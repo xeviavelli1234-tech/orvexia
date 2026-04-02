@@ -1,0 +1,128 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                       String    @id @default(cuid())
+  name                     String
+  email                    String    @unique
+  password                 String?
+  googleId                 String?   @unique
+  emailVerified            Boolean   @default(false)
+  verificationToken        String?   @unique
+  verificationTokenExpires DateTime?
+  resetPasswordToken       String?   @unique
+  resetPasswordExpires     DateTime?
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+
+  // Relaciones futuras (fase 2)
+  // favorites Favorite[]
+  // alerts    Alert[]
+}
+
+// ─── Categorías disponibles ───────────────────────────────────────────────────
+enum Category {
+  TELEVISORES
+  LAVADORAS
+  FRIGORIFICOS
+  LAVAVAJILLAS
+  SECADORAS
+  HORNOS
+  MICROONDAS
+  ASPIRADORAS
+  CAFETERAS
+  AIRES_ACONDICIONADOS
+  OTROS
+}
+
+// ─── Producto ─────────────────────────────────────────────────────────────────
+// Representa un electrodoméstico genérico (independiente de tienda o precio).
+// Un mismo producto puede tener ofertas en varias tiendas.
+model Product {
+  id          String    @id @default(cuid())
+  slug        String    @unique           // ej: "samsung-galaxy-qled-55-2024"
+  name        String                      // ej: "Samsung QLED 55\" 4K Q80C"
+  category    Category
+  brand       String                      // ej: "Samsung"
+  model       String                      // ej: "QE55Q80CATXXC"
+  image       String?                     // URL de imagen principal
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  offers       Offer[]
+  priceHistory PriceHistory[]
+
+  @@index([category])
+  @@index([brand])
+  @@index([slug])
+}
+
+// ─── Oferta por tienda ────────────────────────────────────────────────────────
+// Precio de un producto en una tienda concreta.
+// Un producto → muchas ofertas (una por tienda).
+model Offer {
+  id              String   @id @default(cuid())
+  productId       String
+  store           String                   // ej: "Amazon", "MediaMarkt", "PcComponentes"
+  priceCurrent    Float                    // precio actual en euros
+  priceOld        Float?                   // precio anterior (para mostrar tachado)
+  discountPercent Int?                     // % de descuento calculado
+  externalUrl     String                   // enlace directo al producto en la tienda
+  inStock         Boolean  @default(true)
+  updatedAt       DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, store])             // un producto solo tiene una oferta por tienda
+  @@index([productId])
+  @@index([store])
+  @@index([priceCurrent])
+}
+
+// ─── Historial de precios ─────────────────────────────────────────────────────
+// Registro histórico de cada cambio de precio por producto y tienda.
+// Permite mostrar "precio mínimo histórico" y gráficas de evolución.
+model PriceHistory {
+  id        String   @id @default(cuid())
+  productId String
+  store     String
+  price     Float
+  recordedAt DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([productId, store])
+  @@index([recordedAt])
+}
+
+// ─── Modelos futuros (fase 2) ─────────────────────────────────────────────────
+
+// model Favorite {
+//   id        String   @id @default(cuid())
+//   userId    String
+//   productId String
+//   createdAt DateTime @default(now())
+//   user      User     @relation(fields: [userId], references: [id])
+//   product   Product  @relation(fields: [productId], references: [id])
+//   @@unique([userId, productId])
+// }
+
+// model Alert {
+//   id          String   @id @default(cuid())
+//   userId      String
+//   productId   String
+//   targetPrice Float                        // avisar cuando el precio baje de X€
+//   active      Boolean  @default(true)
+//   createdAt   DateTime @default(now())
+//   user        User     @relation(fields: [userId], references: [id])
+//   product     Product  @relation(fields: [productId], references: [id])
+//   @@unique([userId, productId])
+// }
