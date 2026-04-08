@@ -119,7 +119,7 @@ export default async function HomePage() {
     <main className="min-h-screen bg-[#F1F5F9]">
 
       {/* ── HERO ──────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-[#060B18] pt-24 pb-24 px-6">
+      <section className="relative overflow-hidden bg-[#060B18] pt-24 pb-36 px-6">
         {/* Background glow orbs */}
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute top-[-100px] left-1/2 -translate-x-1/2 w-[900px] h-[500px] rounded-full"
@@ -197,10 +197,19 @@ export default async function HomePage() {
           </div>
         </div>
 
+        {/* Decorative divider line */}
+        <div className="absolute bottom-0 left-0 right-0 flex flex-col items-stretch">
+          <div className="h-px w-full" style={{
+            background: "linear-gradient(90deg, transparent 0%, rgba(99,102,241,0.6) 25%, rgba(139,92,246,0.9) 50%, rgba(99,102,241,0.6) 75%, transparent 100%)"
+          }} />
+          <div className="h-[1px] w-full blur-sm -mt-[1px]" style={{
+            background: "linear-gradient(90deg, transparent 0%, rgba(139,92,246,0.4) 30%, rgba(96,165,250,0.6) 50%, rgba(139,92,246,0.4) 70%, transparent 100%)"
+          }} />
+        </div>
       </section>
 
       {/* ── REGISTER PERKS ──────────────────────────────────────────── */}
-      <section className="px-6 py-20 bg-[#F1F5F9]">
+      <section className="px-6 pb-20 -mt-24 bg-[#F1F5F9]">
         <div className="max-w-6xl mx-auto">
           <div className="rounded-3xl overflow-hidden shadow-[0_32px_80px_-24px_rgba(15,23,42,0.3)]">
             <div className="grid grid-cols-1 lg:grid-cols-2">
