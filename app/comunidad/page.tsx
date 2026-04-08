@@ -6,6 +6,14 @@ import Link from "next/link";
 
 export const runtime = "nodejs";
 
+const DevelopmentBanner = () => (
+  <div className="mx-auto max-w-5xl px-4 pt-8">
+    <div className="rounded-2xl border border-amber-200 bg-amber-50 text-amber-800 px-4 py-3 text-sm font-medium shadow-sm">
+      La comunidad está en proceso de desarrollo. Algunas funciones pueden cambiar o no estar disponibles todavía.
+    </div>
+  </div>
+);
+
 export const metadata = {
   title: "Foro / Discusiones · Comunidad",
   description: "Centro de decisiones de compra con discusiones, reseñas y ofertas.",
@@ -44,7 +52,8 @@ export default async function ComunidadPage() {
           <div className="absolute inset-0 backdrop-blur-md bg-white/40" />
         </div>
 
-        <div className="relative min-h-screen flex items-center justify-center px-6">
+        <div className="relative min-h-screen flex flex-col items-center justify-center gap-6 px-6">
+          <DevelopmentBanner />
           <div className="max-w-lg w-full bg-white border border-[#E2E8F0] rounded-3xl shadow-lg p-8 text-center space-y-4">
             <div className="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-br from-[#2563EB] to-[#7C3AED] flex items-center justify-center text-white text-xl">
               🔒
@@ -104,6 +113,7 @@ export default async function ComunidadPage() {
   return (
     <main className="min-h-screen bg-[#F8FAFC]">
       <ForumStyle />
+      <DevelopmentBanner />
       <ForumTab threads={threads} />
     </main>
   );
