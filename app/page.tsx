@@ -119,7 +119,7 @@ export default async function HomePage() {
     <main className="min-h-screen bg-[#F1F5F9]">
 
       {/* ── HERO ──────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-[#060B18] pt-24 pb-40 px-6">
+      <section className="relative overflow-hidden bg-[#060B18] pt-24 pb-24 px-6">
         {/* Background glow orbs */}
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute top-[-100px] left-1/2 -translate-x-1/2 w-[900px] h-[500px] rounded-full"
@@ -197,64 +197,63 @@ export default async function HomePage() {
           </div>
         </div>
 
-        {/* Wave */}
-        <div className="absolute bottom-0 left-0 right-0 overflow-hidden leading-none">
-          <svg viewBox="0 0 1440 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-20">
-            <path d="M0,60 C240,100 480,20 720,50 C960,80 1200,20 1440,50 L1440,80 L0,80 Z" fill="#F1F5F9" />
-          </svg>
-        </div>
       </section>
 
       {/* ── REGISTER PERKS ──────────────────────────────────────────── */}
-      <section className="py-20 px-6" style={{ background: "linear-gradient(180deg, #F1F5F9 0%, #EEF2FF 100%)" }}>
+      <section className="px-6 py-16 bg-[#F1F5F9]">
         <div className="max-w-6xl mx-auto">
-          {/* Header */}
-          <div className="text-center mb-12">
-            <span className="inline-block text-[10px] font-bold text-indigo-600 uppercase tracking-[0.18em] mb-3 bg-indigo-100 px-3 py-1 rounded-full">
-              Al registrarte obtienes
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 leading-tight mb-4">
-              Crea tu cuenta gratis y desbloquea<br className="hidden sm:block" /> un panel pensado para ahorrar.
-            </h2>
-            <p className="text-sm text-slate-500 leading-relaxed max-w-lg mx-auto">
-              Herramientas claras: seguimiento, alertas y comparativas privadas para comprar en el momento exacto y al mejor precio.
-            </p>
-          </div>
+          <div className="rounded-3xl overflow-hidden shadow-[0_24px_64px_-24px_rgba(15,23,42,0.25)] border border-slate-200">
+            <div className="grid grid-cols-1 lg:grid-cols-5">
 
-          {/* Perks */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-            {REGISTER_PERKS.map((perk) => (
+              {/* Left: dark panel */}
               <div
-                key={perk.title}
-                className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+                className="lg:col-span-2 p-10 lg:p-14 flex flex-col justify-center"
+                style={{ background: "linear-gradient(145deg, #060B18 0%, #1E1B4B 60%, #1e3a8a 100%)" }}
               >
-                <div
-                  className="w-11 h-11 rounded-xl flex items-center justify-center mb-4"
-                  style={{ backgroundColor: perk.bg, color: perk.color }}
-                >
-                  {perk.icon}
+                <span className="inline-block text-[10px] font-bold text-indigo-300 uppercase tracking-[0.18em] mb-5 bg-indigo-500/15 px-3 py-1.5 rounded-full w-fit">
+                  Al registrarte obtienes
+                </span>
+                <h2 className="text-2xl lg:text-3xl font-extrabold text-white leading-snug mb-4">
+                  Crea tu cuenta gratis y desbloquea un panel pensado para ahorrar.
+                </h2>
+                <p className="text-sm text-slate-400 leading-relaxed mb-8">
+                  Herramientas claras: seguimiento, alertas y comparativas privadas para comprar en el momento exacto y al mejor precio.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Link
+                    href="/register"
+                    className="bg-white text-blue-700 font-bold px-6 py-3 rounded-xl hover:bg-blue-50 active:scale-95 transition-all text-sm text-center"
+                  >
+                    Crear cuenta gratis
+                  </Link>
+                  <Link
+                    href="/dashboard"
+                    className="text-white/70 font-semibold px-6 py-3 rounded-xl border border-white/15 hover:bg-white/8 hover:text-white active:scale-95 transition-all text-sm text-center"
+                  >
+                    Ver el panel en vivo
+                  </Link>
                 </div>
-                <h3 className="text-sm font-bold text-slate-900 mb-2">{perk.title}</h3>
-                <p className="text-xs text-slate-500 leading-relaxed">{perk.desc}</p>
               </div>
-            ))}
-          </div>
 
-          {/* CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link
-              href="/register"
-              className="px-8 py-3.5 rounded-xl font-bold text-sm text-white shadow-[0_0_24px_rgba(37,99,235,0.4)] hover:shadow-[0_0_32px_rgba(37,99,235,0.55)] active:scale-95 transition-all"
-              style={{ background: "linear-gradient(135deg, #2563EB, #4F46E5)" }}
-            >
-              Crear cuenta gratis
-            </Link>
-            <Link
-              href="/dashboard"
-              className="px-8 py-3.5 rounded-xl font-semibold text-sm text-slate-600 border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 active:scale-95 transition-all"
-            >
-              Ver el panel en vivo
-            </Link>
+              {/* Right: perks 2×2 */}
+              <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-px bg-slate-100">
+                {REGISTER_PERKS.map((perk) => (
+                  <div key={perk.title} className="bg-white p-8 flex flex-col gap-4 hover:bg-slate-50/80 transition-colors">
+                    <div
+                      className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+                      style={{ backgroundColor: perk.bg, color: perk.color }}
+                    >
+                      {perk.icon}
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900 mb-1.5">{perk.title}</h3>
+                      <p className="text-xs text-slate-500 leading-relaxed">{perk.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+            </div>
           </div>
         </div>
       </section>
