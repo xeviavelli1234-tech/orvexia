@@ -209,7 +209,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── REGISTER PERKS ──────────────────────────────────────────── */}
-      <section className="px-6 pb-20 -mt-24 bg-[#F1F5F9]">
+      <section className="relative z-10 px-6 pb-20 -mt-24 bg-[#F1F5F9]">
         <div className="max-w-6xl mx-auto">
           <div className="rounded-3xl overflow-hidden shadow-[0_32px_80px_-24px_rgba(15,23,42,0.3)]">
             <div className="grid grid-cols-1 lg:grid-cols-2">
@@ -264,7 +264,7 @@ export default async function HomePage() {
                       {perk.icon}
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-slate-900 mb-1.5" style={{ color: perk.color === "#F59E0B" ? "#92400E" : undefined }}>{perk.title}</h3>
+                      <h3 className="text-sm font-bold text-slate-900 mb-1.5">{perk.title}</h3>
                       <p className="text-xs text-slate-500 leading-relaxed">{perk.desc}</p>
                     </div>
                   </div>
