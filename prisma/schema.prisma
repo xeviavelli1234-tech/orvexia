@@ -18,12 +18,18 @@ model User {
   verificationTokenExpires DateTime?
   resetPasswordToken       String?   @unique
   resetPasswordExpires     DateTime?
+  avatarColor              String    @default("#2563EB")
+  avatarEmoji              String?
+  avatarUrl                String?   @db.Text
+  bio                      String?
   createdAt                DateTime  @default(now())
   updatedAt                DateTime  @updatedAt
 
-  // Relaciones futuras (fase 2)
-  // favorites Favorite[]
-  // alerts    Alert[]
+  savedProducts SavedProduct[]
+  priceAlerts   PriceAlert[]
+  communityPosts    CommunityPost[]
+  communityComments CommunityComment[]
+  communityVotes    CommunityVote[]
 }
 
 // ─── Categorías disponibles ───────────────────────────────────────────────────
@@ -52,12 +58,19 @@ model Product {
   brand       String                      // ej: "Samsung"
   model       String                      // ej: "QE55Q80CATXXC"
   image       String?                     // URL de imagen principal
+  images      String[]                    // galería de imágenes
   description String?
+  rating      Float?                      // ej: 4.4
+  reviewCount Int?                        // ej: 4471
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  offers       Offer[]
-  priceHistory PriceHistory[]
+  offers        Offer[]
+  priceHistory  PriceHistory[]
+  buySignals    BuySignal[]
+  savedBy       SavedProduct[]
+  priceAlerts   PriceAlert[]
+  communityPosts CommunityPost[]
 
   @@index([category])
   @@index([brand])
@@ -101,6 +114,135 @@ model PriceHistory {
   @@index([productId])
   @@index([productId, store])
   @@index([recordedAt])
+}
+
+// ─── Producto guardado ────────────────────────────────────────────────────────
+model SavedProduct {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  savedAt   DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId])
+}
+
+// ─── Alerta de precio ─────────────────────────────────────────────────────────
+model PriceAlert {
+  id          String    @id @default(cuid())
+  userId      String
+  productId   String
+  store       String
+  targetPrice Float
+  triggered   Boolean   @default(false)
+  triggeredAt DateTime?
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([productId])
+}
+
+// ─── Señal de Compra ──────────────────────────────────────────────────────────
+model BuySignal {
+  id           String   @id @default(cuid())
+  productId    String
+  store        String
+
+  score        Int      // 0-100
+  label        String   // "Compra ahora" | "Buen momento" | etc.
+
+  priceScore   Int      // 0-40
+  trendScore   Int      // 0-25
+  storeScore   Int      // 0-20
+  dealScore    Int      // 0-15
+
+  priceMin90d  Float
+  priceMax90d  Float
+  priceAvg90d  Float
+  trendSlope   Float    // €/día
+  isFakeDeal   Boolean
+
+  calculatedAt DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, store])
+  @@index([productId])
+  @@index([score])
+}
+
+model StoreReputation {
+  id               String   @id @default(cuid())
+  store            String   @unique
+  manipulationRate Float    @default(0)
+  fakeDealCount    Int      @default(0)
+  totalDeals       Int      @default(0)
+  updatedAt        DateTime @updatedAt
+}
+
+// â”€â”€â”€ Comunidad â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+enum CommunityPostType {
+  DISCUSION
+  PREGUNTA
+  CHOLLO
+  CONSEJO
+}
+
+model CommunityPost {
+  id        String            @id @default(cuid())
+  userId    String
+  productId String?
+  title     String
+  content   String            @db.Text
+  type      CommunityPostType @default(DISCUSION)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id])
+
+  comments CommunityComment[]
+  votes    CommunityVote[]
+
+  @@index([type])
+  @@index([createdAt])
+}
+
+model CommunityComment {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  post CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@index([userId])
+}
+
+model CommunityVote {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  value     Int      @default(1)
+  createdAt DateTime @default(now())
+
+  post CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@index([postId])
+  @@index([userId])
 }
 
 // ─── Modelos futuros (fase 2) ─────────────────────────────────────────────────

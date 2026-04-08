@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Playfair_Display, Inter } from "next/font/google";
+import { Inter } from "next/font/google";
 import { InputField } from "@/components/auth/InputField";
+import { AuthShell } from "@/components/auth/AuthShell";
 
-const playfair = Playfair_Display({ subsets: ["latin"], weight: ["600", "700"] });
 const inter = Inter({ subsets: ["latin"], weight: ["400", "500", "600"] });
 
 function validateEmail(v: string): string {
@@ -29,7 +29,6 @@ export default function ForgotPasswordPage() {
 
   const emailClientErr = validateEmail(email);
 
-  // Clear server error when user edits the field
   const handleEmailChange = (v: string) => {
     setEmail(v);
     if (serverError) setServerError("");
@@ -79,92 +78,75 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div
-      className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-14 relative overflow-hidden"
-      style={{
-        backgroundImage:
-          'linear-gradient(0deg, rgba(37,99,235,0.22), rgba(37,99,235,0.22)), url("/appliances-bg.png")',
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-        backgroundColor: "#E5F0FF",
-      }}
-    >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,rgba(255,255,255,0.22),transparent_45%)]" />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_15%,rgba(37,99,235,0.2),transparent_38%)]" />
-
-      <div className="relative w-full max-w-[640px] px-4">
-        <div className="relative overflow-visible rounded-[16px] border border-[#E2E8F0]/70 bg-white/70 backdrop-blur-2xl shadow-[0_16px_56px_-24px_rgba(15,23,42,0.32)]">
-          <form
-            onSubmit={handleSubmit}
-            className={`relative w-full px-12 py-12 space-y-4 md:px-14 ${inter.className}`}
-          >
-            <div className="space-y-1 text-center">
-              <h1 className={`${playfair.className} text-3xl text-[#0F172A]`}>
-                ¿Olvidaste tu contraseña?
-              </h1>
-              <p className="text-sm text-[#64748B]">
-                Te enviaremos un enlace para crear una nueva.
-              </p>
-            </div>
-
-            <InputField
-              id="email"
-              name="email"
-              label="Correo"
-              type="email"
-              placeholder="tu@email.com"
-              autoComplete="email"
-              value={email}
-              onChange={handleEmailChange}
-              onBlur={() => setEmailBlurred(true)}
-              error={emailError}
-              valid={emailValid}
-            />
-
-            {devToken && (
-              <p className="text-xs text-[#92400E] field-msg">
-                SMTP/Resend no configurado. Usa este enlace:{" "}
-                <button
-                  type="button"
-                  className="underline"
-                  onClick={() => router.push(`/reset-password?token=${devToken}`)}
-                >
-                  Abrir reseteo
-                </button>
-              </p>
-            )}
-
-            {info && (
-              <p
-                className="text-xs text-[#22C55E] text-center field-msg"
-                role="status"
-                aria-live="polite"
-              >
-                {info}
-              </p>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-[#2563EB] text-white p-3 rounded-[10px] shadow-[0_16px_30px_-14px_rgba(37,99,235,0.45)] hover:bg-[#1D4ED8] hover:translate-y-[-1px] hover:shadow-[0_18px_34px_-14px_rgba(37,99,235,0.55)] transition disabled:opacity-50"
-            >
-              {loading ? "Enviando..." : "Enviar enlace"}
-            </button>
-
-            <div className="text-center text-sm text-[#64748B]">
-              <button
-                type="button"
-                onClick={() => router.push("/login")}
-                className="text-[#2563EB] hover:text-[#1D4ED8]"
-              >
-                Volver al login
-              </button>
-            </div>
-          </form>
-        </div>
+    <AuthShell accent="blue">
+      <div className={`space-y-1 text-center mb-6 ${inter.className}`}>
+        <p className="text-xs font-semibold text-[#2563EB] uppercase tracking-widest mb-2">
+          Recuperar acceso
+        </p>
+        <h1 className="text-2xl font-extrabold text-[#0F172A] tracking-tight">
+          ¿Olvidaste tu contraseña?
+        </h1>
+        <p className="text-sm text-[#64748B]">
+          Te enviaremos un enlace para crear una nueva.
+        </p>
       </div>
-    </div>
+
+      <form onSubmit={handleSubmit} className={`space-y-4 ${inter.className}`}>
+        <InputField
+          id="email"
+          name="email"
+          label="Correo"
+          type="email"
+          placeholder="tu@email.com"
+          autoComplete="email"
+          value={email}
+          onChange={handleEmailChange}
+          onBlur={() => setEmailBlurred(true)}
+          error={emailError}
+          valid={emailValid}
+        />
+
+        {devToken && (
+          <p className="text-xs text-[#92400E] bg-[#FEF3C7] px-3 py-2 rounded-lg">
+            SMTP/Resend no configurado. Usa este enlace:{" "}
+            <button
+              type="button"
+              className="underline font-semibold"
+              onClick={() => router.push(`/reset-password?token=${devToken}`)}
+            >
+              Abrir reseteo
+            </button>
+          </p>
+        )}
+
+        {info && (
+          <p
+            className="text-xs text-[#166534] bg-[#DCFCE7] px-3 py-2 rounded-lg text-center"
+            role="status"
+            aria-live="polite"
+          >
+            {info}
+          </p>
+        )}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-[#2563EB] hover:bg-[#1D4ED8] active:scale-[0.98] text-white font-semibold p-3 rounded-xl shadow-[0_8px_24px_-8px_rgba(37,99,235,0.5)] transition-all duration-150 disabled:opacity-50"
+        >
+          {loading ? "Enviando..." : "Enviar enlace de recuperación"}
+        </button>
+
+        <div className="text-center text-sm text-[#64748B] pt-1">
+          <button
+            type="button"
+            onClick={() => router.push("/login")}
+            className="text-[#2563EB] hover:text-[#1D4ED8] font-medium transition-colors"
+          >
+            ← Volver al login
+          </button>
+        </div>
+      </form>
+    </AuthShell>
   );
 }

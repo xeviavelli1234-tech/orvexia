@@ -16,7 +16,6 @@ const playfair = Playfair_Display({ subsets: ["latin"], weight: ["600", "700"] }
 function validateEmail(v: string): string {
   if (!v) return "El email es obligatorio";
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return "Ingresa un email válido";
-  if (!v.toLowerCase().endsWith(".com")) return "El correo debe terminar en .com";
   return "";
 }
 

@@ -2,9 +2,9 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
-import { Playfair_Display, Inter } from "next/font/google";
+import { Inter } from "next/font/google";
+import { AuthShell } from "@/components/auth/AuthShell";
 
-const playfair = Playfair_Display({ subsets: ["latin"], weight: ["600", "700"] });
 const inter = Inter({ subsets: ["latin"], weight: ["400", "500", "600"] });
 
 function VerifyForm() {
@@ -20,7 +20,7 @@ function VerifyForm() {
   const formatDisplay = (digits: string) =>
     digits ? digits.split("").join(" ") : "";
 
-  const [codeDigits, setCodeDigits] = useState(normalizeDigits(""));
+  const [codeDigits, setCodeDigits] = useState(normalizeDigits(codeParam));
   const [email, setEmail] = useState(emailParam);
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
@@ -107,81 +107,80 @@ function VerifyForm() {
   };
 
   return (
-    <div
-      className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-14 relative overflow-hidden"
-      style={{
-        backgroundImage:
-          'linear-gradient(0deg, rgba(37,99,235,0.22), rgba(37,99,235,0.22)), url("/appliances-bg.png")',
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-        backgroundColor: "#E5F0FF",
-      }}
-    >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,rgba(255,255,255,0.22),transparent_45%)]" />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_15%,rgba(37,99,235,0.2),transparent_38%)]" />
-
-      <div className="relative w-full max-w-[640px] px-4">
-        <div className="relative overflow-visible rounded-[16px] border border-[#E2E8F0]/70 bg-white/70 backdrop-blur-2xl shadow-[0_16px_56px_-24px_rgba(15,23,42,0.32)]">
-          <form
-            onSubmit={handleSubmit}
-            className={`relative w-full px-12 py-12 space-y-4 md:px-14 ${inter.className}`}
-          >
-            <div className="space-y-1 text-center">
-              <h1 className={`${playfair.className} text-3xl text-[#0F172A]`}>
-                Verifica tu correo
-              </h1>
-              <p className="text-sm text-[#64748B]">
-                Ingresa el código que enviamos a tu email
-              </p>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-[#0F172A] mb-1 block text-sm">Correo</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="p-3 rounded-[10px] block bg-[#F8FAFC] text-[#0F172A] w-full border border-[#E2E8F0] placeholder-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB33] focus:outline-none transition"
-                placeholder="Correo"
-                required
-              />
-              {info && <p className="text-xs text-[#16A34A]">{info}</p>}
-            </div>
-
-            <div className="flex items-center justify-between">
-              <label className="text-[#0F172A] mb-1 block text-sm">Código</label>
-              <button
-                type="button"
-                onClick={handleResend}
-                disabled={resendLoading}
-                className="text-xs text-[#2563EB] hover:text-[#1D4ED8] disabled:opacity-60"
-              >
-                {resendLoading ? "Reenviando..." : "Reenviar código"}
-              </button>
-            </div>
-            <input
-              type="text"
-              value={formatDisplay(codeDigits)}
-              onChange={(e) => setCodeDigits(normalizeDigits(e.target.value))}
-              className="p-3 rounded-[10px] block bg-[#F8FAFC] text-[#0F172A] w-full border border-[#E2E8F0] placeholder-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB33] focus:outline-none transition tracking-[0.6em]"
-              placeholder="- - - - - -"
-              required
-              maxLength={11} // cuenta los espacios cuando se muestren
-            />
-            {error && <p className="text-xs text-[#DC2626]">{error}</p>}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-[#2563EB] text-white p-3 rounded-[10px] shadow-[0_16px_30px_-14px_rgba(37,99,235,0.45)] hover:bg-[#1D4ED8] hover:translate-y-[-1px] hover:shadow-[0_18px_34px_-14px_rgba(37,99,235,0.55)] transition disabled:opacity-50"
-            >
-              {loading ? "Verificando..." : "Verificar y continuar"}
-            </button>
-          </form>
+    <AuthShell accent="blue">
+      <div className={`space-y-1 text-center mb-6 ${inter.className}`}>
+        <div className="flex justify-center mb-3">
+          <div className="w-14 h-14 rounded-2xl bg-[#EFF6FF] flex items-center justify-center text-3xl">
+            📧
+          </div>
         </div>
+        <p className="text-xs font-semibold text-[#2563EB] uppercase tracking-widest mb-2">
+          Un paso más
+        </p>
+        <h1 className="text-2xl font-extrabold text-[#0F172A] tracking-tight">
+          Verifica tu correo
+        </h1>
+        <p className="text-sm text-[#64748B]">
+          Ingresa el código de 6 dígitos que enviamos a tu email
+        </p>
       </div>
-    </div>
+
+      <form onSubmit={handleSubmit} className={`space-y-4 ${inter.className}`}>
+        <div className="space-y-1">
+          <label className="block text-sm font-medium text-[#0F172A]">Correo</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="p-3 rounded-xl block bg-[#F8FAFC] text-[#0F172A] w-full border border-[#E2E8F0] placeholder-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 focus:outline-none transition-all"
+            placeholder="tu@email.com"
+            required
+          />
+          {info && (
+            <p className="text-xs text-[#166534] bg-[#DCFCE7] px-3 py-2 rounded-lg mt-1">
+              {info}
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-1">
+          <div className="flex items-center justify-between">
+            <label className="block text-sm font-medium text-[#0F172A]">Código</label>
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={resendLoading}
+              className="text-xs text-[#2563EB] hover:text-[#1D4ED8] font-medium disabled:opacity-60 transition-colors"
+            >
+              {resendLoading ? "Reenviando..." : "Reenviar código"}
+            </button>
+          </div>
+          <input
+            type="text"
+            value={formatDisplay(codeDigits)}
+            onChange={(e) => setCodeDigits(normalizeDigits(e.target.value))}
+            className="p-3 rounded-xl block bg-[#F8FAFC] text-[#0F172A] w-full border border-[#E2E8F0] placeholder-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 focus:outline-none transition-all tracking-[0.6em] text-center text-lg font-bold"
+            placeholder="- - - - - -"
+            required
+            maxLength={11}
+          />
+        </div>
+
+        {error && (
+          <p className="text-xs text-[#EF4444] bg-[#FEF2F2] px-3 py-2 rounded-lg">
+            {error}
+          </p>
+        )}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-[#2563EB] hover:bg-[#1D4ED8] active:scale-[0.98] text-white font-semibold p-3 rounded-xl shadow-[0_8px_24px_-8px_rgba(37,99,235,0.5)] transition-all duration-150 disabled:opacity-50"
+        >
+          {loading ? "Verificando..." : "Verificar y continuar →"}
+        </button>
+      </form>
+    </AuthShell>
   );
 }
 

@@ -21,6 +21,9 @@ export async function getUserById(id: string) {
       id: true,
       name: true,
       email: true,
+      avatarColor: true,
+      avatarEmoji: true,
+      bio: true,
       createdAt: true,
     },
   });

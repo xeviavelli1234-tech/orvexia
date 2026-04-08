@@ -1,12 +1,12 @@
 {
-  "name": "dealtracker",
+  "name": "orvexia",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "dev:nofork": "node dev-no-fork.cjs",
     "postinstall": "prisma generate",
-    "build": "prisma generate && next build",
+    "build": "prisma generate && node --max-old-space-size=12288 node_modules/next/dist/bin/next build",
     "start": "next start",
     "lint": "eslint"
   },

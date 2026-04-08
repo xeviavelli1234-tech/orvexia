@@ -1,8 +1,11 @@
 import { PrismaClient } from "@/app/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
+const SCHEMA_VERSION = "v3-avatarUrl";
+
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
+  prismaSchemaVersion: string | undefined;
 };
 
 function createPrismaClient() {
@@ -12,8 +15,12 @@ function createPrismaClient() {
   return new PrismaClient({ adapter });
 }
 
-export const prisma = globalForPrisma.prisma ?? createPrismaClient();
-
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
+// Force-recreate the client if the schema changed since last hot reload
+if (globalForPrisma.prismaSchemaVersion !== SCHEMA_VERSION) {
+  globalForPrisma.prisma = undefined;
+  globalForPrisma.prismaSchemaVersion = SCHEMA_VERSION;
 }
+
+export const prisma =
+  globalForPrisma.prisma ??
+  (globalForPrisma.prisma = createPrismaClient());
