@@ -200,29 +200,38 @@ export default async function HomePage() {
       </section>
 
       {/* ── REGISTER PERKS ──────────────────────────────────────────── */}
-      <section className="px-6 py-16 bg-[#F1F5F9]">
+      <section className="px-6 py-20 bg-[#F1F5F9]">
         <div className="max-w-6xl mx-auto">
-          <div className="rounded-3xl overflow-hidden shadow-[0_24px_64px_-24px_rgba(15,23,42,0.25)] border border-slate-200">
-            <div className="grid grid-cols-1 lg:grid-cols-5">
+          <div className="rounded-3xl overflow-hidden shadow-[0_32px_80px_-24px_rgba(15,23,42,0.3)]">
+            <div className="grid grid-cols-1 lg:grid-cols-2">
 
               {/* Left: dark panel */}
               <div
-                className="lg:col-span-2 p-10 lg:p-14 flex flex-col justify-center"
-                style={{ background: "linear-gradient(145deg, #060B18 0%, #1E1B4B 60%, #1e3a8a 100%)" }}
+                className="relative p-10 lg:p-14 flex flex-col justify-between overflow-hidden"
+                style={{ background: "linear-gradient(145deg, #060B18 0%, #1E1B4B 65%, #1e3a8a 100%)" }}
               >
-                <span className="inline-block text-[10px] font-bold text-indigo-300 uppercase tracking-[0.18em] mb-5 bg-indigo-500/15 px-3 py-1.5 rounded-full w-fit">
-                  Al registrarte obtienes
-                </span>
-                <h2 className="text-2xl lg:text-3xl font-extrabold text-white leading-snug mb-4">
-                  Crea tu cuenta gratis y desbloquea un panel pensado para ahorrar.
-                </h2>
-                <p className="text-sm text-slate-400 leading-relaxed mb-8">
-                  Herramientas claras: seguimiento, alertas y comparativas privadas para comprar en el momento exacto y al mejor precio.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-3">
+                {/* Decorative glow */}
+                <div className="pointer-events-none absolute -top-20 -right-20 w-64 h-64 rounded-full"
+                  style={{ background: "radial-gradient(circle, rgba(99,102,241,0.2) 0%, transparent 70%)" }} />
+                <div className="pointer-events-none absolute -bottom-16 -left-10 w-48 h-48 rounded-full"
+                  style={{ background: "radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 70%)" }} />
+
+                <div className="relative">
+                  <span className="inline-block text-[10px] font-bold text-indigo-300 uppercase tracking-[0.2em] mb-6 bg-indigo-500/15 border border-indigo-500/20 px-3 py-1.5 rounded-full">
+                    Al registrarte obtienes
+                  </span>
+                  <h2 className="text-3xl lg:text-4xl font-extrabold text-white leading-[1.15] mb-5">
+                    Crea tu cuenta gratis y desbloquea un panel pensado para ahorrar.
+                  </h2>
+                  <p className="text-sm text-slate-400 leading-relaxed">
+                    Herramientas claras: seguimiento, alertas y comparativas privadas para comprar en el momento exacto y al mejor precio.
+                  </p>
+                </div>
+
+                <div className="relative flex flex-col sm:flex-row gap-3 mt-10">
                   <Link
                     href="/register"
-                    className="bg-white text-blue-700 font-bold px-6 py-3 rounded-xl hover:bg-blue-50 active:scale-95 transition-all text-sm text-center"
+                    className="bg-white text-blue-700 font-bold px-6 py-3 rounded-xl hover:bg-blue-50 active:scale-95 transition-all text-sm text-center shadow-lg"
                   >
                     Crear cuenta gratis
                   </Link>
@@ -235,18 +244,18 @@ export default async function HomePage() {
                 </div>
               </div>
 
-              {/* Right: perks 2×2 */}
-              <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-px bg-slate-100">
+              {/* Right: perks horizontal layout */}
+              <div className="bg-white divide-y divide-slate-100">
                 {REGISTER_PERKS.map((perk) => (
-                  <div key={perk.title} className="bg-white p-8 flex flex-col gap-4 hover:bg-slate-50/80 transition-colors">
+                  <div key={perk.title} className="flex items-start gap-5 px-8 py-7 hover:bg-slate-50 transition-colors group">
                     <div
-                      className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+                      className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 group-hover:scale-105 transition-transform"
                       style={{ backgroundColor: perk.bg, color: perk.color }}
                     >
                       {perk.icon}
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-slate-900 mb-1.5">{perk.title}</h3>
+                      <h3 className="text-sm font-bold text-slate-900 mb-1.5" style={{ color: perk.color === "#F59E0B" ? "#92400E" : undefined }}>{perk.title}</h3>
                       <p className="text-xs text-slate-500 leading-relaxed">{perk.desc}</p>
                     </div>
                   </div>
