@@ -200,7 +200,7 @@ export default async function HomePage() {
         {/* Wave */}
         <div className="absolute bottom-0 left-0 right-0 overflow-hidden leading-none">
           <svg viewBox="0 0 1440 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-20">
-            <path d="M0 80L360 30L720 55L1080 15L1440 45V80H0Z" fill="#F1F5F9" />
+            <path d="M0,60 C240,100 480,20 720,50 C960,80 1200,20 1440,50 L1440,80 L0,80 Z" fill="#F1F5F9" />
           </svg>
         </div>
       </section>
