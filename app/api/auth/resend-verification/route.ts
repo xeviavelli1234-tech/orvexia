@@ -55,7 +55,7 @@ export async function POST(request: Request) {
   }
 
   let code: string | null = null;
-  const expiresAt = new Date(Date.now() + 1000 * 60 * 1); // 1 minuto
+  const expiresAt = new Date(Date.now() + 1000 * 60 * 15); // 15 minutos
   let attempts = 0;
 
   while (attempts < 5 && !code) {
@@ -93,12 +93,10 @@ export async function POST(request: Request) {
     );
   }
 
-  let emailSent = true;
-  try {
-    await sendVerificationEmail({ to: user.email, code });
-  } catch (err) {
-    emailSent = false;
-    console.error("Error reenviando el correo de verificación:", err);
+  const { emailSent } = await sendVerificationEmail({ to: user.email, code });
+
+  if (!emailSent) {
+    console.warn(`[resend-verification] Email no enviado a ${user.email}, devolviendo código como fallback`);
   }
 
   return NextResponse.json({

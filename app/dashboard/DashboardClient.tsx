@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import ProductModal from "@/components/ProductModal";
@@ -40,6 +40,7 @@ interface DashboardData {
     priceCurrent: number | null; priceOld: number | null;
     discountPercent: number | null; store: string | null;
     externalUrl: string | null; savedAt: string;
+    notifyOnDiscount: boolean;
   }[];
   recentDrops: {
     productId: string; slug: string; name: string; brand: string; category: string;
@@ -64,6 +65,14 @@ interface DashboardData {
     rating: number | null; reviewCount: number | null;
     offers: ModalOffer[];
     priceCurrent: number | null; priceOld: number | null; discountPercent: number | null;
+    store: string | null; externalUrl: string | null;
+  }[];
+  noDiscount: {
+    id: string; slug: string; name: string; brand: string; category: string;
+    description: string | null; image: string | null; images: string[];
+    rating: number | null; reviewCount: number | null;
+    offers: ModalOffer[];
+    priceCurrent: number | null; priceOld: number | null; discountPercent: null;
     store: string | null; externalUrl: string | null;
   }[];
 }
@@ -316,11 +325,29 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
     return () => window.removeEventListener("orvexia:alerts-changed", handler);
   }, []);
 
-  // Listen for save/unsave events from SaveButton (any page)
+  // Ref estable para el listener
+  const silentRefreshRef = useRef(silentRefresh);
+  useEffect(() => { silentRefreshRef.current = silentRefresh; }, [silentRefresh]);
+
+  // Listen for save/unsave events — doble refresh para garantizar que la DB confirmó el cambio
   useEffect(() => {
-    window.addEventListener("orvexia:data-changed", silentRefresh);
-    return () => window.removeEventListener("orvexia:data-changed", silentRefresh);
-  }, [silentRefresh]);
+    let t1: ReturnType<typeof setTimeout>;
+    let t2: ReturnType<typeof setTimeout>;
+    const handler = () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      // Primer refresh a los 500ms
+      t1 = setTimeout(() => silentRefreshRef.current(), 500);
+      // Segundo refresh a los 1500ms por si el primero llegó antes del commit
+      t2 = setTimeout(() => silentRefreshRef.current(), 1500);
+    };
+    window.addEventListener("orvexia:data-changed", handler);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      window.removeEventListener("orvexia:data-changed", handler);
+    };
+  }, []);
 
   async function deleteAlert(alertId: string) {
     await fetch("/api/price-alerts", {
@@ -335,7 +362,7 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
 
   async function unsave(productId: string) {
     await toggleSaved(productId);
-    silentRefresh();
+    // El evento orvexia:data-changed del SavedProvider ya dispara silentRefresh con 300ms de delay
   }
 
   function openModal(product: {
@@ -358,6 +385,16 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
     (a) => a.currentPrice !== null && a.basePrice !== null && a.basePrice !== undefined && a.currentPrice < a.basePrice
   );
   const activeAlerts    = alertsList.filter((a) => a.active && !(a.currentPrice !== null && a.basePrice !== null && a.basePrice !== undefined && a.currentPrice < a.basePrice));
+
+  // Guardados con precio disponible pero sin descuento activo
+  const productsWithoutOffers = (data?.savedProducts ?? []).filter(
+    (p) => p.priceCurrent !== null && (!(p.discountPercent && p.discountPercent > 0))
+  );
+  const productsWithoutOffersToShow = productsWithoutOffers.slice(0, 10);
+
+  // Watchlist (mostrar máx. 10)
+  const savedProducts = data?.savedProducts ?? [];
+  const savedProductsToShow = savedProducts.slice(0, 10);
 
   const { profile: avatarProfile } = useProfile();
   const { toggle: toggleSaved } = useSaved();
@@ -872,15 +909,16 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
 
         {/* ── WATCHLIST ─────────────────────────────────────────────────────── */}
         {!isNew && (
+          <>
           <div className="bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden">
             <SectionHeader
               accent="linear-gradient(180deg,#2563EB,#7C3AED)"
               label="Tu lista de seguimiento"
               title="Watchlist"
-              count={data!.savedProducts.length}
+              count={savedProductsToShow.length}
             />
 
-            {data!.savedProducts.length === 0 ? (
+            {savedProducts.length === 0 ? (
               <EmptyState
                 emoji="📋"
                 title="Tu watchlist está vacía"
@@ -899,7 +937,7 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
                 </div>
 
                 <div className="divide-y divide-[#F8FAFC]">
-                  {data!.savedProducts.map((sp) => (
+                  {savedProductsToShow.map((sp) => (
                     <div
                       key={sp.id}
                       className="group relative flex sm:grid sm:grid-cols-[1fr_auto_auto_auto] items-center gap-3 px-4 sm:px-5 py-3.5 hover:bg-[#F8FAFC] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#2563EB]"
@@ -932,6 +970,14 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
                             {CATEGORY_LABELS[sp.category] ?? sp.category}
                             {sp.store && <> · {sp.store}</>}
                           </p>
+                          {sp.notifyOnDiscount && !sp.discountPercent && (
+                            <span className="inline-flex items-center gap-1 mt-0.5 text-[10px] font-semibold text-[#D97706] bg-[#FFFBEB] border border-[#FDE68A] px-1.5 py-0.5 rounded-md">
+                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0 1 18 14.158V11a6.002 6.002 0 0 0-4-5.659V5a2 2 0 1 0-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 1 1-6 0v-1m6 0H9" />
+                              </svg>
+                              Sin oferta · te avisamos
+                            </span>
+                          )}
                         </div>
                       </div>
 
@@ -1005,6 +1051,7 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
               </>
             )}
           </div>
+          </>
         )}
 
         {/* ── RECOMENDADOS ──────────────────────────────────────────────────── */}
@@ -1083,6 +1130,64 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
             </div>
           )}
         </div>
+
+        {/* ── SIN DESCUENTO ─────────────────────────────────────────────────── */}
+        {(data?.noDiscount ?? []).length > 0 && (
+          <div className="bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden">
+            <div className="px-5 py-4 border-b border-[#F1F5F9] flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-1 h-7 rounded-full bg-[#F59E0B]" />
+                <div>
+                  <p className="text-[10px] font-bold text-[#F59E0B] uppercase tracking-widest">Explora más</p>
+                  <h2 className="text-[15px] font-bold text-[#0F172A]">Disponibles sin oferta</h2>
+                </div>
+              </div>
+              <Link
+                href="/categorias"
+                className="px-4 py-2 rounded-xl text-[12px] font-semibold text-white transition-all"
+                style={{ background: "linear-gradient(135deg,#F59E0B,#EA580C)" }}
+              >
+                Explorar categorías →
+              </Link>
+            </div>
+            <div className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {(data?.noDiscount ?? []).map((p) => (
+                <div
+                  key={p.id}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Ver detalles de ${p.name}`}
+                  className="group flex gap-3 p-3 rounded-xl border border-[#F1F5F9] hover:border-[#C7D7F4] hover:shadow-sm transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-[#2563EB]"
+                  onClick={() => openModal({ id: p.id, name: p.name, brand: p.brand, category: p.category, description: p.description, image: p.image, images: p.images, rating: p.rating, reviewCount: p.reviewCount, offers: p.offers })}
+                  onKeyDown={(e) => e.key === "Enter" && openModal({ id: p.id, name: p.name, brand: p.brand, category: p.category, description: p.description, image: p.image, images: p.images, rating: p.rating, reviewCount: p.reviewCount, offers: p.offers })}
+                >
+                  {/* Image */}
+                  <div className="relative shrink-0">
+                    <ProductThumb src={p.image} name={p.name} size={52} />
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-semibold text-[#0F172A] line-clamp-2 leading-snug mb-1">
+                      {p.name}
+                    </p>
+                    <p className="text-[11px] text-[#94A3B8] mb-1.5">
+                      {CATEGORY_LABELS[p.category] ?? p.category}
+                    </p>
+                    {p.priceCurrent !== null && (
+                      <PriceDisplay current={p.priceCurrent} old={p.priceOld} discount={p.discountPercent} />
+                    )}
+                  </div>
+
+                  {/* Save button */}
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <SaveButton productId={p.id} className="w-8 h-8" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
       </div>
 

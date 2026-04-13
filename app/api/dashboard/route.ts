@@ -96,58 +96,77 @@ export async function GET() {
   const primaryCat = sortedCategories[0];
   const secondaryCats = sortedCategories.slice(1);
 
-  const recommended: typeof prisma.product.$inferSelect[] = [];
+  // Score bayesiano: rating * log(reviewCount + 1)
+  // Premia productos bien valorados Y con muchas reseñas
+  function bayesianScore(rating: number | null, reviewCount: number | null): number {
+    return (rating ?? 0) * Math.log((reviewCount ?? 0) + 1);
+  }
 
-  // Helper para evitar duplicados
-  const pushUnique = (items: typeof recommended) => {
-    for (const p of items) {
-      if (!recommended.find((r) => r.id === p.id)) {
-        recommended.push(p);
-      }
-    }
-  };
+  // Traemos un pool amplio y luego ordenamos por popularidad en memoria
+  const poolSize = 40;
 
-  if (primaryCat) {
-    const primaryBatch = await prisma.product.findMany({
+  const [primaryPool, secondaryPool, fallbackPool] = await Promise.all([
+    primaryCat ? prisma.product.findMany({
       where: {
         category: primaryCat as never,
         id: { notIn: [...savedIds] },
         offers: { some: { discountPercent: { gt: 0 }, priceOld: { not: null } } },
       },
       include: { offers: { orderBy: { discountPercent: "desc" } } },
-      take: 4,
-      orderBy: { createdAt: "desc" },
-    });
-    pushUnique(primaryBatch);
-  }
+      take: poolSize,
+    }) : Promise.resolve([]),
 
-  if (recommended.length < 6) {
-    const secondaryBatch = await prisma.product.findMany({
+    secondaryCats.length > 0 ? prisma.product.findMany({
       where: {
-        category: secondaryCats.length > 0 ? ({ in: secondaryCats as never[] } as never) : undefined,
-        id: { notIn: [...savedIds, ...recommended.map((r) => r.id)] },
+        category: { in: secondaryCats as never[] } as never,
+        id: { notIn: [...savedIds] },
         offers: { some: { discountPercent: { gt: 0 }, priceOld: { not: null } } },
       },
       include: { offers: { orderBy: { discountPercent: "desc" } } },
-      take: 6 - recommended.length,
-      orderBy: { createdAt: "desc" },
-    });
-    pushUnique(secondaryBatch);
-  }
+      take: poolSize,
+    }) : Promise.resolve([]),
 
-  // Fallback si no hay suficientes (o no había guardados)
-  if (recommended.length < 6) {
-    const fallback = await prisma.product.findMany({
+    prisma.product.findMany({
       where: {
-        id: { notIn: [...savedIds, ...recommended.map((r) => r.id)] },
+        id: { notIn: [...savedIds] },
         offers: { some: { discountPercent: { gt: 0 }, priceOld: { not: null } } },
       },
       include: { offers: { orderBy: { discountPercent: "desc" } } },
-      take: 6 - recommended.length,
-      orderBy: { createdAt: "desc" },
-    });
-    pushUnique(fallback);
-  }
+      take: poolSize,
+    }),
+  ]);
+
+  // Ordenar cada pool por score bayesiano descendente
+  const sortByPopularity = <T extends { rating: number | null; reviewCount: number | null }>(items: T[]) =>
+    [...items].sort((a, b) => bayesianScore(b.rating, b.reviewCount) - bayesianScore(a.rating, a.reviewCount));
+
+  const recommended: typeof prisma.product.$inferSelect[] = [];
+  const seenIds = new Set<string>();
+
+  const pushUnique = (items: typeof recommended) => {
+    for (const p of items) {
+      if (!seenIds.has(p.id) && recommended.length < 6) {
+        seenIds.add(p.id);
+        recommended.push(p);
+      }
+    }
+  };
+
+  pushUnique(sortByPopularity(primaryPool));
+  pushUnique(sortByPopularity(secondaryPool));
+  pushUnique(sortByPopularity(fallbackPool));
+
+  // Productos sin descuento — aleatorios en cada request (skip random)
+  const totalNoDiscount = await prisma.product.count({
+    where: { offers: { some: { discountPercent: null, priceOld: null } } },
+  });
+  const skipNoDiscount = Math.max(0, Math.floor(Math.random() * Math.max(1, totalNoDiscount - 6)));
+  const noDiscountProducts = await prisma.product.findMany({
+    where: { offers: { some: { discountPercent: null, priceOld: null } } },
+    include: { offers: { orderBy: { priceCurrent: "asc" } } },
+    take: 6,
+    skip: skipNoDiscount,
+  });
 
   return NextResponse.json({
     stats: {
@@ -181,6 +200,7 @@ export async function GET() {
       store: sp.product.offers[0]?.store ?? null,
       externalUrl: sp.product.offers[0]?.externalUrl ?? null,
       savedAt: sp.savedAt,
+      notifyOnDiscount: sp.notifyOnDiscount,
     })),
     recentDrops,
     alerts: alerts.map((a) => {
@@ -235,6 +255,30 @@ export async function GET() {
       priceCurrent: p.offers[0]?.priceCurrent ?? null,
       priceOld: p.offers[0]?.priceOld ?? null,
       discountPercent: p.offers[0]?.discountPercent ?? null,
+      store: p.offers[0]?.store ?? null,
+      externalUrl: p.offers[0]?.externalUrl ?? null,
+    })),
+    noDiscount: noDiscountProducts.map((p) => ({
+      id: p.id,
+      slug: p.slug,
+      name: p.name,
+      brand: p.brand,
+      category: p.category,
+      description: p.description,
+      image: p.image,
+      images: p.images,
+      rating: p.rating,
+      reviewCount: p.reviewCount,
+      offers: p.offers.map((o) => ({
+        store: o.store,
+        priceCurrent: o.priceCurrent,
+        priceOld: o.priceOld,
+        discountPercent: o.discountPercent,
+        externalUrl: o.externalUrl,
+      })),
+      priceCurrent: p.offers[0]?.priceCurrent ?? null,
+      priceOld: p.offers[0]?.priceOld ?? null,
+      discountPercent: null,
       store: p.offers[0]?.store ?? null,
       externalUrl: p.offers[0]?.externalUrl ?? null,
     })),

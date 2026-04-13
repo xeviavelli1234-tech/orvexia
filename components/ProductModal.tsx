@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { BuySignalPanel } from "./BuySignalBadge";
 import { SaveButton } from "./SaveButton";
 import { PriceAlertButton } from "./PriceAlertButton";
+import ReviewSection from "./ReviewSection";
 
 interface Offer {
   store: string;
@@ -17,6 +18,7 @@ interface Offer {
 interface Props {
   product: {
     id: string;
+    slug?: string;
     name: string;
     brand: string;
     category: string;
@@ -322,6 +324,25 @@ export default function ProductModal({ product, onClose }: Props) {
             {/* Señal de Compra */}
             {mejorOferta && (
               <BuySignalPanel productId={product.id} store={mejorOferta.store} />
+            )}
+
+            {/* Reseñas de la comunidad */}
+            <ReviewSection productId={product.id} />
+
+            {/* Enlace a página de reseñas completa */}
+            {product.slug && (
+              <a
+                href={`/opiniones?producto=${product.slug}`}
+                className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl text-sm font-semibold border border-[#E2E8F0] text-[#475569] hover:border-amber-400 hover:text-amber-600 hover:bg-amber-50 transition-all"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Ver todas las reseñas de este producto
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </a>
             )}
 
             <div className="flex-1" />

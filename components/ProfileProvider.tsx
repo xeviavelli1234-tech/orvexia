@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
 
 export interface ProfileState {
   avatarColor: string;
@@ -12,19 +12,30 @@ export interface ProfileState {
 interface ProfileContextValue {
   profile: ProfileState | null;
   updateProfile: (p: Partial<ProfileState>) => void;
+  resetProfile: () => void;
+  refreshProfile: () => void;
 }
 
 const ProfileContext = createContext<ProfileContextValue>({
   profile: null,
   updateProfile: () => {},
+  resetProfile: () => {},
+  refreshProfile: () => {},
 });
 
 export function ProfileProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<ProfileState | null>(null);
 
-  useEffect(() => {
+  const fetchProfile = useCallback(() => {
     fetch("/api/profile")
-      .then((r) => (r.ok ? r.json() : null))
+      .then((r) => {
+        if (r.status === 401) {
+          // No session — clear the profile so stale data from a previous user disappears
+          setProfile(null);
+          return null;
+        }
+        return r.ok ? r.json() : null;
+      })
       .then((data) => {
         if (data) {
           setProfile({
@@ -38,12 +49,22 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    fetchProfile();
+    window.addEventListener("focus", fetchProfile);
+    return () => window.removeEventListener("focus", fetchProfile);
+  }, [fetchProfile]);
+
   function updateProfile(p: Partial<ProfileState>) {
     setProfile((prev) => (prev ? { ...prev, ...p } : null));
   }
 
+  function resetProfile() {
+    setProfile(null);
+  }
+
   return (
-    <ProfileContext.Provider value={{ profile, updateProfile }}>
+    <ProfileContext.Provider value={{ profile, updateProfile, resetProfile, refreshProfile: fetchProfile }}>
       {children}
     </ProfileContext.Provider>
   );

@@ -30,6 +30,7 @@ model User {
   communityPosts    CommunityPost[]
   communityComments CommunityComment[]
   communityVotes    CommunityVote[]
+  reviews           Review[]
 }
 
 // ─── Categorías disponibles ───────────────────────────────────────────────────
@@ -71,6 +72,7 @@ model Product {
   savedBy       SavedProduct[]
   priceAlerts   PriceAlert[]
   communityPosts CommunityPost[]
+  reviews       Review[]
 
   @@index([category])
   @@index([brand])
@@ -122,12 +124,17 @@ model SavedProduct {
   userId    String
   productId String
   savedAt   DateTime @default(now())
+  notifyOnDiscount    Boolean   @default(false)
+  discountAlertSentAt DateTime?
+  savedPriceCurrent   Float?
+  betterDealAlertSentAt DateTime?
 
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([userId, productId])
   @@index([userId])
+  @@index([notifyOnDiscount])
 }
 
 // ─── Alerta de precio ─────────────────────────────────────────────────────────
@@ -242,6 +249,25 @@ model CommunityVote {
 
   @@unique([postId, userId])
   @@index([postId])
+  @@index([userId])
+}
+
+// ─── Reseñas ─────────────────────────────────────────────────────────────────
+model Review {
+  id        String   @id @default(cuid())
+  productId String
+  userId    String
+  rating    Int      // 1-5
+  title     String?
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, userId])
+  @@index([productId])
   @@index([userId])
 }
 

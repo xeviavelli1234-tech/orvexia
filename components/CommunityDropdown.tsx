@@ -4,10 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 const items = [
-  { label: "Foro / Discusiones", href: "/comunidad", icon: "🗨️", color: "#2563EB", bg: "#EEF2FF" },
-  { label: "Opiniones y Reseñas", href: "/comunidad", icon: "⭐", color: "#F59E0B", bg: "#FEF3C7" },
-  { label: "Fotos y Experiencias", href: "/comunidad", icon: "📸", color: "#0EA5E9", bg: "#E0F2FE" },
-  { label: "Rankings de la comunidad", href: "/comunidad", icon: "🏆", color: "#16A34A", bg: "#DCFCE7" },
+  { label: "Foro / Discusiones",      href: "/comunidad", icon: "🗨️", color: "#2563EB", bg: "#EEF2FF" },
+  { label: "Opiniones y Reseñas",     href: "/opiniones", icon: "⭐", color: "#F59E0B", bg: "#FEF3C7" },
+  { label: "Fotos y Experiencias",    href: "/fotos",     icon: "📸", color: "#0EA5E9", bg: "#E0F2FE" },
 ];
 
 export function CommunityDropdown() {

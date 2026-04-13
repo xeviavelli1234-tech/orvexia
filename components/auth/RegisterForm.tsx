@@ -17,7 +17,6 @@ const playfair = Playfair_Display({ subsets: ["latin"], weight: ["600", "700"] }
 function validateEmail(v: string): string {
   if (!v) return "El email es obligatorio";
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return "Ingresa un email válido";
-  if (!v.toLowerCase().endsWith(".com")) return "El correo debe terminar en .com";
   return "";
 }
 
@@ -54,18 +53,21 @@ export function RegisterForm() {
   );
 
   // Field values
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   // Track when fields have been interacted with
+  const [nameBlurred, setNameBlurred] = useState(false);
   const [emailBlurred, setEmailBlurred] = useState(false);
   const [passwordBlurred, setPasswordBlurred] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
 
   // Remember what was submitted so server errors clear when user edits
-  const [submitted, setSubmitted] = useState({ email: "", password: "" });
+  const [submitted, setSubmitted] = useState({ name: "", email: "", password: "" });
 
   // --- Client-side validation ---
+  const nameClientErr = !name.trim() ? "El nombre es obligatorio" : "";
   const emailClientErr = validateEmail(email);
   const passwordClientErr = validatePassword(password);
 
@@ -80,6 +82,8 @@ export function RegisterForm() {
       : "";
 
   // Show errors when the field has been touched or form submitted
+  const nameError =
+    nameBlurred || submitAttempted ? nameClientErr : "";
   const emailError =
     emailBlurred || submitAttempted
       ? emailClientErr || serverEmailErr
@@ -110,13 +114,26 @@ export function RegisterForm() {
         action={action}
         onSubmit={(e) => {
           setSubmitAttempted(true);
-          setSubmitted({ email, password });
-          if (emailClientErr || passwordClientErr) {
+          setSubmitted({ name, email, password });
+          if (nameClientErr || emailClientErr || passwordClientErr) {
             e.preventDefault();
           }
         }}
         className="space-y-4"
       >
+        <InputField
+          id="name"
+          name="name"
+          label="Nombre"
+          type="text"
+          placeholder="Tu nombre"
+          autoComplete="name"
+          value={name}
+          onChange={setName}
+          onBlur={() => setNameBlurred(true)}
+          error={nameError}
+          valid={nameBlurred && !nameClientErr && !!name}
+        />
         <InputField
           id="email"
           name="email"

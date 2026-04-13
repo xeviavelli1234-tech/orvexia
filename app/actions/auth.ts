@@ -36,6 +36,7 @@ export async function registerAction(
   }
 
   const { email, password } = result.data;
+  const name = (formData.get("name") as string | null)?.trim() || email.split("@")[0] || "Usuario";
 
   const existing = await getUserByEmail(email);
   if (existing) {
@@ -52,13 +53,12 @@ export async function registerAction(
         verificationTokenExpires: new Date(Date.now() + 1000 * 60 * 60 * 24),
       },
     });
-    await sendVerificationEmail({ to: existing.email, code });
+    const { emailSent: sent } = await sendVerificationEmail({ to: existing.email, code });
     redirect(
-      `/verify?email=${encodeURIComponent(existing.email)}&code=${code}&emailSent=true`
+      `/verify?email=${encodeURIComponent(existing.email)}${sent ? "" : `&emailSent=false&code=${code}`}`
     );
   }
 
-  const name = email.split("@")[0] || "Usuario";
   const hashedPassword = await bcrypt.hash(password, 12);
   const verificationCode = String(randomInt(100000, 999999));
 
@@ -77,8 +77,8 @@ export async function registerAction(
 
   redirect(
     `/verify?email=${encodeURIComponent(user.email)}${
-      emailSent ? "" : "&emailSent=false"
-    }&code=${verificationCode}`
+      emailSent ? "" : `&emailSent=false&code=${verificationCode}`
+    }`
   );
 }
 

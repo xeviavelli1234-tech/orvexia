@@ -224,7 +224,7 @@ export default function ProductCard({ product, priority = false }: Props) {
 
       {open && (
         <ProductModal
-          product={{ ...product, images: allModalImages, rating: modalRating, reviewCount: modalReviews }}
+          product={{ ...product, images: allModalImages, rating: modalRating, reviewCount: modalReviews, slug: product.slug }}
           onClose={() => setOpen(false)}
         />
       )}

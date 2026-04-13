@@ -1633,6 +1633,146 @@ async function main() {
   });
 
   console.log("✅ Nilson NC185500E frigorífico combi insertado");
+
+  // ── Usuarios de prueba para la comunidad ──────────────────────────────────
+  console.log("🌱 Insertando usuarios y publicaciones de comunidad...");
+
+  const communityUsers = [
+    {
+      id: "seed-user-1",
+      name: "María García",
+      email: "maria.garcia.seed@example.com",
+      avatarColor: "#7C3AED",
+      avatarEmoji: "👩",
+    },
+    {
+      id: "seed-user-2",
+      name: "Carlos Martínez",
+      email: "carlos.martinez.seed@example.com",
+      avatarColor: "#16A34A",
+      avatarEmoji: "🧑",
+    },
+    {
+      id: "seed-user-3",
+      name: "Ana López",
+      email: "ana.lopez.seed@example.com",
+      avatarColor: "#D97706",
+      avatarEmoji: "👩‍💻",
+    },
+    {
+      id: "seed-user-4",
+      name: "Javier Sánchez",
+      email: "javier.sanchez.seed@example.com",
+      avatarColor: "#DC2626",
+      avatarEmoji: "🧔",
+    },
+    {
+      id: "seed-user-5",
+      name: "Laura Fernández",
+      email: "laura.fernandez.seed@example.com",
+      avatarColor: "#0891B2",
+      avatarEmoji: "👱‍♀️",
+    },
+  ];
+
+  for (const u of communityUsers) {
+    await prisma.user.upsert({
+      where: { email: u.email },
+      update: {},
+      create: {
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        avatarColor: u.avatarColor,
+        avatarEmoji: u.avatarEmoji,
+        emailVerified: true,
+      },
+    });
+  }
+
+  // Eliminar posts genéricos sin producto si existen
+  await prisma.communityPost.deleteMany({
+    where: { id: { in: ["seed-post-1","seed-post-2","seed-post-3","seed-post-4","seed-post-5","seed-post-6","seed-post-7","seed-post-8"] } },
+  });
+
+  // ── Posts vinculados a productos ──────────────────────────────────────────
+  const [xiaomiTV, boschLavadora, nilsonCombi] = await Promise.all([
+    prisma.product.findUnique({ where: { slug: "xiaomi-tv-f-65-2025" } }),
+    prisma.product.findUnique({ where: { slug: "bosch-wgg244z0es-serie6-ecosilence-9kg" } }),
+    prisma.product.findUnique({ where: { slug: "nilson-nc185500e-frigorifico-combi-262l" } }),
+  ]);
+
+  const productPosts = [
+    xiaomiTV && {
+      id: "seed-post-product-1",
+      userId: "seed-user-4",
+      productId: xiaomiTV.id,
+      type: "DISCUSION" as const,
+      title: `Opinión real tras 3 meses con la ${xiaomiTV.name}`,
+      content:
+        "La compré en enero y ya puedo dar una opinión con uso real. Lo bueno: imagen espectacular para el precio, el Fire OS va muy fluido y la integración con Alexa funciona de verdad. Lo malo: el sonido es flojo (recomiendo un soundbar básico), y el mando a distancia es muy minimalista. Para ver películas y series está perfecta. Para gaming hay algo de input lag a 60Hz, aunque en modo juego mejora bastante. Relación calidad-precio imbatible.",
+      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+    },
+    boschLavadora && {
+      id: "seed-post-product-2",
+      userId: "seed-user-5",
+      productId: boschLavadora.id,
+      type: "CONSEJO" as const,
+      title: `Consejos para sacar el máximo a la ${boschLavadora.name}`,
+      content:
+        "Llevo un año con esta lavadora y aprendí algunos trucos. Primero: usa siempre el programa EcoSilence a 40°C para ropa normal, gasta muchísimo menos y lava igual de bien. Segundo: el centrifugado a 1200rpm deja la ropa casi seca, ahorra mucho tiempo de tendido. Tercero: cada mes haz un ciclo de limpieza a 90°C vacío con un sobre de limpiador de tambor. El tambor de acero inoxidable no da problemas. En resumen: una compra que recomiendo sin dudarlo.",
+      createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+    },
+    nilsonCombi && {
+      id: "seed-post-product-3",
+      userId: "seed-user-3",
+      productId: nilsonCombi.id,
+      type: "PREGUNTA" as const,
+      title: `¿Alguien más tiene ruido en la ${nilsonCombi.name}?`,
+      content:
+        "Compré este frigo hace 2 semanas y en general estoy contenta, pero noto un ruido cada 30-40 minutos como un borboteo que dura unos segundos. El vendedor me dijo que es normal del ciclo de descongelación pero no estoy segura. ¿Alguien tiene el mismo modelo y le pasa? ¿Es normal o debería reclamar el cambio? El frío funciona bien, la temperatura está perfecta, solo es ese sonido.",
+      createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000),
+    },
+  ].filter(Boolean) as NonNullable<(typeof productPosts)[number]>[];
+
+  for (const post of productPosts) {
+    await prisma.communityPost.upsert({
+      where: { id: post.id },
+      update: {},
+      create: post,
+    });
+  }
+
+  console.log(`✅ ${productPosts.length} publicaciones vinculadas a productos insertadas`);
+
+  // ── Reseñas de prueba ─────────────────────────────────────────────────────
+  console.log("🌱 Insertando reseñas de prueba...");
+
+  const reviewData = [
+    // Xiaomi TV
+    xiaomiTV && { id: "seed-review-1",  productId: xiaomiTV.id,     userId: "seed-user-1", rating: 5, title: "Increíble relación calidad-precio",         content: "Llevo 4 meses con esta tele y no puedo estar más contenta. La imagen en 4K es espectacular, el Fire OS va muy fluido y la integración con Alexa es fantástica. El sonido es lo único flojo, pero con un soundbar básico queda perfecta. Para el precio que tiene, no hay rival.", createdAt: new Date(Date.now() - 10 * 86400000) },
+    xiaomiTV && { id: "seed-review-2",  productId: xiaomiTV.id,     userId: "seed-user-2", rating: 4, title: "Muy buena, con un pequeño pero",              content: "La imagen es excelente y el sistema operativo responde rápido. Le quito una estrella porque el soporte de apps no es tan completo como en otras plataformas y el mando se queda corto. Aun así, para el precio es una compra muy recomendable.", createdAt: new Date(Date.now() - 5 * 86400000) },
+    xiaomiTV && { id: "seed-review-3",  productId: xiaomiTV.id,     userId: "seed-user-3", rating: 5, title: "La mejor compra que he hecho este año",       content: "No me esperaba una calidad así por este precio. Los colores son vivos, el negro es profundo y el tiempo de respuesta en modo juego es buenísimo. El altavoz incorporado es mejorable, pero el resto es 10/10. La recomiendo sin dudarlo.", createdAt: new Date(Date.now() - 2 * 86400000) },
+    xiaomiTV && { id: "seed-review-4",  productId: xiaomiTV.id,     userId: "seed-user-4", rating: 3, title: "Correcta pero no me convenció del todo",      content: "La tele funciona bien y la imagen es aceptable, pero el Fire OS tiene demasiada publicidad y algunas apps tardan en cargar. Para ver Netflix y Prime está bien, pero si buscas algo más completo quizás vale la pena pagar un poco más por una con Google TV.", createdAt: new Date(Date.now() - 1 * 86400000) },
+    // Bosch lavadora
+    boschLavadora && { id: "seed-review-5", productId: boschLavadora.id, userId: "seed-user-5", rating: 5, title: "La lavadora perfecta para el hogar",     content: "Llevo un año con esta Bosch y no ha dado ningún problema. Lava perfecto, es silenciosísima y el consumo en el programa EcoSilence es muy bajo. La capacidad de 9kg es ideal para familia. Totalmente recomendada.", createdAt: new Date(Date.now() - 15 * 86400000) },
+    boschLavadora && { id: "seed-review-6", productId: boschLavadora.id, userId: "seed-user-1", rating: 4, title: "Silenciosa y eficiente",                 content: "Muy contenta con la compra. Silenciosa como ninguna que haya tenido antes, y los programas son muy completos. Le quito una estrella porque el manual de instrucciones es bastante confuso y tardé un rato en entender todos los ciclos.", createdAt: new Date(Date.now() - 8 * 86400000) },
+    boschLavadora && { id: "seed-review-7", productId: boschLavadora.id, userId: "seed-user-3", rating: 5, title: "Cumple con todo lo que promete",         content: "Tras comparar muchos modelos me decanté por esta Bosch y fue un acierto. Los resultados de lavado son perfectos incluso con manchas difíciles. El tambor de 9kg pasa toda la colada de la semana en dos tandas. El programa eco ahorra mucho en la factura.", createdAt: new Date(Date.now() - 3 * 86400000) },
+    // Nilson frigo
+    nilsonCombi && { id: "seed-review-8",  productId: nilsonCombi.id,   userId: "seed-user-2", rating: 4, title: "Buen frigorífico para el precio",        content: "Para ser una marca que no conocía, ha superado mis expectativas. Mantiene la temperatura estable, es bastante silencioso y el espacio interior está bien organizado. El único inconveniente es que el cajón de las verduras es algo pequeño. Pero por este precio, muy bien.", createdAt: new Date(Date.now() - 20 * 86400000) },
+    nilsonCombi && { id: "seed-review-9",  productId: nilsonCombi.id,   userId: "seed-user-4", rating: 3, title: "Correcto pero con algún ruido ocasional", content: "El frigo funciona bien y enfría perfectamente. Sin embargo, a veces hace un ruido de borboteo cada 30-40 minutos que al principio me asustó. Parece que es el ciclo de descongelación y es normal, pero podría ser más silencioso. Nota media por eso.", createdAt: new Date(Date.now() - 12 * 86400000) },
+    nilsonCombi && { id: "seed-review-10", productId: nilsonCombi.id,   userId: "seed-user-5", rating: 5, title: "Sorprendentemente bueno",                content: "No esperaba tanto de una marca desconocida. El acabado es sólido, la distribución interior es práctica y el congelador tiene bastante capacidad. Lleva 3 meses funcionando sin ningún problema y la temperatura se mantiene constante. Gran compra.", createdAt: new Date(Date.now() - 4 * 86400000) },
+  ].filter(Boolean) as NonNullable<typeof reviewData[number]>[];
+
+  for (const r of reviewData) {
+    await prisma.review.upsert({
+      where: { id: r.id },
+      update: {},
+      create: r,
+    });
+  }
+
+  console.log(`✅ ${reviewData.length} reseñas de prueba insertadas`);
 }
 
 main()

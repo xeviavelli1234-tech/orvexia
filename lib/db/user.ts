@@ -34,16 +34,10 @@ export async function findOrCreateGoogleUser(data: {
   email: string;
   name: string;
 }) {
-  // 1. Buscar por googleId
-  const byGoogle = await prisma.user.findUnique({
-    where: { googleId: data.googleId },
-  });
+  const byGoogle = await prisma.user.findUnique({ where: { googleId: data.googleId } });
   if (byGoogle) return byGoogle;
 
-  // 2. Si existe por email, vincular la cuenta de Google
-  const byEmail = await prisma.user.findUnique({
-    where: { email: data.email },
-  });
+  const byEmail = await prisma.user.findUnique({ where: { email: data.email } });
   if (byEmail) {
     return prisma.user.update({
       where: { id: byEmail.id },
@@ -51,22 +45,13 @@ export async function findOrCreateGoogleUser(data: {
     });
   }
 
-  // 3. Crear usuario nuevo
   return prisma.user.create({
-    data: {
-      name: data.name,
-      email: data.email,
-      googleId: data.googleId,
-      emailVerified: true,
-    },
+    data: { name: data.name, email: data.email, googleId: data.googleId, emailVerified: true },
   });
 }
 
 export async function deleteExpiredUnverified(now: Date = new Date()) {
   return prisma.user.deleteMany({
-    where: {
-      emailVerified: false,
-      verificationTokenExpires: { lt: now },
-    },
+    where: { emailVerified: false, verificationTokenExpires: { lt: now } },
   });
 }

@@ -1,7 +1,7 @@
 import { PrismaClient } from "@/app/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
-const SCHEMA_VERSION = "v3-avatarUrl";
+const SCHEMA_VERSION = "v4-reviews";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;

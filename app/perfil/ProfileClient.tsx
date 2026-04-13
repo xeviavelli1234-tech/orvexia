@@ -63,14 +63,10 @@ function Avatar({ name, color, emoji, avatarUrl, size = 80 }: {
 }) {
   if (avatarUrl) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={avatarUrl}
-        alt={name}
-        className="rounded-full object-cover shrink-0"
-        style={{ width: size, height: size }}
-        aria-hidden="true"
-      />
+      <div className="rounded-full shrink-0 overflow-hidden" style={{ width: size, height: size, minWidth: size, minHeight: size }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={avatarUrl} alt={name} style={{ width: size, height: size, objectFit: "cover", display: "block" }} />
+      </div>
     );
   }
   const fontSize = size * 0.38;
@@ -85,16 +81,33 @@ function Avatar({ name, color, emoji, avatarUrl, size = 80 }: {
   );
 }
 
-function Section({ title, description, children }: {
-  title: string; description?: string; children: React.ReactNode;
+function Section({ title, description, children, collapsible = false, defaultOpen = true }: {
+  title: string; description?: string; children: React.ReactNode; collapsible?: boolean; defaultOpen?: boolean;
 }) {
+  const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden">
-      <div className="px-6 py-5 border-b border-[#F1F5F9]">
-        <h2 className="text-[15px] font-bold text-[#0F172A]">{title}</h2>
-        {description && <p className="text-[13px] text-[#64748B] mt-0.5">{description}</p>}
-      </div>
-      <div className="px-6 py-5">{children}</div>
+    <div className="bg-white rounded-2xl border border-[#E8EDF3] shadow-[0_1px_4px_rgba(0,0,0,0.06)] overflow-hidden">
+      <button
+        type="button"
+        onClick={() => collapsible && setOpen((o) => !o)}
+        className={`w-full px-6 py-4 flex items-center justify-between gap-3 text-left ${collapsible ? "hover:bg-[#F8FAFC] transition-colors" : "cursor-default"}`}
+      >
+        <div>
+          <h2 className="text-[15px] font-bold text-[#0F172A]">{title}</h2>
+          {description && <p className="text-[13px] text-[#64748B] mt-0.5">{description}</p>}
+        </div>
+        {collapsible && (
+          <svg
+            className={`w-4 h-4 text-[#94A3B8] shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+            fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        )}
+      </button>
+      {(!collapsible || open) && (
+        <div className="border-t border-[#F1F5F9] px-6 py-5">{children}</div>
+      )}
     </div>
   );
 }
@@ -126,7 +139,7 @@ function Input({
       maxLength={maxLength}
       disabled={disabled}
       autoComplete={autoComplete}
-      className="w-full px-3 py-2.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] text-[14px] text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30 focus:border-[#2563EB] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+      className="w-full px-3.5 py-2.5 rounded-xl border border-[#E2E8F0] bg-white text-[14px] text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] disabled:bg-[#F8FAFC] disabled:opacity-60 disabled:cursor-not-allowed transition-all"
     />
   );
 }
@@ -139,7 +152,8 @@ function SaveBtn({ loading, label = "Guardar cambios", onClick, disabled }: {
       type="button"
       onClick={onClick}
       disabled={loading || disabled}
-      className="px-5 py-2.5 rounded-xl text-[13px] font-semibold text-white bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 disabled:cursor-not-allowed transition-all focus-visible:outline-2 focus-visible:outline-[#2563EB] focus-visible:outline-offset-2"
+      style={{ background: "linear-gradient(135deg, #2563EB, #1D4ED8)" }}
+      className="px-5 py-2.5 rounded-xl text-[13px] font-semibold text-white shadow-[0_4px_12px_rgba(37,99,235,0.3)] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
     >
       {loading ? "Guardando…" : label}
     </button>
@@ -422,10 +436,14 @@ export function ProfileClient() {
   if (loading) {
     return (
       <main className="min-h-screen bg-[#F8FAFC]">
-        <div className="bg-white border-b border-[#E2E8F0]">
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 py-5 flex items-center gap-4">
-            <Sk className="w-11 h-11 rounded-full" />
-            <div className="flex flex-col gap-2"><Sk className="h-5 w-36" /><Sk className="h-3 w-48" /></div>
+        {/* Skeleton header */}
+        <div className="w-full animate-pulse bg-[#1E293B]">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 flex items-center gap-5">
+            <div className="w-20 h-20 rounded-full bg-white/10 shrink-0" />
+            <div className="flex flex-col gap-2">
+              <div className="h-5 w-36 rounded-lg bg-white/10" />
+              <div className="h-3 w-48 rounded-lg bg-white/10" />
+            </div>
           </div>
         </div>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-7 space-y-5">
@@ -443,180 +461,142 @@ export function ProfileClient() {
   return (
     <main className="min-h-screen bg-[#F8FAFC]">
 
-      {/* Page header */}
-      <div className="bg-white border-b border-[#E2E8F0]">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-5 flex items-center gap-4">
-          <Avatar name={profile.name} color={profile.avatarColor} emoji={profile.avatarEmoji} avatarUrl={avatarUrl} size={44} />
-          <div>
-            <h1 className="text-[17px] font-bold text-[#0F172A] leading-tight">{profile.name}</h1>
-            <p className="text-[13px] text-[#64748B]">Miembro desde {joinedDate}</p>
+      {/* Profile header — avatar + name inside the banner */}
+      <div className="w-full" style={{ background: "linear-gradient(135deg, #0F172A 0%, #1E3A5F 50%, #2563EB 100%)" }}>
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 flex items-center gap-5">
+          <div className="rounded-full shrink-0" style={{ boxShadow: "0 0 0 3px rgba(255,255,255,0.25), 0 4px 20px rgba(0,0,0,0.4)" }}>
+            <Avatar name={profile.name} color={profile.avatarColor} emoji={profile.avatarEmoji} avatarUrl={avatarUrl} size={80} />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-[22px] font-extrabold text-white leading-tight truncate">{profile.name}</h1>
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <span className="text-[12px] text-blue-200">Miembro desde {joinedDate}</span>
+              <span className="w-1 h-1 rounded-full bg-blue-400/50" />
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-white/10 text-white">
+                {profile.isGoogleUser ? "🔗 Google" : "✉ Email"}
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-7 space-y-5">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-4">
 
-        {/* ── 1. AVATAR + IDENTIDAD ────────────────────────────────────────── */}
-        <Section title="Foto y nombre" description="Personaliza cómo apareces en la plataforma">
+        {/* ── 1. FOTO & APARIENCIA ──────────────────────────────────────────── */}
+        <Section title="Apariencia" description="Tu foto, emoji y color de avatar">
 
-          <div className="flex flex-col sm:flex-row gap-6">
-
-            {/* Avatar preview + upload */}
-            <div className="flex flex-col items-center gap-3 shrink-0">
-              {/* Drop zone */}
-              <div
-                className={`relative group cursor-pointer rounded-full transition-all ${photoDragOver ? "ring-4 ring-[#2563EB] ring-offset-2" : ""}`}
-                onDragOver={(e) => { e.preventDefault(); setPhotoDragOver(true); }}
-                onDragLeave={() => setPhotoDragOver(false)}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  setPhotoDragOver(false);
-                  const file = e.dataTransfer.files[0];
-                  if (file) previewPhoto(file);
-                }}
-                onClick={() => fileInputRef.current?.click()}
-                role="button"
-                tabIndex={0}
-                aria-label="Subir foto de perfil"
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") fileInputRef.current?.click(); }}
-              >
-                <Avatar name={name || profile.name} color={avatarColor} emoji={avatarEmoji || null} avatarUrl={pendingPhotoUrl ?? avatarUrl} size={80} />
-                {/* Overlay on hover */}
-                <div className={`absolute inset-0 rounded-full flex items-center justify-center bg-black/50 transition-opacity ${photoUploading ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
-                  {photoUploading ? (
-                    <svg className="w-6 h-6 text-white animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                      <path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
-                    </svg>
-                  ) : (
-                    <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
-                    </svg>
-                  )}
-                </div>
-              </div>
-
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) previewPhoto(f); e.target.value = ""; }}
-              />
-
-              <div className="flex flex-col items-center gap-1.5">
-                <p className="text-[11px] text-[#64748B] font-medium">Haz clic para subir foto</p>
-                {pendingPhotoUrl ? (
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={savePhoto}
-                      disabled={photoUploading}
-                      className="px-3 py-1.5 rounded-lg text-[12px] font-semibold text-white bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                    >
-                      {photoUploading ? "Guardando…" : "Guardar foto"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPendingPhotoUrl(null)}
-                      disabled={photoUploading}
-                      className="px-3 py-1.5 rounded-lg text-[12px] font-semibold text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] disabled:opacity-50 transition-all"
-                    >
-                      Cancelar
-                    </button>
-                  </div>
-                ) : avatarUrl ? (
-                  <button
-                    type="button"
-                    onClick={removePhoto}
-                    disabled={photoUploading}
-                    className="text-[11px] text-[#DC2626] hover:underline disabled:opacity-40"
-                  >
-                    Eliminar foto
-                  </button>
-                ) : null}
+          {/* Photo upload — full-width card at top */}
+          <div className="flex items-center gap-5 p-4 rounded-2xl mb-6" style={{ background: "linear-gradient(135deg, #F8FAFC, #F1F5F9)", border: "1px solid #E2E8F0" }}>
+            <div
+              className={`relative group cursor-pointer rounded-full shrink-0 transition-transform ${photoDragOver ? "scale-105 ring-4 ring-[#2563EB] ring-offset-2" : "hover:scale-105"}`}
+              style={{ boxShadow: "0 4px 16px rgba(0,0,0,0.15)" }}
+              onDragOver={(e) => { e.preventDefault(); setPhotoDragOver(true); }}
+              onDragLeave={() => setPhotoDragOver(false)}
+              onDrop={(e) => { e.preventDefault(); setPhotoDragOver(false); const file = e.dataTransfer.files[0]; if (file) previewPhoto(file); }}
+              onClick={() => fileInputRef.current?.click()}
+              role="button" tabIndex={0} aria-label="Subir foto de perfil"
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") fileInputRef.current?.click(); }}
+            >
+              <Avatar name={name || profile.name} color={avatarColor} emoji={avatarEmoji || null} avatarUrl={pendingPhotoUrl ?? avatarUrl} size={72} />
+              <div className={`absolute inset-0 rounded-full flex flex-col items-center justify-center gap-0.5 bg-black/55 transition-opacity ${photoUploading ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
+                {photoUploading ? (
+                  <svg className="w-5 h-5 text-white animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/></svg>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
+                    <span className="text-[9px] text-white font-bold tracking-wide">FOTO</span>
+                  </>
+                )}
               </div>
             </div>
-
-            <div className="flex-1 space-y-4">
-
-              {/* Emoji picker */}
-              <Field label="Emoji del avatar" hint="Deja vacío para usar tus iniciales">
-                <div className="flex flex-wrap gap-2">
-                  {AVATAR_EMOJIS.map((e) => (
-                    <button
-                      key={e || "none"}
-                      type="button"
-                      onClick={() => setAvatarEmoji(e)}
-                      aria-label={e ? `Emoji ${e}` : "Sin emoji (iniciales)"}
-                      aria-pressed={avatarEmoji === e}
-                      className={`w-9 h-9 rounded-xl text-lg flex items-center justify-center border-2 transition-all focus-visible:outline-2 focus-visible:outline-[#2563EB] ${
-                        avatarEmoji === e
-                          ? "border-[#2563EB] bg-[#EFF6FF]"
-                          : "border-[#E2E8F0] bg-[#F8FAFC] hover:border-[#94A3B8]"
-                      }`}
-                    >
-                      {e || <span className="text-[11px] font-bold text-[#94A3B8]">Aa</span>}
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) previewPhoto(f); e.target.value = ""; }} />
+            <div className="flex-1 min-w-0">
+              <p className="text-[14px] font-semibold text-[#0F172A]">Foto de perfil</p>
+              <p className="text-[12px] text-[#64748B] mt-0.5">JPG, PNG o WebP · máx. 8 MB</p>
+              <div className="flex items-center gap-2 mt-2.5">
+                {pendingPhotoUrl ? (
+                  <>
+                    <button type="button" onClick={savePhoto} disabled={photoUploading}
+                      className="px-3.5 py-1.5 rounded-lg text-[12px] font-semibold text-white transition-all disabled:opacity-50"
+                      style={{ background: "linear-gradient(135deg,#2563EB,#1D4ED8)" }}>
+                      {photoUploading ? "Guardando…" : "Guardar foto"}
                     </button>
-                  ))}
-                </div>
-              </Field>
-
-              {/* Color picker */}
-              <Field label="Color del avatar">
-                <div className="flex flex-wrap gap-2">
-                  {AVATAR_COLORS.map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => setAvatarColor(c)}
-                      aria-label={`Color ${c}`}
-                      aria-pressed={avatarColor === c}
-                      className={`w-8 h-8 rounded-full transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] ${
-                        avatarColor === c ? "ring-2 ring-offset-2 ring-[#2563EB] scale-110" : "hover:scale-105"
-                      }`}
-                      style={{ backgroundColor: c }}
-                    />
-                  ))}
-                </div>
-              </Field>
-
+                    <button type="button" onClick={() => setPendingPhotoUrl(null)} disabled={photoUploading}
+                      className="px-3.5 py-1.5 rounded-lg text-[12px] font-semibold text-[#475569] bg-white border border-[#E2E8F0] hover:bg-[#F8FAFC] disabled:opacity-50 transition-all">
+                      Cancelar
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button type="button" onClick={() => fileInputRef.current?.click()}
+                      className="px-3.5 py-1.5 rounded-lg text-[12px] font-semibold text-[#2563EB] bg-white border border-[#BFDBFE] hover:bg-[#EFF6FF] transition-all">
+                      Subir foto
+                    </button>
+                    {avatarUrl && (
+                      <button type="button" onClick={removePhoto} disabled={photoUploading}
+                        className="px-3.5 py-1.5 rounded-lg text-[12px] font-semibold text-[#DC2626] bg-white border border-[#FECACA] hover:bg-[#FEF2F2] disabled:opacity-40 transition-all">
+                        Eliminar
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="mt-5 space-y-4 pt-5 border-t border-[#F1F5F9]">
+          <div className="space-y-5">
+            {/* Emoji picker */}
+            <Field label="Emoji del avatar" hint="Deja vacío para usar tus iniciales">
+              <div className="flex flex-wrap gap-1.5">
+                {AVATAR_EMOJIS.map((e) => (
+                  <button key={e || "none"} type="button" onClick={() => setAvatarEmoji(e)}
+                    aria-label={e ? `Emoji ${e}` : "Sin emoji"} aria-pressed={avatarEmoji === e}
+                    className={`w-8 h-8 rounded-lg text-base flex items-center justify-center transition-all focus-visible:outline-2 focus-visible:outline-[#2563EB] ${
+                      avatarEmoji === e ? "ring-2 ring-[#2563EB] bg-[#EFF6FF] scale-110" : "bg-[#F8FAFC] hover:bg-[#F1F5F9] hover:scale-110"
+                    }`}>
+                    {e || <span className="text-[10px] font-bold text-[#94A3B8]">Aa</span>}
+                  </button>
+                ))}
+              </div>
+            </Field>
+
+            {/* Color picker */}
+            <Field label="Color del avatar">
+              <div className="flex flex-wrap gap-2">
+                {AVATAR_COLORS.map((c) => (
+                  <button key={c} type="button" onClick={() => setAvatarColor(c)}
+                    aria-label={`Color ${c}`} aria-pressed={avatarColor === c}
+                    className={`w-7 h-7 rounded-full transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] ${
+                      avatarColor === c ? "ring-2 ring-offset-2 ring-[#2563EB] scale-125" : "hover:scale-110"
+                    }`}
+                    style={{ backgroundColor: c }} />
+                ))}
+              </div>
+            </Field>
+          </div>
+        </Section>
+
+        {/* ── 2. DATOS PERSONALES ───────────────────────────────────────────── */}
+        <Section title="Datos personales" description="Tu nombre, email y bio">
+          <div className="space-y-4">
 
             <Field label="Nombre" hint="Entre 2 y 50 caracteres">
-              <Input
-                value={name}
-                onChange={setName}
-                placeholder="Tu nombre"
-                maxLength={50}
-                autoComplete="name"
-              />
+              <Input value={name} onChange={setName} placeholder="Tu nombre" maxLength={50} autoComplete="name" />
             </Field>
 
             <Field label="Email">
-              <Input
-                value={profile.email}
-                onChange={() => {}}
-                disabled
-                type="email"
-              />
+              <Input value={profile.email} onChange={() => {}} disabled type="email" />
               <p className="text-[11px] text-[#94A3B8] mt-1">
-                {profile.isGoogleUser
-                  ? "Email vinculado a tu cuenta de Google. No se puede cambiar aquí."
-                  : "El cambio de email requiere verificación y estará disponible próximamente."}
+                {profile.isGoogleUser ? "Email vinculado a tu cuenta de Google. No se puede cambiar aquí." : "El cambio de email requiere verificación y estará disponible próximamente."}
               </p>
             </Field>
 
             <Field label="Bio" hint={`${bio.length}/160 caracteres`}>
-              <textarea
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
+              <textarea value={bio} onChange={(e) => setBio(e.target.value)}
                 placeholder="Cuéntanos algo sobre ti…"
                 maxLength={160}
                 rows={3}
-                className="w-full px-3 py-2.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] text-[14px] text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30 focus:border-[#2563EB] resize-none transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[#E2E8F0] bg-white text-[14px] text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] resize-none transition-all"
               />
             </Field>
 
@@ -633,6 +613,8 @@ export function ProfileClient() {
 
         {/* ── 2. CONTRASEÑA ───────────────────────────────────────────────── */}
         <Section
+          collapsible
+          defaultOpen={false}
           title="Cambiar contraseña"
           description={
             profile.isGoogleUser && !profile.avatarColor
@@ -766,16 +748,18 @@ export function ProfileClient() {
 
         {/* ── 3. STATS ─────────────────────────────────────────────────────── */}
         <Section title="Tu actividad">
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div className="flex flex-col sm:flex-row gap-4">
             {[
               { label: "Miembro desde", value: joinedDate, icon: "📅" },
               { label: "Email", value: profile.email, icon: "✉️" },
               { label: "Tipo de cuenta", value: profile.isGoogleUser ? "Google" : "Email", icon: profile.isGoogleUser ? "🔗" : "🔒" },
             ].map((s) => (
-              <div key={s.label} className="bg-[#F8FAFC] rounded-xl p-3.5 border border-[#F1F5F9]">
-                <p className="text-xl mb-1">{s.icon}</p>
-                <p className="text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wide">{s.label}</p>
-                <p className="text-[13px] font-semibold text-[#0F172A] mt-0.5 break-all">{s.value}</p>
+              <div key={s.label} className="flex items-center gap-3 flex-1 bg-[#F8FAFC] rounded-xl px-4 py-3 border border-[#F1F5F9]">
+                <span className="text-2xl">{s.icon}</span>
+                <div>
+                  <p className="text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wide">{s.label}</p>
+                  <p className="text-[13px] font-semibold text-[#0F172A]">{s.value}</p>
+                </div>
               </div>
             ))}
           </div>

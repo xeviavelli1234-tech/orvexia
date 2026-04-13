@@ -11,7 +11,6 @@ const inter = Inter({ subsets: ["latin"], weight: ["400", "500", "600"] });
 function validateEmail(v: string): string {
   if (!v) return "El email es obligatorio";
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return "Ingresa un email válido";
-  if (!v.toLowerCase().endsWith(".com")) return "El correo debe terminar en .com";
   return "";
 }
 

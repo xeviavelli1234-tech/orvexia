@@ -13,16 +13,18 @@ function MiniAvatar({ color, emoji, avatarUrl, name, size = 32 }: {
   const initials = name.trim().split(/\s+/).map((w) => w[0]).join("").toUpperCase().slice(0, 2) || "?";
   if (avatarUrl) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={avatarUrl}
-        alt={name}
-        width={size}
-        height={size}
-        className="rounded-full object-cover shrink-0"
-        style={{ width: size, height: size }}
+      <div
+        className="rounded-full shrink-0 overflow-hidden bg-[#E2E8F0]"
+        style={{ width: size, height: size, minWidth: size, minHeight: size }}
         aria-hidden="true"
-      />
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={avatarUrl}
+          alt={name}
+          style={{ width: size, height: size, objectFit: "cover", display: "block" }}
+        />
+      </div>
     );
   }
   return (
@@ -73,6 +75,7 @@ const MOBILE_NAV = [
   { label: "Recomendados", href: "/recomendados", icon: "✨" },
   { label: "Categorías", href: "/categorias", icon: "📋" },
   { label: "Comunidad", href: "/comunidad", icon: "🗨️" },
+  { label: "Opiniones", href: "/opiniones", icon: "⭐" },
 ];
 
 export function HeaderClient({
@@ -85,7 +88,7 @@ export function HeaderClient({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [confirmLogoutOpen, setConfirmLogoutOpen] = useState(false);
-  const { profile } = useProfile();
+  const { profile, resetProfile } = useProfile();
   const profileRef = useRef<HTMLDivElement>(null);
 
   // Close mobile menu on Escape
@@ -401,6 +404,7 @@ export function HeaderClient({
                     setConfirmLogoutOpen(false);
                     setProfileOpen(false);
                     setMobileOpen(false);
+                    resetProfile();
                     logoutAction();
                   }}
                   className="flex-1 h-11 rounded-xl text-sm font-bold text-[#0F172A] bg-white hover:shadow-lg transition-all"

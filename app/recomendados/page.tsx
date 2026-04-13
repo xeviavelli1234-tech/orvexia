@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import ProductCard from "@/components/ProductCard";
 import Link from "next/link";
+import { RecomendadosClient } from "./RecomendadosClient";
 
 const CATEGORY_ICONS: Record<string, string> = {
   TELEVISORES: "📺",
@@ -235,11 +235,7 @@ export default async function RecomendadosPage() {
                 Ver ranking →
               </Link>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              {productsForUser.map((p, i) => (
-                <ProductCard key={p.id} product={p} priority={i === 0} />
-              ))}
-            </div>
+            <RecomendadosClient initialProducts={productsForUser as never} />
           </section>
         )}
 

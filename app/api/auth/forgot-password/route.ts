@@ -73,12 +73,10 @@ export async function POST(request: Request) {
     );
   }
 
-  let emailSent = true;
-  try {
-    await sendPasswordResetEmail({ to: user.email, token });
-  } catch (err) {
-    emailSent = false;
-    console.error("Error enviando email de reseteo:", err);
+  const { emailSent } = await sendPasswordResetEmail({ to: user.email, token });
+
+  if (!emailSent) {
+    console.warn(`[forgot-password] Email no enviado a ${user.email}, devolviendo token como fallback`);
   }
 
   return NextResponse.json({

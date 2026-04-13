@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { communityCommentSchema, communityPostSchema } from "@/lib/validations";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
@@ -16,6 +17,7 @@ export async function createCommunityPost(
   formData: FormData
 ): Promise<CommunityActionState> {
   const session = await getSession();
+  console.log("[createCommunityPost] session:", session ? `userId=${session.userId}` : "null");
   if (!session) {
     return { error: "Debes iniciar sesión para publicar." };
   }
@@ -26,9 +28,11 @@ export async function createCommunityPost(
     type: formData.get("type") ?? "DISCUSION",
     productId: formData.get("productId"),
   };
+  console.log("[createCommunityPost] raw:", raw);
 
   const parsed = communityPostSchema.safeParse(raw);
   if (!parsed.success) {
+    console.log("[createCommunityPost] validation errors:", parsed.error.flatten());
     return { fieldErrors: parsed.error.flatten().fieldErrors };
   }
 
@@ -43,7 +47,7 @@ export async function createCommunityPost(
   });
 
   revalidatePath("/comunidad");
-  return { success: "Publicación creada" };
+  redirect("/comunidad");
 }
 
 export async function createCommunityComment(
@@ -74,8 +78,45 @@ export async function createCommunityComment(
     },
   });
 
-  revalidatePath("/comunidad");
+  revalidatePath("/comunidad", "layout");
   return { success: "Comentario publicado" };
+}
+
+export async function deleteCommunityPost(
+  postId: string
+): Promise<{ error?: string }> {
+  const session = await getSession();
+  if (!session) return { error: "No autenticado." };
+
+  const post = await prisma.communityPost.findUnique({
+    where: { id: postId },
+    select: { userId: true },
+  });
+  if (!post) return { error: "Post no encontrado." };
+  if (post.userId !== session.userId) return { error: "No autorizado." };
+
+  await prisma.communityPost.delete({ where: { id: postId } });
+  revalidatePath("/comunidad");
+  redirect("/comunidad");
+}
+
+export async function deleteCommunityComment(
+  commentId: string,
+  postId: string
+): Promise<{ error?: string }> {
+  const session = await getSession();
+  if (!session) return { error: "No autenticado." };
+
+  const comment = await prisma.communityComment.findUnique({
+    where: { id: commentId },
+    select: { userId: true },
+  });
+  if (!comment) return { error: "Comentario no encontrado." };
+  if (comment.userId !== session.userId) return { error: "No autorizado." };
+
+  await prisma.communityComment.delete({ where: { id: commentId } });
+  revalidatePath(`/comunidad/${postId}`);
+  return {};
 }
 
 export async function toggleCommunityVote(
@@ -91,13 +132,13 @@ export async function toggleCommunityVote(
 
   if (existing) {
     await prisma.communityVote.delete({ where: { id: existing.id } });
-    revalidatePath("/comunidad");
+    revalidatePath("/comunidad", "layout");
     return { liked: false };
   }
 
   await prisma.communityVote.create({
     data: { postId, userId: session.userId, value: 1 },
   });
-  revalidatePath("/comunidad");
+  revalidatePath("/comunidad", "layout");
   return { liked: true };
 }
