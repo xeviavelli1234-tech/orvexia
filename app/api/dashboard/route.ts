@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@/app/generated/prisma/client";
 
 export async function GET() {
   const session = await getSession();
@@ -140,7 +141,7 @@ export async function GET() {
   const sortByPopularity = <T extends { rating: number | null; reviewCount: number | null }>(items: T[]) =>
     [...items].sort((a, b) => bayesianScore(b.rating, b.reviewCount) - bayesianScore(a.rating, a.reviewCount));
 
-  type ProductWithOffers = Awaited<ReturnType<typeof prisma.product.findMany>>[number] & { offers: { store: string; priceCurrent: number; priceOld: number | null; discountPercent: number | null; externalUrl: string }[] };
+  type ProductWithOffers = Prisma.ProductGetPayload<{ include: { offers: true } }>;
   const recommended: ProductWithOffers[] = [];
   const seenIds = new Set<string>();
 
