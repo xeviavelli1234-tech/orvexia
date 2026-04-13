@@ -71,7 +71,8 @@ async function getRecommendations(userId?: string) {
   const primary = sortedCats[0];
   const secondary = sortedCats.slice(1);
 
-  const recommended: typeof prisma.product.$inferSelect[] = [];
+  type ProductWithOffers = Awaited<ReturnType<typeof prisma.product.findMany>>[number] & { offers: { store: string; priceCurrent: number; priceOld: number | null; discountPercent: number | null; externalUrl: string }[] };
+  const recommended: ProductWithOffers[] = [];
   const pushUnique = (items: typeof recommended) => {
     for (const p of items)
       if (!recommended.find((r) => r.id === p.id) && !savedIds.has(p.id)) recommended.push(p);

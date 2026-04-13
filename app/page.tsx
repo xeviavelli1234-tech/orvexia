@@ -1,3 +1,4 @@
+import React from "react";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
@@ -73,7 +74,7 @@ const HOW_IT_WORKS = [
   },
 ];
 
-const REGISTER_PERKS = [
+const REGISTER_PERKS: { title: string; desc: string; accent: string; icon: React.ReactNode; soon?: boolean }[] = [
   {
     title: "Favoritos con historial",
     desc: "Guarda productos y consulta su evolución de precio en un panel limpio.",

@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useProfile } from "@/components/ProfileProvider";
@@ -185,8 +186,8 @@ function Toast({ message, type }: { message: string; type: "success" | "error" }
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
-function Sk({ className }: { className?: string }) {
-  return <div className={`animate-pulse bg-[#E2E8F0] rounded-xl ${className ?? ""}`} />;
+function Sk({ className, style }: { className?: string; style?: React.CSSProperties }) {
+  return <div className={`animate-pulse bg-[#E2E8F0] rounded-xl ${className ?? ""}`} style={style} />;
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
@@ -447,7 +448,7 @@ export function ProfileClient() {
           </div>
         </div>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-7 space-y-5">
-          {[120, 220, 240, 120].map((h, i) => <Sk key={i} className={`h-${h}`} style={{ height: h }} />)}
+          {[120, 220, 240, 120].map((h, i) => <Sk key={i} className="rounded-2xl bg-[#E2E8F0]" style={{ height: h }} />)}
         </div>
       </main>
     );

@@ -140,10 +140,11 @@ export async function GET() {
   const sortByPopularity = <T extends { rating: number | null; reviewCount: number | null }>(items: T[]) =>
     [...items].sort((a, b) => bayesianScore(b.rating, b.reviewCount) - bayesianScore(a.rating, a.reviewCount));
 
-  const recommended: typeof prisma.product.$inferSelect[] = [];
+  type ProductWithOffers = Awaited<ReturnType<typeof prisma.product.findMany>>[number] & { offers: { store: string; priceCurrent: number; priceOld: number | null; discountPercent: number | null; externalUrl: string }[] };
+  const recommended: ProductWithOffers[] = [];
   const seenIds = new Set<string>();
 
-  const pushUnique = (items: typeof recommended) => {
+  const pushUnique = (items: ProductWithOffers[]) => {
     for (const p of items) {
       if (!seenIds.has(p.id) && recommended.length < 6) {
         seenIds.add(p.id);

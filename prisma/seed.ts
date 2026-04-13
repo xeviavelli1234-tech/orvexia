@@ -1702,7 +1702,8 @@ async function main() {
     prisma.product.findUnique({ where: { slug: "nilson-nc185500e-frigorifico-combi-262l" } }),
   ]);
 
-  const productPosts = [
+  type PostData = { id: string; userId: string; productId: string; type: "DISCUSION" | "PREGUNTA" | "CHOLLO" | "CONSEJO"; title: string; content: string; createdAt: Date };
+  const productPosts: PostData[] = ([
     xiaomiTV && {
       id: "seed-post-product-1",
       userId: "seed-user-4",
@@ -1733,7 +1734,7 @@ async function main() {
         "Compré este frigo hace 2 semanas y en general estoy contenta, pero noto un ruido cada 30-40 minutos como un borboteo que dura unos segundos. El vendedor me dijo que es normal del ciclo de descongelación pero no estoy segura. ¿Alguien tiene el mismo modelo y le pasa? ¿Es normal o debería reclamar el cambio? El frío funciona bien, la temperatura está perfecta, solo es ese sonido.",
       createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000),
     },
-  ].filter(Boolean) as NonNullable<(typeof productPosts)[number]>[];
+  ] as (PostData | false)[]).filter((x): x is PostData => Boolean(x));
 
   for (const post of productPosts) {
     await prisma.communityPost.upsert({
@@ -1748,7 +1749,8 @@ async function main() {
   // ── Reseñas de prueba ─────────────────────────────────────────────────────
   console.log("🌱 Insertando reseñas de prueba...");
 
-  const reviewData = [
+  type ReviewData = { id: string; productId: string; userId: string; rating: number; title: string; content: string; createdAt: Date };
+  const reviewData: ReviewData[] = ([
     // Xiaomi TV
     xiaomiTV && { id: "seed-review-1",  productId: xiaomiTV.id,     userId: "seed-user-1", rating: 5, title: "Increíble relación calidad-precio",         content: "Llevo 4 meses con esta tele y no puedo estar más contenta. La imagen en 4K es espectacular, el Fire OS va muy fluido y la integración con Alexa es fantástica. El sonido es lo único flojo, pero con un soundbar básico queda perfecta. Para el precio que tiene, no hay rival.", createdAt: new Date(Date.now() - 10 * 86400000) },
     xiaomiTV && { id: "seed-review-2",  productId: xiaomiTV.id,     userId: "seed-user-2", rating: 4, title: "Muy buena, con un pequeño pero",              content: "La imagen es excelente y el sistema operativo responde rápido. Le quito una estrella porque el soporte de apps no es tan completo como en otras plataformas y el mando se queda corto. Aun así, para el precio es una compra muy recomendable.", createdAt: new Date(Date.now() - 5 * 86400000) },
@@ -1762,7 +1764,7 @@ async function main() {
     nilsonCombi && { id: "seed-review-8",  productId: nilsonCombi.id,   userId: "seed-user-2", rating: 4, title: "Buen frigorífico para el precio",        content: "Para ser una marca que no conocía, ha superado mis expectativas. Mantiene la temperatura estable, es bastante silencioso y el espacio interior está bien organizado. El único inconveniente es que el cajón de las verduras es algo pequeño. Pero por este precio, muy bien.", createdAt: new Date(Date.now() - 20 * 86400000) },
     nilsonCombi && { id: "seed-review-9",  productId: nilsonCombi.id,   userId: "seed-user-4", rating: 3, title: "Correcto pero con algún ruido ocasional", content: "El frigo funciona bien y enfría perfectamente. Sin embargo, a veces hace un ruido de borboteo cada 30-40 minutos que al principio me asustó. Parece que es el ciclo de descongelación y es normal, pero podría ser más silencioso. Nota media por eso.", createdAt: new Date(Date.now() - 12 * 86400000) },
     nilsonCombi && { id: "seed-review-10", productId: nilsonCombi.id,   userId: "seed-user-5", rating: 5, title: "Sorprendentemente bueno",                content: "No esperaba tanto de una marca desconocida. El acabado es sólido, la distribución interior es práctica y el congelador tiene bastante capacidad. Lleva 3 meses funcionando sin ningún problema y la temperatura se mantiene constante. Gran compra.", createdAt: new Date(Date.now() - 4 * 86400000) },
-  ].filter(Boolean) as NonNullable<typeof reviewData[number]>[];
+  ] as (ReviewData | false)[]).filter((x): x is ReviewData => Boolean(x));
 
   for (const r of reviewData) {
     await prisma.review.upsert({
