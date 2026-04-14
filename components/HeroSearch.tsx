@@ -122,7 +122,7 @@ export function HeroSearch() {
       <div ref={containerRef} className="relative max-w-2xl mx-auto mb-5">
         <form
           onSubmit={handleSubmit}
-          className="flex items-center gap-3 bg-white rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.25)] px-4 py-2.5"
+          className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-white rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.25)] p-3 sm:px-4 sm:py-2.5"
         >
           {/* Search icon / spinner */}
           <span className="w-5 h-5 text-[#94A3B8] flex-shrink-0 flex items-center justify-center">
@@ -167,11 +167,11 @@ export function HeroSearch() {
             aria-autocomplete="list"
             aria-expanded={open}
             aria-haspopup="listbox"
-            className="flex-1 text-sm text-[#0F172A] placeholder-[#94A3B8] outline-none bg-transparent py-1"
+            className="flex-1 w-full text-sm text-[#0F172A] placeholder-[#94A3B8] outline-none bg-transparent py-1"
           />
           <button
             type="submit"
-            className="bg-[#2563EB] hover:bg-[#1D4ED8] active:scale-95 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all duration-150 whitespace-nowrap"
+            className="w-full sm:w-auto bg-[#2563EB] hover:bg-[#1D4ED8] active:scale-95 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all duration-150 whitespace-nowrap text-center"
           >
             Buscar ahora
           </button>

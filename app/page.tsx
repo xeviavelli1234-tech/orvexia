@@ -128,7 +128,7 @@ export default async function HomePage() {
     <main style={{ backgroundColor: "#F8FAFC", minHeight: "100vh" }}>
 
       {/* ── HERO ──────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden px-6 pt-28 pb-32" style={{ backgroundColor: "#030305" }}>
+      <section className="relative overflow-hidden px-4 sm:px-6 pt-20 pb-20 sm:pt-28 sm:pb-32" style={{ backgroundColor: "#030305" }}>
 
         {/* Background glows */}
         <div className="pointer-events-none absolute inset-0">
@@ -188,7 +188,7 @@ export default async function HomePage() {
           </div>
 
           {/* Stats row */}
-          <div className="flex flex-wrap items-center justify-center gap-6 mb-10">
+          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 mb-10">
             {[
               { value: stats.productCount.toLocaleString("es-ES"), label: "productos" },
               { value: stats.withDiscount.toLocaleString("es-ES"), label: "con descuento" },
@@ -216,10 +216,10 @@ export default async function HomePage() {
       </section>
 
       {/* ── CATEGORIES ─────────────────────────────────────────────────── */}
-      <section className="px-6 pt-16 pb-14">
+      <section className="px-4 sm:px-6 pt-12 sm:pt-16 pb-12 sm:pb-14">
         <div className="max-w-6xl mx-auto">
 
-          <div className="flex items-end justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-6">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] mb-1" style={{ color: "#6366F1" }}>Explorar</p>
               <h2 className="text-xl font-extrabold" style={{ color: "#0F172A" }}>Categorías</h2>
@@ -227,11 +227,11 @@ export default async function HomePage() {
             <Link href="/categorias"
               className="text-xs font-semibold px-4 py-2 rounded-full transition-all"
               style={{ color: "#6366F1", border: "1px solid #E0E7FF", background: "#EEF2FF" }}>
-              Ver todas →
+              Ver todas → 
             </Link>
           </div>
 
-          <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
             {CATEGORIES.map((cat) => (
               <Link key={cat.key} href={`/categorias?cat=${cat.key}`}
                 className="group flex flex-col items-center gap-2 p-3 rounded-2xl transition-all duration-200 hover:shadow-md"
@@ -250,10 +250,10 @@ export default async function HomePage() {
       </section>
 
       {/* ── TOP DEALS ──────────────────────────────────────────────────── */}
-      <section className="px-6 pb-14">
+      <section className="px-4 sm:px-6 pb-12 sm:pb-14">
         <div className="max-w-6xl mx-auto">
 
-          <div className="flex items-end justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-6">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] mb-1" style={{ color: "#F97316" }}>Mejor precio ahora</p>
               <h2 className="text-xl font-extrabold" style={{ color: "#0F172A" }}>Ofertas destacadas</h2>
@@ -281,15 +281,15 @@ export default async function HomePage() {
       </section>
 
       {/* ── CÓMO FUNCIONA ──────────────────────────────────────────────── */}
-      <section className="px-6 pb-14">
+      <section className="px-4 sm:px-6 pb-12 sm:pb-14">
         <div className="max-w-6xl mx-auto">
 
-          <div className="text-center mb-10">
+          <div className="text-center mb-8 sm:mb-10">
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] mb-2" style={{ color: "#7C3AED" }}>Simple y rápido</p>
             <h2 className="text-xl font-extrabold" style={{ color: "#0F172A" }}>¿Cómo funciona?</h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {HOW_IT_WORKS.map((step) => (
               <div key={step.n}
                 className="group relative p-7 rounded-2xl transition-all duration-200 hover:shadow-md bg-white"
@@ -313,7 +313,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── REGISTER PERKS ──────────────────────────────────────────── */}
-      <section className="px-6 pb-20">
+      <section className="px-4 sm:px-6 pb-16 sm:pb-20">
         <div className="max-w-6xl mx-auto">
           <div className="relative overflow-hidden rounded-3xl p-px"
             style={{ background: "linear-gradient(135deg, rgba(99,102,241,0.4) 0%, rgba(139,92,246,0.2) 50%, rgba(16,185,129,0.2) 100%)" }}>
@@ -329,7 +329,7 @@ export default async function HomePage() {
               <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-0">
 
                 {/* Left */}
-                <div className="p-10 lg:p-14 flex flex-col justify-between">
+                <div className="p-8 sm:p-10 lg:p-14 flex flex-col justify-between gap-6">
                   <div>
                     <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.2em] mb-7 px-3 py-1.5 rounded-full"
                       style={{ color: "rgba(165,180,252,0.9)", background: "rgba(99,102,241,0.10)", border: "1px solid rgba(99,102,241,0.18)" }}>
@@ -345,7 +345,7 @@ export default async function HomePage() {
                     </p>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row gap-3 mt-10">
+                  <div className="flex flex-col sm:flex-row gap-3">
                     <Link href="/register"
                       className="font-bold px-6 py-3 rounded-xl text-sm text-center transition-all active:scale-95"
                       style={{ background: "linear-gradient(135deg, #4F46E5, #2563EB)", color: "#ffffff", boxShadow: "0 0 24px rgba(79,70,229,0.4)" }}>
@@ -360,8 +360,7 @@ export default async function HomePage() {
                 </div>
 
                 {/* Right: perks grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-px"
-                  style={{ borderLeft: "1px solid rgba(255,255,255,0.06)" }}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-px lg:border-l lg:border-white/10">
                   {REGISTER_PERKS.map((perk) => (
                     <div key={perk.title}
                       className="group p-6 transition-colors duration-150"
@@ -391,11 +390,11 @@ export default async function HomePage() {
       </section>
 
       {/* ── RECOMENDADOS ───────────────────────────────────────────────── */}
-      <section className="px-6 pb-24">
+      <section className="px-4 sm:px-6 pb-16 sm:pb-24">
         <div className="max-w-6xl mx-auto">
 
           {/* Header */}
-          <div className="flex items-end justify-between mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-8">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] mb-1" style={{ color: "#F59E0B" }}>Para ti</p>
               <h2 className="text-xl font-extrabold" style={{ color: "#0F172A" }}>Recomendados</h2>
@@ -408,7 +407,7 @@ export default async function HomePage() {
           </div>
 
           {/* Layout: texto izq + criterios der */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
 
             {/* Left: copy */}
             <div>
