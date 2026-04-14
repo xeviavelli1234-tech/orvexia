@@ -149,7 +149,7 @@ export default function ProductModal({ product, onClose }: Props) {
     >
       <div
         className="modal-card relative w-full bg-white rounded-3xl shadow-[0_32px_80px_-12px_rgba(0,0,0,0.35)] overflow-hidden flex flex-col md:flex-row"
-        style={{ maxHeight: "96vh", maxWidth: "min(1400px, 95vw)" }}
+        style={{ height: "90vh", maxHeight: "90vh", maxWidth: "min(1400px, 95vw)" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── Cerrar ── */}
@@ -165,12 +165,11 @@ export default function ProductModal({ product, onClose }: Props) {
         {/* ── Columna izquierda: carrusel ── */}
         <div
           className="md:w-1/2 bg-[#F0F7FF] flex flex-col"
-          style={{ minHeight: 560 }}
           onMouseEnter={() => setPaused(true)}
           onMouseLeave={() => setPaused(false)}
         >
           {/* Imagen principal con track deslizante */}
-          <div className="relative flex-1 overflow-hidden" style={{ minHeight: 460 }}>
+          <div className="relative flex-1 overflow-hidden">
             {all.length > 0 ? (
               <div
                 className="flex h-full transition-transform duration-500 ease-in-out"
