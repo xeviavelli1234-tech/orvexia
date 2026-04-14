@@ -149,7 +149,7 @@ export default function ProductModal({ product, onClose }: Props) {
     >
       <div
         className="modal-card relative w-full bg-white rounded-3xl shadow-[0_32px_80px_-12px_rgba(0,0,0,0.35)] overflow-hidden flex flex-col md:flex-row"
-        style={{ height: "90vh", maxHeight: "90vh", maxWidth: "min(1400px, 95vw)" }}
+        style={{ height: "58vh", maxHeight: "820px", maxWidth: "min(1100px, 95vw)" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── Cerrar ── */}
