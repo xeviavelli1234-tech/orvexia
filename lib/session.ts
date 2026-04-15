@@ -13,7 +13,10 @@ export interface SessionPayload {
   email: string;
 }
 
-export async function createSession(payload: SessionPayload): Promise<void> {
+export async function createSession(
+  payload: SessionPayload,
+  rememberMe = false
+): Promise<void> {
   const token = await new SignJWT({
     userId: payload.userId,
     name: payload.name,
@@ -30,6 +33,9 @@ export async function createSession(payload: SessionPayload): Promise<void> {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
+    // Si el usuario marcó "Recuérdame", la cookie persiste 7 días.
+    // En caso contrario es de sesión: desaparece al cerrar el navegador.
+    ...(rememberMe ? { maxAge: 60 * 60 * 24 * 7 } : {}),
   });
 }
 

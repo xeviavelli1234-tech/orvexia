@@ -6,6 +6,7 @@ import {
   COOKIE_SETTINGS_EVENT,
   type CookieConsent,
   createCookieConsent,
+  readCookieConsent,
   saveCookieConsent,
 } from "@/lib/cookie-consent";
 
@@ -18,6 +19,19 @@ export function CookieConsentBanner({ initialConsent }: CookieConsentBannerProps
   const [showSettings, setShowSettings] = useState(false);
   const [analytics, setAnalytics] = useState(initialConsent?.analytics ?? false);
   const [advertising, setAdvertising] = useState(initialConsent?.advertising ?? false);
+
+  // On mount, check localStorage in case the HTTP cookie was cleared but the user
+  // already gave consent (localStorage is more durable than HTTP cookies for this).
+  useEffect(() => {
+    if (initialConsent !== null) return; // HTTP cookie was present, nothing to recover
+    const stored = readCookieConsent();
+    if (!stored) return; // No consent stored anywhere — banner correctly showing
+    // Restore state from localStorage and re-write the HTTP cookie so SSR is correct next time
+    setAnalytics(stored.analytics);
+    setAdvertising(stored.advertising);
+    setShowBanner(false);
+    saveCookieConsent(stored); // restores HTTP cookie + notifies CookieConsentScripts via event
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const onOpenSettings = () => setShowSettings(true);

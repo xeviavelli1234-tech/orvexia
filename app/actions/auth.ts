@@ -120,7 +120,8 @@ export async function loginAction(
     };
   }
 
-  await createSession({ userId: user.id, name: user.name, email: user.email });
+  const rememberMe = formData.get("rememberMe") === "on";
+  await createSession({ userId: user.id, name: user.name, email: user.email }, rememberMe);
   redirect("/dashboard");
 }
 

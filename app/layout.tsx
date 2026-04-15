@@ -9,6 +9,8 @@ import { ProfileProvider } from "@/components/ProfileProvider";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 import { CookieConsentScripts } from "@/components/CookieConsentScripts";
 import { COOKIE_CONSENT_COOKIE, parseCookieConsent } from "@/lib/cookie-consent";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const geist = Geist({
   variable: "--font-geist",
@@ -53,6 +55,8 @@ export default async function RootLayout({
         </ProfileProvider>
         <CookieConsentScripts initialConsent={initialConsent} />
         <CookieConsentBanner initialConsent={initialConsent} />
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

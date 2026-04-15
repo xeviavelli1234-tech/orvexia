@@ -194,6 +194,15 @@ export function LoginForm({ oauthError }: { oauthError?: string }) {
           valid={passwordValid}
         />
 
+        <label className="flex items-center gap-2 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            name="rememberMe"
+            className="h-4 w-4 rounded border-[#CBD5E1] accent-[#F97316]"
+          />
+          <span className="text-sm text-[#64748B]">Recuérdame</span>
+        </label>
+
         {needsVerification && (
           <div className="space-y-1">
             <p
