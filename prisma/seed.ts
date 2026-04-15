@@ -1634,6 +1634,51 @@ async function main() {
 
   console.log("✅ Nilson NC185500E frigorífico combi insertado");
 
+  const comfeeLavavajillasImages = [
+    "https://m.media-amazon.com/images/I/51So7Dy-KhL._AC_SL1125_.jpg",
+    "https://m.media-amazon.com/images/I/71kJXBPKQXL._AC_SL1500_.jpg",
+    "https://m.media-amazon.com/images/I/71KaTJm7OqL._AC_SL1500_.jpg",
+    "https://m.media-amazon.com/images/I/71wImCvhPZL._AC_SL1500_.jpg",
+    "https://m.media-amazon.com/images/I/81OQwWyDlzL._AC_SL1500_.jpg",
+    "https://m.media-amazon.com/images/I/71aGzEsha+L._AC_SL1500_.jpg",
+    "https://m.media-amazon.com/images/I/713D9tIIWIL._AC_SL1500_.jpg",
+  ];
+
+  await prisma.product.upsert({
+    where: { slug: "comfee-fd1435e-x-lavavajillas-14-cubiertos" },
+    update: {
+      image: comfeeLavavajillasImages[0],
+      images: comfeeLavavajillasImages,
+      rating: 4.1,
+      reviewCount: 477,
+    },
+    create: {
+      slug: "comfee-fd1435e-x-lavavajillas-14-cubiertos",
+      name: "COMFEE' FD1435E-X Lavavajillas 14 Cubiertos 44dB",
+      category: "LAVAVAJILLAS",
+      brand: "Comfee",
+      model: "FD1435E-X",
+      image: comfeeLavavajillasImages[0],
+      images: comfeeLavavajillasImages,
+      rating: 4.1,
+      reviewCount: 477,
+      description:
+        "Lavavajillas independiente para 14 cubiertos, 44 dB silencioso, gran pantalla LED, inicio diferido, función de media carga, soportes flexibles, acero inoxidable. Clase de eficiencia energética D.",
+      offers: {
+        create: {
+          store: "Amazon",
+          priceCurrent: 339.99,
+          priceOld: 369.99,
+          discountPercent: 8,
+          externalUrl: "https://amzn.to/4sviiJO",
+          inStock: true,
+        },
+      },
+    },
+  });
+
+  console.log("✅ COMFEE FD1435E-X lavavajillas insertado");
+
   // ── Usuarios de prueba para la comunidad ──────────────────────────────────
   console.log("🌱 Insertando usuarios y publicaciones de comunidad...");
 
