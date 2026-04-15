@@ -1,4 +1,4 @@
-import { SignJWT, jwtVerify } from "jose";
+﻿import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
 export const SESSION_COOKIE = "auth-session";
@@ -29,7 +29,6 @@ export async function createSession(payload: SessionPayload): Promise<void> {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    maxAge: 60 * 60 * 24 * 7, // 7 días
     path: "/",
   });
 }
