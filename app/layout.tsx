@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
+import { cookies } from "next/headers";
 import "./globals.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { SavedProvider } from "@/components/SavedProvider";
 import { ProfileProvider } from "@/components/ProfileProvider";
+import { CookieConsentBanner } from "@/components/CookieConsentBanner";
+import { CookieConsentScripts } from "@/components/CookieConsentScripts";
+import { COOKIE_CONSENT_COOKIE, parseCookieConsent } from "@/lib/cookie-consent";
 
 const geist = Geist({
   variable: "--font-geist",
@@ -23,11 +27,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const initialConsent = parseCookieConsent(cookieStore.get(COOKIE_CONSENT_COOKIE)?.value);
+
   return (
     <html lang="es" className={geist.variable}>
       <body className="font-sans antialiased">
@@ -44,6 +51,8 @@ export default function RootLayout({
           </SavedProvider>
           <Footer />
         </ProfileProvider>
+        <CookieConsentScripts initialConsent={initialConsent} />
+        <CookieConsentBanner initialConsent={initialConsent} />
       </body>
     </html>
   );
