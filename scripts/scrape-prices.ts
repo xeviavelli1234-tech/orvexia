@@ -60,18 +60,22 @@ async function scrapeAmazon(url: string): Promise<ScrapedData> {
   const res = await fetch(finalUrl, { headers: HEADERS, signal: AbortSignal.timeout(12000) });
   const html = await res.text();
 
+  // ── Detección de bloqueo / CAPTCHA ──────────────────────────────────────
+  const isBlocked =
+    /robot check|captcha|automated access|api-services-support@amazon|enter the characters you see/i.test(html) ||
+    (html.length < 5000 && !html.includes("productTitle") && !html.includes("a-price"));
+
+  if (isBlocked) {
+    throw new Error("Amazon bloqueó la petición (CAPTCHA / robot check)");
+  }
+
   // ── Precio ──────────────────────────────────────────────────────────────
-  // Intentamos varias selecciones, de más específico a más general
   const pricePatterns = [
-    // Precio con oferta / precio central
     /"priceAmount"\s*:\s*([\d]+\.[\d]{2})/,
-    // Datos estructurados JSON-LD
     /"price"\s*:\s*"([\d]+\.[\d]{2})"/,
-    // Precio visible en el HTML (formato ES: 1.299,99 o 299,99)
     /id="priceblock_dealprice"[^>]*>\s*[\d.,]+\s*([\d.,]+)\s*€/,
     /id="priceblock_ourprice"[^>]*>\s*([\d.,]+)\s*€/,
     /class="a-price-whole"[^>]*>([\d.]+)<.*?class="a-price-fraction"[^>]*>([\d]+)/,
-    // Último recurso: cualquier precio en zona de compra
     /"buyingPrice"\s*:\s*([\d.]+)/,
     /corePriceDisplay[\s\S]*?"displayPrice"\s*:\s*"([\d,.]+)\s*€"/,
   ];
@@ -80,7 +84,6 @@ async function scrapeAmazon(url: string): Promise<ScrapedData> {
   for (const pattern of pricePatterns) {
     const match = html.match(pattern);
     if (match) {
-      // Si captura parte entera + decimal separados
       const raw = match[2]
         ? `${match[1]}.${match[2]}`
         : match[1].replace(/\./g, "").replace(",", ".");
@@ -93,6 +96,7 @@ async function scrapeAmazon(url: string): Promise<ScrapedData> {
   }
 
   // ── Stock ────────────────────────────────────────────────────────────────
+  // Señales negativas (sin stock)
   const outOfStockSignals = [
     /id="outOfStock"/i,
     /class="[^"]*a-color-price[^"]*"[^>]*>[\s\S]{0,60}No disponible/i,
@@ -100,9 +104,34 @@ async function scrapeAmazon(url: string): Promise<ScrapedData> {
     /actualmente no disponible/i,
     /temporalmente sin stock/i,
     /Este producto no está disponible/i,
+    /no se puede entregar/i,
   ];
 
-  const inStock = !outOfStockSignals.some((p) => p.test(html));
+  // Señales positivas (en stock)
+  const inStockSignals = [
+    /añadir al carrito/i,
+    /add to cart/i,
+    /"availability"\s*:\s*"InStock"/i,
+    /id="add-to-cart-button"/i,
+    /En stock/i,
+    /Disponible/i,
+  ];
+
+  const hasOutOfStock = outOfStockSignals.some((p) => p.test(html));
+  const hasInStock    = inStockSignals.some((p) => p.test(html));
+
+  // Si hay señal negativa → sin stock
+  // Si hay señal positiva (y no negativa) → en stock
+  // Si no hay ninguna señal (página rara pero no bloqueada) → conservador: sin stock
+  let inStock: boolean;
+  if (hasOutOfStock) {
+    inStock = false;
+  } else if (hasInStock) {
+    inStock = true;
+  } else {
+    // No encontramos señales claras — si tampoco tenemos precio, asumimos sin stock
+    inStock = price !== null;
+  }
 
   return { price, inStock };
 }

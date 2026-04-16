@@ -208,6 +208,7 @@ export default function ProductCard({ product, priority = false }: Props) {
                   productId={product.id}
                   store={mejorOferta.store}
                   category={product.category}
+                  discountPercent={mejorOferta.discountPercent}
                 />
               </div>
               <div className="flex items-center justify-between">

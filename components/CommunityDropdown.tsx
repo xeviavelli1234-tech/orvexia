@@ -6,7 +6,6 @@ import Link from "next/link";
 const items = [
   { label: "Foro / Discusiones",      href: "/comunidad", icon: "🗨️", color: "#2563EB", bg: "#EEF2FF" },
   { label: "Opiniones y Reseñas",     href: "/opiniones", icon: "⭐", color: "#F59E0B", bg: "#FEF3C7" },
-  { label: "Fotos y Experiencias",    href: "/fotos",     icon: "📸", color: "#0EA5E9", bg: "#E0F2FE" },
 ];
 
 export function CommunityDropdown() {

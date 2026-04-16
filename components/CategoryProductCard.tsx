@@ -89,6 +89,7 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
                 productId={product.id}
                 store={oferta.store}
                 category={product.category}
+                discountPercent={oferta.discountPercent}
               />
               <div className="flex items-center justify-between">
                 <div>

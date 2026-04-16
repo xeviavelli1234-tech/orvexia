@@ -6,16 +6,22 @@ import ProductCard from "@/components/ProductCard";
 import { HeroSearch } from "@/components/HeroSearch";
 
 async function getTopDeals() {
-  return prisma.product.findMany({
+  const products = await prisma.product.findMany({
     where: {
       offers: { some: { discountPercent: { gt: 0 }, priceOld: { not: null } } },
     },
     include: {
       offers: { orderBy: { discountPercent: "desc" } },
     },
-    orderBy: { createdAt: "desc" },
-    take: 8,
   });
+
+  return products
+    .sort((a, b) => {
+      const da = a.offers[0]?.discountPercent ?? 0;
+      const db = b.offers[0]?.discountPercent ?? 0;
+      return db - da;
+    })
+    .slice(0, 8);
 }
 
 async function getStats() {

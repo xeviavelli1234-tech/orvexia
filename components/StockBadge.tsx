@@ -16,27 +16,36 @@ interface Props {
   productId: string;
   store: string;
   category?: string;
+  discountPercent?: number | null;
 }
 
-export function StockBadge({ inStock, productId, store, category }: Props) {
+export function StockBadge({ inStock, productId, store, category, discountPercent }: Props) {
   const [level, setLevel] = useState<StockLevel>(inStock ? "green" : "red");
 
   useEffect(() => {
-    if (!inStock) return;
+    if (!inStock) { setLevel("red"); return; }
+
+    // Semáforo amarillo: descuento alto (>= 25%) → stock limitado probable
+    if (discountPercent && discountPercent >= 25) {
+      setLevel("yellow");
+      return;
+    }
+
+    // Semáforo amarillo: muchos cambios de precio recientes
     fetch(`/api/stock-status?productId=${productId}&store=${encodeURIComponent(store)}`)
-      .then((r) => r.json())
+      .then((r) => r.ok ? r.json() : null)
       .then((data) => {
-        if (data.priceChanges24h >= 3) setLevel("yellow");
+        if (data && data.priceChanges24h >= 2) setLevel("yellow");
       })
       .catch(() => {});
-  }, [inStock, productId, store]);
+  }, [inStock, productId, store, discountPercent]);
 
   if (level === "red") {
     return (
       <div className="flex flex-col gap-1">
         <span className="inline-flex items-center gap-1.5 text-xs font-medium text-[#DC2626] bg-[#FEF2F2] border border-[#FECACA] px-2.5 py-1 rounded-full w-fit">
           <span className="w-2 h-2 rounded-full bg-[#DC2626] shrink-0" />
-          Agotado temporalmente en {store}
+          Agotado temporalmente
         </span>
         {category && CATEGORY_SLUGS[category] && (
           <a
@@ -44,7 +53,7 @@ export function StockBadge({ inStock, productId, store, category }: Props) {
             onClick={(e) => e.stopPropagation()}
             className="text-[11px] text-[#2563EB] hover:underline font-medium pl-1"
           >
-            Ver alternativa similar en stock →
+            Ver alternativas en stock →
           </a>
         )}
       </div>
@@ -55,7 +64,7 @@ export function StockBadge({ inStock, productId, store, category }: Props) {
     return (
       <span className="inline-flex items-center gap-1.5 text-xs font-medium text-[#B45309] bg-[#FFFBEB] border border-[#FDE68A] px-2.5 py-1 rounded-full w-fit">
         <span className="w-2 h-2 rounded-full bg-[#F59E0B] animate-pulse shrink-0" />
-        ¡Solo quedan pocas unidades en {store}!
+        ¡Oferta limitada! Pocas unidades
       </span>
     );
   }
@@ -63,7 +72,7 @@ export function StockBadge({ inStock, productId, store, category }: Props) {
   return (
     <span className="inline-flex items-center gap-1.5 text-xs font-medium text-[#15803D] bg-[#F0FDF4] border border-[#BBF7D0] px-2.5 py-1 rounded-full w-fit">
       <span className="w-2 h-2 rounded-full bg-[#22C55E] shrink-0" />
-      Listo para enviar. Recíbelo mañana.
+      En stock · Disponible en {store}
     </span>
   );
 }
