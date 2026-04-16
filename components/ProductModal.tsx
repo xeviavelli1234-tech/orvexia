@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { BuySignalPanel } from "./BuySignalBadge";
 import { SaveButton } from "./SaveButton";
+import { StockBadge } from "./StockBadge";
 import { PriceAlertButton } from "./PriceAlertButton";
 import ReviewSection from "./ReviewSection";
 
@@ -13,6 +14,7 @@ interface Offer {
   priceOld: number | null;
   discountPercent: number | null;
   externalUrl: string;
+  inStock?: boolean;
 }
 
 interface Props {
@@ -311,6 +313,15 @@ export default function ProductModal({ product, onClose }: Props) {
                   </span>
                 )}
               </div>
+            )}
+
+            {mejorOferta && (
+              <StockBadge
+                inStock={mejorOferta.inStock ?? true}
+                productId={product.id}
+                store={mejorOferta.store}
+                category={product.category}
+              />
             )}
 
             {product.description && (

@@ -55,6 +55,7 @@ export default async function CategoryPage({
       priceOld: o.priceOld,
       discountPercent: o.discountPercent,
       externalUrl: o.externalUrl,
+      inStock: o.inStock,
     })),
   }));
 

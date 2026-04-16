@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import ProductModal from "./ProductModal";
+import { StockBadge } from "./StockBadge";
 
 interface Offer {
   store: string;
@@ -10,6 +11,7 @@ interface Offer {
   priceOld: number | null;
   discountPercent: number | null;
   externalUrl: string;
+  inStock?: boolean;
 }
 
 interface Product {
@@ -81,23 +83,31 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
             {product.name}
           </h3>
           {oferta ? (
-            <div className="mt-3 flex items-center justify-between">
-              <div>
-                <span className="text-lg font-extrabold text-[#0F172A]">
-                  {formatPrice(oferta.priceCurrent)}
-                </span>
-                {oferta.priceOld && (
-                  <span className="ml-1.5 text-xs text-[#94A3B8] line-through">
-                    {formatPrice(oferta.priceOld)}
+            <div className="mt-2 flex flex-col gap-1.5">
+              <StockBadge
+                inStock={oferta.inStock ?? true}
+                productId={product.id}
+                store={oferta.store}
+                category={product.category}
+              />
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-lg font-extrabold text-[#0F172A]">
+                    {formatPrice(oferta.priceCurrent)}
                   </span>
-                )}
+                  {oferta.priceOld && (
+                    <span className="ml-1.5 text-xs text-[#94A3B8] line-through">
+                      {formatPrice(oferta.priceOld)}
+                    </span>
+                  )}
+                </div>
+                <span
+                  className="text-xs font-bold text-white px-3 py-1.5 rounded-lg"
+                  style={{ backgroundColor: catColor }}
+                >
+                  Ver →
+                </span>
               </div>
-              <span
-                className="text-xs font-bold text-white px-3 py-1.5 rounded-lg"
-                style={{ backgroundColor: catColor }}
-              >
-                Ver →
-              </span>
             </div>
           ) : (
             <p className="mt-2 text-xs text-[#94A3B8]">Sin oferta</p>

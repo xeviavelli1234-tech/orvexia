@@ -39,13 +39,35 @@ async function main() {
     },
   });
 
-  await prisma.offer.upsert({
-    where: { productId_store: { productId: product.id, store: "Amazon" } },
-    update: { priceCurrent: 315.00, priceOld: 379.90, discountPercent: 17, externalUrl: "https://amzn.to/3PR0V8z", inStock: true },
-    create: { productId: product.id, store: "Amazon", priceCurrent: 315.00, priceOld: 379.90, discountPercent: 17, externalUrl: "https://amzn.to/3PR0V8z", inStock: true },
+  // ── Oferta ──────────────────────────────────────────────────────────────
+  const store = "Amazon";
+  const priceCurrent = 315.00;
+  const inStock = true; // ← cambia a false cuando esté agotado
+
+  // Comprobar precio anterior para registrar cambio en PriceHistory
+  const ofertaActual = await prisma.offer.findUnique({
+    where: { productId_store: { productId: product.id, store } },
+    select: { priceCurrent: true },
   });
 
-  console.log(`✅ Añadido: ${product.name} — 315,00 € en Amazon`);
+  await prisma.offer.upsert({
+    where: { productId_store: { productId: product.id, store } },
+    update: { priceCurrent, priceOld: 379.90, discountPercent: 17, externalUrl: "https://amzn.to/3PR0V8z", inStock },
+    create: { productId: product.id, store, priceCurrent, priceOld: 379.90, discountPercent: 17, externalUrl: "https://amzn.to/3PR0V8z", inStock },
+  });
+
+  // Registrar en PriceHistory si el precio cambió (o es nuevo)
+  const precioAnterior = ofertaActual?.priceCurrent;
+  if (precioAnterior === undefined || precioAnterior !== priceCurrent) {
+    await prisma.priceHistory.create({
+      data: { productId: product.id, store, price: priceCurrent },
+    });
+    if (precioAnterior !== undefined) {
+      console.log(`📈 Precio cambiado: ${precioAnterior.toFixed(2)} € → ${priceCurrent.toFixed(2)} € (registrado en historial)`);
+    }
+  }
+
+  console.log(`✅ Añadido: ${product.name} — ${priceCurrent.toFixed(2)} € en ${store} | inStock: ${inStock}`);
 }
 
 main()

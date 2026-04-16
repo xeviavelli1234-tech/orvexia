@@ -35,6 +35,7 @@ export async function GET(req: Request) {
               priceOld: true,
               discountPercent: true,
               externalUrl: true,
+              inStock: true,
             },
             orderBy: { priceCurrent: "asc" },
           },

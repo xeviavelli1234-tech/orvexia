@@ -6,6 +6,7 @@ import type React from "react";
 import ProductModal from "./ProductModal";
 import { BuySignalBadge } from "./BuySignalBadge";
 import { SaveButton } from "./SaveButton";
+import { StockBadge } from "./StockBadge";
 
 const CATEGORY_LABELS: Record<string, string> = {
   TELEVISORES: "Televisores", LAVADORAS: "Lavadoras", FRIGORIFICOS: "Frigoríficos",
@@ -20,6 +21,7 @@ interface Offer {
   priceOld: number | null;
   discountPercent: number | null;
   externalUrl: string;
+  inStock?: boolean;
 }
 
 interface Props {
@@ -197,8 +199,16 @@ export default function ProductCard({ product, priority = false }: Props) {
                   Ahorras {(mejorOferta.priceOld - mejorOferta.priceCurrent).toFixed(0)} €
                 </p>
               )}
-              <div className="mb-3">
+              <div className="mb-2">
                 <BuySignalBadge productId={product.id} store={mejorOferta.store} />
+              </div>
+              <div className="mb-3">
+                <StockBadge
+                  inStock={mejorOferta.inStock ?? true}
+                  productId={product.id}
+                  store={mejorOferta.store}
+                  category={product.category}
+                />
               </div>
               <div className="flex items-center justify-between">
                 <span className="inline-flex items-center gap-1 text-[11px] text-[#64748B] bg-[#F1F5F9] px-2 py-0.5 rounded-full">

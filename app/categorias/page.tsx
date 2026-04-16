@@ -110,11 +110,19 @@ async function getCategoriasData() {
     _count: { id: true },
   });
 
-  const topProducts = await prisma.product.findMany({
-    include: { offers: { orderBy: { priceCurrent: "asc" } } },
-    orderBy: { createdAt: "desc" },
-    take: 40,
-  });
+  // Fetch 3 most recent products per category (not a global top-40)
+  const topProductsPerCat = await Promise.all(
+    counts.map((c) =>
+      prisma.product.findMany({
+        where: { category: c.category },
+        include: { offers: { orderBy: { priceCurrent: "asc" } } },
+        orderBy: { createdAt: "desc" },
+        take: 3,
+      })
+    )
+  );
+
+  const topProducts = topProductsPerCat.flat();
 
   return { counts, topProducts };
 }
