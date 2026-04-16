@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
 import ProductCard from "@/components/ProductCard";

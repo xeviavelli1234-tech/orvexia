@@ -1,4 +1,6 @@
-﻿import Link from "next/link";
+﻿export const dynamic = "force-dynamic";
+
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Category } from "@/app/generated/prisma/client";
 import { CategoryProductCard } from "@/components/CategoryProductCard";
