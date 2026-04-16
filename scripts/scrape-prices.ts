@@ -73,7 +73,7 @@ async function scrapeAmazon(url: string): Promise<ScrapedData> {
     /class="a-price-whole"[^>]*>([\d.]+)<.*?class="a-price-fraction"[^>]*>([\d]+)/,
     // Último recurso: cualquier precio en zona de compra
     /"buyingPrice"\s*:\s*([\d.]+)/,
-    /corePriceDisplay.*?"displayPrice"\s*:\s*"([\d,.]+)\s*€"/s,
+    /corePriceDisplay[\s\S]*?"displayPrice"\s*:\s*"([\d,.]+)\s*€"/,
   ];
 
   let price: number | null = null;
