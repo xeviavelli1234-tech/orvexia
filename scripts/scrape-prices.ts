@@ -19,7 +19,7 @@ const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
 
 const DRY_RUN = process.argv.includes("--dry-run");
-const STORE_FILTER = process.argv.find(a => !a.startsWith("--") && !a.includes("scrape"))?.toLowerCase();
+const STORE_FILTER = process.argv.slice(2).find(a => !a.startsWith("--"))?.toLowerCase();
 
 // ── Cabeceras realistas para evitar bloqueos ─────────────────────────────────
 const HEADERS: Record<string, string> = {
