@@ -35,6 +35,12 @@ interface Meta {
   desc: string;
 }
 
+interface Content {
+  intro: string;
+  tips: { icon: string; title: string; desc: string }[];
+  guideSlug?: string;
+}
+
 type SortKey = "relevancia" | "precio_asc" | "precio_desc" | "descuento" | "valoracion";
 
 function extractTech(text: string): string | null {
@@ -58,7 +64,7 @@ function getSpecs(p: Product) {
   return { tech: extractTech(full), os: extractOS(full) };
 }
 
-export default function CategoryClient({ products, meta }: { products: Product[]; meta: Meta }) {
+export default function CategoryClient({ products, meta, content }: { products: Product[]; meta: Meta; content: Content | null }) {
   const [search, setSearch] = useState("");
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [selectedTechs, setSelectedTechs] = useState<string[]>([]);
@@ -296,6 +302,35 @@ export default function CategoryClient({ products, meta }: { products: Product[]
           <svg viewBox="0 0 1440 32" fill="none" className="w-full h-8"><path d="M0 32L720 0L1440 32V32H0V32Z" fill="#F8FAFC" /></svg>
         </div>
       </section>
+
+      {/* CONTENIDO EDITORIAL */}
+      {content && (
+        <section className="max-w-7xl mx-auto px-6 pt-8 pb-2">
+          <div className="bg-white rounded-2xl border border-[#E2E8F0] p-6 flex flex-col gap-5">
+            <p className="text-[#334155] text-sm leading-relaxed">{content.intro}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {content.tips.map((t) => (
+                <div key={t.title} className="flex gap-3 p-3 rounded-xl" style={{ backgroundColor: meta.bg }}>
+                  <span className="text-xl flex-shrink-0">{t.icon}</span>
+                  <div>
+                    <p className="text-xs font-bold text-[#0F172A]">{t.title}</p>
+                    <p className="text-xs text-[#64748B] mt-0.5 leading-relaxed">{t.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {content.guideSlug && (
+              <Link
+                href={`/guias/${content.guideSlug}`}
+                className="self-start flex items-center gap-1.5 text-xs font-bold hover:underline transition-colors"
+                style={{ color: meta.color }}
+              >
+                📖 Ver guía de compra completa →
+              </Link>
+            )}
+          </div>
+        </section>
+      )}
 
       <div className="max-w-7xl mx-auto px-6 py-8 flex gap-8">
 

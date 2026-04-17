@@ -20,7 +20,7 @@ const GUIAS = [
     tag: "Guía completa",
     time: "8 min lectura",
     ready: true,
-    featured: true,
+    featured: false,
   },
   {
     slug: "mejor-televisor",
@@ -118,12 +118,21 @@ const GUIAS = [
     ready: true,
     featured: false,
   },
+  {
+    slug: "mejor-aire-acondicionado",
+    title: "Mejor Aire Acondicionado 2026",
+    desc: "Split, portátil o multisplit: potencia, eficiencia y instalación explicados.",
+    icon: "❄️",
+    color: "#0284C7",
+    colorLight: "#BAE6FD",
+    tag: "Guía completa",
+    time: "7 min lectura",
+    ready: true,
+    featured: false,
+  },
 ];
 
 export default function GuiasPage() {
-  const featured = GUIAS.find((g) => g.featured);
-  const rest = GUIAS.filter((g) => !g.featured);
-
   return (
     <main className="min-h-screen bg-[#F8FAFC]">
 
@@ -133,13 +142,13 @@ export default function GuiasPage() {
           <div className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full bg-[#4F46E5] opacity-10 blur-3xl" />
           <div className="absolute bottom-0 left-0 w-80 h-80 rounded-full bg-[#7C3AED] opacity-10 blur-3xl" />
         </div>
-        <div className="relative max-w-4xl mx-auto text-center">
+        <div className="relative max-w-5xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 text-xs text-white/70 font-medium mb-6">
             <span className="w-1.5 h-1.5 rounded-full bg-[#34D399] inline-block" />
             Actualizado abril 2026
           </div>
           <h1 className="text-5xl sm:text-6xl font-extrabold text-white mb-5 tracking-tight leading-tight">
-            Guías de<br />
+            Guías de{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#A78BFA] to-[#60A5FA]">Compra</span>
           </h1>
           <p className="text-white/60 text-lg max-w-xl mx-auto leading-relaxed">
@@ -154,94 +163,53 @@ export default function GuiasPage() {
       </section>
 
       <div className="max-w-5xl mx-auto px-6 -mt-6 pb-16">
+        <p className="text-xs font-bold text-[#94A3B8] uppercase tracking-widest mb-5">{GUIAS.length} guías disponibles</p>
 
-        {/* GUÍA DESTACADA */}
-        {featured && (
-          <div className="mb-8">
-            <p className="text-xs font-bold text-[#94A3B8] uppercase tracking-widest mb-4">Guía disponible</p>
+        {/* GRID: 2 col en tablet, 3 col en desktop */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {GUIAS.map((g, i) => (
             <Link
-              href={`/guias/${featured.slug}`}
-              className="group block bg-white rounded-3xl border border-[#E2E8F0] overflow-hidden hover:shadow-2xl hover:shadow-[#7C3AED]/10 hover:border-[#DDD6FE] transition-all duration-300"
+              key={g.slug}
+              href={`/guias/${g.slug}`}
+              className={`group flex flex-col bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200${i === GUIAS.length - 1 && GUIAS.length % 3 === 1 ? " lg:col-start-2" : ""}`}
             >
-              <div className="flex flex-col sm:flex-row">
-                {/* Visual */}
-                <div
-                  className="sm:w-72 h-48 sm:h-auto flex items-center justify-center flex-shrink-0 relative overflow-hidden"
-                  style={{ background: `linear-gradient(135deg, #2E1065, #7C3AED)` }}
-                >
-                  <div className="absolute inset-0 opacity-20">
-                    <div className="absolute top-4 left-4 w-20 h-20 rounded-full border-2 border-white/30" />
-                    <div className="absolute bottom-4 right-4 w-32 h-32 rounded-full border-2 border-white/20" />
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 rounded-full border border-white/10" />
-                  </div>
-                  <span className="text-8xl relative z-10 drop-shadow-lg">{featured.icon}</span>
-                </div>
-                {/* Content */}
-                <div className="flex-1 p-8 flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center gap-3 mb-4">
-                      <span className="text-xs font-bold px-3 py-1 rounded-full text-white" style={{ backgroundColor: featured.color }}>
-                        {featured.tag}
-                      </span>
-                      <span className="text-xs text-[#94A3B8]">{featured.time}</span>
-                    </div>
-                    <h2 className="text-2xl font-extrabold text-[#0F172A] mb-3 group-hover:text-[#7C3AED] transition-colors">
-                      {featured.title}
-                    </h2>
-                    <p className="text-[#64748B] leading-relaxed">{featured.desc}</p>
-                  </div>
-                  <div className="mt-6 flex items-center gap-2 font-bold text-sm" style={{ color: featured.color }}>
-                    Leer la guía completa
-                    <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-            </Link>
-          </div>
-        )}
-
-        {/* RESTO DE GUÍAS */}
-        <div>
-          <p className="text-xs font-bold text-[#94A3B8] uppercase tracking-widest mb-4">Más guías</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {rest.map((g) => (
-              <Link
-                key={g.slug}
-                href={`/guias/${g.slug}`}
-                className="group bg-white rounded-2xl border border-[#E2E8F0] p-6 flex flex-col gap-4 hover:shadow-lg hover:border-current/20 transition-all duration-200"
-                style={{ ["--tw-border-opacity" as string]: "1" }}
+              {/* Header con color */}
+              <div
+                className="h-32 flex items-center justify-center relative overflow-hidden flex-shrink-0"
+                style={{ background: `linear-gradient(135deg, ${g.color}ee, ${g.color}99)` }}
               >
-                <div className="flex items-start justify-between">
-                  <div
-                    className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
-                    style={{ backgroundColor: g.colorLight }}
-                  >
-                    {g.icon}
-                  </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wide border px-2 py-1 rounded-full" style={{ color: g.color, borderColor: g.colorLight, backgroundColor: g.colorLight }}>
+                <div className="absolute inset-0 opacity-15">
+                  <div className="absolute top-3 left-3 w-14 h-14 rounded-full border-2 border-white/40" />
+                  <div className="absolute bottom-3 right-3 w-20 h-20 rounded-full border-2 border-white/20" />
+                </div>
+                <span className="text-6xl relative z-10 drop-shadow-lg">{g.icon}</span>
+              </div>
+
+              {/* Contenido */}
+              <div className="flex flex-col flex-1 p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[10px] font-bold px-2.5 py-1 rounded-full text-white" style={{ backgroundColor: g.color }}>
                     {g.tag}
                   </span>
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-bold text-[#0F172A] mb-1.5 group-hover:transition-colors" style={{ ["--hover-color" as string]: g.color }}>{g.title}</h3>
-                  <p className="text-xs text-[#64748B] leading-relaxed">{g.desc}</p>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-xs text-[#94A3B8]">
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <span className="text-[11px] text-[#94A3B8] flex items-center gap-1">
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     {g.time}
-                  </div>
-                  <span className="text-xs font-bold group-hover:translate-x-0.5 transition-transform" style={{ color: g.color }}>Leer →</span>
+                  </span>
                 </div>
-              </Link>
-            ))}
-          </div>
+                <h2 className="font-extrabold text-[#0F172A] text-base mb-1.5 leading-snug">{g.title}</h2>
+                <p className="text-xs text-[#64748B] leading-relaxed flex-1">{g.desc}</p>
+                <div className="mt-4 flex items-center gap-1.5 text-xs font-bold transition-transform group-hover:translate-x-0.5" style={{ color: g.color }}>
+                  Leer la guía
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </div>
+            </Link>
+          ))}
         </div>
-
       </div>
     </main>
   );

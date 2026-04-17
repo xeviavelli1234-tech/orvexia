@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     template: "%s · Orvexia",
   },
   description:
-    "Orvexia es tu comparador de precios de electrodomésticos. Encuentra las mejores ofertas en Amazon, MediaMarkt y más tiendas de España.",
+    "Orvexia es tu comparador de precios de electrodomésticos. Encuentra las mejores ofertas en Amazon, PcComponentes, Fnac, El Corte Inglés y más tiendas de España.",
   verification: {
     google: "lcqCpEPYpqIvoa08jEh06pLKma2vc0e5DUuT4J4hneg",
   },

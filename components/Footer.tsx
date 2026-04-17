@@ -9,6 +9,7 @@ const NAV = [
       { label: "Bajadas recientes", href: "/bajadas-recientes" },
       { label: "Mas populares", href: "/popularidad" },
       { label: "Recomendados", href: "/recomendados" },
+      { label: "Guías de compra", href: "/guias" },
     ],
   },
   {
@@ -67,6 +68,13 @@ export function Footer() {
           ))}
         </div>
 
+        {/* Aviso de afiliados */}
+        <div className="border-t border-[#1E293B] pt-5 pb-3">
+          <p className="text-xs text-[#64748B] leading-relaxed text-center">
+            Uso de enlaces de afiliados de Amazon, PcComponentes, Fnac y El Corte Inglés asociados a comisión por venta. Esto no supone ningún coste adicional para el comprador y nos ayuda a mantener el servicio gratuito.
+          </p>
+        </div>
+
         <div className="border-t border-[#1E293B] pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-[#475569]">© {new Date().getFullYear()} Orvexia. Todos los derechos reservados.</p>
           <div className="flex flex-wrap items-center justify-center gap-3">
@@ -75,7 +83,7 @@ export function Footer() {
             </Link>
             <CookieSettingsButton />
             <p className="text-xs text-[#475569]">
-              Los precios se actualizan periodicamente. Verifica siempre el precio final en la tienda.
+              Los precios se actualizan periódicamente. Verifica siempre el precio final en la tienda.
             </p>
           </div>
         </div>
