@@ -7,19 +7,36 @@ import { HeroSearch } from "@/components/HeroSearch";
 
 async function getTopDeals() {
   const products = await prisma.product.findMany({
-    where: {
-      offers: { some: { discountPercent: { gt: 0 }, priceOld: { not: null } } },
-    },
-    include: {
-      offers: { orderBy: { discountPercent: "desc" } },
-    },
+    where: { offers: { some: { priceOld: { not: null }, inStock: true } } },
+    include: { offers: { orderBy: { priceCurrent: "asc" } } },
   });
 
   return products
+    .filter((p) => {
+      const o = p.offers[0];
+      if (!o?.priceOld || !o.inStock) return false;
+
+      const savings  = o.priceOld - o.priceCurrent;
+      const ratio    = o.priceOld / o.priceCurrent;
+
+      // Criterios para considerar un descuento como real:
+      // • El precio actual debe ser menor que el precio antiguo
+      // • Ratio ≤ 1.40 → máximo ~28 % de descuento
+      //   (Amazon infla el PVPR para descuentos mayores — no son reales)
+      // • Ahorro absoluto ≥ 3 € (descarta rebajas ridículas de céntimos)
+      // • Descuento ≥ 3 %
+      return (
+        o.priceCurrent < o.priceOld &&
+        ratio <= 1.40 &&
+        savings >= 3 &&
+        savings / o.priceOld >= 0.03
+      );
+    })
     .sort((a, b) => {
-      const da = a.offers[0]?.discountPercent ?? 0;
-      const db = b.offers[0]?.discountPercent ?? 0;
-      return db - da;
+      // Ordenar por mayor ahorro absoluto (€) para mostrar las mejores oportunidades
+      const savA = (a.offers[0].priceOld ?? 0) - a.offers[0].priceCurrent;
+      const savB = (b.offers[0].priceOld ?? 0) - b.offers[0].priceCurrent;
+      return savB - savA;
     })
     .slice(0, 8);
 }
@@ -124,7 +141,7 @@ const REGISTER_PERKS: { title: string; desc: string; accent: string; icon: React
   },
 ];
 
-const STORES = ["Amazon", "MediaMarkt", "PC Componentes", "El Corte Inglés"];
+const STORES = ["Amazon", "PcComponentes", "Fnac", "El Corte Inglés"];
 
 export default async function HomePage() {
   const session = await getSession();

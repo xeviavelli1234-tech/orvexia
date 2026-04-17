@@ -1,9 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-type StockLevel = "green" | "yellow" | "red";
-
 const CATEGORY_SLUGS: Record<string, string> = {
   TELEVISORES: "televisores", LAVADORAS: "lavadoras", FRIGORIFICOS: "frigorificos",
   LAVAVAJILLAS: "lavavajillas", SECADORAS: "secadoras", HORNOS: "hornos",
@@ -13,34 +9,16 @@ const CATEGORY_SLUGS: Record<string, string> = {
 
 interface Props {
   inStock: boolean;
-  productId: string;
   store: string;
   category?: string;
   discountPercent?: number | null;
+  // kept for API compatibility but no longer used
+  productId?: string;
 }
 
-export function StockBadge({ inStock, productId, store, category, discountPercent }: Props) {
-  const [level, setLevel] = useState<StockLevel>(inStock ? "green" : "red");
-
-  useEffect(() => {
-    if (!inStock) { setLevel("red"); return; }
-
-    // Semáforo amarillo: descuento alto (>= 25%) → stock limitado probable
-    if (discountPercent && discountPercent >= 25) {
-      setLevel("yellow");
-      return;
-    }
-
-    // Semáforo amarillo: muchos cambios de precio recientes
-    fetch(`/api/stock-status?productId=${productId}&store=${encodeURIComponent(store)}`)
-      .then((r) => r.ok ? r.json() : null)
-      .then((data) => {
-        if (data && data.priceChanges24h >= 2) setLevel("yellow");
-      })
-      .catch(() => {});
-  }, [inStock, productId, store, discountPercent]);
-
-  if (level === "red") {
+export function StockBadge({ inStock, store, category, discountPercent }: Props) {
+  /* OUT OF STOCK */
+  if (!inStock) {
     return (
       <div className="flex flex-col gap-1">
         <span className="inline-flex items-center gap-1.5 text-xs font-medium text-[#DC2626] bg-[#FEF2F2] border border-[#FECACA] px-2.5 py-1 rounded-full w-fit">
@@ -60,15 +38,17 @@ export function StockBadge({ inStock, productId, store, category, discountPercen
     );
   }
 
-  if (level === "yellow") {
+  /* IN STOCK WITH ACTIVE DISCOUNT */
+  if (discountPercent && discountPercent > 0) {
     return (
       <span className="inline-flex items-center gap-1.5 text-xs font-medium text-[#B45309] bg-[#FFFBEB] border border-[#FDE68A] px-2.5 py-1 rounded-full w-fit">
-        <span className="w-2 h-2 rounded-full bg-[#F59E0B] animate-pulse shrink-0" />
-        ¡Oferta limitada! Pocas unidades
+        <span className="w-2 h-2 rounded-full bg-[#F59E0B] shrink-0" />
+        En stock · Precio rebajado en {store}
       </span>
     );
   }
 
+  /* IN STOCK */
   return (
     <span className="inline-flex items-center gap-1.5 text-xs font-medium text-[#15803D] bg-[#F0FDF4] border border-[#BBF7D0] px-2.5 py-1 rounded-full w-fit">
       <span className="w-2 h-2 rounded-full bg-[#22C55E] shrink-0" />

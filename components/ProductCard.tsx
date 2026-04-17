@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState, useCallback } from "react";
 import type React from "react";
 import ProductModal from "./ProductModal";
@@ -59,6 +60,14 @@ export default function ProductCard({ product, priority = false }: Props) {
       : [];
 
   const mejorOferta = product.offers[0];
+  // Descuento real: calculado desde los precios actuales y con cap de ratio para
+  // descartar MSRPs inflados de Amazon (ratio > 1.40 = descuento irreal)
+  const realDiscount =
+    mejorOferta?.priceOld != null &&
+    mejorOferta.priceCurrent < mejorOferta.priceOld &&
+    mejorOferta.priceOld / mejorOferta.priceCurrent <= 1.40
+      ? Math.round((1 - mejorOferta.priceCurrent / mejorOferta.priceOld) * 100)
+      : 0;
 
   const prev = useCallback(
     (e: React.MouseEvent) => {
@@ -116,10 +125,10 @@ export default function ProductCard({ product, priority = false }: Props) {
             <div className="absolute inset-0 flex items-center justify-center text-3xl text-[#CBD5E1]">📦</div>
           )}
 
-          {/* Descuento */}
-          {mejorOferta?.discountPercent && (
+          {/* Descuento — solo si hay rebaja real */}
+          {realDiscount > 0 && (
             <span className="absolute top-2 left-2 bg-[#EF4444] text-white text-xs font-bold px-2 py-1 rounded-lg shadow">
-              -{mejorOferta.discountPercent}%
+              -{realDiscount}%
             </span>
           )}
           {/* Guardar */}
@@ -208,14 +217,17 @@ export default function ProductCard({ product, priority = false }: Props) {
                   productId={product.id}
                   store={mejorOferta.store}
                   category={product.category}
-                  discountPercent={mejorOferta.discountPercent}
+                  discountPercent={realDiscount}
                 />
               </div>
-              <div className="flex items-center justify-between">
-                <span className="inline-flex items-center gap-1 text-[11px] text-[#64748B] bg-[#F1F5F9] px-2 py-0.5 rounded-full">
-                  <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/></svg>
-                  {mejorOferta.store}
-                </span>
+              <div className="flex items-center justify-between gap-2">
+                <Link
+                  href={`/productos/${product.slug}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-[11px] font-semibold text-[#64748B] hover:text-[#2563EB] transition-colors underline underline-offset-2"
+                >
+                  Ver análisis
+                </Link>
                 <a
                   href={mejorOferta.externalUrl}
                   target="_blank"
@@ -223,7 +235,7 @@ export default function ProductCard({ product, priority = false }: Props) {
                   onClick={(e) => e.stopPropagation()}
                   className="text-xs font-semibold text-white bg-[#2563EB] hover:bg-[#1D4ED8] px-3 py-1.5 rounded-lg transition-colors shadow-sm shadow-blue-200"
                 >
-                  Ver oferta →
+                  Ver en {mejorOferta.store} →
                 </a>
               </div>
             </>

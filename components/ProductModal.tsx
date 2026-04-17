@@ -304,10 +304,12 @@ export default function ProductModal({ product, onClose }: Props) {
             {mejorOferta && (
               <div className="flex items-end gap-3 py-3 border-t border-b border-[#E5F0FF]">
                 <span className="text-3xl font-bold text-[#0F172A]">{mejorOferta.priceCurrent.toFixed(2)} €</span>
-                {mejorOferta.priceOld && (
+                {mejorOferta.priceOld != null && mejorOferta.priceOld > mejorOferta.priceCurrent &&
+                  mejorOferta.priceOld / mejorOferta.priceCurrent <= 1.40 && (
                   <span className="text-base text-[#94A3B8] line-through mb-0.5">{mejorOferta.priceOld.toFixed(2)} €</span>
                 )}
-                {mejorOferta.discountPercent && (
+                {(mejorOferta.discountPercent ?? 0) > 0 &&
+                  mejorOferta.priceOld != null && mejorOferta.priceOld / mejorOferta.priceCurrent <= 1.40 && (
                   <span className="mb-0.5 px-2 py-0.5 bg-[#EFF6FF] text-[#2563EB] text-xs font-bold rounded-lg">
                     -{mejorOferta.discountPercent}%
                   </span>
@@ -369,7 +371,7 @@ export default function ProductModal({ product, onClose }: Props) {
                   rel="noopener noreferrer"
                   className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm"
                 >
-                  Ver oferta →
+                  Ver en {mejorOferta.store} →
                 </a>
               </div>
             )}

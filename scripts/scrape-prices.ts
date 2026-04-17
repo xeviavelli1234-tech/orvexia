@@ -1,7 +1,7 @@
 /**
  * scrape-prices.ts
- * Actualiza precios y stock de todas las ofertas en la BD.
- * Soporta: Amazon, PcComponentes, MediaMarkt, El Corte Inglés.
+ * Actualiza precios, precio antiguo real y stock de todas las ofertas en la BD.
+ * Soporta: Amazon, PcComponentes, Fnac, El Corte Inglés.
  *
  * Uso:
  *   npx tsx scripts/scrape-prices.ts           ← todas las ofertas
@@ -13,15 +13,19 @@ import { PrismaClient } from "../app/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import * as dotenv from "dotenv";
 
-dotenv.config();
+dotenv.config({ path: ".env.local" });
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
 
-const DRY_RUN = process.argv.includes("--dry-run");
+const DRY_RUN    = process.argv.includes("--dry-run");
 const STORE_FILTER = process.argv.slice(2).find(a => !a.startsWith("--"))?.toLowerCase();
 
-// ── Cabeceras realistas para evitar bloqueos ─────────────────────────────────
+// Máximo ratio priceOld/priceCurrent para considerarlo un descuento real
+// (> 1.40 = Amazon PVPR inflado, no es una rebaja real)
+const MAX_DISCOUNT_RATIO = 1.40;
+
+// ── Cabeceras realistas ───────────────────────────────────────────────────────
 const HEADERS: Record<string, string> = {
   "User-Agent":
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
@@ -36,7 +40,6 @@ function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-/** Resuelve una URL corta (amzn.to, etc.) a la URL final */
 async function resolveRedirect(url: string): Promise<string> {
   try {
     const res = await fetch(url, { method: "HEAD", redirect: "follow", headers: HEADERS, signal: AbortSignal.timeout(8000) });
@@ -46,30 +49,46 @@ async function resolveRedirect(url: string): Promise<string> {
   }
 }
 
-// ── Parsers por tienda ────────────────────────────────────────────────────────
+// ── Tipos ─────────────────────────────────────────────────────────────────────
 
 interface ScrapedData {
-  price: number | null;
-  inStock: boolean;
+  price:    number | null;
+  priceOld: number | null;  // precio tachado real de la tienda (null si no existe)
+  inStock:  boolean;
 }
 
-async function scrapeAmazon(url: string): Promise<ScrapedData> {
-  // Resolver redirect (amzn.to → amazon.es/dp/XXXX)
-  const finalUrl = url.includes("amzn.to") ? await resolveRedirect(url) : url;
+// ── Helper: parsear un string de precio ──────────────────────────────────────
+function parsePrice(raw: string): number | null {
+  const v = parseFloat(raw.replace(/\./g, "").replace(",", "."));
+  return !isNaN(v) && v > 0 && v < 100_000 ? v : null;
+}
 
-  const res = await fetch(finalUrl, { headers: HEADERS, signal: AbortSignal.timeout(12000) });
+/**
+ * Valida y limpia el priceOld:
+ * - Debe ser mayor que priceCurrent
+ * - Ratio ≤ MAX_DISCOUNT_RATIO para que sea creíble
+ * - Si no cumple → null
+ */
+function sanitizePriceOld(priceCurrent: number, priceOld: number | null): number | null {
+  if (!priceOld || priceOld <= priceCurrent) return null;
+  const ratio = priceOld / priceCurrent;
+  return ratio <= MAX_DISCOUNT_RATIO ? priceOld : null;
+}
+
+// ── Amazon ────────────────────────────────────────────────────────────────────
+
+async function scrapeAmazon(url: string): Promise<ScrapedData> {
+  const finalUrl = url.includes("amzn.to") ? await resolveRedirect(url) : url;
+  const res  = await fetch(finalUrl, { headers: HEADERS, signal: AbortSignal.timeout(12000) });
   const html = await res.text();
 
-  // ── Detección de bloqueo / CAPTCHA ──────────────────────────────────────
+  // Bloqueo / CAPTCHA
   const isBlocked =
     /robot check|captcha|automated access|api-services-support@amazon|enter the characters you see/i.test(html) ||
     (html.length < 5000 && !html.includes("productTitle") && !html.includes("a-price"));
+  if (isBlocked) throw new Error("Amazon bloqueó la petición (CAPTCHA / robot check)");
 
-  if (isBlocked) {
-    throw new Error("Amazon bloqueó la petición (CAPTCHA / robot check)");
-  }
-
-  // ── Precio ──────────────────────────────────────────────────────────────
+  // ── Precio actual ────────────────────────────────────────────────────────
   const pricePatterns = [
     /"priceAmount"\s*:\s*([\d]+\.[\d]{2})/,
     /"price"\s*:\s*"([\d]+\.[\d]{2})"/,
@@ -77,71 +96,77 @@ async function scrapeAmazon(url: string): Promise<ScrapedData> {
     /id="priceblock_ourprice"[^>]*>\s*([\d.,]+)\s*€/,
     /class="a-price-whole"[^>]*>([\d.]+)<.*?class="a-price-fraction"[^>]*>([\d]+)/,
     /"buyingPrice"\s*:\s*([\d.]+)/,
-    /corePriceDisplay[\s\S]*?"displayPrice"\s*:\s*"([\d,.]+)\s*€"/,
+    /corePriceDisplay[\s\S]{0,300}"displayPrice"\s*:\s*"([\d,.]+)\s*€"/,
   ];
 
   let price: number | null = null;
   for (const pattern of pricePatterns) {
-    const match = html.match(pattern);
-    if (match) {
-      const raw = match[2]
-        ? `${match[1]}.${match[2]}`
-        : match[1].replace(/\./g, "").replace(",", ".");
-      const parsed = parseFloat(raw);
-      if (!isNaN(parsed) && parsed > 0 && parsed < 100000) {
-        price = parsed;
-        break;
-      }
+    const m = html.match(pattern);
+    if (m) {
+      const raw = m[2] ? `${m[1]}.${m[2]}` : m[1];
+      const v = parsePrice(raw);
+      if (v) { price = v; break; }
+    }
+  }
+
+  // ── Precio tachado (priceOld real de Amazon) ─────────────────────────────
+  // Amazon expone el "was price" en varias formas: JSON embebido y HTML tachado.
+  const oldPricePatterns = [
+    // JSON estructurado (más fiable)
+    /"basisPrice"\s*:\s*\{[^}]*"amount"\s*:\s*([\d.]+)/,
+    /"wasPrice"\s*:\s*\{[^}]*"amount"\s*:\s*([\d.]+)/,
+    /"listPrice"\s*:\s*\{[^}]*"amount"\s*:\s*([\d.]+)/,
+    /"strikethroughPrice"\s*:\s*\{[^}]*"amount"\s*:\s*([\d.]+)/,
+    // JSON simple
+    /"basisPrice"\s*:\s*"([\d,.]+)\s*€"/,
+    /"wasPrice"\s*:\s*"([\d,.]+)\s*€"/,
+    // HTML tachado
+    /data-a-strike="true"[^>]*>[\s\S]{0,100}>([\d.,]+)\s*€/,
+    /class="[^"]*a-text-price[^"]*"[^>]*data-a-strike="true"[\s\S]{0,200}>([\d.,]+)\s*€/,
+    /id="priceblock_saleprice_label"[\s\S]{0,400}>([\d.,]+)\s*€/,
+    // corePriceDisplay basis
+    /corePriceDisplay[\s\S]{0,1000}"basisPrice"[\s\S]{0,200}"displayPrice"\s*:\s*"([\d,.]+)\s*€"/,
+  ];
+
+  let priceOldRaw: number | null = null;
+  for (const pattern of oldPricePatterns) {
+    const m = html.match(pattern);
+    if (m) {
+      const v = parsePrice(m[1]);
+      if (v) { priceOldRaw = v; break; }
     }
   }
 
   // ── Stock ────────────────────────────────────────────────────────────────
-  // Señales negativas (sin stock)
   const outOfStockSignals = [
     /id="outOfStock"/i,
-    /class="[^"]*a-color-price[^"]*"[^>]*>[\s\S]{0,60}No disponible/i,
     /"availability"\s*:\s*"OutOfStock"/i,
     /actualmente no disponible/i,
     /temporalmente sin stock/i,
     /Este producto no está disponible/i,
-    /no se puede entregar/i,
   ];
-
-  // Señales positivas (en stock)
   const inStockSignals = [
     /añadir al carrito/i,
     /add to cart/i,
     /"availability"\s*:\s*"InStock"/i,
     /id="add-to-cart-button"/i,
-    /En stock/i,
-    /Disponible/i,
   ];
 
-  const hasOutOfStock = outOfStockSignals.some((p) => p.test(html));
-  const hasInStock    = inStockSignals.some((p) => p.test(html));
+  const hasOutOfStock = outOfStockSignals.some(p => p.test(html));
+  const hasInStock    = inStockSignals.some(p => p.test(html));
+  const inStock = hasOutOfStock && !hasInStock ? false : true;
 
-  // Si hay señal negativa → sin stock
-  // Si hay señal positiva (y no negativa) → en stock
-  // Si no hay ninguna señal (página rara pero no bloqueada) → conservador: sin stock
-  let inStock: boolean;
-  if (hasOutOfStock) {
-    inStock = false;
-  } else if (hasInStock) {
-    inStock = true;
-  } else {
-    // No encontramos señales claras — si tampoco tenemos precio, asumimos sin stock
-    inStock = price !== null;
-  }
-
-  return { price, inStock };
+  const priceOld = price ? sanitizePriceOld(price, priceOldRaw) : null;
+  return { price, priceOld, inStock };
 }
 
+// ── PcComponentes ─────────────────────────────────────────────────────────────
+
 async function scrapePcComponentes(url: string): Promise<ScrapedData> {
-  const res = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(12000) });
+  const res  = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(12000) });
   const html = await res.text();
 
-  // PcC expone precios en JSON-LD y en atributos data-
-  const patterns = [
+  const pricePatterns = [
     /"price"\s*:\s*"?([\d]+\.[\d]{2})"?/,
     /data-product-price="([\d.,]+)"/,
     /"priceValue"\s*:\s*([\d.]+)/,
@@ -149,78 +174,116 @@ async function scrapePcComponentes(url: string): Promise<ScrapedData> {
   ];
 
   let price: number | null = null;
-  for (const p of patterns) {
+  for (const p of pricePatterns) {
     const m = html.match(p);
-    if (m) {
-      const v = parseFloat(m[1].replace(",", "."));
-      if (!isNaN(v) && v > 0) { price = v; break; }
-    }
+    if (m) { const v = parsePrice(m[1]); if (v) { price = v; break; } }
+  }
+
+  // Precio tachado PcC: data-product-old-price o <del class="price-old">
+  const oldPatterns = [
+    /data-product-old-price="([\d.,]+)"/,
+    /<del[^>]*class="[^"]*price-old[^"]*"[^>]*>([\d.,]+)/,
+    /"oldPrice"\s*:\s*"?([\d.]+)"?/,
+  ];
+
+  let priceOldRaw: number | null = null;
+  for (const p of oldPatterns) {
+    const m = html.match(p);
+    if (m) { const v = parsePrice(m[1]); if (v) { priceOldRaw = v; break; } }
   }
 
   const inStock = !/sin stock|agotado|no disponible/i.test(html)
     && (/"availability"\s*:\s*"InStock"/i.test(html) || /Añadir al carrito/i.test(html));
 
-  return { price, inStock };
+  const priceOld = price ? sanitizePriceOld(price, priceOldRaw) : null;
+  return { price, priceOld, inStock };
 }
 
-async function scrapeMediaMarkt(url: string): Promise<ScrapedData> {
-  const res = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(12000) });
+// ── Fnac ──────────────────────────────────────────────────────────────────────
+
+async function scrapeFnac(url: string): Promise<ScrapedData> {
+  const res  = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(12000) });
   const html = await res.text();
 
-  const patterns = [
-    /"price"\s*:\s*([\d]+\.[\d]{2})/,
+  const pricePatterns = [
     /itemprop="price"[^>]*content="([\d.]+)"/,
-    /"finalPrice"\s*:\s*([\d.]+)/,
+    /"price"\s*:\s*"?([\d]+\.[\d]{2})"?/,
+    /class="[^"]*f-priceBox-price[^"]*"[^>]*>([\d.,]+)/,
   ];
 
   let price: number | null = null;
-  for (const p of patterns) {
+  for (const p of pricePatterns) {
     const m = html.match(p);
-    if (m) {
-      const v = parseFloat(m[1]);
-      if (!isNaN(v) && v > 0) { price = v; break; }
-    }
+    if (m) { const v = parsePrice(m[1]); if (v) { price = v; break; } }
   }
 
-  const inStock = !/agotado|sin stock|no disponible/i.test(html);
-  return { price, inStock };
+  const oldPatterns = [
+    /class="[^"]*f-priceBox-oldPrice[^"]*"[^>]*>([\d.,]+)/,
+    /"oldPrice"\s*:\s*"?([\d.]+)"?/,
+  ];
+
+  let priceOldRaw: number | null = null;
+  for (const p of oldPatterns) {
+    const m = html.match(p);
+    if (m) { const v = parsePrice(m[1]); if (v) { priceOldRaw = v; break; } }
+  }
+
+  const inStock = /añadir al carrito|comprar/i.test(html)
+    && !/agotado|sin existencias|no disponible/i.test(html);
+
+  const priceOld = price ? sanitizePriceOld(price, priceOldRaw) : null;
+  return { price, priceOld, inStock };
 }
 
+// ── El Corte Inglés ───────────────────────────────────────────────────────────
+
 async function scrapeElCorteIngles(url: string): Promise<ScrapedData> {
-  const res = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(12000) });
+  const res  = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(12000) });
   const html = await res.text();
 
-  const patterns = [
+  const pricePatterns = [
     /"price"\s*:\s*"?([\d]+\.[\d]{2})"?/,
     /itemprop="price"[^>]*content="([\d.]+)"/,
     /"sellingPrice"\s*:\s*([\d.]+)/,
   ];
 
   let price: number | null = null;
-  for (const p of patterns) {
+  for (const p of pricePatterns) {
     const m = html.match(p);
-    if (m) {
-      const v = parseFloat(m[1]);
-      if (!isNaN(v) && v > 0) { price = v; break; }
-    }
+    if (m) { const v = parsePrice(m[1]); if (v) { price = v; break; } }
+  }
+
+  const oldPatterns = [
+    /"originalPrice"\s*:\s*([\d.]+)/,
+    /"listPrice"\s*:\s*([\d.]+)/,
+    /class="[^"]*original-price[^"]*"[^>]*>([\d.,]+)/,
+  ];
+
+  let priceOldRaw: number | null = null;
+  for (const p of oldPatterns) {
+    const m = html.match(p);
+    if (m) { const v = parsePrice(m[1]); if (v) { priceOldRaw = v; break; } }
   }
 
   const inStock = /añadir al carrito|comprar/i.test(html)
     && !/agotado|sin existencias/i.test(html);
-  return { price, inStock };
+
+  const priceOld = price ? sanitizePriceOld(price, priceOldRaw) : null;
+  return { price, priceOld, inStock };
 }
+
+// ── Router ────────────────────────────────────────────────────────────────────
 
 async function scrapeOffer(store: string, url: string): Promise<ScrapedData> {
   const s = store.toLowerCase();
-  if (s.includes("amazon"))          return scrapeAmazon(url);
-  if (s.includes("pccomponente"))    return scrapePcComponentes(url);
-  if (s.includes("mediamarkt"))      return scrapeMediaMarkt(url);
-  if (s.includes("corte inglés") || s.includes("eci")) return scrapeElCorteIngles(url);
-  // Fallback genérico — JSON-LD
-  return scrapeAmazon(url);
+  if (s.includes("amazon"))           return scrapeAmazon(url);
+  if (s.includes("pccomponente"))     return scrapePcComponentes(url);
+  if (s.includes("fnac"))             return scrapeFnac(url);
+  if (s.includes("corte") || s.includes("eci")) return scrapeElCorteIngles(url);
+  return scrapeAmazon(url); // fallback
 }
 
-// ── Main ─────────────────────────────────────────────────────────────────────
+// ── Main ──────────────────────────────────────────────────────────────────────
 
 async function main() {
   console.log(`🔍 Iniciando scraper${DRY_RUN ? " (dry-run)" : ""}${STORE_FILTER ? ` · tienda: ${STORE_FILTER}` : ""}\n`);
@@ -239,33 +302,49 @@ async function main() {
     try {
       const data = await scrapeOffer(offer.store, offer.externalUrl);
 
-      const priceChanged = data.price !== null && data.price !== offer.priceCurrent;
+      const newPrice    = data.price ?? offer.priceCurrent;
+      const priceChanged = data.price !== null && Math.abs(data.price - offer.priceCurrent) >= 0.01;
       const stockChanged = data.inStock !== offer.inStock;
 
-      if (!priceChanged && !stockChanged) {
+      // priceOld: usar el scrapeado si lo encontramos; si no, conservar el existente
+      // pero siempre re-validar con sanitizePriceOld por si acaso
+      const newPriceOld = data.priceOld !== null
+        ? data.priceOld                                         // scraped fresh → usar
+        : sanitizePriceOld(newPrice, offer.priceOld ?? null);   // re-validar el existente
+
+      const priceOldChanged = newPriceOld !== (offer.priceOld ?? null);
+
+      // Recalcular discountPercent siempre desde los precios limpios
+      const newDiscountPercent = newPriceOld
+        ? Math.round((1 - newPrice / newPriceOld) * 100)
+        : 0;
+      const discountChanged = newDiscountPercent !== (offer.discountPercent ?? 0);
+
+      if (!priceChanged && !stockChanged && !priceOldChanged && !discountChanged) {
         console.log(`  ✅ Sin cambios  — ${label}`);
         unchanged++;
         await sleep(800 + Math.random() * 400);
         continue;
       }
 
-      const newPrice = data.price ?? offer.priceCurrent;
       const changes: string[] = [];
-      if (priceChanged) changes.push(`precio ${offer.priceCurrent.toFixed(2)} € → ${newPrice.toFixed(2)} €`);
-      if (stockChanged) changes.push(`stock ${offer.inStock ? "✅" : "❌"} → ${data.inStock ? "✅" : "❌"}`);
+      if (priceChanged)    changes.push(`precio ${offer.priceCurrent.toFixed(2)} → ${newPrice.toFixed(2)} €`);
+      if (stockChanged)    changes.push(`stock ${offer.inStock ? "✅" : "❌"} → ${data.inStock ? "✅" : "❌"}`);
+      if (priceOldChanged) changes.push(`priceOld ${offer.priceOld?.toFixed(2) ?? "null"} → ${newPriceOld?.toFixed(2) ?? "null"} €`);
+      if (discountChanged) changes.push(`descuento ${offer.discountPercent ?? 0} → ${newDiscountPercent} %`);
       console.log(`  📈 Cambio       — ${label}: ${changes.join(" | ")}`);
 
       if (!DRY_RUN) {
-        // Actualizar oferta
         await prisma.offer.update({
           where: { id: offer.id },
           data: {
-            priceCurrent: newPrice,
-            inStock: data.inStock,
+            priceCurrent:    newPrice,
+            inStock:         data.inStock,
+            priceOld:        newPriceOld,
+            discountPercent: newDiscountPercent,
           },
         });
 
-        // Registrar en PriceHistory si el precio cambió
         if (priceChanged) {
           await prisma.priceHistory.create({
             data: { productId: offer.productId, store: offer.store, price: newPrice },
@@ -279,7 +358,6 @@ async function main() {
       failed++;
     }
 
-    // Pausa aleatoria para no ser detectados como bot (1.2 – 2.5 s)
     await sleep(1200 + Math.random() * 1300);
   }
 

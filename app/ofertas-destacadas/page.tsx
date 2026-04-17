@@ -9,6 +9,25 @@ import type { Product, Offer } from "@/app/generated/prisma/client";
 
 type ProductWithOffers = Product & { offers: Offer[] };
 
+function realDiscountPercent(p: ProductWithOffers): number {
+  const o = p.offers[0];
+  if (!o?.priceOld || o.priceCurrent >= o.priceOld) return 0;
+  return Math.round((1 - o.priceCurrent / o.priceOld) * 100);
+}
+
+function isRealDeal(p: ProductWithOffers): boolean {
+  const o = p.offers[0];
+  if (!o?.priceOld) return false;
+  const savings = o.priceOld - o.priceCurrent;
+  const ratio   = o.priceOld / o.priceCurrent;
+  return (
+    o.priceCurrent < o.priceOld &&
+    ratio <= 1.40 &&
+    savings >= 3 &&
+    savings / o.priceOld >= 0.03
+  );
+}
+
 async function getFeaturedDeals(orden: string): Promise<ProductWithOffers[]> {
   const products = await prisma.product.findMany({
     include: { offers: { orderBy: { priceCurrent: "asc" } } },
@@ -16,7 +35,8 @@ async function getFeaturedDeals(orden: string): Promise<ProductWithOffers[]> {
     orderBy: { createdAt: "desc" },
   });
 
-  const list = products.filter((p) => p.offers.length > 0);
+  // Solo mostrar productos con descuento verificado (ratio ≤ 1.40)
+  const list = products.filter(isRealDeal);
 
   switch (orden) {
     case "price_asc":
@@ -38,7 +58,7 @@ async function getFeaturedDeals(orden: string): Promise<ProductWithOffers[]> {
       list.sort((a, b) => b.offers.length - a.offers.length);
       break;
     default: // discount_desc
-      list.sort((a, b) => (b.offers[0]?.discountPercent ?? 0) - (a.offers[0]?.discountPercent ?? 0));
+      list.sort((a, b) => realDiscountPercent(b) - realDiscountPercent(a));
   }
 
   return list.slice(0, 12);

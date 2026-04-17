@@ -73,8 +73,13 @@ function RankBadge({ rank }: { rank: number }) {
 
 export function PopularCard({ product, rank }: { product: Product; rank: number }) {
   const [open, setOpen] = useState(false);
-  const best     = product.offers[0];
+  const best = product.offers[0];
   const savings  = best?.priceOld && best.priceCurrent < best.priceOld ? best.priceOld - best.priceCurrent : null;
+  const realDiscount = best?.priceOld != null &&
+    best.priceCurrent < best.priceOld &&
+    best.priceOld / best.priceCurrent <= 1.40
+    ? Math.round((1 - best.priceCurrent / best.priceOld) * 100)
+    : 0;
   const catLabel = CATEGORY_LABELS[product.category] ?? product.category;
   const catEmoji = CATEGORY_EMOJI[product.category] ?? "📦";
   const cardImages = Array.isArray(product.images) && product.images.length > 0
@@ -96,9 +101,9 @@ export function PopularCard({ product, rank }: { product: Product; rank: number 
             <span className="text-5xl">{catEmoji}</span>
           )}
           <RankBadge rank={rank} />
-          {best?.discountPercent && best.discountPercent > 0 && (
+          {realDiscount > 0 && (
             <span className="absolute top-3 right-3 bg-[#EF4444] text-white text-xs font-bold px-2 py-0.5 rounded-lg">
-              -{best.discountPercent}%
+              -{realDiscount}%
             </span>
           )}
         </div>
@@ -143,7 +148,7 @@ export function PopularCard({ product, rank }: { product: Product; rank: number 
                   onClick={(e) => { e.stopPropagation(); window.open(best.externalUrl, "_blank", "noopener,noreferrer"); }}
                   className="text-xs font-bold text-white bg-[#7C3AED] hover:bg-[#6D28D9] px-4 py-2 rounded-xl transition-colors"
                 >
-                  Ver oferta →
+                  Ver en {best.store} →
                 </button>
               </div>
             </>

@@ -57,8 +57,13 @@ function Stars({ rating }: { rating: number }) {
 
 export function CholloCard({ product }: { product: Product }) {
   const [open, setOpen] = useState(false);
-  const best     = product.offers[0];
+  const best = product.offers[0];
   const savings  = best?.priceOld && best.priceCurrent < best.priceOld ? best.priceOld - best.priceCurrent : null;
+  const realDiscount = best?.priceOld != null &&
+    best.priceCurrent < best.priceOld &&
+    best.priceOld / best.priceCurrent <= 1.40
+    ? Math.round((1 - best.priceCurrent / best.priceOld) * 100)
+    : 0;
   const catEmoji = CATEGORY_EMOJI[product.category] ?? "📦";
   const cardImages = Array.isArray(product.images) && product.images.length > 0
     ? product.images : product.image ? [product.image] : [];
@@ -78,10 +83,10 @@ export function CholloCard({ product }: { product: Product }) {
           ) : (
             <span className="text-5xl">{catEmoji}</span>
           )}
-          {/* Discount badge — prominent */}
-          {best?.discountPercent && best.discountPercent > 0 && (
+          {/* Discount badge — solo si hay rebaja real */}
+          {realDiscount > 0 && (
             <span className="absolute top-3 right-3 bg-[#D97706] text-white text-sm font-black px-2.5 py-1 rounded-xl shadow-md">
-              -{best.discountPercent}%
+              -{realDiscount}%
             </span>
           )}
           {/* Savings pill */}
@@ -126,7 +131,7 @@ export function CholloCard({ product }: { product: Product }) {
                   onClick={(e) => { e.stopPropagation(); window.open(best.externalUrl, "_blank", "noopener,noreferrer"); }}
                   className="text-xs font-bold text-white bg-[#D97706] hover:bg-[#B45309] px-4 py-2 rounded-xl transition-colors"
                 >
-                  Ver chollo →
+                  Ver en {best.store} →
                 </button>
               </div>
             </>
