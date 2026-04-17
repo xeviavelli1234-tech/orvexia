@@ -184,6 +184,7 @@ export async function calculateBuySignal(
 function toDb(r: BuySignalResult) {
   return {
     score:       r.score,
+    label:       r.label,
     priceScore:  r.priceScore  ?? 0,
     trendScore:  r.trendScore  ?? 0,
     storeScore:  r.storeScore,
