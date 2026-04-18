@@ -173,12 +173,6 @@ export default async function MejorLavadoraPage() {
             </div>
           </div>
         </div>
-
-        <div className="absolute bottom-0 left-0 right-0 leading-none">
-          <svg viewBox="0 0 1440 50" fill="none" className="w-full h-12">
-            <path d="M0 50L720 0L1440 50V50H0V50Z" fill="#F8FAFC" />
-          </svg>
-        </div>
       </section>
 
       <div className="max-w-4xl mx-auto px-6 py-14 space-y-20">

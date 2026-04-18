@@ -30,13 +30,22 @@ const NAV = [
       { label: "Crear cuenta", href: "/register" },
     ],
   },
+  {
+    title: "Orvexia",
+    links: [
+      { label: "Sobre nosotros", href: "/sobre-nosotros" },
+      { label: "Aviso legal", href: "/aviso-legal" },
+      { label: "Política de privacidad", href: "/politica-privacidad" },
+      { label: "Politica de cookies", href: "/politica-cookies" },
+    ],
+  },
 ];
 
 export function Footer() {
   return (
     <footer className="bg-[#0F172A] text-white mt-auto" role="contentinfo">
       <div className="max-w-6xl mx-auto px-6 py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10 mb-10">
           <div>
             <Link href="/" className="inline-flex items-center gap-2 mb-4 group" aria-label="Orvexia - Inicio">
               <span
@@ -78,9 +87,6 @@ export function Footer() {
         <div className="border-t border-[#1E293B] pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-[#475569]">© {new Date().getFullYear()} Orvexia. Todos los derechos reservados.</p>
           <div className="flex flex-wrap items-center justify-center gap-3">
-            <Link href="/politica-cookies" className="text-xs text-[#64748B] hover:text-white transition-colors">
-              Politica de cookies
-            </Link>
             <CookieSettingsButton />
             <p className="text-xs text-[#475569]">
               Los precios se actualizan periódicamente. Verifica siempre el precio final en la tienda.

@@ -76,9 +76,13 @@ export function CookieConsentBanner({ initialConsent }: CookieConsentBannerProps
             analitica y publicidad para mejorar contenidos y medir resultados.
           </p>
           <p className="mt-2 text-xs text-[#475569]">
-            Mas informacion en la{" "}
+            Más información en la{" "}
+            <Link href="/politica-privacidad" className="font-semibold text-[#2563EB] hover:underline">
+              política de privacidad
+            </Link>
+            {" "}y la{" "}
             <Link href="/politica-cookies" className="font-semibold text-[#2563EB] hover:underline">
-              politica de cookies
+              política de cookies
             </Link>
             .
           </p>
