@@ -43,9 +43,13 @@ async function calcOne(productId: string, store: string) {
   const historyDays  = cleanHistory.length;
 
   // StoreScore
-  const storeScore = rep
-    ? clamp(Math.round(20 * (1 - rep.manipulationRate)), 0, 20)
-    : 16;
+  const TRUSTED = ["amazon", "pccomponente", "fnac", "corte"];
+  const isTrusted = TRUSTED.some(s => store.toLowerCase().includes(s));
+  const storeScore = isTrusted
+    ? 17
+    : rep
+      ? clamp(Math.round(20 * (1 - rep.manipulationRate)), 0, 20)
+      : 12;
 
   // DealScore
   let dealScore  = 4;
@@ -55,13 +59,13 @@ async function calcOne(productId: string, store: string) {
     const pct      = (offer.priceOld - cur) / offer.priceOld;
     const rawScore = clamp(Math.round(4 + (pct / 0.28) * 11), 4, 15);
 
-    if (historyDays >= 3) {
+    if (historyDays >= 20) {
       const hits = cleanHistory.filter(
-        h => Math.abs(h.price - offer.priceOld!) < offer.priceOld! * 0.03
+        h => Math.abs(h.price - offer.priceOld!) < offer.priceOld! * 0.05
       );
       if (hits.length === 0) {
         isFakeDeal = true;
-        dealScore  = clamp(Math.round(rawScore * 0.5), 2, 7);
+        dealScore  = clamp(Math.round(rawScore * 0.6), 3, 8);
       } else {
         dealScore = rawScore;
       }

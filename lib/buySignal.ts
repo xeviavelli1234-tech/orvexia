@@ -84,10 +84,14 @@ export async function calculateBuySignal(
   const cleanHistory = history.filter(h => h.price >= cur * 0.1 && h.price <= cur * 3.0);
   const historyDays  = cleanHistory.length;
 
-  // ── StoreScore (0-20): siempre real ──────────────────────────────────────
-  const storeScore = rep
-    ? clamp(Math.round(20 * (1 - rep.manipulationRate)), 0, 20)
-    : 16; // Amazon/tiendas conocidas → base 16
+  // ── StoreScore (0-20): tiendas conocidas tienen garantía mínima ─────────
+  const TRUSTED = ["amazon", "pccomponente", "fnac", "corte"];
+  const isTrusted = TRUSTED.some(s => store.toLowerCase().includes(s));
+  const storeScore = isTrusted
+    ? 17  // tiendas verificadas: fijo 17/20
+    : rep
+      ? clamp(Math.round(20 * (1 - rep.manipulationRate)), 0, 20)
+      : 12;
 
   // ── DealScore (0-15): escala lineal según % descuento real ──────────────
   // 0% descuento → 4pts  |  10% → 8pts  |  20% → 12pts  |  ≥28% → 15pts
@@ -98,21 +102,19 @@ export async function calculateBuySignal(
     const pct      = (offer.priceOld - cur) / offer.priceOld;   // 0.0 – 0.28 (cap 1.40)
     const rawScore = clamp(Math.round(4 + (pct / 0.28) * 11), 4, 15);
 
-    if (historyDays >= 3) {
-      // Comprobar si realmente vimos ese precio anterior en nuestro historial
+    // Necesitamos ≥20 entradas de historial para fiarnos de que nunca vimos ese precio
+    if (historyDays >= 20) {
       const hits = cleanHistory.filter(
-        h => Math.abs(h.price - offer.priceOld!) < offer.priceOld! * 0.03
+        h => Math.abs(h.price - offer.priceOld!) < offer.priceOld! * 0.05
       );
       if (hits.length === 0) {
-        // Descuento no verificado en nuestro historial
         isFakeDeal = true;
-        dealScore  = clamp(Math.round(rawScore * 0.5), 2, 7);
+        dealScore  = clamp(Math.round(rawScore * 0.6), 3, 8);
       } else {
-        // Verificado: puntuación completa basada en el % de descuento
         dealScore = rawScore;
       }
     } else {
-      // Sin historial suficiente: damos crédito al descuento (el scraper ya filtró ratios falsos)
+      // Historial corto → confiamos en el scraper (ya filtra ratios inflados)
       dealScore = rawScore;
     }
   }
