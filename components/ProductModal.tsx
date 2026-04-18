@@ -75,6 +75,10 @@ function StoreLogo({ store, logo }: { store: string; logo: { src: string; alt: s
   );
 }
 
+function shouldBypassNextImageOptimization(src: string) {
+  return src.includes("thumb.pccomponentes.com");
+}
+
 const SPEC_PATTERNS: { regex: RegExp; icon: string; label: (m: RegExpMatchArray) => string }[] = [
   { regex: /(\d+)\s*pulgadas/i,           icon: "📐", label: (m) => `${m[1]}"` },
   { regex: /4K UHD/i,                     icon: "🖥️", label: () => "4K UHD" },
@@ -232,6 +236,7 @@ export default function ProductModal({ product, onClose }: Props) {
                       src={src}
                       alt={`${product.name} - ${i + 1}`}
                       fill
+                      unoptimized={shouldBypassNextImageOptimization(src)}
                       className="object-contain p-6"
                       sizes="(max-width: 768px) 100vw, 50vw"
                       priority={i === 0}
@@ -289,6 +294,7 @@ export default function ProductModal({ product, onClose }: Props) {
                     alt={`miniatura ${i + 1}`}
                     width={56}
                     height={56}
+                    unoptimized={shouldBypassNextImageOptimization(src)}
                     className="object-contain w-full h-full p-1"
                   />
                 </button>

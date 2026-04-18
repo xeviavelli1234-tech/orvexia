@@ -58,6 +58,8 @@ export default function ProductCard({ product, priority = false }: Props) {
       : product.image
       ? [product.image]
       : [];
+  const activeCardImage = cardImages[active];
+  const activeCardImageUnoptimized = !!activeCardImage && activeCardImage.includes("thumb.pccomponentes.com");
 
   const mejorOferta = product.offers[0];
   // Descuento real: calculado desde los precios actuales y con cap de ratio para
@@ -113,9 +115,10 @@ export default function ProductCard({ product, priority = false }: Props) {
           {cardImages.length > 0 ? (
             <Image
               key={cardImages[active]}
-              src={cardImages[active]}
+              src={activeCardImage}
               alt={product.name}
               fill
+              unoptimized={activeCardImageUnoptimized}
               priority={priority}
               loading={priority ? "eager" : "lazy"}
               sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"

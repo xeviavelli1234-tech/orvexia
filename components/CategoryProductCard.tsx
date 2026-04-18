@@ -42,6 +42,10 @@ function formatPrice(n: number) {
   return new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(n);
 }
 
+function shouldBypassNextImageOptimization(src: string) {
+  return src.includes("thumb.pccomponentes.com");
+}
+
 export function CategoryProductCard({ product, catColor, catIcon }: Props) {
   const [open, setOpen] = useState(false);
   const saneOffers = product.offers.filter(
@@ -49,6 +53,7 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
   );
   const oferta = saneOffers[0] ?? product.offers[0];
   const thumb  = product.images?.[0] ?? product.image;
+  const thumbUnoptimized = !!thumb && shouldBypassNextImageOptimization(thumb);
 
   return (
     <>
@@ -65,6 +70,7 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
               src={thumb}
               alt={product.name}
               fill
+              unoptimized={thumbUnoptimized}
               className="object-contain p-3"
               sizes="112px"
             />
