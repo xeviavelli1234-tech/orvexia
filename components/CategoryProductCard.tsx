@@ -35,13 +35,19 @@ interface Props {
   catIcon: string;
 }
 
+const MIN_REASONABLE_PRICE = 20;
+const MAX_REASONABLE_PRICE = 5000;
+
 function formatPrice(n: number) {
   return new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(n);
 }
 
 export function CategoryProductCard({ product, catColor, catIcon }: Props) {
   const [open, setOpen] = useState(false);
-  const oferta = product.offers[0];
+  const saneOffers = product.offers.filter(
+    (o) => o.priceCurrent >= MIN_REASONABLE_PRICE && o.priceCurrent <= MAX_REASONABLE_PRICE
+  );
+  const oferta = saneOffers[0] ?? product.offers[0];
   const thumb  = product.images?.[0] ?? product.image;
 
   return (
@@ -67,7 +73,7 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
               {catIcon}
             </div>
           )}
-          {oferta?.discountPercent && (
+          {typeof oferta?.discountPercent === "number" && oferta.discountPercent > 0 && (
             <span className="absolute top-2 left-2 bg-[#EF4444] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md">
               -{oferta.discountPercent}%
             </span>
@@ -112,9 +118,9 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
                   Ver →
                 </span>
               </div>
-              {product.offers.length > 1 && (
+              {saneOffers.length > 1 && (
                 <div className="flex flex-wrap gap-1 mt-0.5">
-                  {product.offers.slice(0, 4).map((o) => (
+                  {saneOffers.slice(0, 4).map((o) => (
                     <span
                       key={o.store}
                       className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${

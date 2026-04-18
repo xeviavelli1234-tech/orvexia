@@ -3,6 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { Category } from "@/app/generated/prisma/client";
 import CategoryClient from "./CategoryClient";
 
+const MIN_REASONABLE_PRICE = 20;
+const MAX_REASONABLE_PRICE = 5000;
+
 const CATEGORY_META: Record<string, {
   key: Category; label: string; icon: string;
   color: string; bg: string; gradient: string; desc: string;
@@ -118,8 +121,20 @@ const CATEGORY_CONTENT: Record<string, {
 
 async function getProducts(category: Category) {
   return prisma.product.findMany({
-    where: { category },
-    include: { offers: { orderBy: { priceCurrent: "asc" } } },
+    where: {
+      category,
+      offers: {
+        some: {
+          priceCurrent: { gte: MIN_REASONABLE_PRICE, lte: MAX_REASONABLE_PRICE },
+        },
+      },
+    },
+    include: {
+      offers: {
+        where: { priceCurrent: { gte: MIN_REASONABLE_PRICE, lte: MAX_REASONABLE_PRICE } },
+        orderBy: { priceCurrent: "asc" },
+      },
+    },
     orderBy: { createdAt: "desc" },
   });
 }

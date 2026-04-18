@@ -24,6 +24,7 @@ const STORE_FILTER = process.argv.slice(2).find(a => !a.startsWith("--"))?.toLow
 // Máximo ratio priceOld/priceCurrent para considerarlo un descuento real
 // (> 1.40 = Amazon PVPR inflado, no es una rebaja real)
 const MAX_DISCOUNT_RATIO = 1.40;
+const MAX_PRICE_JUMP_RATIO = 3.0; // evita outliers de scraping (ej. céntimos como euros)
 
 // ── Cabeceras realistas ───────────────────────────────────────────────────────
 const HEADERS: Record<string, string> = {
@@ -103,7 +104,6 @@ async function scrapeAmazon(url: string): Promise<ScrapedData> {
     /id="priceblock_dealprice"[^>]*>\s*[\d.,]+\s*([\d.,]+)\s*€/,
     /id="priceblock_ourprice"[^>]*>\s*([\d.,]+)\s*€/,
     /class="a-price-whole"[^>]*>([\d.]+)<.*?class="a-price-fraction"[^>]*>([\d]+)/,
-    /"buyingPrice"\s*:\s*([\d.]+)/,
     /corePriceDisplay[\s\S]{0,300}"displayPrice"\s*:\s*"([\d,.]+)\s*€"/,
   ];
 
@@ -323,8 +323,21 @@ async function main() {
     try {
       const data = await scrapeOffer(offer.store, offer.externalUrl);
 
-      const newPrice    = data.price ?? offer.priceCurrent;
-      const priceChanged = data.price !== null && Math.abs(data.price - offer.priceCurrent) >= 0.01;
+      const isOutlierPrice =
+        data.price !== null &&
+        (data.price > offer.priceCurrent * MAX_PRICE_JUMP_RATIO ||
+          data.price < offer.priceCurrent / MAX_PRICE_JUMP_RATIO);
+
+      const safeScrapedPrice = isOutlierPrice ? null : data.price;
+
+      if (isOutlierPrice) {
+        console.log(
+          `  ⚠️ Outlier precio — ${label}: scrape ${data.price!.toFixed(2)} € ignorado (actual ${offer.priceCurrent.toFixed(2)} €)`
+        );
+      }
+
+      const newPrice    = safeScrapedPrice ?? offer.priceCurrent;
+      const priceChanged = safeScrapedPrice !== null && Math.abs(safeScrapedPrice - offer.priceCurrent) >= 0.01;
       const stockChanged = data.inStock !== offer.inStock;
 
       // priceOld: usar el scrapeado si lo encontramos; si no, conservar el existente

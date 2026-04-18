@@ -5,6 +5,9 @@ import { prisma } from "@/lib/prisma";
 import { Category } from "@/app/generated/prisma/client";
 import { CategoryProductCard } from "@/components/CategoryProductCard";
 
+const MIN_REASONABLE_PRICE = 20;
+const MAX_REASONABLE_PRICE = 5000;
+
 const CATEGORIES: {
   key: Category;
   label: string;
@@ -116,8 +119,20 @@ async function getCategoriasData() {
   const topProductsPerCat = await Promise.all(
     counts.map((c) =>
       prisma.product.findMany({
-        where: { category: c.category },
-        include: { offers: { orderBy: { priceCurrent: "asc" } } },
+        where: {
+          category: c.category,
+          offers: {
+            some: {
+              priceCurrent: { gte: MIN_REASONABLE_PRICE, lte: MAX_REASONABLE_PRICE },
+            },
+          },
+        },
+        include: {
+          offers: {
+            where: { priceCurrent: { gte: MIN_REASONABLE_PRICE, lte: MAX_REASONABLE_PRICE } },
+            orderBy: { priceCurrent: "asc" },
+          },
+        },
         orderBy: { createdAt: "desc" },
         take: 3,
       })

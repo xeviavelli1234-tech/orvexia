@@ -34,6 +34,47 @@ interface Props {
   onClose: () => void;
 }
 
+function getStoreLogo(store: string): { src: string; alt: string } | null {
+  const normalized = store.toLowerCase();
+
+  if (normalized.includes("pccomponente")) {
+    return {
+      src: "/logos/pccomponentes.png",
+      alt: "PcComponentes",
+    };
+  }
+
+  if (normalized.includes("amazon")) {
+    return {
+      src: "https://images.icon-icons.com/836/PNG/512/Amazon_icon-icons.com_66787.png",
+      alt: "Amazon",
+    };
+  }
+
+  return null;
+}
+
+function StoreLogo({ store, logo }: { store: string; logo: { src: string; alt: string } | null }) {
+  const [failed, setFailed] = useState(false);
+
+  if (!logo || failed) {
+    return (
+      <span className="inline-flex items-center justify-center w-6 h-6 rounded-sm bg-[#EFF6FF] text-[#1D4ED8] text-[10px] font-bold">
+        {store.slice(0, 2).toUpperCase()}
+      </span>
+    );
+  }
+
+  return (
+    <img
+      src={logo.src}
+      alt={logo.alt}
+      className="w-6 h-6 object-contain rounded-sm"
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
 const SPEC_PATTERNS: { regex: RegExp; icon: string; label: (m: RegExpMatchArray) => string }[] = [
   { regex: /(\d+)\s*pulgadas/i,           icon: "📐", label: (m) => `${m[1]}"` },
   { regex: /4K UHD/i,                     icon: "🖥️", label: () => "4K UHD" },
@@ -143,6 +184,7 @@ export default function ProductModal({ product, onClose }: Props) {
   }, []);
 
   const mejorOferta = product.offers[0];
+  const storeLogo = mejorOferta ? getStoreLogo(mejorOferta.store) : null;
 
   return (
     <div
@@ -362,7 +404,7 @@ export default function ProductModal({ product, onClose }: Props) {
             {mejorOferta && (
               <div className="flex items-center justify-between pt-2 border-t border-[#E5F0FF]">
                 <div className="flex items-center gap-2">
-                  <img src="https://images.icon-icons.com/836/PNG/512/Amazon_icon-icons.com_66787.png" alt="Amazon" className="w-6 h-6 object-contain" />
+                  <StoreLogo store={mejorOferta.store} logo={storeLogo} />
                   <span className="text-sm font-medium text-[#0F172A]">{mejorOferta.store}</span>
                 </div>
                 <a

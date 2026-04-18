@@ -106,7 +106,7 @@ export default function ProductCard({ product, priority = false }: Props) {
   return (
     <>
       <div
-        className="group rounded-xl overflow-hidden bg-white border border-[#E5F0FF] hover:shadow-md hover:border-[#2563EB]/30 transition-all duration-200 cursor-pointer"
+        className="group h-full rounded-xl overflow-hidden bg-white border border-[#E5F0FF] hover:shadow-md hover:border-[#2563EB]/30 transition-all duration-200 cursor-pointer flex flex-col"
         onClick={handleOpen}
       >
         <div className="relative h-48 bg-[#F8FBFF]">
@@ -174,7 +174,7 @@ export default function ProductCard({ product, priority = false }: Props) {
         </div>
 
         {/* Info */}
-        <div className="p-4">
+        <div className="p-4 flex flex-col flex-1">
           <div className="flex items-center justify-between mb-1">
             <p className="text-xs text-[#64748B]">
               <span className="font-semibold text-[#2563EB]">{product.brand}</span>
@@ -220,7 +220,7 @@ export default function ProductCard({ product, priority = false }: Props) {
                   discountPercent={realDiscount}
                 />
               </div>
-              <div className="flex items-center justify-between gap-2">
+              <div className="mt-auto flex items-center justify-between gap-2">
                 <Link
                   href={`/productos/${product.slug}`}
                   onClick={(e) => e.stopPropagation()}
