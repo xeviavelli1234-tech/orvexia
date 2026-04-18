@@ -202,11 +202,15 @@ async function scrapePcComponentes(url: string): Promise<ScrapedData> {
     if (m) { const v = parsePrice(m[1]); if (v) { priceOldRaw = v; break; } }
   }
 
-  // JSON-LD (schema.org) is most reliable — check it first
+  // JSON-LD first; PcC usa "Añadir al carro" y "Avísame" para sin stock
   const ldAvailPcc = html.match(/"availability"\s*:\s*"([^"]{3,80})"/)?.[1] ?? "";
+  const pccOOS = /avísame cuando esté disponible|sin stock en tienda/i.test(html)
+    || /"availability"\s*:\s*"(?:OutOfStock|Discontinued)/i.test(html)
+    || /class="[^"]*(?:sin-stock|out-of-stock)[^"]*"/i.test(html);
+  // Default optimista: en stock salvo señal explícita de agotado
   const inStock = ldAvailPcc
     ? /instock/i.test(ldAvailPcc)
-    : /Añadir al carrito/i.test(html) && !/"(?:stock|availability)"\s*:\s*"(?:OutOfStock|sin stock|agotado)/i.test(html);
+    : !pccOOS;
 
   const priceOld = price ? sanitizePriceOld(price, priceOldRaw) : null;
   return { price, priceOld, inStock };
