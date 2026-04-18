@@ -12,6 +12,7 @@ interface Offer {
   discountPercent: number | null;
   externalUrl: string;
   inStock?: boolean;
+  updatedAt?: Date | string;
 }
 
 interface Product {
@@ -90,6 +91,8 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
                 store={oferta.store}
                 category={product.category}
                 discountPercent={oferta.discountPercent}
+                updatedAt={oferta.updatedAt}
+                externalUrl={oferta.externalUrl}
               />
               <div className="flex items-center justify-between">
                 <div>
@@ -109,6 +112,22 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
                   Ver →
                 </span>
               </div>
+              {product.offers.length > 1 && (
+                <div className="flex flex-wrap gap-1 mt-0.5">
+                  {product.offers.slice(0, 4).map((o) => (
+                    <span
+                      key={o.store}
+                      className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${
+                        o.store === oferta.store
+                          ? "bg-[#EFF6FF] border-[#BFDBFE] text-[#1D4ED8]"
+                          : "bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B]"
+                      }`}
+                    >
+                      {o.store} {formatPrice(o.priceCurrent)}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           ) : (
             <p className="mt-2 text-xs text-[#94A3B8]">Sin oferta</p>

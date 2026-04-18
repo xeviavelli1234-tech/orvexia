@@ -59,7 +59,15 @@ interface ScrapedData {
 
 // ── Helper: parsear un string de precio ──────────────────────────────────────
 function parsePrice(raw: string): number | null {
-  const v = parseFloat(raw.replace(/\./g, "").replace(",", "."));
+  let normalized: string;
+  // JSON decimal format ("483.00", "379.99") — dot is the decimal separator
+  if (/^\d+\.\d{1,2}$/.test(raw.trim())) {
+    normalized = raw.trim();
+  } else {
+    // European HTML format ("4.099,00" or "4.099") — dot is thousands separator
+    normalized = raw.replace(/\./g, "").replace(",", ".");
+  }
+  const v = parseFloat(normalized);
   return !isNaN(v) && v > 0 && v < 100_000 ? v : null;
 }
 
@@ -147,9 +155,11 @@ async function scrapeAmazon(url: string): Promise<ScrapedData> {
   ];
   const inStockSignals = [
     /añadir al carrito/i,
+    /añadir a la cesta/i,
     /add to cart/i,
     /"availability"\s*:\s*"InStock"/i,
     /id="add-to-cart-button"/i,
+    /id="buy-now-button"/i,
   ];
 
   const hasOutOfStock = outOfStockSignals.some(p => p.test(html));
@@ -192,8 +202,11 @@ async function scrapePcComponentes(url: string): Promise<ScrapedData> {
     if (m) { const v = parsePrice(m[1]); if (v) { priceOldRaw = v; break; } }
   }
 
-  const inStock = !/sin stock|agotado|no disponible/i.test(html)
-    && (/"availability"\s*:\s*"InStock"/i.test(html) || /Añadir al carrito/i.test(html));
+  // JSON-LD (schema.org) is most reliable — check it first
+  const ldAvailPcc = html.match(/"availability"\s*:\s*"([^"]{3,80})"/)?.[1] ?? "";
+  const inStock = ldAvailPcc
+    ? /instock/i.test(ldAvailPcc)
+    : /Añadir al carrito/i.test(html) && !/"(?:stock|availability)"\s*:\s*"(?:OutOfStock|sin stock|agotado)/i.test(html);
 
   const priceOld = price ? sanitizePriceOld(price, priceOldRaw) : null;
   return { price, priceOld, inStock };
@@ -228,8 +241,10 @@ async function scrapeFnac(url: string): Promise<ScrapedData> {
     if (m) { const v = parsePrice(m[1]); if (v) { priceOldRaw = v; break; } }
   }
 
-  const inStock = /añadir al carrito|comprar/i.test(html)
-    && !/agotado|sin existencias|no disponible/i.test(html);
+  const ldAvailFnac = html.match(/"availability"\s*:\s*"([^"]{3,80})"/)?.[1] ?? "";
+  const inStock = ldAvailFnac
+    ? /instock/i.test(ldAvailFnac)
+    : /añadir al carrito|comprar ahora/i.test(html) && !/class="[^"]*(?:out-of-stock|sin-stock|agotado)[^"]*"/i.test(html);
 
   const priceOld = price ? sanitizePriceOld(price, priceOldRaw) : null;
   return { price, priceOld, inStock };
@@ -265,8 +280,10 @@ async function scrapeElCorteIngles(url: string): Promise<ScrapedData> {
     if (m) { const v = parsePrice(m[1]); if (v) { priceOldRaw = v; break; } }
   }
 
-  const inStock = /añadir al carrito|comprar/i.test(html)
-    && !/agotado|sin existencias/i.test(html);
+  const ldAvailEci = html.match(/"availability"\s*:\s*"([^"]{3,80})"/)?.[1] ?? "";
+  const inStock = ldAvailEci
+    ? /instock/i.test(ldAvailEci)
+    : /añadir al carrito|comprar/i.test(html) && !/class="[^"]*(?:out-of-stock|sin-stock|agotado)[^"]*"/i.test(html);
 
   const priceOld = price ? sanitizePriceOld(price, priceOldRaw) : null;
   return { price, priceOld, inStock };
