@@ -28,7 +28,7 @@ interface SearchResult {
   offers: { priceCurrent: number; discountPercent: number | null }[];
 }
 
-function SearchInput() {
+function SearchInput({ onNavigate }: { onNavigate?: () => void }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -80,6 +80,7 @@ function SearchInput() {
   function navigate(q: string) {
     setOpen(false);
     setHighlighted(-1);
+    onNavigate?.();
     router.push(`/buscar?q=${encodeURIComponent(q)}`);
   }
 
@@ -236,10 +237,10 @@ function SearchInput() {
   );
 }
 
-export function HeaderSearch() {
+export function HeaderSearch({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <Suspense fallback={null}>
-      <SearchInput />
+      <SearchInput onNavigate={onNavigate} />
     </Suspense>
   );
 }

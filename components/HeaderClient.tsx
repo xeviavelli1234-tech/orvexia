@@ -104,6 +104,16 @@ export function HeaderClient({
     return () => document.removeEventListener("keydown", handler);
   }, [mobileOpen, mobileSearchOpen]);
 
+  // Prevent background scroll while mobile search/menu is open
+  useEffect(() => {
+    if (!mobileOpen && !mobileSearchOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [mobileOpen, mobileSearchOpen]);
+
   // Close profile dropdown on Escape or click-outside
   useEffect(() => {
     if (!profileOpen) return;
@@ -174,7 +184,7 @@ export function HeaderClient({
           </div>
 
           {/* Desktop Auth */}
-          <nav className="hidden sm:flex items-center gap-2 shrink-0" aria-label="Cuenta de usuario">
+          <nav className="hidden md:flex items-center gap-2 shrink-0" aria-label="Cuenta de usuario">
             {isLoggedIn ? (
               <>
                 {/* Avatar dropdown */}
@@ -306,7 +316,7 @@ export function HeaderClient({
       {mobileSearchOpen && (
         <div id="mobile-header-search" className="md:hidden sticky top-16 z-30 bg-white border-b border-[#E2E8F0] px-3 py-2.5">
           <div className="max-w-5xl mx-auto w-full">
-            <HeaderSearch />
+            <HeaderSearch onNavigate={() => setMobileSearchOpen(false)} />
           </div>
         </div>
       )}
@@ -315,13 +325,13 @@ export function HeaderClient({
       {mobileOpen && (
         <>
           <div
-            className="sm:hidden fixed inset-0 top-16 z-30 bg-black/20"
+            className="md:hidden fixed inset-0 top-16 z-30 bg-black/20"
             onClick={() => setMobileOpen(false)}
             aria-hidden="true"
           />
           <div
             id="mobile-menu"
-            className="sm:hidden fixed left-0 right-0 top-16 z-40 bg-white border-t border-[#E2E8F0] shadow-xl overflow-y-auto max-h-[calc(100vh-4rem)]"
+            className="md:hidden fixed left-0 right-0 top-16 z-40 bg-white border-t border-[#E2E8F0] shadow-xl overflow-y-auto max-h-[calc(100vh-4rem)]"
             role="dialog"
             aria-modal="true"
             aria-label="Menú de navegación"
