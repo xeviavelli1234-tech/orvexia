@@ -62,12 +62,16 @@ export default function ProductCard({ product, priority = false }: Props) {
   const activeCardImageUnoptimized = !!activeCardImage && activeCardImage.includes("thumb.pccomponentes.com");
 
   const mejorOferta = product.offers[0];
+  const ctaStoreName =
+    mejorOferta?.store?.toLowerCase().includes("pccomponente")
+      ? "PcComp."
+      : mejorOferta?.store ?? "tienda";
   // Descuento real: calculado desde los precios actuales y con cap de ratio para
   // descartar MSRPs inflados de Amazon (ratio > 1.40 = descuento irreal)
   const realDiscount =
     mejorOferta?.priceOld != null &&
     mejorOferta.priceCurrent < mejorOferta.priceOld &&
-    mejorOferta.priceOld / mejorOferta.priceCurrent <= 1.40
+    mejorOferta.priceOld / mejorOferta.priceCurrent <= 2.1
       ? Math.round((1 - mejorOferta.priceCurrent / mejorOferta.priceOld) * 100)
       : 0;
 
@@ -236,9 +240,9 @@ export default function ProductCard({ product, priority = false }: Props) {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={(e) => e.stopPropagation()}
-                  className="text-xs font-semibold text-white bg-[#2563EB] hover:bg-[#1D4ED8] px-3 py-1.5 rounded-lg transition-colors shadow-sm shadow-blue-200"
+                  className="inline-flex items-center gap-1 whitespace-nowrap text-xs font-semibold text-white bg-[#2563EB] hover:bg-[#1D4ED8] px-3 py-1.5 rounded-lg transition-colors shadow-sm shadow-blue-200"
                 >
-                  Ver en {mejorOferta.store} →
+                  Ver en {ctaStoreName} →
                 </a>
               </div>
             </>

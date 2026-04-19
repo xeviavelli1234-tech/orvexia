@@ -69,6 +69,7 @@ export default function CategoryClient({ products, meta, content }: { products: 
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [selectedTechs, setSelectedTechs] = useState<string[]>([]);
   const [selectedOS, setSelectedOS] = useState<string[]>([]);
+  const [selectedStores, setSelectedStores] = useState<string[]>([]);
   const [maxPrice, setMaxPrice] = useState<number>(9999);
   const [minRating, setMinRating] = useState<number>(0);
   const [onlyDiscount, setOnlyDiscount] = useState(false);
@@ -80,6 +81,7 @@ export default function CategoryClient({ products, meta, content }: { products: 
   const brands = useMemo(() => [...new Set(enriched.map((p) => p.brand))].sort(), [enriched]);
   const techs = useMemo(() => [...new Set(enriched.map((p) => p.specs.tech).filter(Boolean))] as string[], [enriched]);
   const osList = useMemo(() => [...new Set(enriched.map((p) => p.specs.os).filter(Boolean))] as string[], [enriched]);
+  const stores = useMemo(() => [...new Set(enriched.flatMap((p) => p.offers.map((o) => o.store)))].sort(), [enriched]);
 
   const prices = enriched.flatMap((p) => p.offers.map((o) => o.priceCurrent)).filter(Boolean);
   const globalMin = prices.length ? Math.floor(Math.min(...prices) / 10) * 10 : 0;
@@ -93,6 +95,7 @@ export default function CategoryClient({ products, meta, content }: { products: 
       if (selectedBrands.length && !selectedBrands.includes(p.brand)) return false;
       if (selectedTechs.length && !selectedTechs.includes(p.specs.tech ?? "")) return false;
       if (selectedOS.length && !selectedOS.includes(p.specs.os ?? "")) return false;
+      if (selectedStores.length && !p.offers.some((o) => selectedStores.includes(o.store))) return false;
       if (maxPrice < globalMax && price > maxPrice) return false;
       if (minRating > 0 && (p.rating ?? 0) < minRating) return false;
       if (onlyDiscount && !oferta?.discountPercent) return false;
@@ -107,7 +110,7 @@ export default function CategoryClient({ products, meta, content }: { products: 
       if (sort === "valoracion") return (b.rating ?? 0) - (a.rating ?? 0);
       return 0;
     });
-  }, [enriched, search, selectedBrands, selectedTechs, selectedOS, maxPrice, minRating, onlyDiscount, sort, globalMin, globalMax]);
+  }, [enriched, search, selectedBrands, selectedTechs, selectedOS, selectedStores, maxPrice, minRating, onlyDiscount, sort, globalMin, globalMax]);
 
   function toggle<T>(arr: T[], val: T, set: (v: T[]) => void) {
     set(arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val]);
@@ -115,10 +118,10 @@ export default function CategoryClient({ products, meta, content }: { products: 
 
   function clearAll() {
     setSearch(""); setSelectedBrands([]); setSelectedTechs([]);
-    setSelectedOS([]); setMaxPrice(9999); setMinRating(0); setOnlyDiscount(false);
+    setSelectedOS([]); setSelectedStores([]); setMaxPrice(9999); setMinRating(0); setOnlyDiscount(false);
   }
 
-  const activeCount = selectedBrands.length + selectedTechs.length + selectedOS.length +
+  const activeCount = selectedBrands.length + selectedTechs.length + selectedOS.length + selectedStores.length +
     (maxPrice < globalMax ? 1 : 0) + (minRating > 0 ? 1 : 0) + (onlyDiscount ? 1 : 0);
 
   const sidebarJSX = (
@@ -150,6 +153,29 @@ export default function CategoryClient({ products, meta, content }: { products: 
           ))}
         </div>
       </div>
+
+      {/* Tienda */}
+      {stores.length > 1 && (
+        <div>
+          <p className="text-xs font-bold text-[#475569] uppercase tracking-wider mb-3">Tienda</p>
+          <div className="space-y-2">
+            {stores.map((s) => (
+              <label key={s} className="flex items-center gap-2.5 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={selectedStores.includes(s)}
+                  onChange={() => toggle(selectedStores, s, setSelectedStores)}
+                  className="w-4 h-4 rounded border-[#CBD5E1] accent-[#2563EB]"
+                />
+                <span className="text-sm text-[#374151] group-hover:text-[#0F172A] flex-1">{s}</span>
+                <span className="text-[11px] text-[#94A3B8]">
+                  {enriched.filter((p) => p.offers.some((o) => o.store === s)).length}
+                </span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Precio */}
       <div>

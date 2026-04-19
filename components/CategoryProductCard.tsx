@@ -46,6 +46,13 @@ function shouldBypassNextImageOptimization(src: string) {
   return src.includes("thumb.pccomponentes.com");
 }
 
+function getRealDiscountPercent(offer: Offer | undefined): number {
+  if (!offer?.priceOld) return 0;
+  if (offer.priceCurrent >= offer.priceOld) return 0;
+  if (offer.priceOld / offer.priceCurrent > 2.1) return 0; // descarta PVPR inflado
+  return Math.round((1 - offer.priceCurrent / offer.priceOld) * 100);
+}
+
 export function CategoryProductCard({ product, catColor, catIcon }: Props) {
   const [open, setOpen] = useState(false);
   const saneOffers = product.offers.filter(
@@ -54,6 +61,8 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
   const oferta = saneOffers[0] ?? product.offers[0];
   const thumb  = product.images?.[0] ?? product.image;
   const thumbUnoptimized = !!thumb && shouldBypassNextImageOptimization(thumb);
+  const realDiscount = getRealDiscountPercent(oferta);
+  const showOldPrice = !!oferta?.priceOld && realDiscount > 0;
 
   return (
     <>
@@ -79,9 +88,9 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
               {catIcon}
             </div>
           )}
-          {typeof oferta?.discountPercent === "number" && oferta.discountPercent > 0 && (
+          {realDiscount > 0 && (
             <span className="absolute top-2 left-2 bg-[#EF4444] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md">
-              -{oferta.discountPercent}%
+              -{realDiscount}%
             </span>
           )}
         </div>
@@ -102,7 +111,7 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
                 productId={product.id}
                 store={oferta.store}
                 category={product.category}
-                discountPercent={oferta.discountPercent}
+                discountPercent={realDiscount}
                 updatedAt={oferta.updatedAt}
                 externalUrl={oferta.externalUrl}
               />
@@ -111,9 +120,9 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
                   <span className="text-lg font-extrabold text-[#0F172A]">
                     {formatPrice(oferta.priceCurrent)}
                   </span>
-                  {oferta.priceOld && (
+                  {showOldPrice && (
                     <span className="ml-1.5 text-xs text-[#94A3B8] line-through">
-                      {formatPrice(oferta.priceOld)}
+                      {formatPrice(oferta.priceOld!)}
                     </span>
                   )}
                 </div>

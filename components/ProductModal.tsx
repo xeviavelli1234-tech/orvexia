@@ -34,6 +34,13 @@ interface Props {
   onClose: () => void;
 }
 
+function getRealDiscountPercent(priceCurrent: number, priceOld: number | null): number {
+  if (!priceOld) return 0;
+  if (priceCurrent >= priceOld) return 0;
+  if (priceOld / priceCurrent > 2.1) return 0; // descarta PVPR inflado
+  return Math.round((1 - priceCurrent / priceOld) * 100);
+}
+
 function getStoreLogo(store: string): { src: string; alt: string } | null {
   const normalized = store.toLowerCase();
 
@@ -189,6 +196,9 @@ export default function ProductModal({ product, onClose }: Props) {
 
   const mejorOferta = product.offers[0];
   const storeLogo = mejorOferta ? getStoreLogo(mejorOferta.store) : null;
+  const realDiscount = mejorOferta
+    ? getRealDiscountPercent(mejorOferta.priceCurrent, mejorOferta.priceOld)
+    : 0;
 
   return (
     <div
@@ -353,13 +363,13 @@ export default function ProductModal({ product, onClose }: Props) {
               <div className="flex items-end gap-3 py-3 border-t border-b border-[#E5F0FF]">
                 <span className="text-3xl font-bold text-[#0F172A]">{mejorOferta.priceCurrent.toFixed(2)} €</span>
                 {mejorOferta.priceOld != null && mejorOferta.priceOld > mejorOferta.priceCurrent &&
-                  mejorOferta.priceOld / mejorOferta.priceCurrent <= 1.40 && (
+                  mejorOferta.priceOld / mejorOferta.priceCurrent <= 2.1 && (
                   <span className="text-base text-[#94A3B8] line-through mb-0.5">{mejorOferta.priceOld.toFixed(2)} €</span>
                 )}
-                {(mejorOferta.discountPercent ?? 0) > 0 &&
-                  mejorOferta.priceOld != null && mejorOferta.priceOld / mejorOferta.priceCurrent <= 1.40 && (
+                {realDiscount > 0 &&
+                  mejorOferta.priceOld != null && (
                   <span className="mb-0.5 px-2 py-0.5 bg-[#EFF6FF] text-[#2563EB] text-xs font-bold rounded-lg">
-                    -{mejorOferta.discountPercent}%
+                    -{realDiscount}%
                   </span>
                 )}
               </div>
@@ -371,6 +381,7 @@ export default function ProductModal({ product, onClose }: Props) {
                 productId={product.id}
                 store={mejorOferta.store}
                 category={product.category}
+                discountPercent={realDiscount}
               />
             )}
 
@@ -408,19 +419,29 @@ export default function ProductModal({ product, onClose }: Props) {
             <div className="flex-1" />
 
             {mejorOferta && (
-              <div className="flex items-center justify-between pt-2 border-t border-[#E5F0FF]">
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-[#E5F0FF]">
                 <div className="flex items-center gap-2">
                   <StoreLogo store={mejorOferta.store} logo={storeLogo} />
                   <span className="text-sm font-medium text-[#0F172A]">{mejorOferta.store}</span>
                 </div>
-                <a
-                  href={mejorOferta.externalUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm"
-                >
-                  Ver en {mejorOferta.store} →
-                </a>
+                <div className="flex items-center gap-2 ml-auto">
+                  {product.slug && (
+                    <a
+                      href={`/productos/${product.slug}`}
+                      className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-sm font-semibold border border-[#CBD5E1] text-[#334155] hover:border-[#94A3B8] hover:bg-[#F8FAFC] transition-colors"
+                    >
+                      Ver análisis
+                    </a>
+                  )}
+                  <a
+                    href={mejorOferta.externalUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm"
+                  >
+                    Ver en {mejorOferta.store} →
+                  </a>
+                </div>
               </div>
             )}
           </div>

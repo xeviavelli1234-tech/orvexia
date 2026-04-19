@@ -1,12 +1,12 @@
-/**
+﻿/**
  * scrape-prices.ts
- * Actualiza precios, precio antiguo real y stock de todas las ofertas en la BD.
- * Soporta: Amazon, PcComponentes, Fnac, El Corte Inglés.
+ * Updates prices, old prices and stock for offers in DB.
+ * Supports: Amazon, PcComponentes, Fnac, El Corte Ingles.
  *
- * Uso:
- *   npx tsx scripts/scrape-prices.ts           ← todas las ofertas
- *   npx tsx scripts/scrape-prices.ts amazon    ← solo Amazon
- *   npx tsx scripts/scrape-prices.ts --dry-run ← muestra cambios sin guardar
+ * Usage:
+ *   npx tsx scripts/scrape-prices.ts
+ *   npx tsx scripts/scrape-prices.ts amazon
+ *   npx tsx scripts/scrape-prices.ts --dry-run
  */
 
 import { PrismaClient } from "../app/generated/prisma/client";
@@ -18,24 +18,39 @@ dotenv.config({ path: ".env.local" });
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
 
-const DRY_RUN    = process.argv.includes("--dry-run");
-const STORE_FILTER = process.argv.slice(2).find(a => !a.startsWith("--"))?.toLowerCase();
+const DRY_RUN = process.argv.includes("--dry-run");
+const STORE_FILTER = process.argv.slice(2).find((a) => !a.startsWith("--"))?.toLowerCase();
 
-// Máximo ratio priceOld/priceCurrent para considerarlo un descuento real
-// (> 1.40 = Amazon PVPR inflado, no es una rebaja real)
-const MAX_DISCOUNT_RATIO = 1.40;
-const MAX_PRICE_JUMP_RATIO = 3.0; // evita outliers de scraping (ej. céntimos como euros)
+// max ratio priceOld/priceCurrent accepted as real discount
+// 2.1 allows up to ~53% off (e.g. Philips 759€ → 379€ = ratio 2.0x)
+const MAX_DISCOUNT_RATIO = 2.1;
+// ignore suspicious jumps from scrape glitches (e.g. cents parsed as euros)
+const MAX_PRICE_JUMP_RATIO = 3.0;
+const AMAZON_MAX_RETRIES = 3;
+const AMAZON_RETRY_BASE_MS = 2500;
+const PCC_MAX_RETRIES = 3;
+const PCC_RETRY_BASE_MS = 2200;
 
-// ── Cabeceras realistas ───────────────────────────────────────────────────────
+const USER_AGENTS = [
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:126.0) Gecko/20100101 Firefox/126.0",
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_6_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+];
+
 const HEADERS: Record<string, string> = {
-  "User-Agent":
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-  "Accept-Language": "es-ES,es;q=0.9",
-  "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-  "Accept-Encoding": "gzip, deflate, br",
+  "User-Agent": USER_AGENTS[0],
+  "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
+  Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
   "Cache-Control": "no-cache",
-  "Pragma": "no-cache",
+  Pragma: "no-cache",
+  "Upgrade-Insecure-Requests": "1",
 };
+
+interface ScrapedData {
+  price: number | null;
+  priceOld: number | null;
+  inStock: boolean;
+}
 
 function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
@@ -43,285 +58,344 @@ function sleep(ms: number) {
 
 async function resolveRedirect(url: string): Promise<string> {
   try {
-    const res = await fetch(url, { method: "HEAD", redirect: "follow", headers: HEADERS, signal: AbortSignal.timeout(8000) });
+    const res = await fetch(url, {
+      method: "HEAD",
+      redirect: "follow",
+      headers: HEADERS,
+      signal: AbortSignal.timeout(8000),
+    });
     return res.url || url;
   } catch {
     return url;
   }
 }
 
-// ── Tipos ─────────────────────────────────────────────────────────────────────
-
-interface ScrapedData {
-  price:    number | null;
-  priceOld: number | null;  // precio tachado real de la tienda (null si no existe)
-  inStock:  boolean;
-}
-
-// ── Helper: parsear un string de precio ──────────────────────────────────────
-function parsePrice(raw: string): number | null {
-  let normalized: string;
-  // JSON decimal format ("483.00", "379.99") — dot is the decimal separator
-  if (/^\d+\.\d{1,2}$/.test(raw.trim())) {
-    normalized = raw.trim();
-  } else {
-    // European HTML format ("4.099,00" or "4.099") — dot is thousands separator
-    normalized = raw.replace(/\./g, "").replace(",", ".");
+async function fetchHtml(url: string): Promise<string> {
+  let referer = "https://www.google.com/";
+  try {
+    const u = new URL(url);
+    referer = `${u.protocol}//${u.host}/`;
+  } catch {
+    // keep default
   }
-  const v = parseFloat(normalized);
-  return !isNaN(v) && v > 0 && v < 100_000 ? v : null;
+
+  const headers = {
+    ...HEADERS,
+    "User-Agent": USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)],
+    Referer: referer,
+  };
+  const res = await fetch(url, { headers, redirect: "follow", signal: AbortSignal.timeout(12000) });
+  return res.text();
 }
 
-/**
- * Valida y limpia el priceOld:
- * - Debe ser mayor que priceCurrent
- * - Ratio ≤ MAX_DISCOUNT_RATIO para que sea creíble
- * - Si no cumple → null
- */
+function isAmazonStore(store: string): boolean {
+  return store.toLowerCase().includes("amazon");
+}
+
+function isAmazonBlockError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /amazon blocked request|captcha|robot check/i.test(message);
+}
+
+function isPcComponentesStore(store: string): boolean {
+  const s = store.toLowerCase();
+  return s.includes("pccomponentes") || s.includes("pccomponente");
+}
+
+function isPcComponentesBlockedHtml(html: string): boolean {
+  return (
+    /just a moment/i.test(html) &&
+    /enable javascript and cookies to continue/i.test(html) &&
+    /cdn-cgi\/challenge-platform/i.test(html)
+  ) || /__cf_chl_|cloudflare/i.test(html);
+}
+
+function isPcComponentesBlockError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /pccomponentes blocked request|cloudflare|just a moment|enable javascript and cookies/i.test(message);
+}
+
+function parsePrice(raw: string): number | null {
+  const cleaned = raw
+    .replace(/&nbsp;|&#160;/gi, " ")
+    .replace(/\u00A0/g, " ")
+    .replace(/[\s]/g, "")
+    .replace(/[€$£]/g, "")
+    .replace(/EUR|USD|GBP/gi, "")
+    .replace(/[^\d,.-]/g, "")
+    .trim();
+
+  if (!cleaned) return null;
+
+  const hasComma = cleaned.includes(",");
+  const hasDot = cleaned.includes(".");
+  let normalized = cleaned;
+
+  if (hasComma && hasDot) {
+    const lastComma = cleaned.lastIndexOf(",");
+    const lastDot = cleaned.lastIndexOf(".");
+
+    if (lastComma > lastDot) {
+      // 1.299,99
+      normalized = cleaned.replace(/\./g, "").replace(",", ".");
+    } else {
+      // 1,299.99
+      normalized = cleaned.replace(/,/g, "");
+    }
+  } else if (hasComma) {
+    // 199,99 or 1,299
+    normalized = /,\d{1,2}$/.test(cleaned) ? cleaned.replace(",", ".") : cleaned.replace(/,/g, "");
+  } else if (hasDot) {
+    // 199.99 or 1.299
+    normalized = /\.\d{1,2}$/.test(cleaned) ? cleaned : cleaned.replace(/\./g, "");
+  }
+
+  const v = Number.parseFloat(normalized);
+  return Number.isFinite(v) && v > 0 && v < 100_000 ? v : null;
+}
+
 function sanitizePriceOld(priceCurrent: number, priceOld: number | null): number | null {
   if (!priceOld || priceOld <= priceCurrent) return null;
   const ratio = priceOld / priceCurrent;
   return ratio <= MAX_DISCOUNT_RATIO ? priceOld : null;
 }
 
-// ── Amazon ────────────────────────────────────────────────────────────────────
+function calculateDiscountPercent(priceCurrent: number, priceOld: number | null): number {
+  if (!priceOld) return 0;
+  return Math.max(0, Math.round((1 - priceCurrent / priceOld) * 100));
+}
+
+function extractFirstPrice(html: string, patterns: RegExp[]): number | null {
+  for (const pattern of patterns) {
+    const match = html.match(pattern);
+    if (!match) continue;
+
+    const raw = match[2] ? `${match[1]}.${match[2]}` : match[1];
+    const value = parsePrice(raw);
+    if (value !== null) return value;
+  }
+  return null;
+}
 
 async function scrapeAmazon(url: string): Promise<ScrapedData> {
   const finalUrl = url.includes("amzn.to") ? await resolveRedirect(url) : url;
-  const res  = await fetch(finalUrl, { headers: HEADERS, signal: AbortSignal.timeout(12000) });
-  const html = await res.text();
+  const html = await fetchHtml(finalUrl);
 
-  // Bloqueo / CAPTCHA
   const isBlocked =
-    /robot check|captcha|automated access|api-services-support@amazon|enter the characters you see/i.test(html) ||
-    (html.length < 5000 && !html.includes("productTitle") && !html.includes("a-price"));
-  if (isBlocked) throw new Error("Amazon bloqueó la petición (CAPTCHA / robot check)");
+    /robot check|captcha|automated access|api-services-support@amazon|enter the characters you see|validatecaptcha/i.test(
+      html
+    ) || (html.length < 5000 && !html.includes("productTitle") && !html.includes("a-price"));
 
-  // ── Precio actual ────────────────────────────────────────────────────────
-  const pricePatterns = [
+  if (isBlocked) throw new Error("Amazon blocked request (captcha/robot check)");
+
+  const price = extractFirstPrice(html, [
     /"priceAmount"\s*:\s*([\d]+\.[\d]{2})/,
     /"price"\s*:\s*"([\d]+\.[\d]{2})"/,
-    /id="priceblock_dealprice"[^>]*>\s*[\d.,]+\s*([\d.,]+)\s*€/,
-    /id="priceblock_ourprice"[^>]*>\s*([\d.,]+)\s*€/,
-    /class="a-price-whole"[^>]*>([\d.]+)<.*?class="a-price-fraction"[^>]*>([\d]+)/,
-    /corePriceDisplay[\s\S]{0,300}"displayPrice"\s*:\s*"([\d,.]+)\s*€"/,
-  ];
+    /id="priceblock_dealprice"[^>]*>\s*([\d.,]+)/,
+    /id="priceblock_ourprice"[^>]*>\s*([\d.,]+)/,
+    /class="a-price-whole"[^>]*>([\d.]+)<[\s\S]*?class="a-price-fraction"[^>]*>([\d]+)/,
+    /corePriceDisplay[\s\S]{0,500}"displayPrice"\s*:\s*"([^"]+)"/,
+    /class="a-offscreen">\s*([^<]{2,30})</,
+  ]);
 
-  let price: number | null = null;
-  for (const pattern of pricePatterns) {
-    const m = html.match(pattern);
-    if (m) {
-      const raw = m[2] ? `${m[1]}.${m[2]}` : m[1];
-      const v = parsePrice(raw);
-      if (v) { price = v; break; }
-    }
-  }
-
-  // ── Precio tachado (priceOld real de Amazon) ─────────────────────────────
-  // Amazon expone el "was price" en varias formas: JSON embebido y HTML tachado.
-  const oldPricePatterns = [
-    // JSON estructurado (más fiable)
+  const priceOldRaw = extractFirstPrice(html, [
     /"basisPrice"\s*:\s*\{[^}]*"amount"\s*:\s*([\d.]+)/,
     /"wasPrice"\s*:\s*\{[^}]*"amount"\s*:\s*([\d.]+)/,
     /"listPrice"\s*:\s*\{[^}]*"amount"\s*:\s*([\d.]+)/,
     /"strikethroughPrice"\s*:\s*\{[^}]*"amount"\s*:\s*([\d.]+)/,
-    // JSON simple
-    /"basisPrice"\s*:\s*"([\d,.]+)\s*€"/,
-    /"wasPrice"\s*:\s*"([\d,.]+)\s*€"/,
-    // HTML tachado
-    /data-a-strike="true"[^>]*>[\s\S]{0,100}>([\d.,]+)\s*€/,
-    /class="[^"]*a-text-price[^"]*"[^>]*data-a-strike="true"[\s\S]{0,200}>([\d.,]+)\s*€/,
-    /id="priceblock_saleprice_label"[\s\S]{0,400}>([\d.,]+)\s*€/,
-    // corePriceDisplay basis
-    /corePriceDisplay[\s\S]{0,1000}"basisPrice"[\s\S]{0,200}"displayPrice"\s*:\s*"([\d,.]+)\s*€"/,
-  ];
+    /"basisPrice"\s*:\s*"([^"]+)"/,
+    /"wasPrice"\s*:\s*"([^"]+)"/,
+    /data-a-strike="true"[^>]*>[\s\S]{0,120}>([^<]{2,30})</,
+    /class="[^"]*a-text-price[^"]*"[^>]*data-a-strike="true"[\s\S]{0,220}>([^<]{2,30})</,
+    /id="priceblock_saleprice_label"[\s\S]{0,450}>([^<]{2,30})</,
+    /corePriceDisplay[\s\S]{0,1200}"basisPrice"[\s\S]{0,300}"displayPrice"\s*:\s*"([^"]+)"/,
+  ]);
 
-  let priceOldRaw: number | null = null;
-  for (const pattern of oldPricePatterns) {
-    const m = html.match(pattern);
-    if (m) {
-      const v = parsePrice(m[1]);
-      if (v) { priceOldRaw = v; break; }
-    }
-  }
-
-  // ── Stock ────────────────────────────────────────────────────────────────
   const outOfStockSignals = [
     /id="outOfStock"/i,
     /"availability"\s*:\s*"OutOfStock"/i,
     /actualmente no disponible/i,
     /temporalmente sin stock/i,
-    /Este producto no está disponible/i,
+    /este producto no est[a\u00E1] disponible/i,
+    /currently unavailable/i,
   ];
+
   const inStockSignals = [
-    /añadir al carrito/i,
-    /añadir a la cesta/i,
+    /a(?:n|\u00F1)adir al carrito/i,
+    /a(?:n|\u00F1)adir a la cesta/i,
     /add to cart/i,
     /"availability"\s*:\s*"InStock"/i,
     /id="add-to-cart-button"/i,
     /id="buy-now-button"/i,
+    /comprar ya/i,
   ];
 
-  const hasOutOfStock = outOfStockSignals.some(p => p.test(html));
-  const hasInStock    = inStockSignals.some(p => p.test(html));
+  const hasOutOfStock = outOfStockSignals.some((p) => p.test(html));
+  const hasInStock = inStockSignals.some((p) => p.test(html));
   const inStock = hasOutOfStock && !hasInStock ? false : true;
 
   const priceOld = price ? sanitizePriceOld(price, priceOldRaw) : null;
   return { price, priceOld, inStock };
 }
 
-// ── PcComponentes ─────────────────────────────────────────────────────────────
-
 async function scrapePcComponentes(url: string): Promise<ScrapedData> {
-  const res  = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(12000) });
-  const html = await res.text();
+  const html = await fetchHtml(url);
+  if (isPcComponentesBlockedHtml(html)) {
+    throw new Error("PcComponentes blocked request (cloudflare challenge)");
+  }
 
-  const pricePatterns = [
+  const price = extractFirstPrice(html, [
     /"price"\s*:\s*"?([\d]+\.[\d]{2})"?/,
+    /"price"\s*:\s*"([\d.,]+)"/,
     /data-product-price="([\d.,]+)"/,
     /"priceValue"\s*:\s*([\d.]+)/,
     /itemprop="price"[^>]*content="([\d.]+)"/,
-  ];
+    /"unitPrice"\s*:\s*"([\d.,]+)"/,
+    /"currentPrice"\s*:\s*"?([\d.,]+)"?/,
+    /"priceAmount"\s*:\s*([\d.]+)/,
+    /"salePrice"\s*:\s*"?([\d.,]+)"?/,
+    /class="[^"]*price[^"]*"[^>]*>\s*([\d.,]+)\s*€/i,
+  ]);
 
-  let price: number | null = null;
-  for (const p of pricePatterns) {
-    const m = html.match(p);
-    if (m) { const v = parsePrice(m[1]); if (v) { price = v; break; } }
-  }
-
-  // Precio tachado PcC: data-product-old-price o <del class="price-old">
-  const oldPatterns = [
+  const priceOldRaw = extractFirstPrice(html, [
     /data-product-old-price="([\d.,]+)"/,
     /<del[^>]*class="[^"]*price-old[^"]*"[^>]*>([\d.,]+)/,
     /"oldPrice"\s*:\s*"?([\d.]+)"?/,
-  ];
+    /"oldPrice"\s*:\s*"([\d.,]+)"/,
+    /"listPrice"\s*:\s*"?([\d.,]+)"?/,
+    /"strike(?:Through)?Price"\s*:\s*"?([\d.,]+)"?/i,
+    /"priceBefore"\s*:\s*"?([\d.,]+)"?/i,
+    /class="[^"]*(?:old-price|price--old|product-card__old-price)[^"]*"[^>]*>\s*([\d.,]+)/i,
+  ]);
 
-  let priceOldRaw: number | null = null;
-  for (const p of oldPatterns) {
-    const m = html.match(p);
-    if (m) { const v = parsePrice(m[1]); if (v) { priceOldRaw = v; break; } }
-  }
-
-  // JSON-LD first; PcC usa "Añadir al carro" y "Avísame" para sin stock
   const ldAvailPcc = html.match(/"availability"\s*:\s*"([^"]{3,80})"/)?.[1] ?? "";
-  const pccOOS = /avísame cuando esté disponible|sin stock en tienda/i.test(html)
-    || /"availability"\s*:\s*"(?:OutOfStock|Discontinued)/i.test(html)
-    || /class="[^"]*(?:sin-stock|out-of-stock)[^"]*"/i.test(html);
-  // Default optimista: en stock salvo señal explícita de agotado
+  const pccOutOfStock =
+    /av[i\u00ED]same cuando est[e\u00E9] disponible|sin stock en tienda/i.test(html) ||
+    /"availability"\s*:\s*"(?:OutOfStock|Discontinued|LimitedAvailability)/i.test(html) ||
+    /agotado|no disponible|temporalmente sin stock|producto descatalogado/i.test(html) ||
+    /"stock"\s*:\s*0\b/i.test(html) ||
+    /class="[^"]*(?:sin-stock|out-of-stock|agotado)[^"]*"/i.test(html);
+
+  const pccInStockSignals =
+    /a(?:n|\u00F1)adir al carrito|comprar ahora|entrega en|rec[ií]belo|unidades disponibles/i.test(html) ||
+    /"availability"\s*:\s*"(?:InStock|PreOrder)/i.test(html) ||
+    /"stock"\s*:\s*[1-9]\d*/i.test(html);
+
   const inStock = ldAvailPcc
-    ? /instock/i.test(ldAvailPcc)
-    : !pccOOS;
+    ? /instock|preorder/i.test(ldAvailPcc)
+    : pccInStockSignals && !pccOutOfStock;
 
   const priceOld = price ? sanitizePriceOld(price, priceOldRaw) : null;
   return { price, priceOld, inStock };
 }
 
-// ── Fnac ──────────────────────────────────────────────────────────────────────
-
 async function scrapeFnac(url: string): Promise<ScrapedData> {
-  const res  = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(12000) });
-  const html = await res.text();
+  const html = await fetchHtml(url);
 
-  const pricePatterns = [
+  const price = extractFirstPrice(html, [
     /itemprop="price"[^>]*content="([\d.]+)"/,
     /"price"\s*:\s*"?([\d]+\.[\d]{2})"?/,
     /class="[^"]*f-priceBox-price[^"]*"[^>]*>([\d.,]+)/,
-  ];
+  ]);
 
-  let price: number | null = null;
-  for (const p of pricePatterns) {
-    const m = html.match(p);
-    if (m) { const v = parsePrice(m[1]); if (v) { price = v; break; } }
-  }
-
-  const oldPatterns = [
+  const priceOldRaw = extractFirstPrice(html, [
     /class="[^"]*f-priceBox-oldPrice[^"]*"[^>]*>([\d.,]+)/,
     /"oldPrice"\s*:\s*"?([\d.]+)"?/,
-  ];
-
-  let priceOldRaw: number | null = null;
-  for (const p of oldPatterns) {
-    const m = html.match(p);
-    if (m) { const v = parsePrice(m[1]); if (v) { priceOldRaw = v; break; } }
-  }
+  ]);
 
   const ldAvailFnac = html.match(/"availability"\s*:\s*"([^"]{3,80})"/)?.[1] ?? "";
   const inStock = ldAvailFnac
     ? /instock/i.test(ldAvailFnac)
-    : /añadir al carrito|comprar ahora/i.test(html) && !/class="[^"]*(?:out-of-stock|sin-stock|agotado)[^"]*"/i.test(html);
+    : /a(?:n|\u00F1)adir al carrito|comprar ahora|add to cart/i.test(html) &&
+      !/class="[^"]*(?:out-of-stock|sin-stock|agotado)[^"]*"/i.test(html);
 
   const priceOld = price ? sanitizePriceOld(price, priceOldRaw) : null;
   return { price, priceOld, inStock };
 }
 
-// ── El Corte Inglés ───────────────────────────────────────────────────────────
-
 async function scrapeElCorteIngles(url: string): Promise<ScrapedData> {
-  const res  = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(12000) });
-  const html = await res.text();
+  const html = await fetchHtml(url);
 
-  const pricePatterns = [
+  const price = extractFirstPrice(html, [
     /"price"\s*:\s*"?([\d]+\.[\d]{2})"?/,
     /itemprop="price"[^>]*content="([\d.]+)"/,
     /"sellingPrice"\s*:\s*([\d.]+)/,
-  ];
+  ]);
 
-  let price: number | null = null;
-  for (const p of pricePatterns) {
-    const m = html.match(p);
-    if (m) { const v = parsePrice(m[1]); if (v) { price = v; break; } }
-  }
-
-  const oldPatterns = [
+  const priceOldRaw = extractFirstPrice(html, [
     /"originalPrice"\s*:\s*([\d.]+)/,
     /"listPrice"\s*:\s*([\d.]+)/,
     /class="[^"]*original-price[^"]*"[^>]*>([\d.,]+)/,
-  ];
-
-  let priceOldRaw: number | null = null;
-  for (const p of oldPatterns) {
-    const m = html.match(p);
-    if (m) { const v = parsePrice(m[1]); if (v) { priceOldRaw = v; break; } }
-  }
+  ]);
 
   const ldAvailEci = html.match(/"availability"\s*:\s*"([^"]{3,80})"/)?.[1] ?? "";
   const inStock = ldAvailEci
     ? /instock/i.test(ldAvailEci)
-    : /añadir al carrito|comprar/i.test(html) && !/class="[^"]*(?:out-of-stock|sin-stock|agotado)[^"]*"/i.test(html);
+    : /a(?:n|\u00F1)adir al carrito|comprar|add to cart/i.test(html) &&
+      !/class="[^"]*(?:out-of-stock|sin-stock|agotado)[^"]*"/i.test(html);
 
   const priceOld = price ? sanitizePriceOld(price, priceOldRaw) : null;
   return { price, priceOld, inStock };
 }
 
-// ── Router ────────────────────────────────────────────────────────────────────
-
 async function scrapeOffer(store: string, url: string): Promise<ScrapedData> {
   const s = store.toLowerCase();
-  if (s.includes("amazon"))           return scrapeAmazon(url);
-  if (s.includes("pccomponente"))     return scrapePcComponentes(url);
-  if (s.includes("fnac"))             return scrapeFnac(url);
+  if (s.includes("amazon")) return scrapeAmazon(url);
+  if (s.includes("pccomponentes") || s.includes("pccomponente")) return scrapePcComponentes(url);
+  if (s.includes("fnac")) return scrapeFnac(url);
   if (s.includes("corte") || s.includes("eci")) return scrapeElCorteIngles(url);
-  return scrapeAmazon(url); // fallback
+  return scrapeAmazon(url);
 }
 
-// ── Main ──────────────────────────────────────────────────────────────────────
+async function scrapeOfferWithRetry(store: string, url: string): Promise<ScrapedData> {
+  const amazon = isAmazonStore(store);
+  const pcc = isPcComponentesStore(store);
+  const maxAttempts = amazon ? AMAZON_MAX_RETRIES : pcc ? PCC_MAX_RETRIES : 1;
+  let lastError: unknown = null;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await scrapeOffer(store, url);
+    } catch (error) {
+      lastError = error;
+
+      const isBlock = (amazon && isAmazonBlockError(error)) || (pcc && isPcComponentesBlockError(error));
+      const hasMoreAttempts = attempt < maxAttempts;
+
+      if (!isBlock || !hasMoreAttempts) break;
+
+      const jitter = Math.floor(Math.random() * 900);
+      const waitMs = (amazon ? AMAZON_RETRY_BASE_MS : PCC_RETRY_BASE_MS) * attempt + jitter;
+      console.log(
+        `  [retry] ${amazon ? "Amazon" : "PcComponentes"} blocked, attempt ${attempt}/${maxAttempts}. Waiting ${waitMs}ms...`
+      );
+      await sleep(waitMs);
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error(String(lastError));
+}
 
 async function main() {
-  console.log(`🔍 Iniciando scraper${DRY_RUN ? " (dry-run)" : ""}${STORE_FILTER ? ` · tienda: ${STORE_FILTER}` : ""}\n`);
+  console.log(`Starting scraper${DRY_RUN ? " (dry-run)" : ""}${STORE_FILTER ? ` | store: ${STORE_FILTER}` : ""}\n`);
 
   const offers = await prisma.offer.findMany({
     include: { product: { select: { name: true } } },
     ...(STORE_FILTER ? { where: { store: { contains: STORE_FILTER, mode: "insensitive" } } } : {}),
   });
 
-  console.log(`📦 ${offers.length} ofertas a procesar\n`);
+  console.log(`${offers.length} offers to process\n`);
 
-  let updated = 0, unchanged = 0, failed = 0;
+  let updated = 0;
+  let unchanged = 0;
+  let failed = 0;
+  let skipped = 0;
 
   for (const offer of offers) {
     const label = `${offer.product.name.substring(0, 40)} [${offer.store}]`;
+
     try {
-      const data = await scrapeOffer(offer.store, offer.externalUrl);
+      const data = await scrapeOfferWithRetry(offer.store, offer.externalUrl);
 
       const isOutlierPrice =
         data.price !== null &&
@@ -332,49 +406,45 @@ async function main() {
 
       if (isOutlierPrice) {
         console.log(
-          `  ⚠️ Outlier precio — ${label}: scrape ${data.price!.toFixed(2)} € ignorado (actual ${offer.priceCurrent.toFixed(2)} €)`
+          `  [warn] Outlier price - ${label}: scraped ${data.price!.toFixed(2)} EUR ignored (current ${offer.priceCurrent.toFixed(2)} EUR)`
         );
       }
 
-      const newPrice    = safeScrapedPrice ?? offer.priceCurrent;
+      const newPrice = safeScrapedPrice ?? offer.priceCurrent;
       const priceChanged = safeScrapedPrice !== null && Math.abs(safeScrapedPrice - offer.priceCurrent) >= 0.01;
       const stockChanged = data.inStock !== offer.inStock;
 
-      // priceOld: usar el scrapeado si lo encontramos; si no, conservar el existente
-      // pero siempre re-validar con sanitizePriceOld por si acaso
-      const newPriceOld = data.priceOld !== null
-        ? data.priceOld                                         // scraped fresh → usar
-        : sanitizePriceOld(newPrice, offer.priceOld ?? null);   // re-validar el existente
+      const newPriceOld =
+        data.priceOld !== null ? data.priceOld : sanitizePriceOld(newPrice, offer.priceOld ?? null);
 
       const priceOldChanged = newPriceOld !== (offer.priceOld ?? null);
 
-      // Recalcular discountPercent siempre desde los precios limpios
-      const newDiscountPercent = newPriceOld
-        ? Math.round((1 - newPrice / newPriceOld) * 100)
-        : 0;
+      const newDiscountPercent = calculateDiscountPercent(newPrice, newPriceOld);
       const discountChanged = newDiscountPercent !== (offer.discountPercent ?? 0);
 
       if (!priceChanged && !stockChanged && !priceOldChanged && !discountChanged) {
-        console.log(`  ✅ Sin cambios  — ${label}`);
+        console.log(`  [ok] No changes - ${label}`);
         unchanged++;
         await sleep(800 + Math.random() * 400);
         continue;
       }
 
       const changes: string[] = [];
-      if (priceChanged)    changes.push(`precio ${offer.priceCurrent.toFixed(2)} → ${newPrice.toFixed(2)} €`);
-      if (stockChanged)    changes.push(`stock ${offer.inStock ? "✅" : "❌"} → ${data.inStock ? "✅" : "❌"}`);
-      if (priceOldChanged) changes.push(`priceOld ${offer.priceOld?.toFixed(2) ?? "null"} → ${newPriceOld?.toFixed(2) ?? "null"} €`);
-      if (discountChanged) changes.push(`descuento ${offer.discountPercent ?? 0} → ${newDiscountPercent} %`);
-      console.log(`  📈 Cambio       — ${label}: ${changes.join(" | ")}`);
+      if (priceChanged) changes.push(`price ${offer.priceCurrent.toFixed(2)} -> ${newPrice.toFixed(2)} EUR`);
+      if (stockChanged) changes.push(`stock ${offer.inStock ? "in" : "out"} -> ${data.inStock ? "in" : "out"}`);
+      if (priceOldChanged)
+        changes.push(`priceOld ${offer.priceOld?.toFixed(2) ?? "null"} -> ${newPriceOld?.toFixed(2) ?? "null"} EUR`);
+      if (discountChanged) changes.push(`discount ${offer.discountPercent ?? 0} -> ${newDiscountPercent} %`);
+
+      console.log(`  [chg] ${label}: ${changes.join(" | ")}`);
 
       if (!DRY_RUN) {
         await prisma.offer.update({
           where: { id: offer.id },
           data: {
-            priceCurrent:    newPrice,
-            inStock:         data.inStock,
-            priceOld:        newPriceOld,
+            priceCurrent: newPrice,
+            inStock: data.inStock,
+            priceOld: newPriceOld,
             discountPercent: newDiscountPercent,
           },
         });
@@ -387,16 +457,29 @@ async function main() {
       }
 
       updated++;
-    } catch (e) {
-      console.log(`  ❌ Error        — ${label}: ${e instanceof Error ? e.message : e}`);
-      failed++;
+    } catch (error) {
+      if (isAmazonStore(offer.store) && isAmazonBlockError(error)) {
+        console.log(`  [skip] ${label}: blocked by Amazon after retries`);
+        skipped++;
+      } else if (isPcComponentesStore(offer.store) && isPcComponentesBlockError(error)) {
+        console.log(`  [skip] ${label}: blocked by PcComponentes (Cloudflare) after retries`);
+        skipped++;
+      } else {
+        console.log(`  [err] ${label}: ${error instanceof Error ? error.message : error}`);
+        failed++;
+      }
     }
 
-    await sleep(1200 + Math.random() * 1300);
+    const waitMs = isAmazonStore(offer.store)
+      ? 3000 + Math.random() * 3000
+      : isPcComponentesStore(offer.store)
+      ? 2400 + Math.random() * 2200
+      : 1200 + Math.random() * 1300;
+    await sleep(waitMs);
   }
 
-  console.log(`\n🎉 Completado: ${updated} actualizados · ${unchanged} sin cambios · ${failed} errores`);
-  if (DRY_RUN) console.log("ℹ️  Modo dry-run: ningún cambio fue guardado en la BD");
+  console.log(`\nDone: ${updated} updated | ${unchanged} unchanged | ${skipped} skipped | ${failed} errors`);
+  if (DRY_RUN) console.log("Dry-run mode: no DB changes were saved");
 }
 
 main()
