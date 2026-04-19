@@ -86,18 +86,23 @@ export function HeaderClient({
   logoutAction: () => Promise<void>;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [confirmLogoutOpen, setConfirmLogoutOpen] = useState(false);
   const { profile, resetProfile } = useProfile();
   const profileRef = useRef<HTMLDivElement>(null);
 
-  // Close mobile menu on Escape
+  // Close mobile menu/search on Escape
   useEffect(() => {
-    if (!mobileOpen) return;
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") setMobileOpen(false); };
+    if (!mobileOpen && !mobileSearchOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setMobileOpen(false);
+      setMobileSearchOpen(false);
+    };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
-  }, [mobileOpen]);
+  }, [mobileOpen, mobileSearchOpen]);
 
   // Close profile dropdown on Escape or click-outside
   useEffect(() => {
@@ -144,15 +149,24 @@ export function HeaderClient({
           </div>
 
           {/* Mobile search shortcut */}
-          <Link
-            href="/buscar"
+          <button
+            type="button"
+            onClick={() => {
+              setMobileSearchOpen((prev) => {
+                const next = !prev;
+                if (next) setMobileOpen(false);
+                return next;
+              });
+            }}
             className="md:hidden ml-auto flex items-center justify-center w-10 h-10 rounded-lg bg-[#F1F5F9] border border-[#E2E8F0] text-[#0F172A] hover:border-[#CBD5E1] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#2563EB]"
-            aria-label="Abrir buscador"
+            aria-label={mobileSearchOpen ? "Cerrar buscador" : "Abrir buscador"}
+            aria-expanded={mobileSearchOpen}
+            aria-controls="mobile-header-search"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
             </svg>
-          </Link>
+          </button>
 
           {/* Comunidad dropdown */}
           <div className="hidden md:flex items-center shrink-0">
@@ -271,7 +285,13 @@ export function HeaderClient({
           {/* Mobile hamburger */}
           <button
             className="md:hidden flex flex-col justify-center items-center w-10 h-10 rounded-lg hover:bg-[#F1F5F9] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#2563EB]"
-            onClick={() => setMobileOpen((o) => !o)}
+            onClick={() => {
+              setMobileOpen((o) => {
+                const next = !o;
+                if (next) setMobileSearchOpen(false);
+                return next;
+              });
+            }}
             aria-expanded={mobileOpen}
             aria-controls="mobile-menu"
             aria-label={mobileOpen ? "Cerrar menú" : "Abrir menú de navegación"}
@@ -282,6 +302,14 @@ export function HeaderClient({
           </button>
         </div>
       </header>
+
+      {mobileSearchOpen && (
+        <div id="mobile-header-search" className="md:hidden sticky top-16 z-30 bg-white border-b border-[#E2E8F0] px-4 py-3">
+          <div className="max-w-5xl mx-auto w-full">
+            <HeaderSearch />
+          </div>
+        </div>
+      )}
 
       {/* Mobile menu overlay */}
       {mobileOpen && (
