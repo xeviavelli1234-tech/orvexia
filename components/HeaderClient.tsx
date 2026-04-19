@@ -304,7 +304,7 @@ export function HeaderClient({
       </header>
 
       {mobileSearchOpen && (
-        <div id="mobile-header-search" className="md:hidden sticky top-16 z-30 bg-white border-b border-[#E2E8F0] px-4 py-3">
+        <div id="mobile-header-search" className="md:hidden sticky top-16 z-30 bg-white border-b border-[#E2E8F0] px-3 py-2.5">
           <div className="max-w-5xl mx-auto w-full">
             <HeaderSearch />
           </div>

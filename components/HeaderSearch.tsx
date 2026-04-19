@@ -110,7 +110,7 @@ function SearchInput() {
   return (
     <div ref={containerRef} className="w-full relative">
       <form onSubmit={handleSubmit} className="w-full" role="search" aria-label="Buscar productos">
-        <div className="flex items-center gap-2 w-full px-3 py-2 rounded-full bg-[#F1F5F9] border border-[#E2E8F0] hover:border-[#CBD5E1] focus-within:border-[#2563EB] focus-within:bg-white transition-all">
+        <div className="flex items-center gap-2 w-full px-2.5 py-2.5 sm:px-3 sm:py-2 rounded-xl sm:rounded-full bg-[#F1F5F9] border border-[#E2E8F0] hover:border-[#CBD5E1] focus-within:border-[#2563EB] focus-within:bg-white transition-all">
           {/* Search icon / spinner */}
           <span className="shrink-0 text-[#94A3B8] w-[15px] h-[15px] flex items-center justify-center">
             {loading ? (
@@ -163,7 +163,7 @@ function SearchInput() {
             aria-autocomplete="list"
             aria-expanded={open}
             aria-haspopup="listbox"
-            className="flex-1 bg-transparent text-sm outline-none text-[#0F172A] placeholder:text-[#94A3B8]"
+            className="flex-1 min-w-0 bg-transparent text-[15px] sm:text-sm outline-none text-[#0F172A] placeholder:text-[#94A3B8]"
           />
           <button type="submit" className="sr-only">Buscar</button>
         </div>
@@ -173,7 +173,7 @@ function SearchInput() {
       {open && results.length > 0 && (
         <div
           role="listbox"
-          className="absolute top-full left-0 right-0 mt-1.5 bg-white border border-[#E2E8F0] rounded-xl shadow-lg z-50 overflow-hidden"
+          className="absolute top-full left-0 right-0 mt-1.5 bg-white border border-[#E2E8F0] rounded-xl shadow-lg z-50 overflow-hidden max-h-[60vh] overflow-y-auto"
         >
           {results.map((r, i) => (
             <button
@@ -182,12 +182,12 @@ function SearchInput() {
               aria-selected={i === highlighted}
               onClick={() => navigate(r.name)}
               onMouseEnter={() => setHighlighted(i)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors ${
+              className={`w-full flex items-center gap-2 sm:gap-3 px-2.5 sm:px-3 py-2.5 text-left transition-colors ${
                 i === highlighted ? "bg-[#F1F5F9]" : "hover:bg-[#F8FAFC]"
               } ${i > 0 ? "border-t border-[#F1F5F9]" : ""}`}
             >
               {/* Image */}
-              <div className="w-8 h-8 rounded-md bg-[#F1F5F9] flex-shrink-0 overflow-hidden flex items-center justify-center">
+              <div className="w-9 h-9 sm:w-8 sm:h-8 rounded-md bg-[#F1F5F9] flex-shrink-0 overflow-hidden flex items-center justify-center">
                 {r.image ? (
                   <Image
                     src={r.image}
@@ -205,15 +205,15 @@ function SearchInput() {
               </div>
               {/* Info */}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-[#0F172A] truncate">{r.name}</p>
+                <p className="text-[13px] sm:text-sm font-medium text-[#0F172A] truncate">{r.name}</p>
                 <p className="text-xs text-[#64748B] truncate">
                   {r.brand} · {CAT[r.category] ?? r.category}
                 </p>
               </div>
               {/* Price */}
               {r.offers[0] && (
-                <div className="flex-shrink-0 text-right">
-                  <p className="text-sm font-semibold text-[#0F172A]">
+                <div className="flex-shrink-0 text-right min-w-[76px] sm:min-w-[84px]">
+                  <p className="text-[13px] sm:text-sm font-semibold text-[#0F172A] leading-tight">
                     {r.offers[0].priceCurrent.toLocaleString("es-ES", { style: "currency", currency: "EUR" })}
                   </p>
                   {r.offers[0].discountPercent != null && r.offers[0].discountPercent > 0 && (
@@ -226,7 +226,7 @@ function SearchInput() {
           {/* Ver todos */}
           <button
             onClick={() => navigate(query.trim())}
-            className="w-full px-3 py-2.5 text-center text-sm text-[#2563EB] font-medium hover:bg-[#EFF6FF] transition-colors border-t border-[#F1F5F9]"
+            className="w-full px-3 py-3 sm:py-2.5 text-center text-sm text-[#2563EB] font-medium hover:bg-[#EFF6FF] transition-colors border-t border-[#F1F5F9]"
           >
             Ver todos los resultados →
           </button>
