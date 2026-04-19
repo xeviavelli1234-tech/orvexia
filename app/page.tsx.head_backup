@@ -5,22 +5,13 @@ import { getSession } from "@/lib/session";
 import ProductCard from "@/components/ProductCard";
 import { HeroSearch } from "@/components/HeroSearch";
 
-function isAmazonStore(store?: string | null): boolean {
-  return (store ?? "").toLowerCase().includes("amazon");
-}
-
-function isPcComponentesStore(store?: string | null): boolean {
-  const s = (store ?? "").toLowerCase();
-  return s.includes("pccomponentes") || s.includes("pccomponente");
-}
-
 async function getTopDeals() {
   const products = await prisma.product.findMany({
     where: { offers: { some: { priceOld: { not: null }, inStock: true } } },
     include: { offers: { orderBy: { priceCurrent: "asc" } } },
   });
 
-  const sorted = products
+  return products
     .filter((p) => {
       const o = p.offers[0];
       if (!o?.priceOld || !o.inStock) return false;
@@ -46,24 +37,8 @@ async function getTopDeals() {
       const savA = (a.offers[0].priceOld ?? 0) - a.offers[0].priceCurrent;
       const savB = (b.offers[0].priceOld ?? 0) - b.offers[0].priceCurrent;
       return savB - savA;
-    });
-
-  const amazonDeals = sorted.filter((p) => isAmazonStore(p.offers[0]?.store));
-  const pcDeals = sorted.filter((p) => isPcComponentesStore(p.offers[0]?.store));
-  const otherDeals = sorted.filter(
-    (p) => !isAmazonStore(p.offers[0]?.store) && !isPcComponentesStore(p.offers[0]?.store)
-  );
-
-  const mixed: typeof sorted = [];
-  let ai = 0;
-  let pi = 0;
-
-  while (ai < amazonDeals.length || pi < pcDeals.length) {
-    for (let i = 0; i < 3 && ai < amazonDeals.length; i++) mixed.push(amazonDeals[ai++]);
-    for (let i = 0; i < 3 && pi < pcDeals.length; i++) mixed.push(pcDeals[pi++]);
-  }
-
-  return [...mixed, ...otherDeals].slice(0, 8);
+    })
+    .slice(0, 8);
 }
 
 async function getStats() {

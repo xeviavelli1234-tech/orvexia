@@ -227,11 +227,11 @@ export default function ProductCard({ product, priority = false }: Props) {
                   discountPercent={realDiscount}
                 />
               </div>
-              <div className="mt-auto flex items-center justify-between gap-2">
+              <div className="mt-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <Link
                   href={`/productos/${product.slug}`}
                   onClick={(e) => e.stopPropagation()}
-                  className="text-[11px] font-semibold text-[#64748B] hover:text-[#2563EB] transition-colors underline underline-offset-2"
+                  className="text-[11px] font-semibold text-[#64748B] hover:text-[#2563EB] transition-colors underline underline-offset-2 self-start"
                 >
                   Ver análisis
                 </Link>
@@ -240,7 +240,7 @@ export default function ProductCard({ product, priority = false }: Props) {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={(e) => e.stopPropagation()}
-                  className="inline-flex items-center gap-1 whitespace-nowrap text-xs font-semibold text-white bg-[#2563EB] hover:bg-[#1D4ED8] px-3 py-1.5 rounded-lg transition-colors shadow-sm shadow-blue-200"
+                  className="inline-flex items-center justify-center gap-1 text-xs font-semibold text-white bg-[#2563EB] hover:bg-[#1D4ED8] px-3 py-1.5 rounded-lg transition-colors shadow-sm shadow-blue-200 w-full sm:w-auto"
                 >
                   Ver en {ctaStoreName} →
                 </a>

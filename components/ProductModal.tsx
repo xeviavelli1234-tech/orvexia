@@ -206,8 +206,8 @@ export default function ProductModal({ product, onClose }: Props) {
       onClick={onClose}
     >
       <div
-        className="modal-card relative w-full bg-white rounded-3xl shadow-[0_32px_80px_-12px_rgba(0,0,0,0.35)] overflow-hidden flex flex-col md:flex-row"
-        style={{ height: "58vh", maxHeight: "820px", maxWidth: "min(1100px, 95vw)" }}
+        className="modal-card relative w-full h-[92vh] md:h-[58vh] max-h-[820px] bg-white rounded-2xl md:rounded-3xl shadow-[0_32px_80px_-12px_rgba(0,0,0,0.35)] overflow-hidden flex flex-col md:flex-row"
+        style={{ maxWidth: "min(1100px, 95vw)" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── Cerrar ── */}
@@ -315,7 +315,7 @@ export default function ProductModal({ product, onClose }: Props) {
 
         {/* ── Columna derecha: info ── */}
         <div className="md:w-1/2 flex flex-col overflow-y-auto">
-          <div className="p-6 flex flex-col gap-4 flex-1">
+          <div className="p-4 md:p-6 flex flex-col gap-4 flex-1">
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold tracking-widest text-[#2563EB] uppercase">{product.brand}</span>
               <span className="text-[#CBD5E1]">·</span>
@@ -424,11 +424,11 @@ export default function ProductModal({ product, onClose }: Props) {
                   <StoreLogo store={mejorOferta.store} logo={storeLogo} />
                   <span className="text-sm font-medium text-[#0F172A]">{mejorOferta.store}</span>
                 </div>
-                <div className="flex items-center gap-2 ml-auto">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 ml-0 sm:ml-auto w-full sm:w-auto">
                   {product.slug && (
                     <a
                       href={`/productos/${product.slug}`}
-                      className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-sm font-semibold border border-[#CBD5E1] text-[#334155] hover:border-[#94A3B8] hover:bg-[#F8FAFC] transition-colors"
+                      className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-sm font-semibold border border-[#CBD5E1] text-[#334155] hover:border-[#94A3B8] hover:bg-[#F8FAFC] transition-colors w-full sm:w-auto"
                     >
                       Ver análisis
                     </a>
@@ -437,7 +437,7 @@ export default function ProductModal({ product, onClose }: Props) {
                     href={mejorOferta.externalUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm"
+                    className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm text-center w-full sm:w-auto"
                   >
                     Ver en {mejorOferta.store} →
                   </a>

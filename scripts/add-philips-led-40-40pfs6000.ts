@@ -9,36 +9,35 @@ const prisma = new PrismaClient({
 });
 
 async function main() {
-  const slug = "xiaomi-tv-a-pro-32-2026-qled";
+  const slug = "philips-led-40-40pfs6000-fullhd-titan";
   const images = [
-    "https://thumb.pccomponentes.com/w-530-530/articles/1093/10934126/1254-xiaomi-tv-a-pro-32-2026-32-qled-hd-google-tv-chromecast-sonido-dts-mejor-precio.jpg",
-    "https://thumb.pccomponentes.com/w-530-530/articles/1093/10934126/2191-xiaomi-tv-a-pro-32-2026-32-qled-hd-google-tv-chromecast-sonido-dts-caracteristicas.jpg",
+    "https://thumb.pccomponentes.com/w-530-530/articles/1087/10878768/1365-philips-led-40-40pfs6000-fullhd-dolby-audio-hdr10-titan.jpg",
   ];
 
   const product = await prisma.product.upsert({
     where: { slug },
-    update: { image: images[0], images, rating: 4.3, reviewCount: 109 },
+    update: { image: images[0], images, rating: 4.4, reviewCount: 174 },
     create: {
       slug,
-      name: 'Xiaomi TV A Pro 32 2026 32" QLED HD Google TV',
+      name: 'Philips LED 40" 40PFS6000 FullHD Dolby Audio HDR10 Titan',
       category: "TELEVISORES",
-      brand: "Xiaomi",
-      model: "ELA5936EU",
+      brand: "Philips",
+      model: "40PFS6000/12",
       image: images[0],
       images,
-      rating: 4.3,
-      reviewCount: 109,
+      rating: 4.4,
+      reviewCount: 174,
       description:
-        'Smart TV 32" QLED HD con Google TV, Chromecast integrado, sonido DTS:X y Dolby Audio, Wi-Fi dual, Bluetooth 5.0.',
+        'Smart TV 40" Full HD con Direct LED, Pixel Plus HD, HDR10, HLG, Dolby Audio con Vocal Boost, Titan OS, 3x HDMI, Wi-Fi, DVB-T/T2/C/S2.',
     },
   });
 
   const store = "PcComponentes";
-  const priceCurrent = 139.00;
-  const priceOld = 149.00;   // precio mínimo últimos 30 días (PcC muestra 149 € tachado)
-  const discountPercent = Math.round((1 - priceCurrent / priceOld) * 100); // 7 %
+  const priceCurrent = 189.00;
+  const priceOld = 319.00;   // precio original PcComponentes
+  const discountPercent = Math.round((1 - priceCurrent / priceOld) * 100); // 41 %
   const externalUrl =
-    "https://www.pccomponentes.com/xiaomi-tv-a-pro-32-2026-32-qled-hd-google-tv-chromecast-sonido-dts";
+    "https://www.pccomponentes.com/philips-led-40-40pfs6000-fullhd-dolby-audio-hdr10-titan";
 
   const existing = await prisma.offer.findUnique({
     where: { productId_store: { productId: product.id, store } },
@@ -57,7 +56,7 @@ async function main() {
     });
   }
 
-  console.log(`✅ Añadido: ${product.name} — ${priceCurrent.toFixed(2)} € en ${store}`);
+  console.log(`✅ Añadido: ${product.name} — ${priceCurrent.toFixed(2)} € en ${store} (antes ${priceOld.toFixed(2)} €, -${discountPercent}%)`);
   console.log(`   ID: ${product.id} | Slug: ${slug}`);
 }
 

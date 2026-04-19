@@ -116,7 +116,7 @@ function PriceHistoryChart({
       </div>
 
       {/* Stats cards */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {([
           { label: "Mínimo",  value: minPrice,     color: "#059669", bg: "#F0FDF4", border: "#BBF7D0" },
           { label: "Máximo",  value: maxPrice,     color: "#DC2626", bg: "#FEF2F2", border: "#FECACA" },
@@ -259,7 +259,7 @@ export default function ProductPageClient({ product, specs, description, catLabe
   const minPrice = product.priceHistory.length > 0 ? Math.min(...product.priceHistory.map(h => h.price)) : null;
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-6 space-y-10">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-5 sm:py-6 space-y-8 sm:space-y-10">
 
       {/* BLOQUE PRINCIPAL */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -306,7 +306,7 @@ export default function ProductPageClient({ product, specs, description, catLabe
             <Link href={`/categorias/${catSlug}`} className="text-xs font-bold text-[#2563EB] uppercase tracking-widest hover:underline">
               {catLabel}
             </Link>
-            <h1 className="text-2xl font-extrabold text-[#0F172A] mt-1 leading-snug">{product.name}</h1>
+            <h1 className="text-xl sm:text-2xl font-extrabold text-[#0F172A] mt-1 leading-snug">{product.name}</h1>
             <p className="text-sm text-[#64748B] mt-1">por <span className="font-semibold text-[#334155]">{product.brand}</span></p>
           </div>
 
@@ -336,7 +336,7 @@ export default function ProductPageClient({ product, specs, description, catLabe
           {bestOffer && (
             <div className="bg-[#F8FAFC] rounded-2xl border border-[#E2E8F0] p-5 space-y-4">
               <div className="flex items-end gap-3">
-                <span className="text-4xl font-extrabold text-[#0F172A]">{formatPrice(bestOffer.priceCurrent)}</span>
+                <span className="text-3xl sm:text-4xl font-extrabold text-[#0F172A]">{formatPrice(bestOffer.priceCurrent)}</span>
                 {bestOffer.priceOld && (
                   <span className="text-lg text-[#94A3B8] line-through mb-1">{formatPrice(bestOffer.priceOld)}</span>
                 )}
@@ -377,9 +377,9 @@ export default function ProductPageClient({ product, specs, description, catLabe
                   href={o.externalUrl}
                   target="_blank"
                   rel="nofollow noopener noreferrer sponsored"
-                  className="flex items-center justify-between bg-white border border-[#E2E8F0] hover:border-[#2563EB]/30 rounded-xl px-4 py-3 transition-colors group"
+                  className="flex items-center justify-between gap-2 bg-white border border-[#E2E8F0] hover:border-[#2563EB]/30 rounded-xl px-3 sm:px-4 py-3 transition-colors group"
                 >
-                  <span className="text-sm font-semibold text-[#334155]">{o.store}</span>
+                  <span className="text-sm font-semibold text-[#334155] truncate pr-1">{o.store}</span>
                   <div className="flex items-center gap-2">
                     {o.discountPercent && (
                       <span className="text-[11px] font-bold text-[#EF4444] bg-[#FEF2F2] px-2 py-0.5 rounded-full">-{o.discountPercent}%</span>
@@ -397,7 +397,7 @@ export default function ProductPageClient({ product, specs, description, catLabe
       </div>
 
       {/* DESCRIPCIÓN Y ANÁLISIS */}
-      <section className="bg-white rounded-2xl border border-[#E2E8F0] p-8 space-y-4">
+      <section className="bg-white rounded-2xl border border-[#E2E8F0] p-5 sm:p-8 space-y-4">
         <h2 className="text-xl font-extrabold text-[#0F172A]">Análisis y descripción</h2>
         <p className="text-[#334155] leading-relaxed">{description}</p>
         {product.description && product.description !== product.name && (
@@ -421,7 +421,7 @@ export default function ProductPageClient({ product, specs, description, catLabe
       )}
 
       {/* RESEÑAS */}
-      <section className="bg-white rounded-2xl border border-[#E2E8F0] p-8">
+      <section className="bg-white rounded-2xl border border-[#E2E8F0] p-5 sm:p-8">
         <h2 className="text-xl font-extrabold text-[#0F172A] mb-6">Opiniones de la comunidad</h2>
         <ReviewSection productId={product.id} />
       </section>

@@ -73,7 +73,7 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
                    overflow-hidden flex cursor-pointer"
       >
         {/* Imagen */}
-        <div className="relative w-28 flex-shrink-0 bg-gradient-to-br from-[#F8FAFC] to-[#EFF6FF]">
+        <div className="relative w-24 sm:w-28 flex-shrink-0 bg-gradient-to-br from-[#F8FAFC] to-[#EFF6FF]">
           {thumb ? (
             <Image
               src={thumb}
@@ -96,7 +96,7 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
         </div>
 
         {/* Info */}
-        <div className="flex flex-col flex-1 p-4 min-w-0">
+        <div className="flex flex-col flex-1 p-3 sm:p-4 min-w-0">
           <p className="text-[11px] font-semibold uppercase tracking-wide mb-1" style={{ color: catColor }}>
             {product.brand}
           </p>
@@ -117,7 +117,7 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
               />
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-lg font-extrabold text-[#0F172A]">
+                  <span className="text-base sm:text-lg font-extrabold text-[#0F172A]">
                     {formatPrice(oferta.priceCurrent)}
                   </span>
                   {showOldPrice && (
