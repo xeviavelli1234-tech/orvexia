@@ -202,18 +202,18 @@ export default function ProductModal({ product, onClose }: Props) {
 
   return (
     <div
-      className="modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      className="modal-backdrop fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4 bg-black/60 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className="modal-card relative w-full h-[92vh] md:h-[58vh] max-h-[820px] bg-white rounded-2xl md:rounded-3xl shadow-[0_32px_80px_-12px_rgba(0,0,0,0.35)] overflow-hidden flex flex-col md:flex-row"
-        style={{ maxWidth: "min(1100px, 95vw)" }}
+        className="modal-card relative w-full h-[95vh] md:h-[58vh] max-h-[95vh] md:max-h-[820px] bg-white rounded-t-3xl md:rounded-3xl shadow-[0_32px_80px_-12px_rgba(0,0,0,0.35)] overflow-hidden flex flex-col md:flex-row"
+        style={{ maxWidth: "min(1100px, 100vw)" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── Cerrar ── */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-20 bg-white/90 hover:bg-white text-[#64748B] hover:text-[#0F172A] rounded-full p-1.5 shadow transition-colors"
+          className="absolute top-3 right-3 md:top-4 md:right-4 z-20 bg-white/90 hover:bg-white text-[#64748B] hover:text-[#0F172A] rounded-full p-1.5 shadow transition-colors"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -222,7 +222,7 @@ export default function ProductModal({ product, onClose }: Props) {
 
         {/* ── Columna izquierda: carrusel ── */}
         <div
-          className="md:w-1/2 bg-[#F0F7FF] flex flex-col"
+          className="h-[40vh] min-h-[260px] md:h-auto md:min-h-0 md:w-1/2 bg-[#F0F7FF] flex flex-col"
           onMouseEnter={() => setPaused(true)}
           onMouseLeave={() => setPaused(false)}
         >
@@ -288,14 +288,14 @@ export default function ProductModal({ product, onClose }: Props) {
           {all.length > 1 && (
             <div
               ref={thumbsRef}
-              className="flex gap-2 p-3 overflow-x-auto border-t border-[#E5F0FF] bg-white/60"
+              className="flex gap-1.5 md:gap-2 p-2 md:p-3 overflow-x-auto border-t border-[#E5F0FF] bg-white/60"
               style={{ scrollbarWidth: "none" }}
             >
               {all.map((src, i) => (
                 <button
                   key={i}
                   onClick={() => setActive(i)}
-                  className={`flex-shrink-0 w-14 h-14 rounded-xl overflow-hidden border-2 transition-all duration-200 bg-white ${
+                  className={`flex-shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-xl overflow-hidden border-2 transition-all duration-200 bg-white ${
                     active === i ? "border-[#2563EB] shadow-md scale-105" : "border-transparent opacity-50 hover:opacity-90"
                   }`}
                 >
@@ -314,7 +314,7 @@ export default function ProductModal({ product, onClose }: Props) {
         </div>
 
         {/* ── Columna derecha: info ── */}
-        <div className="md:w-1/2 flex flex-col overflow-y-auto">
+        <div className="md:w-1/2 flex flex-col flex-1 min-h-0 overflow-y-auto">
           <div className="p-4 md:p-6 flex flex-col gap-4 flex-1">
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold tracking-widest text-[#2563EB] uppercase">{product.brand}</span>
@@ -328,8 +328,8 @@ export default function ProductModal({ product, onClose }: Props) {
             </div>
 
             <div className="flex items-start justify-between gap-3">
-              <h2 className="text-xl font-bold text-[#0F172A] leading-snug">{product.name}</h2>
-              <div className="flex items-center gap-2">
+              <h2 className="text-lg md:text-xl font-bold text-[#0F172A] leading-snug">{product.name}</h2>
+              <div className="flex items-center gap-2 flex-wrap">
                 {mejorOferta && (
                   <PriceAlertButton
                     productId={product.id}
@@ -360,8 +360,8 @@ export default function ProductModal({ product, onClose }: Props) {
             )}
 
             {mejorOferta && (
-              <div className="flex items-end gap-3 py-3 border-t border-b border-[#E5F0FF]">
-                <span className="text-3xl font-bold text-[#0F172A]">{mejorOferta.priceCurrent.toFixed(2)} €</span>
+              <div className="flex items-end gap-2 md:gap-3 flex-wrap py-3 border-t border-b border-[#E5F0FF]">
+                <span className="text-2xl md:text-3xl font-bold text-[#0F172A]">{mejorOferta.priceCurrent.toFixed(2)} €</span>
                 {mejorOferta.priceOld != null && mejorOferta.priceOld > mejorOferta.priceCurrent &&
                   mejorOferta.priceOld / mejorOferta.priceCurrent <= 2.1 && (
                   <span className="text-base text-[#94A3B8] line-through mb-0.5">{mejorOferta.priceOld.toFixed(2)} €</span>
