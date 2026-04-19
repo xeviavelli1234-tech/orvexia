@@ -310,12 +310,12 @@ function parsePcComponentesPage(url: string, html: string): Scraped {
 
   const offers = asObject(productLd?.offers);
   const priceLd = asNumber(offers?.price);
-  const priceRaw = asNumber(html.match(/"price"\s*:\s*"?(?<p>[\d.,]+)"?/i)?.groups?.p);
+  const priceRaw = asNumber(html.match(/"price"\s*:\s*"?([\d.,]+)"?/i)?.[1]);
   const priceCurrent = priceLd ?? priceRaw;
 
   const oldRaw =
-    asNumber(html.match(/data-product-old-price="(?<p>[\d.,]+)"/i)?.groups?.p) ??
-    asNumber(html.match(/"oldPrice"\s*:\s*"?(?<p>[\d.,]+)"?/i)?.groups?.p);
+    asNumber(html.match(/data-product-old-price="([\d.,]+)"/i)?.[1]) ??
+    asNumber(html.match(/"oldPrice"\s*:\s*"?([\d.,]+)"?/i)?.[1]);
   const priceOld = priceCurrent ? sanitizePriceOld(priceCurrent, oldRaw) : null;
 
   const availabilityRaw = asString(offers?.availability) ?? "";
@@ -343,10 +343,10 @@ function parsePcComponentesPage(url: string, html: string): Scraped {
 
   const rating =
     asNumber(asObject(productLd?.aggregateRating)?.ratingValue) ??
-    asNumber(html.match(/"ratingValue"\s*:\s*"?(?<r>[\d.]+)"?/i)?.groups?.r);
+    asNumber(html.match(/"ratingValue"\s*:\s*"?([\d.]+)"?/i)?.[1]);
   const reviewCount =
     asNumber(asObject(productLd?.aggregateRating)?.reviewCount) ??
-    asNumber(html.match(/"reviewCount"\s*:\s*"?(?<r>[\d.]+)"?/i)?.groups?.r);
+    asNumber(html.match(/"reviewCount"\s*:\s*"?([\d.]+)"?/i)?.[1]);
 
   const model =
     asString(productLd?.sku) ??
