@@ -35,8 +35,8 @@ async function getFeaturedDeals(orden: string): Promise<ProductWithOffers[]> {
     orderBy: { createdAt: "desc" },
   });
 
-  // Solo mostrar productos con descuento verificado (ratio â‰¤ 1.40)
-    const realDeals = products.filter(isRealDeal);
+  // Solo mostrar productos con descuento verificado (ratio <= 1.40)
+  const realDeals = products.filter(isRealDeal);
   const realDealIds = new Set(realDeals.map((p) => p.id));
 
   const recentPcTv = products.filter(
@@ -84,10 +84,10 @@ async function getStats() {
 
 const SORT_LABEL: Record<string, string> = {
   discount_desc: "mayor descuento",
-  price_asc:     "precio mÃ¡s bajo",
-  price_desc:    "precio mÃ¡s alto",
+  price_asc:     "precio más bajo",
+  price_desc:    "precio más alto",
   savings_desc:  "mayor ahorro",
-  most_stores:   "mÃ¡s tiendas",
+  most_stores:   "más tiendas",
 };
 
 export default async function OfertasDestacadasPage({
@@ -110,7 +110,7 @@ export default async function OfertasDestacadasPage({
   return (
     <main className="min-h-screen bg-[#F8FAFC]">
 
-      {/* â”€â”€ Hero â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* Hero */}
       <section className="relative overflow-hidden pt-20 pb-24 px-6 text-center"
         style={{ background: "linear-gradient(150deg,#0F172A 0%,#1E3A8A 55%,#2563EB 100%)" }}>
         <div className="pointer-events-none absolute inset-0">
@@ -122,39 +122,39 @@ export default async function OfertasDestacadasPage({
         <div className="relative max-w-4xl mx-auto">
           <div className="inline-flex items-center gap-2 mb-5 px-4 py-1.5 rounded-full border border-white/20 bg-white/10 text-xs font-semibold text-white/90">
             <span className="w-1.5 h-1.5 rounded-full bg-[#22C55E] animate-pulse" />
-            SelecciÃ³n curada con descuentos reales
+            Selección curada con descuentos reales
           </div>
 
           <h1 className="text-4xl sm:text-5xl font-extrabold text-white mb-4 tracking-tight">
             Ofertas destacadas
           </h1>
           <p className="text-blue-200 text-lg max-w-xl mx-auto mb-8 leading-relaxed">
-            Los mejores descuentos de electrodomÃ©sticos en un solo lugar.
+            Los mejores descuentos de electrodomésticos en un solo lugar.
             Verificamos precios en tiempo real para que compres con confianza.
           </p>
 
           <div className="flex flex-wrap justify-center gap-3 text-sm text-white/80">
             {bestDiscount > 0 && (
               <span className="px-3 py-2 rounded-full bg-white/10 border border-white/15">
-                ðŸ·ï¸ Hasta -{bestDiscount}% hoy
+                Hasta -{bestDiscount}% hoy
               </span>
             )}
             {avgDiscount > 0 && (
               <span className="px-3 py-2 rounded-full bg-white/10 border border-white/15">
-                ðŸ“Š Descuento medio {avgDiscount}%
+                Descuento medio {avgDiscount}%
               </span>
             )}
             <span className="px-3 py-2 rounded-full bg-white/10 border border-white/15">
-              ðŸ” {stats.offerCount} ofertas Â· {stats.productCount} productos
+              {stats.offerCount} ofertas · {stats.productCount} productos
             </span>
           </div>
         </div>
       </section>
 
-      {/* â”€â”€ Sort bar + grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* Sort bar + grid */}
       <div className="max-w-6xl mx-auto px-6">
 
-        {/* Sort bar â€” overlapping card, same pattern that popularidad uses */}
+        {/* Sort bar - overlapping card, same pattern that popularidad uses */}
         <div className="relative z-10 -mt-12 mb-8 bg-white rounded-2xl border border-[#E2E8F0]
                         shadow-[0_18px_48px_-24px_rgba(15,23,42,0.2)] p-4">
           <Suspense>
@@ -166,7 +166,7 @@ export default async function OfertasDestacadasPage({
         <div className="flex items-end justify-between mb-6">
           <div>
             <p className="text-xs font-bold text-[#2563EB] uppercase tracking-widest mb-1">
-              SelecciÃ³n premium
+              Selección premium
             </p>
             <h2 className="text-2xl font-bold text-[#0F172A]">Ofertas verificadas</h2>
           </div>
@@ -178,7 +178,7 @@ export default async function OfertasDestacadasPage({
         {/* Grid */}
         {deals.length === 0 ? (
           <div className="text-center py-24 bg-white rounded-3xl border border-[#E2E8F0]">
-            <p className="text-5xl mb-4">âŒ›</p>
+            <p className="text-5xl mb-4">⌛</p>
             <p className="text-[#94A3B8] text-sm font-medium">No hay ofertas disponibles ahora mismo.</p>
           </div>
         ) : (
