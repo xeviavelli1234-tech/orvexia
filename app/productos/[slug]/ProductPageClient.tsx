@@ -79,8 +79,8 @@ function PriceHistoryChart({
   const maxIdx   = prices.indexOf(maxPrice);
 
   // SVG viewport
-  const W = 800, H = 200;
-  const padL = 68, padR = 24, padT = 24, padB = 40;
+  const W = 900, H = 260;
+  const padL = 72, padR = 24, padT = 24, padB = 46;
   const cW = W - padL - padR;
   const cH = H - padT - padB;
 
@@ -143,7 +143,7 @@ function PriceHistoryChart({
         className="relative rounded-xl overflow-hidden bg-[#F8FAFC] border border-[#E2E8F0]"
         onMouseLeave={() => setHoveredIdx(null)}
       >
-        <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 200 }}>
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-[300px] sm:h-[260px] md:h-[220px]">
           <defs>
             <linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%"   stopColor="#2563EB" stopOpacity="0.18" />
