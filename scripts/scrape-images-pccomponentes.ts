@@ -26,6 +26,7 @@
 
 import { PrismaClient } from "../app/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { chromium } from "playwright";
 import * as dotenv from "dotenv";
 
 dotenv.config({ path: ".env.local" });
@@ -50,11 +51,8 @@ const CF_CLEARANCE =
     : null);
 
 const THUMB_HOST = "thumb.pccomponentes.com/w-530-530";
-
-const USER_AGENTS = [
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:126.0) Gecko/20100101 Firefox/126.0",
-];
+const CHROME_PATH = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
+const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36";
 
 function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
@@ -139,22 +137,61 @@ function extractImages(html: string): string[] {
   return results;
 }
 
-async function fetchWithCookie(url: string, cfClearance: string): Promise<string> {
-  const ua = USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
-  const res = await fetch(url, {
-    headers: {
-      "User-Agent": ua,
-      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-      "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
-      "Cache-Control": "no-cache",
-      "Upgrade-Insecure-Requests": "1",
-      "Cookie": `cf_clearance=${cfClearance}`,
-      "Referer": "https://www.pccomponentes.com/televisores",
-    },
-    redirect: "follow",
-    signal: AbortSignal.timeout(15000),
+async function fetchWithPlaywright(
+  url: string,
+  cfClearance: string
+): Promise<string> {
+  const browser = await chromium.launch({
+    headless: true,
+    executablePath: CHROME_PATH,
+    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-blink-features=AutomationControlled"],
   });
-  return res.text();
+
+  const context = await browser.newContext({
+    userAgent: UA,
+    locale: "es-ES",
+    viewport: { width: 1366, height: 768 },
+    extraHTTPHeaders: { "Accept-Language": "es-ES,es;q=0.9,en;q=0.8" },
+  });
+
+  // Inject the real cf_clearance cookie BEFORE loading any page
+  await context.addCookies([
+    {
+      name: "cf_clearance",
+      value: cfClearance,
+      domain: ".pccomponentes.com",
+      path: "/",
+      httpOnly: false,
+      secure: true,
+      sameSite: "None",
+    },
+  ]);
+
+  const page = await context.newPage();
+  await page.route("**/*.{mp4,webm,ogg,woff,woff2,ttf,otf,eot}", (r) => r.abort());
+
+  try {
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 25000 });
+
+    // Scroll to trigger lazy image loading
+    await page.evaluate(async () => {
+      await new Promise<void>((resolve) => {
+        let y = 0;
+        const id = setInterval(() => {
+          window.scrollBy(0, 300);
+          y += 300;
+          if (y >= 2500) { clearInterval(id); resolve(); }
+        }, 100);
+      });
+    });
+    await sleep(2000);
+
+    return await page.content();
+  } finally {
+    await page.close();
+    await context.close();
+    await browser.close();
+  }
 }
 
 async function main() {
@@ -206,7 +243,7 @@ Sigue estos pasos para obtenerlo:
     const label = `${product.name.substring(0, 55)} [${product.slug}]`;
 
     try {
-      const html = await fetchWithCookie(offer.externalUrl, CF_CLEARANCE);
+      const html = await fetchWithPlaywright(offer.externalUrl, CF_CLEARANCE);
 
       if (isCloudflare(html)) {
         console.log(`  [skip] Cookie caducada o IP diferente — ${label}`);
