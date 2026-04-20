@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { BuySignalPanel } from "./BuySignalBadge";
 import { SaveButton } from "./SaveButton";
@@ -58,6 +57,13 @@ function getStoreLogo(store: string): { src: string; alt: string } | null {
     };
   }
 
+  if (normalized.includes("fnac")) {
+    return {
+      src: "/logos/fnac.png",
+      alt: "Fnac",
+    };
+  }
+
   return null;
 }
 
@@ -80,10 +86,6 @@ function StoreLogo({ store, logo }: { store: string; logo: { src: string; alt: s
       onError={() => setFailed(true)}
     />
   );
-}
-
-function shouldBypassNextImageOptimization(src: string) {
-  return src.includes("thumb.pccomponentes.com");
 }
 
 const SPEC_PATTERNS: { regex: RegExp; icon: string; label: (m: RegExpMatchArray) => string }[] = [
@@ -153,6 +155,9 @@ function Stars({ rating }: { rating: number }) {
 }
 
 export default function ProductModal({ product, onClose }: Props) {
+  const formatEuro = (value: number) =>
+    new Intl.NumberFormat("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+
   // Construir array de imágenes de forma segura
   const rawImages = Array.isArray(product.images) ? product.images : [];
   const all = rawImages.length > 0 ? rawImages : product.image ? [product.image] : [];
@@ -242,14 +247,16 @@ export default function ProductModal({ product, onClose }: Props) {
                     className="relative flex-shrink-0 h-full"
                     style={{ width: `${100 / all.length}%` }}
                   >
-                    <Image
+                    <img
                       src={src}
                       alt={`${product.name} - ${i + 1}`}
-                      fill
-                      unoptimized={shouldBypassNextImageOptimization(src)}
-                      className="object-contain p-6"
-                      sizes="(max-width: 768px) 100vw, 50vw"
-                      priority={i === 0}
+                      className="absolute inset-0 w-full h-full object-contain p-6"
+                      loading={i === 0 ? "eager" : "lazy"}
+                      referrerPolicy="no-referrer"
+                      onError={(e) => {
+                        const el = e.currentTarget;
+                        el.style.opacity = "0";
+                      }}
                     />
                   </div>
                 ))}
@@ -299,13 +306,16 @@ export default function ProductModal({ product, onClose }: Props) {
                     active === i ? "border-[#2563EB] shadow-md scale-105" : "border-transparent opacity-50 hover:opacity-90"
                   }`}
                 >
-                  <Image
+                  <img
                     src={src}
                     alt={`miniatura ${i + 1}`}
-                    width={56}
-                    height={56}
-                    unoptimized={shouldBypassNextImageOptimization(src)}
                     className="object-contain w-full h-full p-1"
+                    loading="lazy"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      const el = e.currentTarget;
+                      el.style.opacity = "0.2";
+                    }}
                   />
                 </button>
               ))}
@@ -361,10 +371,10 @@ export default function ProductModal({ product, onClose }: Props) {
 
             {mejorOferta && (
               <div className="flex items-end gap-2 md:gap-3 flex-wrap py-3 border-t border-b border-[#E5F0FF]">
-                <span className="text-2xl md:text-3xl font-bold text-[#0F172A]">{mejorOferta.priceCurrent.toFixed(2)} €</span>
+                <span className="text-2xl md:text-3xl font-bold text-[#0F172A]">{formatEuro(mejorOferta.priceCurrent)} €</span>
                 {mejorOferta.priceOld != null && mejorOferta.priceOld > mejorOferta.priceCurrent &&
                   mejorOferta.priceOld / mejorOferta.priceCurrent <= 2.1 && (
-                  <span className="text-base text-[#94A3B8] line-through mb-0.5">{mejorOferta.priceOld.toFixed(2)} €</span>
+                  <span className="text-base text-[#94A3B8] line-through mb-0.5">{formatEuro(mejorOferta.priceOld)} €</span>
                 )}
                 {realDiscount > 0 &&
                   mejorOferta.priceOld != null && (

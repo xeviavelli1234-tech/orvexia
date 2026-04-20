@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useState, useCallback } from "react";
 import type React from "react";
@@ -43,6 +42,9 @@ interface Props {
 }
 
 export default function ProductCard({ product, priority = false }: Props) {
+  const formatEuro = (value: number) =>
+    new Intl.NumberFormat("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
 
@@ -59,7 +61,8 @@ export default function ProductCard({ product, priority = false }: Props) {
       ? [product.image]
       : [];
   const activeCardImage = cardImages[active];
-  const activeCardImageUnoptimized = !!activeCardImage && activeCardImage.includes("thumb.pccomponentes.com");
+  const [failedCardImages, setFailedCardImages] = useState<Set<string>>(new Set());
+  const cardImageErrored = !!activeCardImage && failedCardImages.has(activeCardImage);
 
   const mejorOferta = product.offers[0];
   const ctaStoreName =
@@ -116,17 +119,23 @@ export default function ProductCard({ product, priority = false }: Props) {
         onClick={handleOpen}
       >
         <div className="relative h-48 bg-[#F8FBFF]">
-          {cardImages.length > 0 ? (
-            <Image
+          {cardImages.length > 0 && !cardImageErrored ? (
+            <img
               key={cardImages[active]}
               src={activeCardImage}
               alt={product.name}
-              fill
-              unoptimized={activeCardImageUnoptimized}
-              priority={priority}
               loading={priority ? "eager" : "lazy"}
-              sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
-              className="object-contain p-4 transition-opacity duration-200"
+              className="absolute inset-0 w-full h-full object-contain p-4 transition-opacity duration-200"
+              referrerPolicy="no-referrer"
+              onError={() => {
+                if (!activeCardImage) return;
+                setFailedCardImages((prev) => {
+                  if (prev.has(activeCardImage)) return prev;
+                  const nextSet = new Set(prev);
+                  nextSet.add(activeCardImage);
+                  return nextSet;
+                });
+              }}
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center text-3xl text-[#CBD5E1]">📦</div>
@@ -205,14 +214,14 @@ export default function ProductCard({ product, priority = false }: Props) {
           {mejorOferta ? (
             <>
               <div className="flex items-end gap-2 mb-1">
-                <span className="text-xl font-bold text-[#0F172A]">{mejorOferta.priceCurrent.toFixed(2)} €</span>
+                <span className="text-xl font-bold text-[#0F172A]">{formatEuro(mejorOferta.priceCurrent)} €</span>
                 {mejorOferta.priceOld && (
-                  <span className="text-sm text-[#94A3B8] line-through mb-0.5">{mejorOferta.priceOld.toFixed(2)} €</span>
+                  <span className="text-sm text-[#94A3B8] line-through mb-0.5">{formatEuro(mejorOferta.priceOld)} €</span>
                 )}
               </div>
               {mejorOferta.priceOld && mejorOferta.priceOld > mejorOferta.priceCurrent && (
                 <p className="text-[11px] font-semibold text-[#16A34A] mb-2">
-                  Ahorras {(mejorOferta.priceOld - mejorOferta.priceCurrent).toFixed(0)} €
+                  Ahorras {new Intl.NumberFormat("es-ES", { maximumFractionDigits: 0 }).format(mejorOferta.priceOld - mejorOferta.priceCurrent)} €
                 </p>
               )}
               <div className="mb-2">

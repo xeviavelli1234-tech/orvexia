@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
 import ProductModal from "./ProductModal";
 import { StockBadge } from "./StockBadge";
@@ -42,10 +41,6 @@ function formatPrice(n: number) {
   return new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(n);
 }
 
-function shouldBypassNextImageOptimization(src: string) {
-  return src.includes("thumb.pccomponentes.com");
-}
-
 function getRealDiscountPercent(offer: Offer | undefined): number {
   if (!offer?.priceOld) return 0;
   if (offer.priceCurrent >= offer.priceOld) return 0;
@@ -60,7 +55,8 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
   );
   const oferta = saneOffers[0] ?? product.offers[0];
   const thumb  = product.images?.[0] ?? product.image;
-  const thumbUnoptimized = !!thumb && shouldBypassNextImageOptimization(thumb);
+  const [failedThumbs, setFailedThumbs] = useState<Set<string>>(new Set());
+  const thumbError = !!thumb && failedThumbs.has(thumb);
   const realDiscount = getRealDiscountPercent(oferta);
   const showOldPrice = !!oferta?.priceOld && realDiscount > 0;
 
@@ -74,14 +70,22 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
       >
         {/* Imagen */}
         <div className="relative w-24 sm:w-28 flex-shrink-0 bg-gradient-to-br from-[#F8FAFC] to-[#EFF6FF]">
-          {thumb ? (
-            <Image
+          {thumb && !thumbError ? (
+            <img
               src={thumb}
               alt={product.name}
-              fill
-              unoptimized={thumbUnoptimized}
-              className="object-contain p-3"
-              sizes="112px"
+              className="absolute inset-0 w-full h-full object-contain p-3"
+              loading="lazy"
+              referrerPolicy="no-referrer"
+              onError={() => {
+                if (!thumb) return;
+                setFailedThumbs((prev) => {
+                  if (prev.has(thumb)) return prev;
+                  const nextSet = new Set(prev);
+                  nextSet.add(thumb);
+                  return nextSet;
+                });
+              }}
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center text-3xl opacity-30">
