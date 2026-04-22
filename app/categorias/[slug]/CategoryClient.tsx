@@ -362,7 +362,7 @@ export default function CategoryClient({ products, meta, content }: { products: 
 
         {/* SIDEBAR DESKTOP */}
         <aside className="hidden lg:block w-60 flex-shrink-0">
-          <div className="sticky top-6">
+          <div className="filters-scroll sticky top-6 max-h-[calc(100vh-2rem)] overflow-y-auto overscroll-contain pr-1 touch-pan-y">
             {sidebarJSX}
           </div>
         </aside>
@@ -401,7 +401,7 @@ export default function CategoryClient({ products, meta, content }: { products: 
 
           {/* Filtros móvil */}
           {showFilters && (
-            <div className="lg:hidden mb-6">
+            <div className="filters-scroll lg:hidden mb-6 max-h-[70vh] overflow-y-auto overscroll-contain rounded-2xl pr-1 touch-pan-y">
               {sidebarJSX}
             </div>
           )}

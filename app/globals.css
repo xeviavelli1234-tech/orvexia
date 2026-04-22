@@ -74,3 +74,28 @@ body {
 .modal-card {
   animation: modal-card-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
+
+/* Scrollbar for category filter panels */
+.filters-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #94a3b8 #e2e8f0;
+}
+
+.filters-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+
+.filters-scroll::-webkit-scrollbar-track {
+  background: #e2e8f0;
+  border-radius: 9999px;
+}
+
+.filters-scroll::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 9999px;
+  border: 2px solid #e2e8f0;
+}
+
+.filters-scroll::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
