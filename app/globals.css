@@ -1,4 +1,8 @@
-@import "tailwindcss";
+@import "tailwindcss" source(none);
+@source "./**/*.{ts,tsx,js,jsx,mdx}";
+@source "../components/**/*.{ts,tsx,js,jsx,mdx}";
+@source "../lib/**/*.{ts,tsx,js,jsx,mdx}";
+@source not "./generated/**/*";
 
 :root {
   --background: #ffffff;
