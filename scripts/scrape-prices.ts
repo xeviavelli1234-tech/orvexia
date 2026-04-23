@@ -1,7 +1,9 @@
 ﻿/**
  * scrape-prices.ts
  * Updates prices, old prices and stock for offers in DB.
- * Supports: Amazon, PcComponentes, Fnac, El Corte Ingles.
+ * Supports: Amazon, PcComponentes, Fnac.
+ * El Corte Inglés is excluded here (Akamai blocks scraping) and handled by
+ * scripts/update-prices-awin.ts via the official AWIN affiliate feed.
  *
  * Usage:
  *   npx tsx scripts/scrape-prices.ts
@@ -313,29 +315,11 @@ async function scrapeFnac(url: string): Promise<ScrapedData> {
   return { price, priceOld, inStock };
 }
 
-async function scrapeElCorteIngles(url: string): Promise<ScrapedData> {
-  const html = await fetchHtml(url);
-
-  const price = extractFirstPrice(html, [
-    /"price"\s*:\s*"?([\d]+\.[\d]{2})"?/,
-    /itemprop="price"[^>]*content="([\d.]+)"/,
-    /"sellingPrice"\s*:\s*([\d.]+)/,
-  ]);
-
-  const priceOldRaw = extractFirstPrice(html, [
-    /"originalPrice"\s*:\s*([\d.]+)/,
-    /"listPrice"\s*:\s*([\d.]+)/,
-    /class="[^"]*original-price[^"]*"[^>]*>([\d.,]+)/,
-  ]);
-
-  const ldAvailEci = html.match(/"availability"\s*:\s*"([^"]{3,80})"/)?.[1] ?? "";
-  const inStock = ldAvailEci
-    ? /instock/i.test(ldAvailEci)
-    : /a(?:n|\u00F1)adir al carrito|comprar|add to cart/i.test(html) &&
-      !/class="[^"]*(?:out-of-stock|sin-stock|agotado)[^"]*"/i.test(html);
-
-  const priceOld = price ? sanitizePriceOld(price, priceOldRaw) : null;
-  return { price, priceOld, inStock };
+// El Corte Ingles is handled separately by scripts/update-prices-awin.ts
+// because Akamai blocks direct scraping.
+function isElCorteInglesStore(store: string): boolean {
+  const s = store.toLowerCase();
+  return s.includes("corte") || s.includes("eci");
 }
 
 async function scrapeOffer(store: string, url: string): Promise<ScrapedData> {
@@ -343,7 +327,6 @@ async function scrapeOffer(store: string, url: string): Promise<ScrapedData> {
   if (s.includes("amazon")) return scrapeAmazon(url);
   if (s.includes("pccomponentes") || s.includes("pccomponente")) return scrapePcComponentes(url);
   if (s.includes("fnac")) return scrapeFnac(url);
-  if (s.includes("corte") || s.includes("eci")) return scrapeElCorteIngles(url);
   return scrapeAmazon(url);
 }
 
@@ -379,10 +362,17 @@ async function scrapeOfferWithRetry(store: string, url: string): Promise<Scraped
 async function main() {
   console.log(`Starting scraper${DRY_RUN ? " (dry-run)" : ""}${STORE_FILTER ? ` | store: ${STORE_FILTER}` : ""}\n`);
 
-  const offers = await prisma.offer.findMany({
+  const allOffers = await prisma.offer.findMany({
     include: { product: { select: { name: true } } },
     ...(STORE_FILTER ? { where: { store: { contains: STORE_FILTER, mode: "insensitive" } } } : {}),
   });
+
+  // El Corte Inglés is updated via scripts/update-prices-awin.ts (Akamai blocks scraping).
+  const offers = allOffers.filter((o) => !isElCorteInglesStore(o.store));
+  const skippedEci = allOffers.length - offers.length;
+  if (skippedEci > 0) {
+    console.log(`Skipping ${skippedEci} El Corte Inglés offer(s) - use scripts/update-prices-awin.ts\n`);
+  }
 
   console.log(`${offers.length} offers to process\n`);
 
