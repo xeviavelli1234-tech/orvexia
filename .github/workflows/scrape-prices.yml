@@ -29,3 +29,10 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: npx tsx scripts/scrape-prices.ts
+
+      - name: Actualizar precios El Corte Ingles (feed AWIN)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          AWIN_API_KEY: ${{ secrets.AWIN_API_KEY }}
+          AWIN_ECI_FEED_ID: ${{ secrets.AWIN_ECI_FEED_ID }}
+        run: npx tsx scripts/update-prices-awin.ts
