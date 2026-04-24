@@ -233,6 +233,12 @@ export default function ProductModal({ product, onClose }: Props) {
         >
           {/* Imagen principal con track deslizante */}
           <div className="relative flex-1 overflow-hidden">
+            {/* Badge de descuento sobre la imagen — coherente con la card */}
+            {realDiscount > 0 && (
+              <span className="absolute top-3 left-3 z-20 bg-[#EF4444] text-white text-xs font-bold px-2 py-1 rounded-lg shadow">
+                -{realDiscount}%
+              </span>
+            )}
             {all.length > 0 ? (
               <div
                 className="flex h-full transition-transform duration-500 ease-in-out"
