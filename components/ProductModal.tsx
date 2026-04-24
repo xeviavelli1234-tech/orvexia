@@ -36,7 +36,7 @@ interface Props {
 function getRealDiscountPercent(priceCurrent: number, priceOld: number | null): number {
   if (!priceOld) return 0;
   if (priceCurrent >= priceOld) return 0;
-  if (priceOld / priceCurrent > 2.1) return 0; // descarta PVPR inflado
+  if (priceOld / priceCurrent > 2.5) return 0; // descarta PVPR inflado
   return Math.round((1 - priceCurrent / priceOld) * 100);
 }
 
@@ -373,7 +373,7 @@ export default function ProductModal({ product, onClose }: Props) {
               <div className="flex items-end gap-2 md:gap-3 flex-wrap py-3 border-t border-b border-[#E5F0FF]">
                 <span className="text-2xl md:text-3xl font-bold text-[#0F172A]">{formatEuro(mejorOferta.priceCurrent)} €</span>
                 {mejorOferta.priceOld != null && mejorOferta.priceOld > mejorOferta.priceCurrent &&
-                  mejorOferta.priceOld / mejorOferta.priceCurrent <= 2.1 && (
+                  mejorOferta.priceOld / mejorOferta.priceCurrent <= 2.5 && (
                   <span className="text-base text-[#94A3B8] line-through mb-0.5">{formatEuro(mejorOferta.priceOld)} €</span>
                 )}
                 {realDiscount > 0 &&
