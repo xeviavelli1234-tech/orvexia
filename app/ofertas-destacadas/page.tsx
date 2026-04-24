@@ -22,7 +22,7 @@ function isRealDeal(p: ProductWithOffers): boolean {
   const ratio   = o.priceOld / o.priceCurrent;
   return (
     o.priceCurrent < o.priceOld &&
-    ratio <= 1.40 &&
+    ratio <= 2.5 &&
     savings >= 3 &&
     savings / o.priceOld >= 0.03
   );
@@ -35,7 +35,7 @@ async function getFeaturedDeals(orden: string): Promise<ProductWithOffers[]> {
     orderBy: { createdAt: "desc" },
   });
 
-  // Solo mostrar productos con descuento verificado (ratio <= 1.40)
+  // Solo mostrar productos con descuento verificado (ratio <= 2.5)
   const realDeals = products.filter(isRealDeal);
   const realDealIds = new Set(realDeals.map((p) => p.id));
 

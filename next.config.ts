@@ -15,6 +15,8 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "*.ssl-images-amazon.com" },
       { protocol: "https", hostname: "www.smarttech-tv.com" },
       { protocol: "https", hostname: "assets.mmsrg.com" },
+      { protocol: "https", hostname: "dam.elcorteingles.es" },
+      { protocol: "https", hostname: "*.elcorteingles.es" },
     ],
   },
 };

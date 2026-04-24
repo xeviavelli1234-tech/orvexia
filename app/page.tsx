@@ -30,13 +30,13 @@ async function getTopDeals() {
 
       // Criterios para considerar un descuento como real:
       // • El precio actual debe ser menor que el precio antiguo
-      // • Ratio ≤ 1.40 → máximo ~28 % de descuento
-      //   (Amazon infla el PVPR para descuentos mayores — no son reales)
+      // • Ratio ≤ 2.5 → admite hasta ~60 % de descuento
+      //   (feeds AWIN de ECI/Fnac traen priceOld del merchant, son fiables)
       // • Ahorro absoluto ≥ 3 € (descarta rebajas ridículas de céntimos)
       // • Descuento ≥ 3 %
       return (
         o.priceCurrent < o.priceOld &&
-        ratio <= 1.40 &&
+        ratio <= 2.5 &&
         savings >= 3 &&
         savings / o.priceOld >= 0.03
       );

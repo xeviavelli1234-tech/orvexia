@@ -70,11 +70,11 @@ export default function ProductCard({ product, priority = false }: Props) {
       ? "PcComp."
       : mejorOferta?.store ?? "tienda";
   // Descuento real: calculado desde los precios actuales y con cap de ratio para
-  // descartar MSRPs inflados de Amazon (ratio > 1.40 = descuento irreal)
+  // descartar MSRPs inflados (ratio > 2.5 = descuento irreal)
   const realDiscount =
     mejorOferta?.priceOld != null &&
     mejorOferta.priceCurrent < mejorOferta.priceOld &&
-    mejorOferta.priceOld / mejorOferta.priceCurrent <= 2.1
+    mejorOferta.priceOld / mejorOferta.priceCurrent <= 2.5
       ? Math.round((1 - mejorOferta.priceCurrent / mejorOferta.priceOld) * 100)
       : 0;
 
