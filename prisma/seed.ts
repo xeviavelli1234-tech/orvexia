@@ -140,13 +140,13 @@ async function main() {
     "https://m.media-amazon.com/images/I/518ka4ThNRL._AC_SL1134_.jpg",
   ];
 
-  await prisma.product.upsert({
+  const tcl50Product = await prisma.product.upsert({
     where: { slug: "tcl-50v6c-google-tv-50" },
     update: {
       image: tcl50Images[0],
       images: tcl50Images,
       rating: 4.4,
-      reviewCount: 2454,
+      reviewCount: 2583,
     },
     create: {
       slug: "tcl-50v6c-google-tv-50",
@@ -157,19 +157,29 @@ async function main() {
       image: tcl50Images[0],
       images: tcl50Images,
       rating: 4.4,
-      reviewCount: 2454,
+      reviewCount: 2583,
       description:
         "50 Pulgadas 4K UHD, Direct LED, Google TV, Dolby Audio, Motion Clarity, HDR10, Google Assistant & Alexa, AiPQ Processor. Clase de eficiencia energética E.",
       offers: {
         create: {
           store: "Amazon",
-          priceCurrent: 259.0,
+          priceCurrent: 299.0,
           priceOld: 399.0,
-          discountPercent: 35,
+          discountPercent: 25,
           externalUrl: "https://amzn.to/3PPVxm7",
           inStock: true,
         },
       },
+    },
+  });
+
+  await prisma.offer.upsert({
+    where: { productId_store: { productId: tcl50Product.id, store: "Amazon" } },
+    update: { priceCurrent: 299.0, priceOld: 399.0, discountPercent: 25, inStock: true },
+    create: {
+      productId: tcl50Product.id, store: "Amazon",
+      priceCurrent: 299.0, priceOld: 399.0, discountPercent: 25,
+      externalUrl: "https://amzn.to/3PPVxm7", inStock: true,
     },
   });
 
@@ -252,8 +262,8 @@ async function main() {
     update: {
       image: tcl65T69Images[0],
       images: tcl65T69Images,
-      rating: 4.3,
-      reviewCount: 423,
+      rating: 4.2,
+      reviewCount: 460,
     },
     create: {
       slug: "tcl-65t69c-qled-google-tv-65",
@@ -263,8 +273,8 @@ async function main() {
       model: "65T69C",
       image: tcl65T69Images[0],
       images: tcl65T69Images,
-      rating: 4.3,
-      reviewCount: 423,
+      rating: 4.2,
+      reviewCount: 460,
       description:
         "65 Pulgadas QLED Direct LED TV, 4K HDR, Google TV, Dolby Vision, Dolby Atmos, Game Master, Motion Clarity, AiPQ Processor, Google Assistant, Alexa. Clase de eficiencia energética F.",
       offers: {
@@ -301,13 +311,13 @@ async function main() {
     "https://m.media-amazon.com/images/I/5112qF+ICwL._AC_SL1456_.jpg",
   ];
 
-  await prisma.product.upsert({
+  const xiaomi32Product = await prisma.product.upsert({
     where: { slug: "xiaomi-tv-f-32-2026" },
     update: {
       image: xiaomi32Images[0],
       images: xiaomi32Images,
       rating: 4.4,
-      reviewCount: 4486,
+      reviewCount: 4917,
     },
     create: {
       slug: "xiaomi-tv-f-32-2026",
@@ -318,19 +328,29 @@ async function main() {
       image: xiaomi32Images[0],
       images: xiaomi32Images,
       rating: 4.4,
-      reviewCount: 4486,
+      reviewCount: 4917,
       description:
         "32 Pulgadas (81 cm), HD, Smart TV, Fire OS 7, Control por Voz Alexa, Dolby Audio, DTS Virtual:X, DTS-HD, Compatible con Apple AirPlay, 120Hz. Clase de eficiencia energética F.",
       offers: {
         create: {
           store: "Amazon",
-          priceCurrent: 148.99,
-          priceOld: 179.0,
-          discountPercent: 17,
+          priceCurrent: 138.99,
+          priceOld: 149.0,
+          discountPercent: 7,
           externalUrl: "https://amzn.to/48b2FQi",
           inStock: true,
         },
       },
+    },
+  });
+
+  await prisma.offer.upsert({
+    where: { productId_store: { productId: xiaomi32Product.id, store: "Amazon" } },
+    update: { priceCurrent: 138.99, priceOld: 149.0, discountPercent: 7, inStock: true },
+    create: {
+      productId: xiaomi32Product.id, store: "Amazon",
+      priceCurrent: 138.99, priceOld: 149.0, discountPercent: 7,
+      externalUrl: "https://amzn.to/48b2FQi", inStock: true,
     },
   });
 
@@ -361,13 +381,13 @@ async function main() {
     "https://m.media-amazon.com/images/I/51NC2O9y7uL._AC_SL1451_.jpg",
   ];
 
-  await prisma.product.upsert({
+  const xiaomi50Product = await prisma.product.upsert({
     where: { slug: "xiaomi-tv-f-50-2026" },
     update: {
       image: xiaomi50Images[0],
       images: xiaomi50Images,
       rating: 4.4,
-      reviewCount: 4486,
+      reviewCount: 4917,
     },
     create: {
       slug: "xiaomi-tv-f-50-2026",
@@ -378,19 +398,29 @@ async function main() {
       image: xiaomi50Images[0],
       images: xiaomi50Images,
       rating: 4.4,
-      reviewCount: 4486,
+      reviewCount: 4917,
       description:
         "50 Pulgadas (127 cm), 4K UHD, Smart TV, Fire OS 8, Control por Voz Alexa, HDR10, MEMC, Modo Game Boost 120Hz, 2GB+32GB, Compatible con Apple AirPlay. Clase de eficiencia energética F.",
       offers: {
         create: {
           store: "Amazon",
           priceCurrent: 299.0,
-          priceOld: 359.0,
-          discountPercent: 17,
+          priceOld: null,
+          discountPercent: null,
           externalUrl: "https://amzn.to/4dZ5kAe",
           inStock: true,
         },
       },
+    },
+  });
+
+  await prisma.offer.upsert({
+    where: { productId_store: { productId: xiaomi50Product.id, store: "Amazon" } },
+    update: { priceCurrent: 299.0, priceOld: null, discountPercent: null, inStock: true },
+    create: {
+      productId: xiaomi50Product.id, store: "Amazon",
+      priceCurrent: 299.0, priceOld: null, discountPercent: null,
+      externalUrl: "https://amzn.to/4dZ5kAe", inStock: true,
     },
   });
 
@@ -414,13 +444,13 @@ async function main() {
     "https://m.media-amazon.com/images/I/71QXRvI8oHL._AC_SL1500_.jpg",
   ];
 
-  await prisma.product.upsert({
+  const hisense43Product = await prisma.product.upsert({
     where: { slug: "hisense-43e63qt-4k-43" },
     update: {
       image: hisense43Images[0],
       images: hisense43Images,
-      rating: 4.2,
-      reviewCount: 4778,
+      rating: 4.4,
+      reviewCount: 499,
     },
     create: {
       slug: "hisense-43e63qt-4k-43",
@@ -430,20 +460,30 @@ async function main() {
       model: "43E63QT",
       image: hisense43Images[0],
       images: hisense43Images,
-      rating: 4.2,
-      reviewCount: 4778,
+      rating: 4.4,
+      reviewCount: 499,
       description:
         "43 Pulgadas UHD 4K, Smart TV, Dolby Vision, Game Mode Plus 60Hz VRR, DTS Virtual X, Control por Voz, Doble Control de Volumen, Auto Ordenación Canales TDT. Clase de eficiencia energética E.",
       offers: {
         create: {
           store: "Amazon",
-          priceCurrent: 245.0,
-          priceOld: 252.9,
-          discountPercent: 3,
+          priceCurrent: 207.0,
+          priceOld: 252.99,
+          discountPercent: 18,
           externalUrl: "https://amzn.to/3NVCB4X",
           inStock: true,
         },
       },
+    },
+  });
+
+  await prisma.offer.upsert({
+    where: { productId_store: { productId: hisense43Product.id, store: "Amazon" } },
+    update: { priceCurrent: 207.0, priceOld: 252.99, discountPercent: 18, inStock: true },
+    create: {
+      productId: hisense43Product.id, store: "Amazon",
+      priceCurrent: 207.0, priceOld: 252.99, discountPercent: 18,
+      externalUrl: "https://amzn.to/3NVCB4X", inStock: true,
     },
   });
 
@@ -562,13 +602,13 @@ async function main() {
     "https://m.media-amazon.com/images/I/51GRoR49ePL._AC_SL1134_.jpg",
   ];
 
-  await prisma.product.upsert({
+  const lg32Product = await prisma.product.upsert({
     where: { slug: "lg-32lr60006la-fhd-webos-32" },
     update: {
       image: lg32Images[0],
       images: lg32Images,
       rating: 4.4,
-      reviewCount: 107,
+      reviewCount: 116,
     },
     create: {
       slug: "lg-32lr60006la-fhd-webos-32",
@@ -579,7 +619,7 @@ async function main() {
       image: lg32Images[0],
       images: lg32Images,
       rating: 4.4,
-      reviewCount: 107,
+      reviewCount: 116,
       description:
         "32 Pulgadas FHD 1080p, Smart TV webOS 23, Procesador α5 AI Gen6, HDR10/HLG, Dolby Digital Plus, AI Sound, Google Assistant, Apple AirPlay, ThinQ, Bluetooth, Wi-Fi. Clase de eficiencia energética F.",
       offers: {
@@ -592,6 +632,16 @@ async function main() {
           inStock: true,
         },
       },
+    },
+  });
+
+  await prisma.offer.upsert({
+    where: { productId_store: { productId: lg32Product.id, store: "Amazon" } },
+    update: { priceCurrent: 229.0, priceOld: 289.0, discountPercent: 21, inStock: true },
+    create: {
+      productId: lg32Product.id, store: "Amazon",
+      priceCurrent: 229.0, priceOld: 289.0, discountPercent: 21,
+      externalUrl: "https://amzn.to/47HRdvr", inStock: true,
     },
   });
 
@@ -617,13 +667,13 @@ async function main() {
     "https://m.media-amazon.com/images/I/71KXqJZGV6L._AC_SL1500_.jpg",
   ];
 
-  await prisma.product.upsert({
+  const lg50UA73Product = await prisma.product.upsert({
     where: { slug: "lg-50ua73006la-uhd-webos25-50" },
     update: {
       image: lg50UA73Images[0],
       images: lg50UA73Images,
-      rating: 4.3,
-      reviewCount: 3462,
+      rating: 4.4,
+      reviewCount: 3556,
     },
     create: {
       slug: "lg-50ua73006la-uhd-webos25-50",
@@ -633,20 +683,30 @@ async function main() {
       model: "50UA73006LA",
       image: lg50UA73Images[0],
       images: lg50UA73Images,
-      rating: 4.3,
-      reviewCount: 3462,
+      rating: 4.4,
+      reviewCount: 3556,
       description:
         "50 Pulgadas UHD 4K, WebOS 25, Ultimate IA, HDR10 Pro, Super Upscaling, Dolby Digital Plus, Google Assistant, Magic Remote, Negro. Clase de eficiencia energética G.",
       offers: {
         create: {
           store: "Amazon",
-          priceCurrent: 311.9,
+          priceCurrent: 316.9,
           priceOld: null,
           discountPercent: null,
           externalUrl: "https://amzn.to/4t0JRM3",
           inStock: true,
         },
       },
+    },
+  });
+
+  await prisma.offer.upsert({
+    where: { productId_store: { productId: lg50UA73Product.id, store: "Amazon" } },
+    update: { priceCurrent: 316.9, priceOld: null, discountPercent: null, inStock: true },
+    create: {
+      productId: lg50UA73Product.id, store: "Amazon",
+      priceCurrent: 316.9, priceOld: null, discountPercent: null,
+      externalUrl: "https://amzn.to/4t0JRM3", inStock: true,
     },
   });
 
@@ -673,13 +733,13 @@ async function main() {
     "https://m.media-amazon.com/images/I/517xQFUd6WL._AC_SL1134_.jpg",
   ];
 
-  await prisma.product.upsert({
+  const lg43UA73Product = await prisma.product.upsert({
     where: { slug: "lg-43ua73006la-uhd-webos25-43" },
     update: {
       image: lg43UA73Images[0],
       images: lg43UA73Images,
-      rating: 4.3,
-      reviewCount: 3462,
+      rating: 4.4,
+      reviewCount: 3556,
     },
     create: {
       slug: "lg-43ua73006la-uhd-webos25-43",
@@ -689,20 +749,30 @@ async function main() {
       model: "43UA73006LA",
       image: lg43UA73Images[0],
       images: lg43UA73Images,
-      rating: 4.3,
-      reviewCount: 3462,
+      rating: 4.4,
+      reviewCount: 3556,
       description:
         "43 Pulgadas UHD 4K, WebOS 25, Ultimate IA, HDR10 Pro, Super Upscaling, Dolby Digital Plus, Google Assistant, Cloud Gaming GeForce Now y Xbox, Magic Remote, Negro. Clase de eficiencia energética G.",
       offers: {
         create: {
           store: "Amazon",
-          priceCurrent: 258.9,
+          priceCurrent: 269.0,
           priceOld: null,
           discountPercent: null,
           externalUrl: "https://amzn.to/3NLAXCW",
           inStock: true,
         },
       },
+    },
+  });
+
+  await prisma.offer.upsert({
+    where: { productId_store: { productId: lg43UA73Product.id, store: "Amazon" } },
+    update: { priceCurrent: 269.0, priceOld: null, discountPercent: null, inStock: true },
+    create: {
+      productId: lg43UA73Product.id, store: "Amazon",
+      priceCurrent: 269.0, priceOld: null, discountPercent: null,
+      externalUrl: "https://amzn.to/3NLAXCW", inStock: true,
     },
   });
 
@@ -721,13 +791,13 @@ async function main() {
     "https://m.media-amazon.com/images/I/516xEq-BrwL._AC_SL1500_.jpg",
   ];
 
-  await prisma.product.upsert({
+  const tdSystems32Product = await prisma.product.upsert({
     where: { slug: "td-systems-prime32c22tizen-32" },
     update: {
       image: tdSystems32Images[0],
       images: tdSystems32Images,
       rating: 4.4,
-      reviewCount: 2170,
+      reviewCount: 2218,
     },
     create: {
       slug: "td-systems-prime32c22tizen-32",
@@ -738,7 +808,7 @@ async function main() {
       image: tdSystems32Images[0],
       images: tdSystems32Images,
       rating: 4.4,
-      reviewCount: 2170,
+      reviewCount: 2218,
       description:
         "32 Pulgadas Smart TV Samsung Tizen OS 8.0, Triple Tuner DVB-T2/C/S2, Samsung Smart TV Gaming Hub, HD Ready. Clase de eficiencia energética E.",
       offers: {
@@ -754,7 +824,62 @@ async function main() {
     },
   });
 
+  await prisma.offer.upsert({
+    where: { productId_store: { productId: tdSystems32Product.id, store: "Amazon" } },
+    update: { priceCurrent: 119.89, priceOld: null, discountPercent: null, inStock: true },
+    create: {
+      productId: tdSystems32Product.id, store: "Amazon",
+      priceCurrent: 119.89, priceOld: null, discountPercent: null,
+      externalUrl: "https://amzn.to/3PGfv2P", inStock: true,
+    },
+  });
+
   console.log("✅ TD Systems PRIME32C22TIZEN insertada");
+
+  const tdSystems40Product = await prisma.product.upsert({
+    where: { slug: "td-systems-prime40c22tizen-40" },
+    update: {
+      image: tdSystems32Images[0],
+      images: tdSystems32Images,
+      rating: 4.4,
+      reviewCount: 2218,
+    },
+    create: {
+      slug: "td-systems-prime40c22tizen-40",
+      name: 'TD Systems PRIME40C22TIZEN 40" Smart TV',
+      category: "TELEVISORES",
+      brand: "TD Systems",
+      model: "PRIME40C22TIZEN",
+      image: tdSystems32Images[0],
+      images: tdSystems32Images,
+      rating: 4.4,
+      reviewCount: 2218,
+      description:
+        "40 Pulgadas Smart TV Samsung Tizen OS 8.0, Triple Tuner DVB-T2/C/S2, Samsung Smart TV Gaming Hub, Full HD. Clase de eficiencia energética E.",
+      offers: {
+        create: {
+          store: "Amazon",
+          priceCurrent: 169.89,
+          priceOld: null,
+          discountPercent: null,
+          externalUrl: "https://amzn.to/3PGfv2P",
+          inStock: true,
+        },
+      },
+    },
+  });
+
+  await prisma.offer.upsert({
+    where: { productId_store: { productId: tdSystems40Product.id, store: "Amazon" } },
+    update: { priceCurrent: 169.89, priceOld: null, discountPercent: null, inStock: true },
+    create: {
+      productId: tdSystems40Product.id, store: "Amazon",
+      priceCurrent: 169.89, priceOld: null, discountPercent: null,
+      externalUrl: "https://amzn.to/3PGfv2P", inStock: true,
+    },
+  });
+
+  console.log("✅ TD Systems PRIME40C22TIZEN insertada");
 
   const philips40Images = [
     "https://m.media-amazon.com/images/I/71yk75UB4gL._AC_SL1500_.jpg",
