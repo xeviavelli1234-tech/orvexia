@@ -29,7 +29,7 @@ const CATEGORY_MAP: Record<string, { enum: string; nameMatches: RegExp; excludes
   MICROONDAS: { enum: "MICROONDAS", nameMatches: /\bmicroondas\b/i, excludes: /accesorios|plato|bandeja|filtro|repuesto|grill\s+para|palomitero|para\s+microondas|tapa|recipiente|olla|l[eé]kue/i },
   ASPIRADORAS: { enum: "ASPIRADORAS", nameMatches: /\baspirador(?:a|as|es)?\b|\brobot\s+aspirador/i, excludes: /bolsa|filtro|accesorios|recambio|cepillo|manguera|tubo|para\s+aspirador|kit\s+aspirador|repuesto|boquilla|dep[oó]sito|bater[ií]a\s+para/i },
   CAFETERAS: { enum: "CAFETERAS", nameMatches: /cafetera/i, excludes: /c[aá]psula|caf[eé]\s+molido|accesorios|filtro|recambio|para\s+cafetera|jarra\s+para/i },
-  AIRES_ACONDICIONADOS: { enum: "AIRES_ACONDICIONADOS", nameMatches: /aire\s+acondicionado|climatizador|split(?!.*cargador)|ping[uü]ino|portát[íi]l\s+(?:fr[íi]o|aire)/i, excludes: /mando|accesor|para\s+aire|kit|filtro|recambio|tubo|ventilador|humidificador|deshumidificador|purificador/i },
+  AIRES_ACONDICIONADOS: { enum: "AIRES_ACONDICIONADOS", nameMatches: /aire\s+acondicionado|climatizador|split\s+(?:1x[1-9]|2x1|3x1|3x2|4x1|inverter|bomba|\d+(?:[.,]\d+)?\s*(?:btu|frig|kw))|ping[uü]ino|portát[íi]l\s+(?:fr[íi]o|aire)/i, excludes: /mando|accesor|para\s+aire|kit|filtro|recambio|tubo|ventilador|humidificador|deshumidificador|purificador|short|pantal[oó]n|camisa|camiseta|sudadera|vestido|chaqueta|leggin|jogger|biker|polo|jers[eé]y|abrigo|bermuda|bikini|ba[nñ]ador|falda|polera|zapatill|sneaker|bota\b|sandalia|gorra|calcet[ií]n/i },
 };
 
 function parseCsvLine(line: string): string[] {
