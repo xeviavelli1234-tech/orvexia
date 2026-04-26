@@ -47,6 +47,13 @@ const PRICE_CURRENT = 499.0;
 const PRICE_OLD = 599.0;
 const DISCOUNT = 17;
 
+// ECI bloquea scrape directo (Cloudflare). Imagen del CDN público de
+// MediaMarkt para el mismo SKU Balay 3TS3106B (assets.mmsrg.com ya está en
+// next.config.ts > remotePatterns).
+const IMAGES = [
+  "https://assets.mmsrg.com/isr/166325/c1/-/ASSET_MP_116998692?x=800&y=800&format=jpg",
+];
+
 function slugify(s: string): string {
   return s
     .toLowerCase()
@@ -61,15 +68,9 @@ async function main() {
   const slug = `${STORE_SLUG}-${AW}-${slugify(NAME)}`;
   console.log(`Slug: ${slug}`);
 
-  const existing = await prisma.product.findUnique({ where: { slug } });
-  if (existing) {
-    console.log(`✓ ya existe: ${existing.id}`);
-    return;
-  }
-
   const product = await prisma.product.upsert({
     where: { slug },
-    update: {},
+    update: { image: IMAGES[0], images: IMAGES },
     create: {
       slug,
       name: NAME,
@@ -77,7 +78,8 @@ async function main() {
       brand: BRAND,
       model: MODEL,
       description: DESCRIPTION,
-      images: [],
+      image: IMAGES[0],
+      images: IMAGES,
     },
   });
 
