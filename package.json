@@ -9,7 +9,8 @@
     "db:sync-tv-prices": "tsx scripts/sync-tv-prices.ts",
     "db:sync-fnac-lavadoras-prices": "tsx scripts/sync-fnac-lavadoras-prices.ts",
     "db:sync-eci-lavadoras-stock": "tsx scripts/sync-eci-lavadoras-stock.ts",
-    "build": "prisma generate && (tsx scripts/sync-tv-prices.ts || true) && (tsx scripts/sync-fnac-lavadoras-prices.ts || true) && (tsx scripts/sync-eci-lavadoras-stock.ts || true) && node --max-old-space-size=12288 node_modules/next/dist/bin/next build",
+    "db:sync-eci-lavadoras-prices": "tsx scripts/sync-eci-lavadoras-prices.ts",
+    "build": "prisma generate && (tsx scripts/sync-tv-prices.ts || true) && (tsx scripts/sync-fnac-lavadoras-prices.ts || true) && (tsx scripts/sync-eci-lavadoras-stock.ts || true) && (tsx scripts/sync-eci-lavadoras-prices.ts || true) && node --max-old-space-size=12288 node_modules/next/dist/bin/next build",
     "start": "next start",
     "lint": "eslint"
   },
