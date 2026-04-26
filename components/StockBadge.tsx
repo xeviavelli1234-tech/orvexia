@@ -11,15 +11,8 @@ interface Props {
   productId?: string;
 }
 
-export function StockBadge({ inStock, store, discountPercent }: Props) {
-  if (inStock === false) {
-    return (
-      <span className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-[#991B1B] bg-[#FEF2F2] border border-[#FECACA] px-2.5 py-1 rounded-full w-fit max-w-full break-words uppercase tracking-wide">
-        <span className="w-2 h-2 rounded-full bg-[#DC2626] shrink-0" />
-        Agotado en {store}
-      </span>
-    );
-  }
+export function StockBadge({ inStock: _inStock, store, discountPercent }: Props) {
+  void _inStock;
 
   const isPcComponentes = store.toLowerCase().includes("pccomponente");
   const inStockLabel = isPcComponentes

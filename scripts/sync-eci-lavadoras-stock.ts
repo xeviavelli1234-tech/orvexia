@@ -12,13 +12,15 @@ const prisma = new PrismaClient({
 
 const STORE = "El Corte Inglés";
 
-// Modelos agotados en ECI (visto en captura 2026-04-26). El producto vive en BD
-// con el modelo dentro del nombre, así que lo localizamos por substring.
-const SOLD_OUT_MODELS = ["WAN28287ES", "LFE6G54H4B", "WUU28T66ES", "WUU28T8XES"];
+// El usuario pidió quitar todo lo de "agotado". Este script ya no marca nada
+// como sin stock; al contrario, hace cleanup deshaciendo los marcados previos
+// (commits e1ee530 / 6f8dd53) sobre estos 4 modelos en la oferta ECI.
+const RESET_TO_IN_STOCK_MODELS = ["WAN28287ES", "LFE6G54H4B", "WUU28T66ES", "WUU28T8XES"];
 
-// Slugs insertados por la primera versión del script (commit e1ee530) que el
-// usuario quiere revertir. Se borran completos: schema tiene onDelete: Cascade
-// para Offer, PriceHistory, BuySignal, SavedProduct y PriceAlert.
+// Slugs de los 4 productos sustitutos que inserté en e1ee530 y que el usuario
+// quiere revertir. Defensivo: si ya los borró el deploy anterior, no pasa nada.
+// Schema tiene onDelete: Cascade para Offer, PriceHistory, BuySignal,
+// SavedProduct y PriceAlert.
 const REPLACEMENTS_TO_DELETE_PREFIXES = [
   "eci-44531643339-", // Bosch WGG254Z5ES
   "eci-44149868303-", // AEG LFR7394O4V
@@ -26,11 +28,11 @@ const REPLACEMENTS_TO_DELETE_PREFIXES = [
   "eci-44450209052-", // Bosch WUU28T63ES
 ];
 
-async function markSoldOut(): Promise<{ ok: number; missing: number }> {
+async function resetInStock(): Promise<{ ok: number; missing: number }> {
   let ok = 0;
   let missing = 0;
 
-  for (const model of SOLD_OUT_MODELS) {
+  for (const model of RESET_TO_IN_STOCK_MODELS) {
     const products = await prisma.product.findMany({
       where: {
         category: "LAVADORAS",
@@ -52,14 +54,14 @@ async function markSoldOut(): Promise<{ ok: number; missing: number }> {
 
     for (const p of products) {
       for (const o of p.offers) {
-        if (o.inStock === false) {
-          console.log(`✓  ${model} (${p.slug.slice(0, 60)}): ya marcado sin stock`);
+        if (o.inStock === true) {
+          console.log(`✓  ${model} (${p.slug.slice(0, 60)}): ya en stock`);
         } else {
           await prisma.offer.update({
             where: { id: o.id },
-            data: { inStock: false },
+            data: { inStock: true },
           });
-          console.log(`✅ ${model} (${p.slug.slice(0, 60)}): marcado inStock=false`);
+          console.log(`✅ ${model} (${p.slug.slice(0, 60)}): reset inStock=true`);
         }
         ok++;
       }
@@ -86,11 +88,11 @@ async function deleteRevertedReplacements(): Promise<{ deleted: number }> {
 }
 
 async function main() {
-  console.log("🔻 Marcando agotados...");
-  const so = await markSoldOut();
+  console.log("🔄 Reseteando inStock=true...");
+  const so = await resetInStock();
   console.log(`   ${so.ok} ofertas tocadas, ${so.missing} modelos no encontrados\n`);
 
-  console.log("🧹 Borrando reemplazos revertidos...");
+  console.log("🧹 Borrando reemplazos revertidos (defensivo)...");
   const del = await deleteRevertedReplacements();
   console.log(`   ${del.deleted} productos borrados\n`);
 
