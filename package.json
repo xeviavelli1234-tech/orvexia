@@ -7,7 +7,8 @@
     "dev:nofork": "node dev-no-fork.cjs",
     "postinstall": "prisma generate",
     "db:sync-tv-prices": "tsx scripts/sync-tv-prices.ts",
-    "build": "prisma generate && (tsx scripts/sync-tv-prices.ts || true) && node --max-old-space-size=12288 node_modules/next/dist/bin/next build",
+    "db:sync-price-corrections": "tsx scripts/sync-price-corrections.ts",
+    "build": "prisma generate && (tsx scripts/sync-tv-prices.ts || true) && (tsx scripts/sync-price-corrections.ts || true) && node --max-old-space-size=12288 node_modules/next/dist/bin/next build",
     "start": "next start",
     "lint": "eslint"
   },
