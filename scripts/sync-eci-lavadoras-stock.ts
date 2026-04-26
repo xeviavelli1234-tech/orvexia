@@ -14,7 +14,16 @@ const STORE = "El Corte Inglés";
 
 // Modelos agotados en ECI (visto en captura 2026-04-26). El producto vive en BD
 // con el modelo dentro del nombre, así que lo localizamos por substring.
-const SOLD_OUT_MODELS = ["WAN28287ES", "LFE6G54H4B", "WUU28T66ES", "WUU28T8XES"];
+const SOLD_OUT_MODELS = [
+  "WAN28287ES",
+  "LFE6G54H4B",
+  "WUU28T66ES",
+  "WUU28T8XES",
+  "WGH244A0ES",
+  "THASNQ286TM5-S",
+  "LFR6114O4B",
+  "WG44H2A0ES",
+];
 
 // Slugs insertados por la primera versión del script (commit e1ee530) que el
 // usuario quiere revertir. Se borran completos: schema tiene onDelete: Cascade

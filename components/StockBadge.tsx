@@ -17,7 +17,16 @@ interface Props {
 // uno de estos códigos Y la oferta es de El Corte Inglés. Independiente del
 // campo inStock de la BD para evitar que un scraping antiguo "contagie" el
 // badge a otros productos.
-const ECI_SOLD_OUT_MODELS = ["WAN28287ES", "LFE6G54H4B", "WUU28T66ES", "WUU28T8XES"];
+const ECI_SOLD_OUT_MODELS = [
+  "WAN28287ES",
+  "LFE6G54H4B",
+  "WUU28T66ES",
+  "WUU28T8XES",
+  "WGH244A0ES",
+  "THASNQ286TM5-S",
+  "LFR6114O4B",
+  "WG44H2A0ES",
+];
 
 function isManualEciSoldOut(productName: string | undefined, store: string): boolean {
   if (!productName) return false;
