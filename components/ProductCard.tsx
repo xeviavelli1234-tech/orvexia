@@ -234,6 +234,7 @@ export default function ProductCard({ product, priority = false }: Props) {
                   store={mejorOferta.store}
                   category={product.category}
                   discountPercent={realDiscount}
+                  productName={product.name}
                 />
               </div>
               <div className="mt-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">

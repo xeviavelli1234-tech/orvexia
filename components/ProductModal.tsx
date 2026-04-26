@@ -398,6 +398,7 @@ export default function ProductModal({ product, onClose }: Props) {
                 store={mejorOferta.store}
                 category={product.category}
                 discountPercent={realDiscount}
+                productName={product.name}
               />
             )}
 

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 interface Props {
   inStock: boolean;
@@ -7,12 +7,29 @@ interface Props {
   discountPercent?: number | null;
   updatedAt?: Date | string;
   externalUrl?: string;
+  productName?: string;
   // kept for API compatibility but no longer used
   productId?: string;
 }
 
-export function StockBadge({ inStock, store, discountPercent }: Props) {
-  if (inStock === false) {
+// Lista cerrada de modelos ECI marcados como agotados a mano por el usuario.
+// El badge AGOTADO se muestra ÚNICAMENTE si el nombre del producto contiene
+// uno de estos códigos Y la oferta es de El Corte Inglés. Independiente del
+// campo inStock de la BD para evitar que un scraping antiguo "contagie" el
+// badge a otros productos.
+const ECI_SOLD_OUT_MODELS = ["WAN28287ES", "LFE6G54H4B", "WUU28T66ES", "WUU28T8XES"];
+
+function isManualEciSoldOut(productName: string | undefined, store: string): boolean {
+  if (!productName) return false;
+  if (!/corte\s*ingl[eé]s|elcorteingles|\beci\b/i.test(store)) return false;
+  const upper = productName.toUpperCase();
+  return ECI_SOLD_OUT_MODELS.some((m) => upper.includes(m));
+}
+
+export function StockBadge({ inStock: _inStock, store, discountPercent, productName }: Props) {
+  void _inStock;
+
+  if (isManualEciSoldOut(productName, store)) {
     return (
       <span className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-[#991B1B] bg-[#FEF2F2] border border-[#FECACA] px-2.5 py-1 rounded-full w-fit max-w-full break-words uppercase tracking-wide">
         <span className="w-2 h-2 rounded-full bg-[#DC2626] shrink-0" />

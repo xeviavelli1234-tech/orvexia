@@ -349,7 +349,7 @@ export default function ProductPageClient({ product, specs, description, catLabe
                   💡 Precio mínimo histórico: <span className="font-bold text-[#059669]">{formatPrice(minPrice)}</span>
                 </p>
               )}
-              <StockBadge inStock={bestOffer.inStock ?? true} productId={product.id} store={bestOffer.store} category={product.category} />
+              <StockBadge inStock={bestOffer.inStock ?? true} productId={product.id} store={bestOffer.store} category={product.category} productName={product.name} />
               <a
                 href={bestOffer.externalUrl}
                 target="_blank"
