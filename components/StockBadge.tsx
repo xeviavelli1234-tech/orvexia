@@ -26,6 +26,7 @@ const ECI_SOLD_OUT_MODELS = [
   "THASNQ286TM5-S",
   "LFR6114O4B",
   "WG44H2A0ES",
+  "3TS3106B",
 ];
 
 function isManualEciSoldOut(productName: string | undefined, store: string): boolean {
