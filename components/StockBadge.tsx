@@ -27,6 +27,13 @@ const ECI_SOLD_OUT_MODELS = [
   "LFR6114O4B",
   "WG44H2A0ES",
   "3TS3106B",
+  "RB53DG706AS9EF",
+  "RB34C775CS9",
+  "KGN392LAG",
+  "KGN392WCF",
+  "HDPW7620ANPK",
+  "RB38C776CS9",
+  "GBV7280AMB",
 ];
 
 // Misma lógica para Amazon: marcamos modelos sin stock vistos en captura.
