@@ -29,6 +29,11 @@ const ECI_SOLD_OUT_MODELS = [
   "3TS3106B",
 ];
 
+// Misma lógica para Amazon: marcamos modelos sin stock vistos en captura.
+const AMAZON_SOLD_OUT_MODELS = [
+  "CNCQ2T518EG",
+];
+
 function isManualEciSoldOut(productName: string | undefined, store: string): boolean {
   if (!productName) return false;
   if (!/corte\s*ingl[eé]s|elcorteingles|\beci\b/i.test(store)) return false;
@@ -36,10 +41,17 @@ function isManualEciSoldOut(productName: string | undefined, store: string): boo
   return ECI_SOLD_OUT_MODELS.some((m) => upper.includes(m));
 }
 
+function isManualAmazonSoldOut(productName: string | undefined, store: string): boolean {
+  if (!productName) return false;
+  if (!/amazon/i.test(store)) return false;
+  const upper = productName.toUpperCase();
+  return AMAZON_SOLD_OUT_MODELS.some((m) => upper.includes(m));
+}
+
 export function StockBadge({ inStock: _inStock, store, discountPercent, productName }: Props) {
   void _inStock;
 
-  if (isManualEciSoldOut(productName, store)) {
+  if (isManualEciSoldOut(productName, store) || isManualAmazonSoldOut(productName, store)) {
     return (
       <span className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-[#991B1B] bg-[#FEF2F2] border border-[#FECACA] px-2.5 py-1 rounded-full w-fit max-w-full break-words uppercase tracking-wide">
         <span className="w-2 h-2 rounded-full bg-[#DC2626] shrink-0" />
