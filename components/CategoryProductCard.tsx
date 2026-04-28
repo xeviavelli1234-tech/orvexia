@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import ProductModal from "./ProductModal";
-import { StockBadge, isManualSoldOut } from "./StockBadge";
+import { StockBadge } from "./StockBadge";
 
 interface Offer {
   store: string;
@@ -59,11 +59,6 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
   const thumbError = !!thumb && failedThumbs.has(thumb);
   const realDiscount = getRealDiscountPercent(oferta);
   const showOldPrice = !!oferta?.priceOld && realDiscount > 0;
-  // De momento sólo para lavavajillas ECI: si está agotado, badge "AGOTADO" en
-  // la esquina (en vez del -X%) y precio tachado en gris.
-  const agotadoLavavajillasEci =
-    product.category === "LAVAVAJILLAS" &&
-    isManualSoldOut(product.name, oferta?.store);
 
   return (
     <>
@@ -97,15 +92,11 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
               {catIcon}
             </div>
           )}
-          {agotadoLavavajillasEci ? (
-            <span className="absolute top-2 left-2 bg-[#DC2626] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wide">
-              Agotado
-            </span>
-          ) : realDiscount > 0 ? (
+          {realDiscount > 0 && (
             <span className="absolute top-2 left-2 bg-[#EF4444] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md">
               -{realDiscount}%
             </span>
-          ) : null}
+          )}
         </div>
 
         {/* Info */}
@@ -131,33 +122,21 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
               />
               <div className="flex items-center justify-between">
                 <div>
-                  <span
-                    className={
-                      agotadoLavavajillasEci
-                        ? "text-base sm:text-lg font-extrabold text-[#94A3B8] line-through"
-                        : "text-base sm:text-lg font-extrabold text-[#0F172A]"
-                    }
-                  >
+                  <span className="text-base sm:text-lg font-extrabold text-[#0F172A]">
                     {formatPrice(oferta.priceCurrent)}
                   </span>
-                  {showOldPrice && !agotadoLavavajillasEci && (
+                  {showOldPrice && (
                     <span className="ml-1.5 text-xs text-[#94A3B8] line-through">
                       {formatPrice(oferta.priceOld!)}
                     </span>
                   )}
                 </div>
-                {agotadoLavavajillasEci ? (
-                  <span className="text-xs font-bold text-white bg-[#DC2626] px-3 py-1.5 rounded-lg uppercase tracking-wide">
-                    Agotado
-                  </span>
-                ) : (
-                  <span
-                    className="text-xs font-bold text-white px-3 py-1.5 rounded-lg"
-                    style={{ backgroundColor: catColor }}
-                  >
-                    Ver →
-                  </span>
-                )}
+                <span
+                  className="text-xs font-bold text-white px-3 py-1.5 rounded-lg"
+                  style={{ backgroundColor: catColor }}
+                >
+                  Ver →
+                </span>
               </div>
               {saneOffers.length > 1 && (
                 <div className="flex flex-wrap gap-1 mt-0.5">

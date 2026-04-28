@@ -65,12 +65,6 @@ function isManualAmazonSoldOut(productName: string | undefined, store: string): 
   return AMAZON_SOLD_OUT_MODELS.some((m) => upper.includes(m));
 }
 
-// Helper público: ¿este producto+tienda está marcado AGOTADO a mano?
-export function isManualSoldOut(productName: string | undefined, store: string | undefined): boolean {
-  if (!store) return false;
-  return isManualEciSoldOut(productName, store) || isManualAmazonSoldOut(productName, store);
-}
-
 export function StockBadge({ inStock: _inStock, store, discountPercent, productName }: Props) {
   void _inStock;
 
