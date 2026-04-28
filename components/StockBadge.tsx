@@ -34,6 +34,15 @@ const ECI_SOLD_OUT_MODELS = [
   "HDPW7620ANPK",
   "RB38C776CS9",
   "GBV7280AMB",
+  // Lavavajillas ECI agotados (capturas 2026-04-28)
+  "FFB76717PM",
+  "6B0S3FSB",
+  "3VH6330SA",
+  "MID60S110",
+  "FFB64627ZW",
+  "6B2S3PSX",
+  "SPS4EMW61E",
+  "4A4M3PB",
 ];
 
 // Misma lógica para Amazon: marcamos modelos sin stock vistos en captura.
