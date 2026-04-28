@@ -6,7 +6,7 @@ import type React from "react";
 import ProductModal from "./ProductModal";
 import { BuySignalBadge } from "./BuySignalBadge";
 import { SaveButton } from "./SaveButton";
-import { StockBadge, isManualSoldOut } from "./StockBadge";
+import { StockBadge } from "./StockBadge";
 
 const CATEGORY_LABELS: Record<string, string> = {
   TELEVISORES: "Televisores", LAVADORAS: "Lavadoras", FRIGORIFICOS: "Frigoríficos",
@@ -77,11 +77,6 @@ export default function ProductCard({ product, priority = false }: Props) {
     mejorOferta.priceOld / mejorOferta.priceCurrent <= 2.5
       ? Math.round((1 - mejorOferta.priceCurrent / mejorOferta.priceOld) * 100)
       : 0;
-  // De momento solo lavavajillas ECI: si está agotado, badge "AGOTADO" en la
-  // esquina (en vez del -X%), precio tachado en gris y CTA deshabilitado.
-  const agotadoLavavajillasEci =
-    product.category === "LAVAVAJILLAS" &&
-    isManualSoldOut(product.name, mejorOferta?.store);
 
   const prev = useCallback(
     (e: React.MouseEvent) => {
@@ -147,15 +142,11 @@ export default function ProductCard({ product, priority = false }: Props) {
           )}
 
           {/* Descuento — solo si hay rebaja real */}
-          {agotadoLavavajillasEci ? (
-            <span className="absolute top-2 left-2 bg-[#DC2626] text-white text-xs font-bold px-2 py-1 rounded-lg shadow uppercase tracking-wide">
-              Agotado
-            </span>
-          ) : realDiscount > 0 ? (
+          {realDiscount > 0 && (
             <span className="absolute top-2 left-2 bg-[#EF4444] text-white text-xs font-bold px-2 py-1 rounded-lg shadow">
               -{realDiscount}%
             </span>
-          ) : null}
+          )}
           {/* Guardar */}
           <SaveButton productId={product.id} className="absolute top-2 right-2 w-7 h-7" />
 
@@ -223,20 +214,12 @@ export default function ProductCard({ product, priority = false }: Props) {
           {mejorOferta ? (
             <>
               <div className="flex items-end gap-2 mb-1">
-                <span
-                  className={
-                    agotadoLavavajillasEci
-                      ? "text-xl font-bold text-[#94A3B8] line-through"
-                      : "text-xl font-bold text-[#0F172A]"
-                  }
-                >
-                  {formatEuro(mejorOferta.priceCurrent)} €
-                </span>
-                {mejorOferta.priceOld && !agotadoLavavajillasEci && (
+                <span className="text-xl font-bold text-[#0F172A]">{formatEuro(mejorOferta.priceCurrent)} €</span>
+                {mejorOferta.priceOld && (
                   <span className="text-sm text-[#94A3B8] line-through mb-0.5">{formatEuro(mejorOferta.priceOld)} €</span>
                 )}
               </div>
-              {mejorOferta.priceOld && mejorOferta.priceOld > mejorOferta.priceCurrent && !agotadoLavavajillasEci && (
+              {mejorOferta.priceOld && mejorOferta.priceOld > mejorOferta.priceCurrent && (
                 <p className="text-[11px] font-semibold text-[#16A34A] mb-2">
                   Ahorras {new Intl.NumberFormat("es-ES", { maximumFractionDigits: 0 }).format(mejorOferta.priceOld - mejorOferta.priceCurrent)} €
                 </p>

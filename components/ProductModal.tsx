@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { BuySignalPanel } from "./BuySignalBadge";
 import { SaveButton } from "./SaveButton";
-import { StockBadge, isManualSoldOut } from "./StockBadge";
+import { StockBadge } from "./StockBadge";
 import { PriceAlertButton } from "./PriceAlertButton";
 import ReviewSection from "./ReviewSection";
 
@@ -204,11 +204,6 @@ export default function ProductModal({ product, onClose }: Props) {
   const realDiscount = mejorOferta
     ? getRealDiscountPercent(mejorOferta.priceCurrent, mejorOferta.priceOld)
     : 0;
-  // Solo lavavajillas ECI: si está agotado, badge "AGOTADO" en la imagen y
-  // precio tachado.
-  const agotadoLavavajillasEci =
-    product.category === "LAVAVAJILLAS" &&
-    isManualSoldOut(product.name, mejorOferta?.store);
 
   return (
     <div
@@ -239,15 +234,11 @@ export default function ProductModal({ product, onClose }: Props) {
           {/* Imagen principal con track deslizante */}
           <div className="relative flex-1 overflow-hidden">
             {/* Badge de descuento sobre la imagen — coherente con la card */}
-            {agotadoLavavajillasEci ? (
-              <span className="absolute top-3 left-3 z-20 bg-[#DC2626] text-white text-xs font-bold px-2 py-1 rounded-lg shadow uppercase tracking-wide">
-                Agotado
-              </span>
-            ) : realDiscount > 0 ? (
+            {realDiscount > 0 && (
               <span className="absolute top-3 left-3 z-20 bg-[#EF4444] text-white text-xs font-bold px-2 py-1 rounded-lg shadow">
                 -{realDiscount}%
               </span>
-            ) : null}
+            )}
             {all.length > 0 ? (
               <div
                 className="flex h-full transition-transform duration-500 ease-in-out"
@@ -386,29 +377,15 @@ export default function ProductModal({ product, onClose }: Props) {
 
             {mejorOferta && (
               <div className="flex items-end gap-2 md:gap-3 flex-wrap py-3 border-t border-b border-[#E5F0FF]">
-                <span
-                  className={
-                    agotadoLavavajillasEci
-                      ? "text-2xl md:text-3xl font-bold text-[#94A3B8] line-through"
-                      : "text-2xl md:text-3xl font-bold text-[#0F172A]"
-                  }
-                >
-                  {formatEuro(mejorOferta.priceCurrent)} €
-                </span>
-                {!agotadoLavavajillasEci &&
-                  mejorOferta.priceOld != null && mejorOferta.priceOld > mejorOferta.priceCurrent &&
+                <span className="text-2xl md:text-3xl font-bold text-[#0F172A]">{formatEuro(mejorOferta.priceCurrent)} €</span>
+                {mejorOferta.priceOld != null && mejorOferta.priceOld > mejorOferta.priceCurrent &&
                   mejorOferta.priceOld / mejorOferta.priceCurrent <= 2.5 && (
                   <span className="text-base text-[#94A3B8] line-through mb-0.5">{formatEuro(mejorOferta.priceOld)} €</span>
                 )}
-                {!agotadoLavavajillasEci && realDiscount > 0 &&
+                {realDiscount > 0 &&
                   mejorOferta.priceOld != null && (
                   <span className="mb-0.5 px-2 py-0.5 bg-[#EFF6FF] text-[#2563EB] text-xs font-bold rounded-lg">
                     -{realDiscount}%
-                  </span>
-                )}
-                {agotadoLavavajillasEci && (
-                  <span className="mb-0.5 px-2 py-0.5 bg-[#FEF2F2] text-[#DC2626] text-xs font-bold rounded-lg uppercase tracking-wide">
-                    Agotado
                   </span>
                 )}
               </div>
