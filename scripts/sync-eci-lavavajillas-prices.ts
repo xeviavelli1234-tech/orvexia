@@ -17,6 +17,10 @@ const STORE = "El Corte Inglés";
 // ECI llevan IDs AWIN volátiles), igual que sync-eci-frigorificos-prices.ts.
 type U = {
   model: string;
+  // Si está, descarta productos cuyo nombre contenga este texto. Útil cuando
+  // el mismo modelo existe en versión nueva y reacondicionada con precios
+  // distintos (ej. Indesit DFO 3T133 A F).
+  excludeContains?: string;
   label: string;
   priceCurrent: number;
   priceOld: number | null;
@@ -25,11 +29,12 @@ type U = {
 };
 
 const UPDATES: U[] = [
-  { model: "3E7L0W2",    label: "Candy CI 3E7L0W2 13c WiFi 60cm",          priceCurrent: 349, priceOld: 529, discountPercent: 34, inStock: true },
-  { model: "DVS05024W",  label: "Beko DVS05024W 10c 5 programas 45cm",     priceCurrent: 359, priceOld: 549, discountPercent: 34, inStock: true },
-  { model: "BDFN26430W", label: "Beko BDFN26430W 14c progr. 6+4 60cm",     priceCurrent: 369, priceOld: 579, discountPercent: 36, inStock: true },
-  { model: "3C42",       label: "Whirlpool WFC 3C42 P 14c 8 progr. 60cm",  priceCurrent: 469, priceOld: 739, discountPercent: 36, inStock: true },
-  { model: "3T133",      label: "Indesit DFO 3T133 A F 14c Bandeja 60cm",  priceCurrent: 349, priceOld: 669, discountPercent: 47, inStock: true },
+  { model: "3E7L0W2",    label: "Candy CI 3E7L0W2 13c WiFi 60cm",                                                  priceCurrent: 349, priceOld: 529, discountPercent: 34, inStock: true },
+  { model: "DVS05024W",  label: "Beko DVS05024W 10c 5 programas 45cm",                                             priceCurrent: 359, priceOld: 549, discountPercent: 34, inStock: true },
+  { model: "BDFN26430W", label: "Beko BDFN26430W 14c progr. 6+4 60cm",                                             priceCurrent: 369, priceOld: 579, discountPercent: 36, inStock: true },
+  { model: "3C42",       label: "Whirlpool WFC 3C42 P 14c 8 progr. 60cm",                                          priceCurrent: 469, priceOld: 739, discountPercent: 36, inStock: true },
+  { model: "3T133", excludeContains: "Reacondicionado", label: "Indesit DFO 3T133 A F nuevo 14c Bandeja 60cm",     priceCurrent: 399, priceOld: 669, discountPercent: 40, inStock: true },
+  { model: "3T133 A F (Reacondicionado", label: "Indesit DFO 3T133 A F Reacond. C 14c Bandeja 60cm",               priceCurrent: 349, priceOld: 669, discountPercent: 47, inStock: true },
 ];
 
 // Modelos AGOTADOS en ECI (capturas 2026-04-28). Solo flip de inStock=false,
@@ -57,6 +62,9 @@ async function applyPriceUpdates(): Promise<{ updated: number; unchanged: number
         category: "LAVAVAJILLAS",
         name: { contains: u.model, mode: "insensitive" },
         offers: { some: { store: STORE } },
+        ...(u.excludeContains
+          ? { NOT: { name: { contains: u.excludeContains, mode: "insensitive" } } }
+          : {}),
       },
       select: {
         id: true,
