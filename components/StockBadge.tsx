@@ -39,6 +39,7 @@ const ECI_SOLD_OUT_MODELS = [
 // Misma lógica para Amazon: marcamos modelos sin stock vistos en captura.
 const AMAZON_SOLD_OUT_MODELS = [
   "CNCQ2T518EG",
+  "Aguazero 6620 Inox",
 ];
 
 function isManualEciSoldOut(productName: string | undefined, store: string): boolean {
