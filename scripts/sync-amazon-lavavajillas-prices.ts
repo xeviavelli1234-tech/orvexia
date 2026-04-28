@@ -38,6 +38,9 @@ const UPDATES: U[] = [
   { model: "3VS506BP",       label: "Balay 3VS506BP 12c ExtraSilencio Blanco",        priceCurrent: 299,    priceOld: 479,     discountPercent: 38,   inStock: true },
   { model: "HS622E10X",      label: "Hisense HS622E10X 13c Inox Clase E (oferta)",    priceCurrent: 269.99, priceOld: 296.65,  discountPercent: 9,    inStock: true },
   { model: "SMS25AW05E",     label: "Bosch SMS25AW05E EcoSilence Blanco",             priceCurrent: 351,    priceOld: null,    discountPercent: null, inStock: true },
+  { model: "3VS572BP",       label: "Balay 3VS572BP 13c Silencioso Blanco",           priceCurrent: 341,    priceOld: null,    discountPercent: null, inStock: true },
+  { model: "3VS572IP",       label: "Balay 3VS572IP 13c Acero Antihuellas",           priceCurrent: 374.86, priceOld: null,    discountPercent: null, inStock: true },
+  { model: "Aguazero 4201",  label: "Cecotec Bolero Aguazero 4201 Inox E 45cm",       priceCurrent: 289,    priceOld: 309,     discountPercent: 6,    inStock: true },
 ];
 
 // Cecotec Aguazero 6620 Inox Clase C: "No disponible" en captura.
