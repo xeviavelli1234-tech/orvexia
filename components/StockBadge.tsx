@@ -79,14 +79,25 @@ function isManualFnacSoldOut(productName: string | undefined, store: string): bo
   return FNAC_SOLD_OUT_MODELS.some((m) => upper.includes(m.toUpperCase()));
 }
 
-export function StockBadge({ inStock: _inStock, store, discountPercent, productName }: Props) {
-  void _inStock;
-
+export function StockBadge({ inStock, store, discountPercent, productName }: Props) {
+  // 1) Listas manuales (override por nombre de modelo en stores donde el dato
+  //    de BD aún no es fiable o ha sido detectado a mano por capturas).
   if (
     isManualEciSoldOut(productName, store) ||
     isManualAmazonSoldOut(productName, store) ||
     isManualFnacSoldOut(productName, store)
   ) {
+    return (
+      <span className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-[#991B1B] bg-[#FEF2F2] border border-[#FECACA] px-2.5 py-1 rounded-full w-fit max-w-full break-words uppercase tracking-wide">
+        <span className="w-2 h-2 rounded-full bg-[#DC2626] shrink-0" />
+        Agotado en {store}
+      </span>
+    );
+  }
+
+  // 2) Dato real de BD (alimentado por el feed de Awin para ECI/Fnac
+  //    y por el scraper para Amazon/PcComponentes).
+  if (inStock === false) {
     return (
       <span className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-[#991B1B] bg-[#FEF2F2] border border-[#FECACA] px-2.5 py-1 rounded-full w-fit max-w-full break-words uppercase tracking-wide">
         <span className="w-2 h-2 rounded-full bg-[#DC2626] shrink-0" />
