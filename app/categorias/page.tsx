@@ -110,8 +110,17 @@ const CATEGORIES: {
 ];
 
 async function getCategoriasData() {
+  // Conteo limitado a productos con al menos una oferta en el rango de precios
+  // razonable, para que coincida con lo que muestra la página de cada categoría.
   const counts = await prisma.product.groupBy({
     by: ["category"],
+    where: {
+      offers: {
+        some: {
+          priceCurrent: { gte: MIN_REASONABLE_PRICE, lte: MAX_REASONABLE_PRICE },
+        },
+      },
+    },
     _count: { id: true },
   });
 
