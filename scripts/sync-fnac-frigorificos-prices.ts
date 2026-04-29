@@ -27,6 +27,12 @@ const UPDATES: U[] = [
   { slug: "frigorifico-dometic-ds-601-h-3-2958388-40597540871",                                       priceCurrent: 1419.38, priceOld: null,   discountPercent: null },
 ];
 
+// Productos marcados como "Momentáneamente no disponible" en Fnac.
+const OUT_OF_STOCK: string[] = [
+  "frigorifico-combi-balay-3kfe561mi-inox-a-3-8903914-43814522147",
+  "frigorifico-dcg-eltronic-mf1070-3-2957513-44410820907",
+];
+
 async function main() {
   let updated = 0;
   let missing = 0;
@@ -81,7 +87,19 @@ async function main() {
     updated++;
   }
 
-  console.log(`\n🎯 sync-fnac-frigorificos-prices: ${updated} actualizados, ${missing} no encontrados`);
+  let outOfStock = 0;
+  for (const slug of OUT_OF_STOCK) {
+    const product = await prisma.product.findUnique({ where: { slug }, select: { id: true } });
+    if (!product) { console.log(`⚠️  ${slug}: producto no encontrado`); missing++; continue; }
+    await prisma.offer.update({
+      where: { productId_store: { productId: product.id, store: "Fnac" } },
+      data: { inStock: false },
+    });
+    console.log(`🚫 ${slug}: marcado sin stock`);
+    outOfStock++;
+  }
+
+  console.log(`\n🎯 sync-fnac-frigorificos-prices: ${updated} actualizados, ${outOfStock} sin stock, ${missing} no encontrados`);
 }
 
 main()

@@ -54,6 +54,8 @@ const AMAZON_SOLD_OUT_MODELS = [
 // Misma lógica para Fnac.
 const FNAC_SOLD_OUT_MODELS = [
   "FFB 10469", // Whirlpool FFB 10469 BV SPT 10kg 1400rpm
+  "3KFE561MI", // Frigorífico Combi Balay 3KFE561MI Inox A++
+  "MF1070",    // Frigorífico DCG Eltronic MF1070
 ];
 
 function isManualEciSoldOut(productName: string | undefined, store: string): boolean {
