@@ -24,7 +24,18 @@ const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: proc
 const DRY_RUN = process.argv.includes("--dry-run");
 const targetArg = process.argv.find((a) => a.startsWith("--target="));
 const TARGET = targetArg ? parseInt(targetArg.replace("--target=", ""), 10) : 20;
+const excludeArg = process.argv.find((a) => a.startsWith("--exclude-ids="));
+const EXCLUDE_IDS = new Set(
+  (excludeArg ? excludeArg.replace("--exclude-ids=", "") : "").split(",").filter(Boolean)
+);
 const catArg = (process.argv.slice(2).find((a) => !a.startsWith("--")) ?? "").toLowerCase();
+
+// aw_product_ids con imágenes 404 confirmadas en LG.com (la página oficial
+// también las quitó). Se evitan automáticamente.
+const KNOWN_BROKEN_IDS = new Set([
+  "43474318728", // Outlet Lavadora 9kg 1400rpm Silver grafito Serie 100 F4A10S9NBK
+  "43474318716", // Lavadora AI Direct Drive 20kg 1000rpm B Blanca F0P3CYV2W
+]);
 
 const FEED_FILE = path.join(os.homedir(), "Downloads", "datafeed_2854543 (4).csv.gz");
 const AFF_ID = "2854543";
@@ -157,6 +168,8 @@ async function main() {
     const row = rowRaw as Record<string, string>;
     if (row.in_stock !== "1" && row.in_stock !== "") continue;
     if (!matchesCategory(row)) continue;
+    const awId = row.aw_product_id?.trim() ?? "";
+    if (KNOWN_BROKEN_IDS.has(awId) || EXCLUDE_IDS.has(awId)) continue;
 
     const price = parsePrice(row.search_price) ?? parsePrice(row.store_price);
     if (price === null || price < CFG.minPrice || price > CFG.maxPrice) continue;
