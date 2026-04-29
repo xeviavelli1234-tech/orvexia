@@ -168,6 +168,49 @@ const REGISTER_PERKS: { title: string; desc: string; accent: string; icon: React
 
 const STORES = ["Amazon", "PcComponentes", "Fnac", "El Corte Inglés"];
 
+const FAQS: { q: string; a: React.ReactNode }[] = [
+  {
+    q: "¿Cuánto cuesta usar Orvexia?",
+    a: "Es 100% gratis. No pagas por buscar, comparar precios ni por las alertas. Si compras a través de un enlace nuestro la tienda nos paga una pequeña comisión, pero el precio que ves es exactamente el que pagas: no se aplica ningún recargo.",
+  },
+  {
+    q: "¿De dónde salen los precios y cada cuánto se actualizan?",
+    a: "Sincronizamos con los feeds oficiales de cada tienda y revisamos los catálogos varias veces al día. En la ficha de cada producto verás el gráfico con los últimos 90 días y el momento exacto de la última actualización.",
+  },
+  {
+    q: "¿En qué tiendas comparáis?",
+    a: "Hoy comparamos en Amazon, PcComponentes, Fnac y El Corte Inglés, las cuatro principales del mercado español de electrodomésticos. Iremos sumando más tiendas a medida que validemos su catálogo y la fiabilidad de sus precios.",
+  },
+  {
+    q: "¿Cómo funcionan las alertas de precio?",
+    a: (
+      <>
+        Guarda un producto, define el precio al que comprarías y te avisamos por email en cuanto cualquier tienda lo iguale o baje. Sin spam: solo recibes emails de las alertas que tú activas y puedes desactivarlas en un clic desde tu{" "}
+        <Link href="/dashboard" className="font-semibold underline decoration-dotted underline-offset-2" style={{ color: "#0284C7" }}>
+          panel
+        </Link>
+        .
+      </>
+    ),
+  },
+  {
+    q: "¿Vuestras recomendaciones son neutrales?",
+    a: "Sí. El orden lo calcula nuestro algoritmo a partir de precio actual, valoraciones de compradores reales y descuento verificado contra el histórico de los últimos 90 días. La comisión que recibimos es la misma sea cual sea la tienda en la que termines comprando, así que no tenemos incentivo para empujarte hacia una concreta.",
+  },
+  {
+    q: "He visto un precio mal o un producto agotado, ¿qué hago?",
+    a: (
+      <>
+        Escríbenos a{" "}
+        <a href="mailto:orvexiaesp@gmail.com" className="font-semibold underline decoration-dotted underline-offset-2" style={{ color: "#0284C7" }}>
+          orvexiaesp@gmail.com
+        </a>{" "}
+        con el enlace del producto. Revisamos cada caso el mismo día. Nuestra obsesión es que el precio que muestras coincida con el que pagas en la tienda.
+      </>
+    ),
+  },
+];
+
 export default async function HomePage() {
   const session = await getSession();
   const [productos, stats] = await Promise.all([getTopDeals(), getStats()]);
@@ -522,6 +565,84 @@ export default async function HomePage() {
             </div>
 
           </div>
+        </div>
+      </section>
+
+      {/* ── FAQ ────────────────────────────────────────────────────────── */}
+      <section
+        className="px-4 sm:px-6 pb-20 sm:pb-28"
+        aria-labelledby="faq-title"
+      >
+        <div className="max-w-3xl mx-auto">
+
+          {/* Header */}
+          <div className="text-center mb-8 sm:mb-10">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] mb-2" style={{ color: "#0EA5E9" }}>
+              Resolvemos dudas
+            </p>
+            <h2 id="faq-title" className="text-xl font-extrabold mb-3" style={{ color: "#0F172A" }}>
+              Preguntas frecuentes
+            </h2>
+            <p className="text-[13px] leading-relaxed max-w-md mx-auto" style={{ color: "#64748B" }}>
+              Lo que la gente nos pregunta antes de empezar a comparar.
+            </p>
+          </div>
+
+          {/* Accordion */}
+          <div className="flex flex-col gap-3">
+            {FAQS.map((faq, i) => (
+              <details
+                key={i}
+                className="group bg-white rounded-2xl px-5 sm:px-6 transition-all duration-200 hover:shadow-md open:shadow-md"
+                style={{ border: "1px solid #E2E8F0" }}
+              >
+                <summary
+                  className="flex items-start gap-4 py-5 cursor-pointer list-none [&::-webkit-details-marker]:hidden"
+                >
+                  <span
+                    className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-black tabular-nums mt-0.5"
+                    style={{ background: "#F0F9FF", color: "#0EA5E9", border: "1px solid #E0F2FE" }}
+                  >
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <span
+                    className="flex-1 text-[14px] sm:text-[15px] font-bold leading-snug"
+                    style={{ color: "#0F172A" }}
+                  >
+                    {faq.q}
+                  </span>
+                  <span
+                    aria-hidden="true"
+                    className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center mt-0.5 transition-transform duration-200 group-open:rotate-180"
+                    style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", color: "#64748B" }}
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                    </svg>
+                  </span>
+                </summary>
+                <div
+                  className="pb-5 pl-11 pr-2 text-[13px] sm:text-[14px] leading-relaxed"
+                  style={{ color: "#64748B" }}
+                >
+                  {faq.a}
+                </div>
+              </details>
+            ))}
+          </div>
+
+          {/* Footer note */}
+          <p className="mt-8 text-center text-[12px]" style={{ color: "#94A3B8" }}>
+            ¿No encuentras tu respuesta?{" "}
+            <a
+              href="mailto:orvexiaesp@gmail.com"
+              className="font-semibold underline decoration-dotted underline-offset-2"
+              style={{ color: "#0284C7" }}
+            >
+              Escríbenos
+            </a>
+            {" "}y la añadimos.
+          </p>
         </div>
       </section>
 
