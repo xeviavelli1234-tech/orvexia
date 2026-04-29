@@ -103,8 +103,10 @@ const CATEGORIES: Record<string, CatConfig> = {
   },
   aspiradoras: {
     category: "ASPIRADORAS",
-    matcher: /aspirador|robot.*aspirador|escoba.*sin\s*cable/i,
-    excluder: /bolsa|filtro|cepillo|accesorio|repuesto/i,
+    matcher: /\baspirador\w*\b|\bcordzero\b/i,
+    // Excluir solo cuando el nombre EMPIEZA por palabra de accesorio
+    // (evita falsos positivos como "Aspirador sin bolsa").
+    excluder: /^(mopa|bater[íi]a|cargador|cepillo|filtro|boquilla|bolsa|base|pre[-\s]?filtro|funda|recambio|accesorio|servicio|instalaci[oó]n)\b/i,
     minPrice: 80, maxPrice: 1500,
   },
   aires: {
