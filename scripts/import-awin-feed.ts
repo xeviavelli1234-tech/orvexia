@@ -91,6 +91,38 @@ function extractAwProductId(externalUrl: string): string | null {
   return m ? decodeURIComponent(m[1]) : null;
 }
 
+// Extrae imágenes válidas de la fila del feed, deduplicadas y en orden
+// (principal primero, alternativas después). Excluye thumbs porque son
+// recortes pequeños y nuestro front renderiza con object-fit el original.
+function extractImages(row: Record<string, string>): string[] {
+  const candidates = [
+    row.merchant_image_url,
+    row.large_image,
+    row.aw_image_url,
+    row.alternate_image,
+    row.alternate_image_two,
+    row.alternate_image_three,
+    row.alternate_image_four,
+  ];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of candidates) {
+    const v = raw?.trim();
+    if (!v) continue;
+    if (!/^https?:\/\//i.test(v)) continue;
+    if (seen.has(v)) continue;
+    seen.add(v);
+    out.push(v);
+  }
+  return out.slice(0, 8);
+}
+
+function arraysEqualOrdered(a: readonly string[], b: readonly string[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+  return true;
+}
+
 // ── Importador por tienda ───────────────────────────────────────────────────
 
 async function importStore(cfg: FeedConfig) {
@@ -104,7 +136,7 @@ async function importStore(cfg: FeedConfig) {
   // 1. Cargar nuestras ofertas de esa tienda y mapearlas por aw_product_id
   const ourOffers = await prisma.offer.findMany({
     where: { store: { contains: cfg.storeName.split(" ")[0], mode: "insensitive" } },
-    include: { product: { select: { id: true, name: true } } },
+    include: { product: { select: { id: true, name: true, image: true, images: true } } },
   });
 
   const offersByAwId = new Map<string, (typeof ourOffers)[number]>();
@@ -149,6 +181,7 @@ async function importStore(cfg: FeedConfig) {
   let unchanged = 0;
   let stockChanged = 0;
   let priceChanged = 0;
+  let imagesUpdated = 0;
   let errors = 0;
 
   for await (const rowRaw of stream) {
@@ -194,6 +227,17 @@ async function importStore(cfg: FeedConfig) {
 
       const inStock = parseInStock(row);
 
+      // Imágenes nuevas del feed (puede estar vacío si no las trae)
+      const feedImages = extractImages(row);
+      const currentImages = (offer.product.images ?? []) as string[];
+      // Merge con orden: feed primero (más actuales), luego las que ya
+      // teníamos que no estén en el feed. Limitar a 8.
+      const mergedImages = feedImages.length > 0
+        ? [...feedImages, ...currentImages.filter((u) => !feedImages.includes(u))].slice(0, 8)
+        : currentImages;
+      const imagesChanged =
+        feedImages.length > 0 && !arraysEqualOrdered(currentImages, mergedImages);
+
       // Compara con BD
       const before = {
         priceCurrent: offer.priceCurrent,
@@ -207,7 +251,8 @@ async function importStore(cfg: FeedConfig) {
         before.priceCurrent === after.priceCurrent &&
         before.priceOld === after.priceOld &&
         (before.discountPercent ?? null) === (after.discountPercent ?? null) &&
-        before.inStock === after.inStock;
+        before.inStock === after.inStock &&
+        !imagesChanged;
 
       if (sameAll) {
         unchanged++;
@@ -221,7 +266,8 @@ async function importStore(cfg: FeedConfig) {
         console.log(
           `🔎 ${offer.product.name.slice(0, 60)} :: ${before.priceCurrent}€ → ${priceCurrent}€` +
           `${priceOld ? ` (antes ${priceOld}€, -${discountPercent}%)` : ""}` +
-          `${stockMoved ? ` · stock ${before.inStock}→${inStock}` : ""}`
+          `${stockMoved ? ` · stock ${before.inStock}→${inStock}` : ""}` +
+          `${imagesChanged ? ` · imgs ${currentImages.length}→${mergedImages.length}` : ""}`
         );
       } else {
         // Si cambia el precio, log en priceHistory (precio anterior si no estaba ya)
@@ -240,6 +286,20 @@ async function importStore(cfg: FeedConfig) {
           where: { id: offer.id },
           data: { priceCurrent, priceOld, discountPercent, inStock },
         });
+
+        // Actualizar imágenes en el Product (compartido entre todas las
+        // ofertas del producto, así que solo escribimos si han cambiado).
+        if (imagesChanged) {
+          await prisma.product.update({
+            where: { id: offer.productId },
+            data: {
+              images: mergedImages,
+              // Si el producto no tenía imagen principal, ponemos la nueva
+              ...(offer.product.image ? {} : { image: mergedImages[0] }),
+            },
+          });
+          imagesUpdated++;
+        }
 
         if (priceMoved) {
           await prisma.priceHistory.create({
@@ -265,6 +325,7 @@ async function importStore(cfg: FeedConfig) {
   console.log(`   sin cambios:        ${unchanged}`);
   console.log(`   precio cambió:      ${priceChanged}`);
   console.log(`   stock cambió:       ${stockChanged}`);
+  console.log(`   imágenes actualiz.: ${imagesUpdated}`);
   if (errors) console.log(`   errores:            ${errors}`);
 }
 
