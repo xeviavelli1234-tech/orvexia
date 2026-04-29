@@ -40,6 +40,7 @@ const KNOWN_BROKEN_IDS = new Set([
   "43474318987", // Frigorífico American Combi Door-in-Door™, Clasif. E, 634 L
   "43474319373", // Horno LG Instaview 76L A++ Vapor y Freidora
   "43474319364", // Horno Pirolítico Instaview 76L A+ limpieza
+  "43474319078", // Outlet Microondas Grill 20 litros Negro MH6042D
 ]);
 
 const FEED_FILE = path.join(os.homedir(), "Downloads", "datafeed_2854543 (4).csv.gz");
