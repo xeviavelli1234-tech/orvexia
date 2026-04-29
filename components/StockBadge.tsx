@@ -51,6 +51,11 @@ const AMAZON_SOLD_OUT_MODELS = [
   "Aguazero 6620 Inox",
 ];
 
+// Misma lógica para Fnac.
+const FNAC_SOLD_OUT_MODELS = [
+  "FFB 10469", // Whirlpool FFB 10469 BV SPT 10kg 1400rpm
+];
+
 function isManualEciSoldOut(productName: string | undefined, store: string): boolean {
   if (!productName) return false;
   if (!/corte\s*ingl[eé]s|elcorteingles|\beci\b/i.test(store)) return false;
@@ -65,10 +70,21 @@ function isManualAmazonSoldOut(productName: string | undefined, store: string): 
   return AMAZON_SOLD_OUT_MODELS.some((m) => upper.includes(m));
 }
 
+function isManualFnacSoldOut(productName: string | undefined, store: string): boolean {
+  if (!productName) return false;
+  if (!/fnac/i.test(store)) return false;
+  const upper = productName.toUpperCase();
+  return FNAC_SOLD_OUT_MODELS.some((m) => upper.includes(m.toUpperCase()));
+}
+
 export function StockBadge({ inStock: _inStock, store, discountPercent, productName }: Props) {
   void _inStock;
 
-  if (isManualEciSoldOut(productName, store) || isManualAmazonSoldOut(productName, store)) {
+  if (
+    isManualEciSoldOut(productName, store) ||
+    isManualAmazonSoldOut(productName, store) ||
+    isManualFnacSoldOut(productName, store)
+  ) {
     return (
       <span className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-[#991B1B] bg-[#FEF2F2] border border-[#FECACA] px-2.5 py-1 rounded-full w-fit max-w-full break-words uppercase tracking-wide">
         <span className="w-2 h-2 rounded-full bg-[#DC2626] shrink-0" />
