@@ -1,9 +1,10 @@
 /**
  * seed-price-history.ts
- * Genera historial de precios sintético pero realista para todos los productos.
+ * Genera historial de precios sintético pero realista SOLO para ofertas sin
+ * historial. Cualquier oferta con al menos 1 registro real se deja intacta.
  * - 90 días de datos (~1 punto cada 1-2 días)
  * - Patrones variados: bajando, subiendo, estable, con pico, con valle
- * - Si ya hay ≥30 registros para esa oferta, no toca nada (para no sobreescribir datos reales)
+ * - Si ya hay ≥1 registro para esa oferta, no toca nada (para no sobreescribir datos reales)
  */
 import { PrismaClient } from "../app/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
@@ -154,19 +155,15 @@ async function main() {
   for (const offer of offers) {
     const { productId, store, priceCurrent, priceOld } = offer;
 
-    // Comprobar historial existente
+    // Comprobar historial existente. Si ya hay aunque sea un único registro
+    // real, no lo tocamos — preservamos los datos reales aunque sean pocos.
     const existing = await prisma.priceHistory.count({
       where: { productId, store },
     });
 
-    if (existing >= 30) {
-      skipped++;
-      continue; // Ya tiene datos suficientes
-    }
-
-    // Eliminar los pocos registros que pueda haber (si son <30)
     if (existing > 0) {
-      await prisma.priceHistory.deleteMany({ where: { productId, store } });
+      skipped++;
+      continue;
     }
 
     const rand = seededRandom(productId + store);
