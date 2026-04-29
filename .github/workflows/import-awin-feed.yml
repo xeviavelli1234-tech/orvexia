@@ -1,0 +1,39 @@
+name: Importar precios Awin (ECI + Fnac)
+
+on:
+  schedule:
+    # Diario a las 04:00 UTC (06:00 España verano / 05:00 invierno).
+    # Awin actualiza los feeds una vez al día — más frecuente no aporta.
+    - cron: "0 4 * * *"
+  workflow_dispatch: # también ejecutable a mano desde la pestaña Actions
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: awin-feed-import
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Generar cliente Prisma
+        run: npx prisma generate
+
+      - name: Importar feed Awin (ECI + Fnac)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          AWIN_FEED_URL_ECI: ${{ secrets.AWIN_FEED_URL_ECI }}
+          AWIN_FEED_URL_FNAC: ${{ secrets.AWIN_FEED_URL_FNAC }}
+        run: npx tsx scripts/import-awin-feed.ts
