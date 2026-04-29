@@ -22,6 +22,7 @@ const UPDATES: U[] = [
   { slug: "lavadora-de-carga-frontal-aeg-lfa6i8272a-8-kg-1200-rpm-blanco-a-3-9404853-37592175044",                priceCurrent: 423.90, priceOld: 559.00,  discountPercent: 24 },
   { slug: "lavadora-de-carga-frontal-cecotec-bolero-dresscode-121000-steel-12kg-1400rpm-plata-a-3-9400656-40528620966", priceCurrent: 460.90, priceOld: 609.00,  discountPercent: 24 },
   { slug: "lavadora-de-carga-frontal-integrable-balay-3ti987b-8kg-1400rpm-clase-c-3-9366470-37592173604",         priceCurrent: 791.40, priceOld: 1109.50, discountPercent: 29 },
+  { slug: "lavadora-de-carga-frontal-hotpoint-ariston-ns824wksptn-8-kg-1200-rpm-blanco-c-3-9404884-44372459927",   priceCurrent: 540.03, priceOld: null,    discountPercent: null },
 ];
 
 async function main() {
