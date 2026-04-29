@@ -16,7 +16,7 @@
     "db:sync-amazon-frigorificos-prices": "tsx scripts/sync-amazon-frigorificos-prices.ts",
     "db:sync-amazon-lavavajillas-prices": "tsx scripts/sync-amazon-lavavajillas-prices.ts",
     "db:import-awin-feed": "tsx scripts/import-awin-feed.ts",
-    "build": "prisma generate && (tsx scripts/sync-tv-prices.ts || true) && (tsx scripts/sync-fnac-lavadoras-prices.ts || true) && (tsx scripts/sync-fnac-frigorificos-prices.ts || true) && (tsx scripts/sync-eci-lavadoras-stock.ts || true) && (tsx scripts/sync-eci-lavadoras-prices.ts || true) && (tsx scripts/sync-eci-frigorificos-prices.ts || true) && (tsx scripts/sync-eci-lavavajillas-prices.ts || true) && (tsx scripts/sync-amazon-frigorificos-prices.ts || true) && (tsx scripts/sync-amazon-lavavajillas-prices.ts || true) && node --max-old-space-size=12288 node_modules/next/dist/bin/next build",
+    "build": "prisma generate && node --max-old-space-size=12288 node_modules/next/dist/bin/next build",
     "start": "next start",
     "lint": "eslint"
   },
