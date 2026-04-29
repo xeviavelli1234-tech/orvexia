@@ -111,8 +111,8 @@ const CATEGORIES: Record<string, CatConfig> = {
   },
   aires: {
     category: "AIRES_ACONDICIONADOS",
-    matcher: /aire\s*acondicionado|split|inverter.*frig/i,
-    excluder: /accesorio|control\s*remoto|filtro/i,
+    matcher: /aire\s*acondicionado|\bsplit\b/i,
+    excluder: /^(instalaci[oó]n|servicio|desinstalaci[oó]n)\b|accesorio|control\s*remoto|filtro/i,
     minPrice: 200, maxPrice: 3000,
   },
 };
