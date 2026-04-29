@@ -80,8 +80,10 @@ const CATEGORIES: Record<string, CatConfig> = {
   },
   secadoras: {
     category: "SECADORAS",
-    matcher: /secadora|bomba\s*de\s*calor.*kg|condensaci[óo]n.*kg/i,
-    excluder: /accesorio|filtro|patas/i,
+    // Requiere palabra "secadora" o "lavasecadora" explícita en el nombre.
+    // El criterio "bomba de calor + kg" capturaba lavadoras por error.
+    matcher: /\bsecadora\b|\blavasecadora\b/i,
+    excluder: /\baccesorio\b|filtro|patas/i,
     minPrice: 250, maxPrice: 2500,
   },
   hornos: {
