@@ -60,7 +60,8 @@ async function main() {
       }
       fixed++;
     } else {
-      console.log(`🗑️  borrando (sin imagen recuperable)`);
+      const awId = p.slug.match(/^lg-(\d+)-/)?.[1] ?? "?";
+      console.log(`🗑️  borrando aw_product_id=${awId} (sin imagen recuperable)`);
       if (!DRY_RUN) await prisma.product.delete({ where: { id: p.id } });
       deleted++;
     }

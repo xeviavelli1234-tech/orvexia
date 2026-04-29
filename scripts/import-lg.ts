@@ -36,6 +36,8 @@ const KNOWN_BROKEN_IDS = new Set([
   "43474318728", // Outlet Lavadora 9kg 1400rpm Silver grafito Serie 100 F4A10S9NBK
   "43474318716", // Lavadora AI Direct Drive 20kg 1000rpm B Blanca F0P3CYV2W
   "43474318730", // Outlet Lavadora 9kg 1400rpm Blanca Serie 100 F4A1009NWK
+  "43474319022", // Frigorífico Americano Side By side, Clasif. D, 635 L
+  "43474318987", // Frigorífico American Combi Door-in-Door™, Clasif. E, 634 L
 ]);
 
 const FEED_FILE = path.join(os.homedir(), "Downloads", "datafeed_2854543 (4).csv.gz");
