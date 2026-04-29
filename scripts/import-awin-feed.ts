@@ -54,7 +54,9 @@ const FEEDS: FeedConfig[] = [
   {
     storeName: "Fnac",
     storeMatcher: /\bfnac\b/i,
-    url: process.env.AWIN_FEED_URL_FNAC,
+    // Acepta AWIN_FEED_URL_FNAC explícito o AWIN_FEED_URL (multi-feed
+    // configurado por el usuario en su .env con los 4 FIDs de Fnac).
+    url: process.env.AWIN_FEED_URL_FNAC ?? process.env.AWIN_FEED_URL,
   },
 ];
 
@@ -173,12 +175,16 @@ async function importStore(cfg: FeedConfig) {
         continue;
       }
 
-      // Precio antiguo: rrp_price > product_price_old (solo si > priceCurrent)
-      let priceOld: number | null = parsePrice(row.rrp_price) ?? parsePrice(row.product_price_old);
+      // Precio antiguo: rrp_price > product_price_old > was_price (Fnac usa was_price)
+      let priceOld: number | null =
+        parsePrice(row.rrp_price) ??
+        parsePrice(row.product_price_old) ??
+        parsePrice(row.was_price);
       if (priceOld !== null && priceOld <= priceCurrent) priceOld = null;
 
-      // Descuento %
-      const savingsPct = parseInt(row.savings_percent ?? "0", 10);
+      // Descuento %: ECI usa savings_percent, Fnac usa saving_percent (sin 's')
+      const savingsRaw = row.savings_percent ?? row.saving_percent ?? "0";
+      const savingsPct = parseInt(savingsRaw, 10);
       let discountPercent: number | null = Number.isFinite(savingsPct) && savingsPct > 0 ? savingsPct : null;
       if (!discountPercent && priceOld) {
         discountPercent = Math.round((1 - priceCurrent / priceOld) * 100);
