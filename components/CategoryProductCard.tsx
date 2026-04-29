@@ -44,7 +44,11 @@ function formatPrice(n: number) {
 function getRealDiscountPercent(offer: Offer | undefined): number {
   if (!offer?.priceOld) return 0;
   if (offer.priceCurrent >= offer.priceOld) return 0;
-  if (offer.priceOld / offer.priceCurrent > 2.1) return 0; // descarta PVPR inflado
+  // Tiendas de feed oficial Awin: confiamos en el descuento (ya verificado).
+  // Outlets de LG / Reacondicionados ECI llegan legítimamente al 60-70%.
+  const trustedStore =
+    /^(LG|Fnac)$/i.test(offer.store) || offer.store.toLowerCase().includes("corte ingl");
+  if (!trustedStore && offer.priceOld / offer.priceCurrent > 2.1) return 0; // descarta PVPR inflado
   return Math.round((1 - offer.priceCurrent / offer.priceOld) * 100);
 }
 

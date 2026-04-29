@@ -17,6 +17,10 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "assets.mmsrg.com" },
       { protocol: "https", hostname: "dam.elcorteingles.es" },
       { protocol: "https", hostname: "*.elcorteingles.es" },
+      { protocol: "https", hostname: "www.lg.com" },
+      { protocol: "https", hostname: "*.lg.com" },
+      { protocol: "https", hostname: "www.lg.es" },
+      { protocol: "https", hostname: "*.lg.es" },
     ],
   },
 };

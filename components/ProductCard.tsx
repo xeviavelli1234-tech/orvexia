@@ -69,13 +69,22 @@ export default function ProductCard({ product, priority = false }: Props) {
     mejorOferta?.store?.toLowerCase().includes("pccomponente")
       ? "PcComp."
       : mejorOferta?.store ?? "tienda";
-  // Descuento real: calculado desde los precios actuales y con cap de ratio para
-  // descartar MSRPs inflados (ratio > 2.5 = descuento irreal)
+  // Descuento real:
+  // 1. Si la tienda es LG, ECI o Fnac (datos vienen del feed oficial Awin),
+  //    confiamos al 100% en el discountPercent ya verificado por la tienda.
+  // 2. Si es Amazon u otra tienda con cálculo automático, aplicamos cap 2.5x
+  //    para descartar PVPRs inflados típicos.
+  const trustedStore = mejorOferta?.store
+    ? /^(LG|El Corte Inglés|Fnac)$/i.test(mejorOferta.store) ||
+      mejorOferta.store.toLowerCase().includes("corte ingl")
+    : false;
   const realDiscount =
-    mejorOferta?.priceOld != null &&
-    mejorOferta.priceCurrent < mejorOferta.priceOld &&
-    mejorOferta.priceOld / mejorOferta.priceCurrent <= 2.5
-      ? Math.round((1 - mejorOferta.priceCurrent / mejorOferta.priceOld) * 100)
+    mejorOferta?.priceOld != null && mejorOferta.priceCurrent < mejorOferta.priceOld
+      ? trustedStore
+        ? Math.round((1 - mejorOferta.priceCurrent / mejorOferta.priceOld) * 100)
+        : mejorOferta.priceOld / mejorOferta.priceCurrent <= 2.5
+        ? Math.round((1 - mejorOferta.priceCurrent / mejorOferta.priceOld) * 100)
+        : 0
       : 0;
 
   const prev = useCallback(
