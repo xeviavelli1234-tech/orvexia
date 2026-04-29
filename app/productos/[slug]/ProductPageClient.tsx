@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { StockBadge } from "@/components/StockBadge";
 import ReviewSection from "@/components/ReviewSection";
+import type { ProductAnalysis } from "@/lib/productAnalysis";
 
 interface Offer {
   store: string;
@@ -48,6 +49,7 @@ interface Props {
   catLabel: string;
   catSlug: string;
   related: RelatedProduct[];
+  analysis: ProductAnalysis;
 }
 
 function formatPrice(n: number) {
@@ -252,7 +254,7 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
-export default function ProductPageClient({ product, specs, description, catLabel, catSlug, related }: Props) {
+export default function ProductPageClient({ product, specs, description, catLabel, catSlug, related, analysis }: Props) {
   const [activeImage, setActiveImage] = useState(0);
   const images = product.images?.length > 0 ? product.images : (product.image ? [product.image] : []);
   const bestOffer = product.offers[0];
@@ -396,10 +398,190 @@ export default function ProductPageClient({ product, specs, description, catLabe
         </div>
       </div>
 
-      {/* DESCRIPCIÓN Y ANÁLISIS */}
-      <section className="bg-white rounded-2xl border border-[#E2E8F0] p-5 sm:p-8 space-y-4">
-        <h2 className="text-xl font-extrabold text-[#0F172A]">Análisis y descripción</h2>
-        <p className="text-[#334155] leading-relaxed">{description}</p>
+      {/* ANÁLISIS Y DESCRIPCIÓN */}
+      <section className="bg-white rounded-2xl border border-[#E2E8F0] p-5 sm:p-8 space-y-6">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <h2 className="text-xl font-extrabold text-[#0F172A]">Análisis y descripción</h2>
+          {/* Score badge */}
+          <div className="flex items-center gap-2.5">
+            <div
+              className="flex items-baseline gap-1 px-3 py-1.5 rounded-xl font-black"
+              style={{
+                background: analysis.verdict.tone === "great" ? "#ECFDF5"
+                  : analysis.verdict.tone === "good" ? "#EFF6FF"
+                  : analysis.verdict.tone === "ok" ? "#FFFBEB"
+                  : "#FEF2F2",
+                color: analysis.verdict.tone === "great" ? "#059669"
+                  : analysis.verdict.tone === "good" ? "#2563EB"
+                  : analysis.verdict.tone === "ok" ? "#B45309"
+                  : "#DC2626",
+                border: `1px solid ${analysis.verdict.tone === "great" ? "#A7F3D0"
+                  : analysis.verdict.tone === "good" ? "#BFDBFE"
+                  : analysis.verdict.tone === "ok" ? "#FDE68A"
+                  : "#FECACA"}`,
+              }}
+            >
+              <span className="text-xl tabular-nums">{analysis.score.toFixed(1)}</span>
+              <span className="text-xs opacity-70">/ 10</span>
+            </div>
+            <span
+              className="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full"
+              style={{
+                background: analysis.verdict.tone === "great" ? "#ECFDF5"
+                  : analysis.verdict.tone === "good" ? "#EFF6FF"
+                  : analysis.verdict.tone === "ok" ? "#FFFBEB"
+                  : "#FEF2F2",
+                color: analysis.verdict.tone === "great" ? "#059669"
+                  : analysis.verdict.tone === "good" ? "#2563EB"
+                  : analysis.verdict.tone === "ok" ? "#B45309"
+                  : "#DC2626",
+              }}
+            >
+              {analysis.verdict.label}
+            </span>
+          </div>
+        </div>
+
+        {/* One-liner */}
+        <p className="text-[#334155] text-[15px] leading-relaxed font-medium">{analysis.oneLiner}</p>
+
+        {/* Highlights chips */}
+        {analysis.highlights.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {analysis.highlights.map((h) => (
+              <div
+                key={h.label}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#F8FAFC] border border-[#E2E8F0] text-xs"
+              >
+                <span className="text-base leading-none">{h.icon}</span>
+                <span className="font-bold text-[#0F172A]">{h.label}:</span>
+                <span className="text-[#475569]">{h.value}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Comparativa con la categoría */}
+        {(analysis.comparison.priceVsAvg !== null || analysis.comparison.ratingVsAvg !== null || analysis.comparison.pricePercentile !== null) && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {analysis.comparison.priceVsAvg !== null && (
+              <div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-1">Precio vs media</p>
+                <p
+                  className="text-base font-black tabular-nums"
+                  style={{ color: analysis.comparison.priceVsAvg <= 0 ? "#059669" : "#DC2626" }}
+                >
+                  {analysis.comparison.priceVsAvg > 0 ? "+" : ""}{analysis.comparison.priceVsAvg}%
+                </p>
+                <p className="text-[11px] text-[#94A3B8]">
+                  {analysis.comparison.priceVsAvg <= 0 ? "más barato que la media" : "por encima de la media"}
+                </p>
+              </div>
+            )}
+            {analysis.comparison.ratingVsAvg !== null && (
+              <div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-1">Rating vs media</p>
+                <p
+                  className="text-base font-black tabular-nums"
+                  style={{ color: analysis.comparison.ratingVsAvg >= 0 ? "#059669" : "#DC2626" }}
+                >
+                  {analysis.comparison.ratingVsAvg >= 0 ? "+" : ""}{analysis.comparison.ratingVsAvg.toFixed(1)}
+                </p>
+                <p className="text-[11px] text-[#94A3B8]">
+                  {analysis.comparison.ratingVsAvg >= 0 ? "puntos sobre la media" : "puntos bajo la media"}
+                </p>
+              </div>
+            )}
+            {analysis.comparison.pricePercentile !== null && (
+              <div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-1">Posición de precio</p>
+                <p className="text-base font-black tabular-nums text-[#0F172A]">
+                  Top {analysis.comparison.pricePercentile <= 50 ? `${100 - analysis.comparison.pricePercentile}%` : `${analysis.comparison.pricePercentile}%`}
+                </p>
+                <p className="text-[11px] text-[#94A3B8]">
+                  {analysis.comparison.pricePercentile <= 25
+                    ? "entre los más baratos"
+                    : analysis.comparison.pricePercentile <= 50
+                    ? "en la mitad económica"
+                    : analysis.comparison.pricePercentile >= 75
+                    ? "en gama alta"
+                    : "en la mitad alta"}{" "} de su categoría
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Pros / Contras */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+          <div className="rounded-2xl border border-[#A7F3D0] bg-[#F0FDF4] p-4">
+            <p className="text-xs font-extrabold text-emerald-700 uppercase tracking-wider mb-3">✓ Lo bueno</p>
+            <ul className="space-y-2">
+              {analysis.pros.map((p) => (
+                <li key={p} className="flex gap-2 text-[13px] text-[#0F172A] leading-relaxed">
+                  <span className="text-emerald-600 mt-0.5">●</span>
+                  <span>{p}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="rounded-2xl border border-[#FECACA] bg-[#FEF2F2] p-4">
+            <p className="text-xs font-extrabold text-red-600 uppercase tracking-wider mb-3">✗ Lo no tan bueno</p>
+            <ul className="space-y-2">
+              {analysis.cons.map((c) => (
+                <li key={c} className="flex gap-2 text-[13px] text-[#0F172A] leading-relaxed">
+                  <span className="text-red-400 mt-0.5">●</span>
+                  <span>{c}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {/* ¿Buen momento? */}
+        {analysis.bestMoment && (
+          <div
+            className="rounded-2xl p-4 flex gap-3 items-start"
+            style={{
+              background: analysis.bestMoment.isGood ? "#ECFDF5" : "#FFFBEB",
+              border: `1px solid ${analysis.bestMoment.isGood ? "#A7F3D0" : "#FDE68A"}`,
+            }}
+          >
+            <span className="text-xl shrink-0">{analysis.bestMoment.isGood ? "✅" : "⏳"}</span>
+            <div>
+              <p
+                className="text-sm font-extrabold mb-1"
+                style={{ color: analysis.bestMoment.isGood ? "#059669" : "#B45309" }}
+              >
+                {analysis.bestMoment.isGood ? "Buen momento para comprarlo" : "Quizá quieras esperar"}
+              </p>
+              <p className="text-[13px] text-[#475569] leading-relaxed">{analysis.bestMoment.reason}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Especificaciones detectadas */}
+        {specs.length > 0 && (
+          <div>
+            <p className="text-xs font-extrabold text-[#0F172A] uppercase tracking-wider mb-3">Especificaciones detectadas</p>
+            <div className="flex flex-wrap gap-2">
+              {specs.map((s) => (
+                <span key={s.text} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#F1F5F9] text-[13px] font-semibold text-[#475569] border border-[#E2E8F0]">
+                  <span>{s.icon}</span>
+                  {s.text}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Descripción narrativa generada */}
+        <div className="pt-2 border-t border-[#F1F5F9]">
+          <p className="text-xs font-extrabold text-[#0F172A] uppercase tracking-wider mb-2">Descripción</p>
+          <p className="text-[#475569] text-[14px] leading-relaxed">{description}</p>
+        </div>
+
+        {/* Descripción del fabricante (collapsible) */}
         {product.description && product.description !== product.name && (
           <details className="group">
             <summary className="cursor-pointer text-sm font-semibold text-[#2563EB] hover:underline select-none list-none">

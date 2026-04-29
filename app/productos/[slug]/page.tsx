@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import ProductPageClient from "./ProductPageClient";
+import { buildAnalysis, getCategoryStats } from "@/lib/productAnalysis";
 
 const CATEGORY_LABELS: Record<string, string> = {
   TELEVISORES: "Televisores", LAVADORAS: "Lavadoras", FRIGORIFICOS: "Frigoríficos",
@@ -87,6 +88,7 @@ async function getProduct(slug: string) {
     include: {
       offers: { orderBy: { priceCurrent: "asc" } },
       priceHistory: { orderBy: { recordedAt: "asc" }, take: 30 },
+      reviews: { select: { rating: true } },
     },
   });
 }
@@ -116,12 +118,40 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const product = await getProduct(slug);
   if (!product) notFound();
 
-  const related = await getRelated(product.category, product.id);
+  const [related, categoryStats] = await Promise.all([
+    getRelated(product.category, product.id),
+    getCategoryStats(product.category),
+  ]);
   const specs = extractSpecs(`${product.name} ${product.description ?? ""}`);
   const description = generateDescription(product.name, product.brand, product.category);
   const catLabel = CATEGORY_LABELS[product.category] ?? "Electrodomésticos";
   const catSlug = CATEGORY_SLUGS[product.category] ?? "otros";
-  const bestOffer = product.offers[0];
+
+  // Análisis enriquecido (server-side)
+  const reviewsAvg = product.reviews.length > 0
+    ? product.reviews.reduce((s, r) => s + r.rating, 0) / product.reviews.length
+    : null;
+  const analysis = buildAnalysis(
+    {
+      id: product.id,
+      name: product.name,
+      brand: product.brand,
+      category: product.category,
+      rating: product.rating,
+      reviewCount: product.reviewCount,
+      offers: product.offers.map((o) => ({
+        priceCurrent: o.priceCurrent,
+        priceOld: o.priceOld,
+        discountPercent: o.discountPercent,
+        inStock: o.inStock,
+        store: o.store,
+      })),
+      priceHistory: product.priceHistory.map((h) => ({ price: h.price, date: h.recordedAt.toISOString() })),
+      reviewsAvg,
+      reviewsTotal: product.reviews.length,
+    },
+    categoryStats,
+  );
 
   const serialized = {
     id: product.id,
@@ -187,6 +217,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         catLabel={catLabel}
         catSlug={catSlug}
         related={serializedRelated}
+        analysis={analysis}
       />
 
     </main>
