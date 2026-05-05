@@ -88,7 +88,7 @@ export default function CategoryClient({ products, meta, content }: { products: 
   const globalMax = prices.length ? Math.ceil(Math.max(...prices) / 10) * 10 : 9999;
 
   const filtered = useMemo(() => {
-    let list = enriched.filter((p) => {
+    const list = enriched.filter((p) => {
       const oferta = p.offers[0];
       const price = oferta?.priceCurrent ?? 0;
       if (search && !`${p.name} ${p.brand}`.toLowerCase().includes(search.toLowerCase())) return false;
@@ -110,7 +110,7 @@ export default function CategoryClient({ products, meta, content }: { products: 
       if (sort === "valoracion") return (b.rating ?? 0) - (a.rating ?? 0);
       return 0;
     });
-  }, [enriched, search, selectedBrands, selectedTechs, selectedOS, selectedStores, maxPrice, minRating, onlyDiscount, sort, globalMin, globalMax]);
+  }, [enriched, search, selectedBrands, selectedTechs, selectedOS, selectedStores, maxPrice, minRating, onlyDiscount, sort, globalMax]);
 
   function toggle<T>(arr: T[], val: T, set: (v: T[]) => void) {
     set(arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val]);
@@ -124,31 +124,45 @@ export default function CategoryClient({ products, meta, content }: { products: 
   const activeCount = selectedBrands.length + selectedTechs.length + selectedOS.length + selectedStores.length +
     (maxPrice < globalMax ? 1 : 0) + (minRating > 0 ? 1 : 0) + (onlyDiscount ? 1 : 0);
 
+  // Active filter chips for top of results
+  const activeChips: { label: string; clear: () => void }[] = [
+    ...selectedBrands.map((b) => ({ label: b, clear: () => setSelectedBrands(selectedBrands.filter((x) => x !== b)) })),
+    ...selectedTechs.map((t) => ({ label: t, clear: () => setSelectedTechs(selectedTechs.filter((x) => x !== t)) })),
+    ...selectedOS.map((o) => ({ label: o, clear: () => setSelectedOS(selectedOS.filter((x) => x !== o)) })),
+    ...selectedStores.map((s) => ({ label: s, clear: () => setSelectedStores(selectedStores.filter((x) => x !== s)) })),
+    ...(maxPrice < globalMax ? [{ label: `≤ ${maxPrice} €`, clear: () => setMaxPrice(9999) }] : []),
+    ...(minRating > 0 ? [{ label: `★${minRating}+`, clear: () => setMinRating(0) }] : []),
+    ...(onlyDiscount ? [{ label: "Con descuento", clear: () => setOnlyDiscount(false) }] : []),
+  ];
+
   const sidebarJSX = (
-    <div className="bg-white rounded-2xl border border-[#E2E8F0] p-5 space-y-6">
+    <div className="bg-bg-elevated rounded-2xl border border-border p-5 space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="font-bold text-[#0F172A]">Filtros</h3>
+        <h3 className="text-sm font-bold text-fg">Filtros</h3>
         {activeCount > 0 && (
-          <button onClick={clearAll} className="text-xs font-semibold text-[#EF4444] hover:underline">
-            Limpiar todo
+          <button
+            onClick={clearAll}
+            className="text-xs font-semibold text-fg-subtle hover:text-fg transition-colors"
+          >
+            Limpiar
           </button>
         )}
       </div>
 
       {/* Marca */}
       <div>
-        <p className="text-xs font-bold text-[#475569] uppercase tracking-wider mb-3">Marca</p>
-        <div className="space-y-2">
+        <p className="text-[10px] font-bold text-fg-subtle uppercase tracking-[0.18em] mb-3">Marca</p>
+        <div className="space-y-1.5">
           {brands.map((b) => (
-            <label key={b} className="flex items-center gap-2.5 cursor-pointer group">
+            <label key={b} className="flex items-center gap-2.5 cursor-pointer group py-1 -mx-2 px-2 rounded-md hover:bg-bg-subtle transition-colors">
               <input
                 type="checkbox"
                 checked={selectedBrands.includes(b)}
                 onChange={() => toggle(selectedBrands, b, setSelectedBrands)}
-                className="w-4 h-4 rounded border-[#CBD5E1] accent-[#2563EB]"
+                className="w-4 h-4 rounded border-border accent-brand-600"
               />
-              <span className="text-sm text-[#374151] group-hover:text-[#0F172A] flex-1">{b}</span>
-              <span className="text-[11px] text-[#94A3B8]">{enriched.filter((p) => p.brand === b).length}</span>
+              <span className="text-sm text-fg-muted group-hover:text-fg transition-colors flex-1">{b}</span>
+              <span className="text-[11px] text-fg-faint tabular">{enriched.filter((p) => p.brand === b).length}</span>
             </label>
           ))}
         </div>
@@ -157,18 +171,18 @@ export default function CategoryClient({ products, meta, content }: { products: 
       {/* Tienda */}
       {stores.length > 1 && (
         <div>
-          <p className="text-xs font-bold text-[#475569] uppercase tracking-wider mb-3">Tienda</p>
-          <div className="space-y-2">
+          <p className="text-[10px] font-bold text-fg-subtle uppercase tracking-[0.18em] mb-3">Tienda</p>
+          <div className="space-y-1.5">
             {stores.map((s) => (
-              <label key={s} className="flex items-center gap-2.5 cursor-pointer group">
+              <label key={s} className="flex items-center gap-2.5 cursor-pointer group py-1 -mx-2 px-2 rounded-md hover:bg-bg-subtle transition-colors">
                 <input
                   type="checkbox"
                   checked={selectedStores.includes(s)}
                   onChange={() => toggle(selectedStores, s, setSelectedStores)}
-                  className="w-4 h-4 rounded border-[#CBD5E1] accent-[#2563EB]"
+                  className="w-4 h-4 rounded border-border accent-brand-600"
                 />
-                <span className="text-sm text-[#374151] group-hover:text-[#0F172A] flex-1">{s}</span>
-                <span className="text-[11px] text-[#94A3B8]">
+                <span className="text-sm text-fg-muted group-hover:text-fg transition-colors flex-1">{s}</span>
+                <span className="text-[11px] text-fg-faint tabular">
                   {enriched.filter((p) => p.offers.some((o) => o.store === s)).length}
                 </span>
               </label>
@@ -179,10 +193,12 @@ export default function CategoryClient({ products, meta, content }: { products: 
 
       {/* Precio */}
       <div>
-        <p className="text-xs font-bold text-[#475569] uppercase tracking-wider mb-3">
-          Precio máximo
-          {maxPrice < globalMax && <span className="ml-2 text-[#2563EB] normal-case font-semibold">hasta {maxPrice}€</span>}
-        </p>
+        <div className="flex items-baseline justify-between mb-3">
+          <p className="text-[10px] font-bold text-fg-subtle uppercase tracking-[0.18em]">Precio máximo</p>
+          {maxPrice < globalMax && (
+            <span className="text-xs font-bold text-brand-600 tabular">≤ {maxPrice} €</span>
+          )}
+        </div>
         <input
           type="range"
           min={globalMin}
@@ -190,14 +206,18 @@ export default function CategoryClient({ products, meta, content }: { products: 
           step={10}
           value={maxPrice === 9999 ? globalMax : maxPrice}
           onChange={(e) => setMaxPrice(Number(e.target.value))}
-          className="w-full accent-[#2563EB] mb-3"
+          className="w-full accent-brand-600 mb-3"
         />
         <div className="grid grid-cols-3 gap-1.5">
           {[200, 300, 400, 500, 700, 1000].filter((v) => v <= globalMax + 50).map((v) => (
             <button
               key={v}
               onClick={() => setMaxPrice(maxPrice === v ? 9999 : v)}
-              className={`text-xs py-1.5 rounded-lg border transition-colors ${maxPrice === v ? "bg-[#2563EB] text-white border-[#2563EB]" : "border-[#E2E8F0] text-[#64748B] hover:border-[#2563EB]/50"}`}
+              className={`text-xs h-8 rounded-md font-semibold border transition-colors tabular ${
+                maxPrice === v
+                  ? "bg-brand-600 text-white border-brand-600"
+                  : "border-border text-fg-muted hover:text-fg hover:border-border-strong"
+              }`}
             >
               {v}€
             </button>
@@ -208,13 +228,17 @@ export default function CategoryClient({ products, meta, content }: { products: 
       {/* Tecnología */}
       {techs.length > 0 && (
         <div>
-          <p className="text-xs font-bold text-[#475569] uppercase tracking-wider mb-3">Tecnología</p>
-          <div className="flex flex-wrap gap-2">
+          <p className="text-[10px] font-bold text-fg-subtle uppercase tracking-[0.18em] mb-3">Tecnología</p>
+          <div className="flex flex-wrap gap-1.5">
             {techs.map((t) => (
               <button
                 key={t}
                 onClick={() => toggle(selectedTechs, t, setSelectedTechs)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${selectedTechs.includes(t) ? "bg-[#2563EB] text-white border-[#2563EB]" : "border-[#E2E8F0] text-[#475569] hover:border-[#2563EB]/50"}`}
+                className={`px-3 h-8 rounded-md text-xs font-bold border transition-all ${
+                  selectedTechs.includes(t)
+                    ? "bg-brand-600 text-white border-brand-600"
+                    : "border-border text-fg-muted hover:text-fg hover:border-border-strong"
+                }`}
               >
                 {t}
               </button>
@@ -223,20 +247,20 @@ export default function CategoryClient({ products, meta, content }: { products: 
         </div>
       )}
 
-      {/* Sistema Operativo */}
+      {/* OS */}
       {osList.length > 0 && (
         <div>
-          <p className="text-xs font-bold text-[#475569] uppercase tracking-wider mb-3">Sistema operativo</p>
-          <div className="space-y-2">
+          <p className="text-[10px] font-bold text-fg-subtle uppercase tracking-[0.18em] mb-3">Sistema operativo</p>
+          <div className="space-y-1.5">
             {osList.map((os) => (
-              <label key={os} className="flex items-center gap-2.5 cursor-pointer group">
+              <label key={os} className="flex items-center gap-2.5 cursor-pointer group py-1 -mx-2 px-2 rounded-md hover:bg-bg-subtle transition-colors">
                 <input
                   type="checkbox"
                   checked={selectedOS.includes(os)}
                   onChange={() => toggle(selectedOS, os, setSelectedOS)}
-                  className="w-4 h-4 rounded border-[#CBD5E1] accent-[#2563EB]"
+                  className="w-4 h-4 rounded border-border accent-brand-600"
                 />
-                <span className="text-sm text-[#374151] group-hover:text-[#0F172A]">{os}</span>
+                <span className="text-sm text-fg-muted group-hover:text-fg transition-colors">{os}</span>
               </label>
             ))}
           </div>
@@ -245,13 +269,17 @@ export default function CategoryClient({ products, meta, content }: { products: 
 
       {/* Valoración */}
       <div>
-        <p className="text-xs font-bold text-[#475569] uppercase tracking-wider mb-3">Valoración mínima</p>
-        <div className="flex gap-1.5">
+        <p className="text-[10px] font-bold text-fg-subtle uppercase tracking-[0.18em] mb-3">Valoración mínima</p>
+        <div className="grid grid-cols-4 gap-1.5">
           {[3, 3.5, 4, 4.5].map((r) => (
             <button
               key={r}
               onClick={() => setMinRating(minRating === r ? 0 : r)}
-              className={`flex-1 py-1.5 rounded-xl text-xs font-semibold border transition-all ${minRating === r ? "bg-[#F59E0B] text-white border-[#F59E0B]" : "border-[#E2E8F0] text-[#475569] hover:border-[#F59E0B]/50"}`}
+              className={`h-8 rounded-md text-xs font-bold border transition-all ${
+                minRating === r
+                  ? "bg-warn-500 text-white border-warn-500"
+                  : "border-border text-fg-muted hover:text-fg hover:border-border-strong"
+              }`}
             >
               ★{r}+
             </button>
@@ -259,88 +287,129 @@ export default function CategoryClient({ products, meta, content }: { products: 
         </div>
       </div>
 
-      {/* Descuento */}
-      <div className="flex items-center justify-between cursor-pointer pt-1 border-t border-[#F1F5F9]" onClick={() => setOnlyDiscount((v) => !v)}>
-        <span className="text-sm font-medium text-[#374151] select-none">Solo con descuento</span>
-        <div className={`relative w-10 h-6 rounded-full transition-colors duration-200 flex-shrink-0 ${onlyDiscount ? "bg-[#2563EB]" : "bg-[#CBD5E1]"}`}>
-          <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${onlyDiscount ? "translate-x-5" : "translate-x-1"}`} />
-        </div>
-      </div>
+      {/* Solo con descuento */}
+      <button
+        type="button"
+        onClick={() => setOnlyDiscount((v) => !v)}
+        className="w-full flex items-center justify-between pt-2 border-t border-border-subtle"
+      >
+        <span className="text-sm font-semibold text-fg-muted select-none">Solo con descuento</span>
+        <span
+          className={`relative w-10 h-6 rounded-full transition-colors duration-200 flex-shrink-0 ${
+            onlyDiscount ? "bg-brand-600" : "bg-bg-muted"
+          }`}
+        >
+          <span
+            className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+              onlyDiscount ? "translate-x-5" : "translate-x-1"
+            }`}
+          />
+        </span>
+      </button>
     </div>
   );
 
   return (
-
-    <main className="min-h-screen bg-[#F8FAFC]">
-
-      {/* HERO */}
-      <section className={`bg-gradient-to-br ${meta.gradient} pt-12 pb-16 px-6 relative overflow-hidden`}>
+    <main className="min-h-screen bg-bg">
+      {/* HERO con accent de la categoría */}
+      <section
+        className="relative overflow-hidden"
+        style={{
+          background: `linear-gradient(135deg, color-mix(in srgb, ${meta.color} 88%, black) 0%, color-mix(in srgb, ${meta.color} 70%, black) 50%, color-mix(in srgb, ${meta.color} 60%, black) 100%)`,
+        }}
+      >
         <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-white opacity-5 blur-3xl" />
-          <div className="absolute bottom-0 left-1/3 w-64 h-32 rounded-full bg-white opacity-5 blur-2xl" />
+          <div
+            className="absolute -top-32 -right-20 w-[500px] h-[500px] rounded-full opacity-30"
+            style={{ background: `radial-gradient(circle, ${meta.color} 0%, transparent 70%)` }}
+          />
+          <div
+            className="absolute inset-0 opacity-20"
+            style={{
+              backgroundImage:
+                "linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px)",
+              backgroundSize: "48px 48px",
+              maskImage: "radial-gradient(ellipse at center, black 30%, transparent 80%)",
+              WebkitMaskImage: "radial-gradient(ellipse at center, black 30%, transparent 80%)",
+            }}
+          />
         </div>
-        <div className="relative max-w-7xl mx-auto">
-          <div className="flex items-center gap-2 text-white/50 text-xs mb-6">
-            <Link href="/" className="hover:text-white/80 transition-colors">Inicio</Link>
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 pt-10 pb-12 sm:pt-12 sm:pb-14">
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-2 text-xs text-white/50 mb-7">
+            <Link href="/" className="hover:text-white/90 transition-colors">Inicio</Link>
             <span>/</span>
-            <Link href="/categorias" className="hover:text-white/80 transition-colors">Categorías</Link>
+            <Link href="/categorias" className="hover:text-white/90 transition-colors">Categorías</Link>
             <span>/</span>
-            <span className="text-white/90 font-medium">{meta.label}</span>
+            <span className="text-white/85 font-semibold">{meta.label}</span>
           </div>
-          <div className="flex flex-col sm:flex-row sm:items-end gap-6">
-            <div className="flex items-center gap-5">
-              <div className="w-20 h-20 rounded-3xl bg-white/10 backdrop-blur-sm flex items-center justify-center text-5xl shadow-xl">{meta.icon}</div>
+
+          <div className="flex flex-col lg:flex-row lg:items-end gap-6 lg:gap-10">
+            <div className="flex items-center gap-4">
+              <div
+                className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 flex items-center justify-center text-3xl sm:text-4xl shadow-xl"
+              >
+                {meta.icon}
+              </div>
               <div>
-                <h1 className="text-4xl font-extrabold text-white tracking-tight">{meta.label}</h1>
-                <p className="text-white/60 text-sm mt-1">{meta.desc}</p>
-                <div className="flex items-center gap-2 mt-2 flex-wrap">
-                  <span className="text-xs font-semibold text-white/80 bg-white/10 px-2.5 py-1 rounded-full">
+                <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">{meta.label}</h1>
+                <p className="text-white/60 text-sm mt-1.5">{meta.desc}</p>
+                <div className="flex items-center gap-2 mt-3 flex-wrap">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-white/85 bg-white/[0.08] border border-white/10 px-2.5 h-6 inline-flex items-center rounded-md tabular">
                     {products.length} producto{products.length !== 1 ? "s" : ""}
                   </span>
                   {products.some((p) => p.offers[0]?.discountPercent) && (
-                    <span className="text-xs font-semibold text-[#34D399] bg-white/10 px-2.5 py-1 rounded-full">🔥 Ofertas activas</span>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-300 bg-emerald-500/15 border border-emerald-500/30 px-2.5 h-6 inline-flex items-center rounded-md">
+                      Ofertas activas
+                    </span>
                   )}
                 </div>
               </div>
             </div>
-            <div className="flex-1 max-w-md">
-              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-4 py-2.5">
-                <svg className="w-4 h-4 text-white/50 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+
+            {/* Inline search */}
+            <div className="flex-1 max-w-md lg:ml-auto w-full">
+              <div className="flex items-center gap-2 bg-white/[0.08] backdrop-blur-md border border-white/15 hover:border-white/25 focus-within:border-white/40 focus-within:bg-white/[0.12] rounded-xl px-4 h-11 transition-all">
+                <svg className="w-4 h-4 text-white/45 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
                 </svg>
                 <input
                   type="text"
-                  placeholder={`Buscar en ${meta.label.toLowerCase()}...`}
+                  placeholder={`Buscar en ${meta.label.toLowerCase()}…`}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="flex-1 bg-transparent text-white placeholder-white/40 text-sm outline-none"
                 />
                 {search && (
-                  <button onClick={() => setSearch("")} className="text-white/50 hover:text-white">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                  <button onClick={() => setSearch("")} aria-label="Limpiar búsqueda" className="text-white/50 hover:text-white">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
                   </button>
                 )}
               </div>
             </div>
           </div>
         </div>
-        <div className="absolute bottom-0 left-0 right-0 leading-none">
-          <svg viewBox="0 0 1440 32" fill="none" className="w-full h-8"><path d="M0 32L720 0L1440 32V32H0V32Z" fill="#F8FAFC" /></svg>
-        </div>
       </section>
 
       {/* CONTENIDO EDITORIAL */}
       {content && (
-        <section className="max-w-7xl mx-auto px-6 pt-8 pb-2">
-          <div className="bg-white rounded-2xl border border-[#E2E8F0] p-6 flex flex-col gap-5">
-            <p className="text-[#334155] text-sm leading-relaxed">{content.intro}</p>
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-8">
+          <div className="bg-bg-elevated rounded-2xl border border-border p-6 flex flex-col gap-5">
+            <p className="text-fg-muted text-sm leading-relaxed">{content.intro}</p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {content.tips.map((t) => (
-                <div key={t.title} className="flex gap-3 p-3 rounded-xl" style={{ backgroundColor: meta.bg }}>
+                <div
+                  key={t.title}
+                  className="flex gap-3 p-3.5 rounded-xl border"
+                  style={{ backgroundColor: meta.bg, borderColor: `color-mix(in srgb, ${meta.color} 14%, transparent)` }}
+                >
                   <span className="text-xl flex-shrink-0">{t.icon}</span>
-                  <div>
-                    <p className="text-xs font-bold text-[#0F172A]">{t.title}</p>
-                    <p className="text-xs text-[#64748B] mt-0.5 leading-relaxed">{t.desc}</p>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-fg leading-tight">{t.title}</p>
+                    <p className="text-xs text-fg-muted mt-1 leading-relaxed">{t.desc}</p>
                   </div>
                 </div>
               ))}
@@ -348,21 +417,25 @@ export default function CategoryClient({ products, meta, content }: { products: 
             {content.guideSlug && (
               <Link
                 href={`/guias/${content.guideSlug}`}
-                className="self-start flex items-center gap-1.5 text-xs font-bold hover:underline transition-colors"
+                className="self-start inline-flex items-center gap-1.5 text-xs font-bold transition-opacity hover:opacity-80"
                 style={{ color: meta.color }}
               >
-                📖 Ver guía de compra completa →
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                  <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                </svg>
+                Ver guía de compra completa →
               </Link>
             )}
           </div>
         </section>
       )}
 
-      <div className="max-w-7xl mx-auto px-6 py-8 flex gap-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 flex gap-8">
 
         {/* SIDEBAR DESKTOP */}
-        <aside className="hidden lg:block w-60 flex-shrink-0">
-          <div className="filters-scroll sticky top-6 max-h-[calc(100vh-2rem)] overflow-y-auto overscroll-contain pr-1 touch-pan-y">
+        <aside className="hidden lg:block w-64 flex-shrink-0">
+          <div className="filters-scroll sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto overscroll-contain pr-1 touch-pan-y">
             {sidebarJSX}
           </div>
         </aside>
@@ -371,24 +444,30 @@ export default function CategoryClient({ products, meta, content }: { products: 
         <div className="flex-1 min-w-0">
 
           {/* Barra de control */}
-          <div className="flex items-center justify-between gap-3 mb-5 flex-wrap">
-            <p className="text-sm text-[#64748B]">
-              <span className="font-bold text-[#0F172A]">{filtered.length}</span> resultado{filtered.length !== 1 ? "s" : ""}
-              {search && <span> para "<span className="text-[#2563EB]">{search}</span>"</span>}
+          <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+            <p className="text-sm text-fg-muted">
+              <span className="font-bold text-fg tabular">{filtered.length}</span> resultado{filtered.length !== 1 ? "s" : ""}
+              {search && <> para &ldquo;<span className="text-brand-600 font-semibold">{search}</span>&rdquo;</>}
             </p>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowFilters((v) => !v)}
-                className="lg:hidden flex items-center gap-1.5 text-sm font-semibold px-3 py-2 bg-white border border-[#E2E8F0] rounded-xl hover:border-[#2563EB]/40 transition-colors"
+                className="lg:hidden flex items-center gap-1.5 text-sm font-semibold px-3 h-9 bg-bg-elevated border border-border rounded-lg hover:border-border-strong transition-colors"
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 4h18M7 8h10M11 12h2" /></svg>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h18M7 8h10M11 12h2" />
+                </svg>
                 Filtros
-                {activeCount > 0 && <span className="bg-[#2563EB] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{activeCount}</span>}
+                {activeCount > 0 && (
+                  <span className="bg-brand-600 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center tabular">
+                    {activeCount}
+                  </span>
+                )}
               </button>
               <select
                 value={sort}
                 onChange={(e) => setSort(e.target.value as SortKey)}
-                className="text-sm border border-[#E2E8F0] bg-white rounded-xl px-3 py-2 outline-none hover:border-[#2563EB]/40 transition-colors cursor-pointer"
+                className="text-sm font-medium border border-border bg-bg-elevated rounded-lg px-3 h-9 outline-none hover:border-border-strong focus-visible:border-brand-500 focus-visible:ring-2 focus-visible:ring-brand-500/15 transition-all cursor-pointer text-fg"
               >
                 <option value="relevancia">Relevancia</option>
                 <option value="precio_asc">Precio: menor a mayor</option>
@@ -399,6 +478,30 @@ export default function CategoryClient({ products, meta, content }: { products: 
             </div>
           </div>
 
+          {/* Active chips */}
+          {activeChips.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5 mb-5">
+              {activeChips.map((c) => (
+                <button
+                  key={c.label}
+                  onClick={c.clear}
+                  className="inline-flex items-center gap-1 text-xs font-semibold px-3 h-7 rounded-full bg-brand-50 text-brand-700 border border-brand-100 hover:bg-brand-100 transition-colors"
+                >
+                  {c.label}
+                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round">
+                    <path d="M6 6L18 18M6 18L18 6" />
+                  </svg>
+                </button>
+              ))}
+              <button
+                onClick={clearAll}
+                className="text-xs font-semibold text-fg-subtle hover:text-fg ml-1 transition-colors"
+              >
+                Limpiar todo
+              </button>
+            </div>
+          )}
+
           {/* Filtros móvil */}
           {showFilters && (
             <div className="filters-scroll lg:hidden mb-6 max-h-[70vh] overflow-y-auto overscroll-contain rounded-2xl pr-1 touch-pan-y">
@@ -408,17 +511,22 @@ export default function CategoryClient({ products, meta, content }: { products: 
 
           {/* Grid */}
           {filtered.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-          {filtered.map((p, i) => <ProductCard key={p.id} product={p} priority={i === 0} />)}
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
+              {filtered.map((p, i) => (
+                <ProductCard key={p.id} product={p} priority={i === 0} />
+              ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-24 text-center bg-white rounded-2xl border border-[#E2E8F0]">
-              <span className="text-6xl mb-4">{meta.icon}</span>
-              <h3 className="text-lg font-bold text-[#0F172A] mb-2">Sin resultados</h3>
-              <p className="text-sm text-[#64748B] mb-6">
-                {search ? `No encontramos "${search}" con estos filtros` : "Ningún producto coincide con los filtros seleccionados"}
+            <div className="flex flex-col items-center justify-center py-20 text-center bg-bg-elevated rounded-2xl border border-border">
+              <span className="text-5xl mb-4 opacity-50">{meta.icon}</span>
+              <h3 className="text-base font-bold text-fg mb-1.5">Sin resultados</h3>
+              <p className="text-sm text-fg-muted mb-6 max-w-sm">
+                {search ? `No encontramos "${search}" con estos filtros.` : "Ningún producto coincide con los filtros seleccionados."}
               </p>
-              <button onClick={clearAll} className="text-sm font-semibold text-white px-5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] transition-colors">
+              <button
+                onClick={clearAll}
+                className="text-sm font-bold text-white px-5 h-10 rounded-lg bg-brand-600 hover:bg-brand-700 transition-colors"
+              >
                 Limpiar filtros
               </button>
             </div>

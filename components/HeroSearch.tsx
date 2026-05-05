@@ -45,8 +45,8 @@ export function HeroSearch() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [highlighted, setHighlighted] = useState(-1);
+  const [focused, setFocused] = useState(false);
 
-  // Debounced fetch
   const fetchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fetchResults = useCallback((q: string) => {
     if (fetchRef.current) clearTimeout(fetchRef.current);
@@ -71,7 +71,6 @@ export function HeroSearch() {
     }, 250);
   }, []);
 
-  // Close on outside click
   useEffect(() => {
     function onPointerDown(e: PointerEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -96,10 +95,6 @@ export function HeroSearch() {
     navigate(q);
   }
 
-  function searchTrend(term: string) {
-    navigate(term);
-  }
-
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (!open) return;
     if (e.key === "ArrowDown") {
@@ -118,33 +113,29 @@ export function HeroSearch() {
   }
 
   return (
-    <div>
-      <div ref={containerRef} className="relative w-full max-w-2xl mx-auto mb-5 px-2 sm:px-0">
+    <div className="w-full">
+      <div ref={containerRef} className="relative w-full max-w-2xl mx-auto">
+        {/* Halo glow when focused */}
+        <div
+          className={`absolute inset-0 -m-px rounded-2xl transition-opacity duration-300 pointer-events-none ${focused ? "opacity-100" : "opacity-0"}`}
+          style={{
+            background: "linear-gradient(120deg, rgba(99,102,241,0.5), rgba(96,165,250,0.4), rgba(52,211,153,0.4))",
+            filter: "blur(16px)",
+          }}
+          aria-hidden
+        />
+
         <form
           onSubmit={handleSubmit}
-          className="flex items-center gap-2 bg-white rounded-2xl shadow-[0_10px_28px_rgba(15,23,42,0.18)] px-3 py-2 sm:px-4 sm:py-2.5"
+          className="relative flex items-center gap-2 bg-white rounded-2xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.4)] p-2 sm:p-2.5 ring-1 ring-white/10"
         >
-          {/* Search icon / spinner */}
-          <span className="w-5 h-5 text-[#94A3B8] flex-shrink-0 flex items-center justify-center">
+          <span className="w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center text-fg-faint flex-shrink-0">
             {loading ? (
-              <svg
-                className="animate-spin w-5 h-5"
-                viewBox="0 0 20 20"
-                fill="none"
-                aria-hidden="true"
-              >
-                <circle
-                  cx="10"
-                  cy="10"
-                  r="8"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeDasharray="38"
-                  strokeDashoffset="14"
-                />
+              <svg className="animate-spin w-5 h-5 text-brand-500" viewBox="0 0 20 20" fill="none" aria-hidden>
+                <circle cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="2" strokeDasharray="38" strokeDashoffset="14" />
               </svg>
             ) : (
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
               </svg>
             )}
@@ -152,7 +143,7 @@ export function HeroSearch() {
           <input
             ref={inputRef}
             type="text"
-            placeholder="Busca lavadora, TV, frigorífico..."
+            placeholder="¿Qué electrodoméstico estás buscando?"
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
@@ -161,27 +152,29 @@ export function HeroSearch() {
             }}
             onKeyDown={handleKeyDown}
             onFocus={() => {
+              setFocused(true);
               if (results.length > 0) setOpen(true);
             }}
+            onBlur={() => setFocused(false)}
             aria-label="Buscar electrodomésticos"
             aria-autocomplete="list"
             aria-expanded={open}
             aria-haspopup="listbox"
-            className="flex-1 min-w-0 text-sm sm:text-base text-[#0F172A] placeholder-[#94A3B8] outline-none bg-transparent py-1"
+            className="flex-1 min-w-0 text-base text-slate-900 placeholder:text-slate-400 outline-none bg-transparent"
+            style={{ color: "#0B0D12" }}
           />
           <button
             type="submit"
-            className="shrink-0 bg-[#2563EB] hover:bg-[#1D4ED8] active:scale-95 text-white text-sm sm:text-sm font-semibold px-4 sm:px-5 py-2.5 rounded-xl transition-all duration-150 whitespace-nowrap text-center"
+            className="shrink-0 inline-flex items-center justify-center bg-brand-600 hover:bg-brand-700 active:scale-[0.97] text-white text-sm font-bold px-5 sm:px-6 h-10 sm:h-11 rounded-xl transition-all duration-150 shadow-md shadow-brand-600/30"
           >
-            Buscar ahora
+            Buscar
           </button>
         </form>
 
-        {/* Dropdown */}
         {open && results.length > 0 && (
           <div
             role="listbox"
-            className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-[0_16px_48px_rgba(0,0,0,0.20)] z-50 overflow-hidden"
+            className="absolute top-full left-0 right-0 mt-3 bg-white rounded-2xl shadow-2xl ring-1 ring-black/5 z-50 overflow-hidden fade-in"
           >
             {results.map((r, i) => (
               <button
@@ -191,50 +184,39 @@ export function HeroSearch() {
                 onClick={() => navigate(r.name)}
                 onMouseEnter={() => setHighlighted(i)}
                 className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
-                  i === highlighted ? "bg-[#F1F5F9]" : "hover:bg-[#F8FAFC]"
-                } ${i > 0 ? "border-t border-[#F1F5F9]" : ""}`}
+                  i === highlighted ? "bg-slate-100" : "hover:bg-slate-50"
+                } ${i > 0 ? "border-t border-slate-100" : ""}`}
               >
-                {/* Image */}
-                <div className="w-8 h-8 rounded-lg bg-[#F1F5F9] flex-shrink-0 overflow-hidden flex items-center justify-center">
+                <div className="w-10 h-10 rounded-lg bg-slate-50 flex-shrink-0 overflow-hidden flex items-center justify-center border border-slate-100">
                   {r.image ? (
-                    <Image
-                      src={r.image}
-                      alt={r.name}
-                      width={32}
-                      height={32}
-                      className="object-contain w-full h-full"
-                      unoptimized
-                    />
+                    <Image src={r.image} alt={r.name} width={36} height={36} className="object-contain w-full h-full p-1" unoptimized />
                   ) : (
-                    <svg className="w-4 h-4 text-[#CBD5E1]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-4 h-4 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                   )}
                 </div>
-                {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[#0F172A] truncate">{r.name}</p>
-                  <p className="text-xs text-[#64748B] truncate">
+                  <p className="text-sm font-semibold text-slate-900 truncate">{r.name}</p>
+                  <p className="text-xs text-slate-500 truncate">
                     {r.brand} · {CAT[r.category] ?? r.category}
                   </p>
                 </div>
-                {/* Price */}
                 {r.offers[0] && (
                   <div className="flex-shrink-0 text-right">
-                    <p className="text-sm font-semibold text-[#0F172A]">
+                    <p className="text-sm font-bold text-slate-900 tabular">
                       {r.offers[0].priceCurrent.toLocaleString("es-ES", { style: "currency", currency: "EUR" })}
                     </p>
                     {r.offers[0].discountPercent != null && r.offers[0].discountPercent > 0 && (
-                      <p className="text-xs font-medium text-[#16A34A]">-{r.offers[0].discountPercent}%</p>
+                      <p className="text-xs font-bold text-emerald-600">-{r.offers[0].discountPercent}%</p>
                     )}
                   </div>
                 )}
               </button>
             ))}
-            {/* Ver todos */}
             <button
               onClick={() => navigate(query.trim())}
-              className="w-full px-4 py-3 text-center text-sm text-[#2563EB] font-medium hover:bg-[#EFF6FF] transition-colors border-t border-[#F1F5F9]"
+              className="w-full px-4 py-3 text-center text-sm text-brand-600 font-bold hover:bg-brand-50 transition-colors border-t border-slate-100"
             >
               Ver todos los resultados →
             </button>
@@ -243,13 +225,13 @@ export function HeroSearch() {
       </div>
 
       {/* Trending tags */}
-      <div className="flex flex-wrap items-center justify-center gap-2 px-2 sm:px-0">
-        <span className="text-white/40 text-xs">Tendencias:</span>
+      <div className="flex flex-wrap items-center justify-center gap-2 mt-5 px-2 sm:px-0">
+        <span className="text-white/40 text-xs font-medium">Tendencias:</span>
         {TRENDING.map((term) => (
           <button
             key={term}
-            onClick={() => searchTrend(term)}
-            className="text-xs text-white/70 hover:text-white px-3 py-1 rounded-full border border-white/20 hover:border-white/40 bg-white/5 hover:bg-white/10 transition-all duration-150"
+            onClick={() => navigate(term)}
+            className="text-xs text-white/70 hover:text-white px-3 h-7 inline-flex items-center rounded-full border border-white/15 hover:border-white/35 bg-white/[0.04] hover:bg-white/[0.08] transition-all duration-150"
           >
             {term}
           </button>

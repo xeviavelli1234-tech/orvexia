@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 const items = [
-  { label: "Foro / Discusiones",      href: "/comunidad", icon: "🗨️", color: "#2563EB", bg: "#EEF2FF" },
-  { label: "Opiniones y Reseñas",     href: "/opiniones", icon: "⭐", color: "#F59E0B", bg: "#FEF3C7" },
+  { label: "Foro / Discusiones", href: "/comunidad", icon: "🗨️", accent: "var(--brand-600)", bg: "var(--brand-50)" },
+  { label: "Opiniones y Reseñas", href: "/opiniones", icon: "⭐", accent: "var(--warn-500)", bg: "#FEF3C7" },
 ];
 
 export function CommunityDropdown() {
@@ -28,8 +28,8 @@ export function CommunityDropdown() {
   return (
     <div className="relative" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
       <button
-        className={`flex items-center gap-1.5 text-sm font-semibold px-3 py-2 rounded-lg transition-all duration-150 ${
-          open ? "bg-[#F1F5F9] text-[#0F172A]" : "text-[#475569] hover:text-[#0F172A] hover:bg-[#F1F5F9]"
+        className={`flex items-center gap-1.5 text-sm font-semibold px-3 h-10 rounded-lg transition-all duration-150 ${
+          open ? "bg-bg-subtle text-fg" : "text-fg-muted hover:text-fg hover:bg-bg-subtle"
         }`}
       >
         Comunidad
@@ -53,27 +53,27 @@ export function CommunityDropdown() {
           transition: "opacity 160ms ease, transform 160ms ease",
         }}
       >
-        <div className="rounded-2xl bg-white shadow-[0_8px_32px_rgba(15,23,42,0.12)] border border-[#E2E8F0] overflow-hidden">
-          <div className="px-4 pt-3 pb-2 border-b border-[#F1F5F9]">
-            <p className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest">Comunidad</p>
+        <div className="rounded-2xl bg-bg-elevated shadow-lg border border-border overflow-hidden">
+          <div className="px-4 pt-3 pb-2 border-b border-border-subtle">
+            <p className="text-[10px] font-bold text-fg-subtle uppercase tracking-[0.2em]">Comunidad</p>
           </div>
 
           <div className="p-2">
             {uniqueItems.map((item) => (
               <Link
-                key={`${item.label}`}
+                key={item.label}
                 href={item.href}
                 onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group hover:bg-[#F8FAFC]"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group hover:bg-bg-subtle"
               >
                 <div
-                  className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-150 group-hover:scale-110"
-                  style={{ backgroundColor: item.bg, color: item.color, fontSize: "15px" }}
+                  className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-150 group-hover:scale-110 text-base"
+                  style={{ backgroundColor: item.bg, color: item.accent }}
                   aria-hidden="true"
                 >
                   {item.icon}
                 </div>
-                <p className="text-sm font-semibold text-[#0F172A] leading-tight">{item.label}</p>
+                <p className="text-sm font-semibold text-fg leading-tight">{item.label}</p>
               </Link>
             ))}
           </div>

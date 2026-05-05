@@ -194,18 +194,18 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   }));
 
   return (
-    <main className="min-h-screen bg-[#F8FAFC]">
+    <main className="min-h-screen bg-bg">
 
       {/* BREADCRUMB */}
-      <div className="max-w-6xl mx-auto px-6 pt-6 pb-2">
-        <div className="flex items-center gap-2 text-xs text-[#94A3B8]">
-          <Link href="/" className="hover:text-[#0F172A] transition-colors">Inicio</Link>
-          <span>/</span>
-          <Link href="/categorias" className="hover:text-[#0F172A] transition-colors">Categorías</Link>
-          <span>/</span>
-          <Link href={`/categorias/${catSlug}`} className="hover:text-[#0F172A] transition-colors">{catLabel}</Link>
-          <span>/</span>
-          <span className="text-[#475569] truncate max-w-[200px]">{product.name.slice(0, 40)}...</span>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 pb-2">
+        <div className="flex items-center gap-2 text-xs text-fg-subtle">
+          <Link href="/" className="hover:text-fg transition-colors">Inicio</Link>
+          <span aria-hidden>/</span>
+          <Link href="/categorias" className="hover:text-fg transition-colors">Categorías</Link>
+          <span aria-hidden>/</span>
+          <Link href={`/categorias/${catSlug}`} className="hover:text-fg transition-colors">{catLabel}</Link>
+          <span aria-hidden>/</span>
+          <span className="text-fg-muted font-medium truncate max-w-[200px]">{product.name.slice(0, 40)}...</span>
         </div>
       </div>
 

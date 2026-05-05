@@ -48,12 +48,10 @@ export default function ProductCard({ product, priority = false }: Props) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
 
-  // Imágenes para el modal — se cargan frescas desde la API al abrir
   const [modalImages, setModalImages] = useState<string[]>([]);
   const [modalRating, setModalRating] = useState<number | null>(product.rating);
   const [modalReviews, setModalReviews] = useState<number | null>(product.reviewCount);
 
-  // Imágenes para la tarjeta (puede ser 1 si images no llega aún)
   const cardImages =
     Array.isArray(product.images) && product.images.length > 0
       ? product.images
@@ -69,11 +67,7 @@ export default function ProductCard({ product, priority = false }: Props) {
     mejorOferta?.store?.toLowerCase().includes("pccomponente")
       ? "PcComp."
       : mejorOferta?.store ?? "tienda";
-  // Descuento real:
-  // 1. Si la tienda es LG, ECI o Fnac (datos vienen del feed oficial Awin),
-  //    confiamos al 100% en el discountPercent ya verificado por la tienda.
-  // 2. Si es Amazon u otra tienda con cálculo automático, aplicamos cap 2.5x
-  //    para descartar PVPRs inflados típicos.
+
   const trustedStore = mejorOferta?.store
     ? /^(LG|El Corte Inglés|Fnac)$/i.test(mejorOferta.store) ||
       mejorOferta.store.toLowerCase().includes("corte ingl")
@@ -86,6 +80,9 @@ export default function ProductCard({ product, priority = false }: Props) {
         ? Math.round((1 - mejorOferta.priceCurrent / mejorOferta.priceOld) * 100)
         : 0
       : 0;
+  const savingsAmount = mejorOferta?.priceOld && mejorOferta.priceOld > mejorOferta.priceCurrent
+    ? mejorOferta.priceOld - mejorOferta.priceCurrent
+    : 0;
 
   const prev = useCallback(
     (e: React.MouseEvent) => {
@@ -105,7 +102,6 @@ export default function ProductCard({ product, priority = false }: Props) {
 
   async function handleOpen() {
     setOpen(true);
-    // Carga fresca de imágenes desde la API
     try {
       const res = await fetch(`/api/products?slug=${product.slug}`);
       const data = await res.json();
@@ -115,7 +111,7 @@ export default function ProductCard({ product, priority = false }: Props) {
       if (data.rating != null) setModalRating(data.rating);
       if (data.reviewCount != null) setModalReviews(data.reviewCount);
     } catch {
-      // fallback: usar lo que tengamos
+      /* noop */
     }
   }
 
@@ -124,17 +120,18 @@ export default function ProductCard({ product, priority = false }: Props) {
   return (
     <>
       <div
-        className="group h-full rounded-xl overflow-hidden bg-white border border-[#E5F0FF] hover:shadow-md hover:border-[#2563EB]/30 transition-all duration-200 cursor-pointer flex flex-col"
+        className="group h-full rounded-2xl overflow-hidden bg-bg-elevated border border-border hover:border-border-strong hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 ease-out cursor-pointer flex flex-col"
         onClick={handleOpen}
       >
-        <div className="relative h-48 bg-[#F8FBFF]">
+        {/* Image area */}
+        <div className="relative aspect-[4/3] bg-gradient-to-br from-bg-subtle to-bg-muted">
           {cardImages.length > 0 && !cardImageErrored ? (
             <img
               key={cardImages[active]}
               src={activeCardImage}
               alt={product.name}
               loading={priority ? "eager" : "lazy"}
-              className="absolute inset-0 w-full h-full object-contain p-4 transition-opacity duration-200"
+              className="absolute inset-0 w-full h-full object-contain p-5 transition-all duration-300 group-hover:scale-[1.04]"
               referrerPolicy="no-referrer"
               onError={() => {
                 if (!activeCardImage) return;
@@ -147,43 +144,47 @@ export default function ProductCard({ product, priority = false }: Props) {
               }}
             />
           ) : (
-            <div className="absolute inset-0 flex items-center justify-center text-3xl text-[#CBD5E1]">📦</div>
+            <div className="absolute inset-0 flex items-center justify-center text-3xl text-fg-faint">📦</div>
           )}
 
-          {/* Descuento — solo si hay rebaja real */}
+          {/* Discount pill */}
           {realDiscount > 0 && (
-            <span className="absolute top-2 left-2 bg-[#EF4444] text-white text-xs font-bold px-2 py-1 rounded-lg shadow">
-              -{realDiscount}%
-            </span>
+            <div className="absolute top-3 left-3 inline-flex items-center gap-1 px-2 h-6 rounded-md bg-fg-strong text-bg text-[11px] font-bold shadow-md">
+              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <polyline points="19 12 12 19 5 12" />
+                <line x1="12" y1="19" x2="12" y2="5" />
+              </svg>
+              {realDiscount}%
+            </div>
           )}
-          {/* Guardar */}
-          <SaveButton productId={product.id} className="absolute top-2 right-2 w-7 h-7" />
 
-          {/* Flechas */}
+          <SaveButton productId={product.id} className="absolute top-3 right-3 w-8 h-8" />
+
           {cardImages.length > 1 && (
             <>
               <button
                 onClick={prev}
-                className="absolute left-1.5 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 hover:bg-white rounded-full p-1 shadow z-10"
+                aria-label="Imagen anterior"
+                className="absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-bg-elevated/90 hover:bg-bg-elevated rounded-full w-7 h-7 flex items-center justify-center shadow-md z-10"
               >
-                <svg className="w-3.5 h-3.5 text-[#0F172A]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <svg className="w-3.5 h-3.5 text-fg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
               <button
                 onClick={next}
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 hover:bg-white rounded-full p-1 shadow z-10"
+                aria-label="Imagen siguiente"
+                className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-bg-elevated/90 hover:bg-bg-elevated rounded-full w-7 h-7 flex items-center justify-center shadow-md z-10"
               >
-                <svg className="w-3.5 h-3.5 text-[#0F172A]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <svg className="w-3.5 h-3.5 text-fg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
               </button>
             </>
           )}
 
-          {/* Puntos */}
           {cardImages.length > 1 && (
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10">
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1 z-10">
               {cardImages.map((_, i) => (
                 <button
                   key={i}
@@ -191,46 +192,55 @@ export default function ProductCard({ product, priority = false }: Props) {
                     e.stopPropagation();
                     setActive(i);
                   }}
-                  className={`rounded-full transition-all duration-300 ${active === i ? "bg-[#2563EB] w-3.5 h-1.5" : "bg-white/60 w-1.5 h-1.5"}`}
+                  aria-label={`Imagen ${i + 1}`}
+                  className={`rounded-full transition-all duration-300 ${
+                    active === i ? "bg-fg-strong w-4 h-1.5" : "bg-fg-strong/30 hover:bg-fg-strong/50 w-1.5 h-1.5"
+                  }`}
                 />
               ))}
             </div>
           )}
         </div>
 
-        {/* Info */}
+        {/* Body */}
         <div className="p-4 flex flex-col flex-1">
-          <div className="flex items-center justify-between mb-1">
-            <p className="text-xs text-[#64748B]">
-              <span className="font-semibold text-[#2563EB]">{product.brand}</span>
-              <span className="mx-1">·</span>
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <p className="text-[11px] text-fg-subtle min-w-0 truncate">
+              <span className="font-semibold text-brand-600">{product.brand}</span>
+              <span className="mx-1.5 text-border-strong">·</span>
               {CATEGORY_LABELS[product.category] ?? product.category}
             </p>
             {product.rating != null && (
-              <span className="flex items-center gap-0.5 text-[11px] font-semibold text-[#F59E0B]">
-                <svg className="w-3 h-3 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+              <span className="flex-shrink-0 inline-flex items-center gap-0.5 text-[11px] font-bold text-fg">
+                <svg className="w-3 h-3 fill-warn-500 text-warn-500" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
                 {product.rating.toFixed(1)}
                 {product.reviewCount != null && (
-                  <span className="text-[#94A3B8] font-normal ml-0.5">({product.reviewCount >= 1000 ? `${(product.reviewCount / 1000).toFixed(1)}k` : product.reviewCount})</span>
+                  <span className="text-fg-subtle font-medium ml-0.5">
+                    ({product.reviewCount >= 1000 ? `${(product.reviewCount / 1000).toFixed(1)}k` : product.reviewCount})
+                  </span>
                 )}
               </span>
             )}
           </div>
-          <h3 className="text-sm font-semibold text-[#0F172A] leading-snug mb-3 line-clamp-2 group-hover:text-[#2563EB] transition-colors">
+
+          <h3 className="text-[14px] font-bold text-fg leading-snug mb-3 line-clamp-2 group-hover:text-brand-600 transition-colors min-h-[2.5em]">
             {product.name}
           </h3>
 
           {mejorOferta ? (
             <>
-              <div className="flex items-end gap-2 mb-1">
-                <span className="text-xl font-bold text-[#0F172A]">{formatEuro(mejorOferta.priceCurrent)} €</span>
-                {mejorOferta.priceOld && (
-                  <span className="text-sm text-[#94A3B8] line-through mb-0.5">{formatEuro(mejorOferta.priceOld)} €</span>
+              <div className="flex items-baseline gap-2 mb-1 tabular">
+                <span className="text-2xl font-extrabold text-fg leading-none tracking-tight">
+                  {formatEuro(mejorOferta.priceCurrent)}
+                  <span className="text-base font-bold text-fg-muted ml-0.5">€</span>
+                </span>
+                {mejorOferta.priceOld && mejorOferta.priceOld > mejorOferta.priceCurrent && (
+                  <span className="text-sm text-fg-faint line-through">{formatEuro(mejorOferta.priceOld)} €</span>
                 )}
               </div>
-              {mejorOferta.priceOld && mejorOferta.priceOld > mejorOferta.priceCurrent && (
-                <p className="text-[11px] font-semibold text-[#16A34A] mb-2">
-                  Ahorras {new Intl.NumberFormat("es-ES", { maximumFractionDigits: 0 }).format(mejorOferta.priceOld - mejorOferta.priceCurrent)} €
+              {savingsAmount > 0 && (
+                <p className="text-[11px] font-bold text-accent-600 mb-2 tabular">
+                  Ahorras {new Intl.NumberFormat("es-ES", { maximumFractionDigits: 0 }).format(savingsAmount)} €
                 </p>
               )}
               <div className="mb-2">
@@ -246,27 +256,31 @@ export default function ProductCard({ product, priority = false }: Props) {
                   productName={product.name}
                 />
               </div>
-              <div className="mt-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div className="mt-auto flex items-center gap-2 pt-2 border-t border-border-subtle">
                 <Link
                   href={`/productos/${product.slug}`}
                   onClick={(e) => e.stopPropagation()}
-                  className="text-[11px] font-semibold text-[#64748B] hover:text-[#2563EB] transition-colors underline underline-offset-2 self-start"
+                  className="text-[11px] font-semibold text-fg-subtle hover:text-fg transition-colors whitespace-nowrap"
                 >
-                  Ver análisis
+                  Análisis →
                 </Link>
                 <a
                   href={mejorOferta.externalUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={(e) => e.stopPropagation()}
-                  className="inline-flex items-center justify-center gap-1 text-xs font-semibold text-white bg-[#2563EB] hover:bg-[#1D4ED8] px-3 py-1.5 rounded-lg transition-colors shadow-sm shadow-blue-200 w-full sm:w-auto"
+                  className="ml-auto inline-flex items-center justify-center gap-1 text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 active:scale-[0.97] px-3.5 h-9 rounded-lg transition-all shadow-sm shadow-brand-600/20"
                 >
-                  Ver en {ctaStoreName} →
+                  Ver en {ctaStoreName}
+                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <line x1="7" y1="17" x2="17" y2="7" />
+                    <polyline points="7 7 17 7 17 17" />
+                  </svg>
                 </a>
               </div>
             </>
           ) : (
-            <p className="text-xs text-[#94A3B8]">Sin ofertas disponibles</p>
+            <p className="text-xs text-fg-faint">Sin ofertas disponibles</p>
           )}
         </div>
       </div>

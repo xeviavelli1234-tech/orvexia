@@ -40,7 +40,6 @@ function SearchInput({ onNavigate }: { onNavigate?: () => void }) {
   const [loading, setLoading] = useState(false);
   const [highlighted, setHighlighted] = useState(-1);
 
-  // Debounced fetch
   const fetchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fetchResults = useCallback((q: string) => {
     if (fetchRef.current) clearTimeout(fetchRef.current);
@@ -65,7 +64,6 @@ function SearchInput({ onNavigate }: { onNavigate?: () => void }) {
     }, 250);
   }, []);
 
-  // Close on outside click
   useEffect(() => {
     function onPointerDown(e: PointerEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -111,45 +109,23 @@ function SearchInput({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div ref={containerRef} className="w-full relative">
       <form onSubmit={handleSubmit} className="w-full" role="search" aria-label="Buscar productos">
-        <div className="flex items-center gap-2 w-full px-2.5 py-2.5 sm:px-3 sm:py-2 rounded-xl sm:rounded-full bg-[#F1F5F9] border border-[#E2E8F0] hover:border-[#CBD5E1] focus-within:border-[#2563EB] focus-within:bg-white transition-all">
-          {/* Search icon / spinner */}
-          <span className="shrink-0 text-[#94A3B8] w-[15px] h-[15px] flex items-center justify-center">
+        <div className="flex items-center gap-2 w-full px-3 h-10 rounded-lg bg-bg-subtle border border-border hover:border-border-strong focus-within:border-brand-500 focus-within:bg-bg-elevated focus-within:ring-2 focus-within:ring-brand-500/15 transition-all">
+          <span className="shrink-0 text-fg-faint w-4 h-4 flex items-center justify-center">
             {loading ? (
-              <svg
-                className="animate-spin"
-                width="15"
-                height="15"
-                viewBox="0 0 15 15"
-                fill="none"
-                aria-hidden="true"
-              >
-                <circle
-                  cx="7.5"
-                  cy="7.5"
-                  r="6"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeDasharray="28"
-                  strokeDashoffset="10"
-                />
+              <svg className="animate-spin" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.5" strokeDasharray="26" strokeDashoffset="9" />
               </svg>
             ) : (
-              <svg
-                width="15"
-                height="15"
-                viewBox="0 0 16 16"
-                fill="none"
-                aria-hidden="true"
-              >
-                <circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" strokeWidth="1.5" />
-                <path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" strokeWidth="1.6" />
+                <path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
               </svg>
             )}
           </span>
           <input
             ref={inputRef}
             type="search"
-            placeholder="Buscar productos, categorías…"
+            placeholder="Buscar productos…"
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
@@ -164,17 +140,19 @@ function SearchInput({ onNavigate }: { onNavigate?: () => void }) {
             aria-autocomplete="list"
             aria-expanded={open}
             aria-haspopup="listbox"
-            className="flex-1 min-w-0 bg-transparent text-[15px] sm:text-sm outline-none text-[#0F172A] placeholder:text-[#94A3B8]"
+            className="flex-1 min-w-0 bg-transparent text-sm outline-none text-fg placeholder:text-fg-faint"
           />
+          <kbd className="hidden lg:inline-flex h-5 px-1.5 rounded border border-border text-[10px] font-semibold text-fg-subtle bg-bg-elevated tabular">
+            ⌘K
+          </kbd>
           <button type="submit" className="sr-only">Buscar</button>
         </div>
       </form>
 
-      {/* Dropdown */}
       {open && results.length > 0 && (
         <div
           role="listbox"
-          className="absolute top-full left-0 right-0 mt-1.5 bg-white border border-[#E2E8F0] rounded-xl shadow-lg z-50 overflow-hidden max-h-[60vh] overflow-y-auto"
+          className="absolute top-full left-0 right-0 mt-2 bg-bg-elevated border border-border rounded-xl shadow-lg z-50 overflow-hidden max-h-[60vh] overflow-y-auto fade-in"
         >
           {results.map((r, i) => (
             <button
@@ -183,51 +161,40 @@ function SearchInput({ onNavigate }: { onNavigate?: () => void }) {
               aria-selected={i === highlighted}
               onClick={() => navigate(r.name)}
               onMouseEnter={() => setHighlighted(i)}
-              className={`w-full flex items-center gap-2 sm:gap-3 px-2.5 sm:px-3 py-2.5 text-left transition-colors ${
-                i === highlighted ? "bg-[#F1F5F9]" : "hover:bg-[#F8FAFC]"
-              } ${i > 0 ? "border-t border-[#F1F5F9]" : ""}`}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors ${
+                i === highlighted ? "bg-bg-subtle" : "hover:bg-bg-subtle"
+              } ${i > 0 ? "border-t border-border-subtle" : ""}`}
             >
-              {/* Image */}
-              <div className="w-9 h-9 sm:w-8 sm:h-8 rounded-md bg-[#F1F5F9] flex-shrink-0 overflow-hidden flex items-center justify-center">
+              <div className="w-9 h-9 rounded-lg bg-bg-subtle flex-shrink-0 overflow-hidden flex items-center justify-center border border-border-subtle">
                 {r.image ? (
-                  <Image
-                    src={r.image}
-                    alt={r.name}
-                    width={32}
-                    height={32}
-                    className="object-contain w-full h-full"
-                    unoptimized
-                  />
+                  <Image src={r.image} alt={r.name} width={32} height={32} className="object-contain w-full h-full p-1" unoptimized />
                 ) : (
-                  <svg className="w-4 h-4 text-[#CBD5E1]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-4 h-4 text-fg-faint" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 )}
               </div>
-              {/* Info */}
               <div className="flex-1 min-w-0">
-                <p className="text-[13px] sm:text-sm font-medium text-[#0F172A] truncate">{r.name}</p>
-                <p className="text-xs text-[#64748B] truncate">
+                <p className="text-sm font-semibold text-fg truncate">{r.name}</p>
+                <p className="text-xs text-fg-subtle truncate">
                   {r.brand} · {CAT[r.category] ?? r.category}
                 </p>
               </div>
-              {/* Price */}
               {r.offers[0] && (
-                <div className="flex-shrink-0 text-right min-w-[76px] sm:min-w-[84px]">
-                  <p className="text-[13px] sm:text-sm font-semibold text-[#0F172A] leading-tight">
+                <div className="flex-shrink-0 text-right min-w-[80px]">
+                  <p className="text-sm font-bold text-fg leading-tight tabular">
                     {r.offers[0].priceCurrent.toLocaleString("es-ES", { style: "currency", currency: "EUR" })}
                   </p>
                   {r.offers[0].discountPercent != null && r.offers[0].discountPercent > 0 && (
-                    <p className="text-xs font-medium text-[#16A34A]">-{r.offers[0].discountPercent}%</p>
+                    <p className="text-xs font-bold text-accent-600">-{r.offers[0].discountPercent}%</p>
                   )}
                 </div>
               )}
             </button>
           ))}
-          {/* Ver todos */}
           <button
             onClick={() => navigate(query.trim())}
-            className="w-full px-3 py-3 sm:py-2.5 text-center text-sm text-[#2563EB] font-medium hover:bg-[#EFF6FF] transition-colors border-t border-[#F1F5F9]"
+            className="w-full px-3 py-3 text-center text-sm text-brand-600 font-semibold hover:bg-brand-50 transition-colors border-t border-border-subtle"
           >
             Ver todos los resultados →
           </button>

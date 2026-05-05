@@ -12,11 +12,15 @@ const CATEGORY_LABELS: Record<string, string> = {
   AIRES_ACONDICIONADOS: "Aire acondicionado", OTROS: "Otros",
 };
 
+const TRENDING_TERMS = [
+  "Lavadora Samsung", 'TV 65"', "Frigorífico No Frost", "Lavavajillas Bosch",
+  "Cafetera Nespresso", "Aspiradora Roomba",
+];
+
 async function searchProducts(q: string) {
   if (!q || q.trim().length < 2) return [];
 
   const term = q.trim();
-
   return prisma.product.findMany({
     where: {
       offers: { some: {} },
@@ -43,58 +47,73 @@ export default async function BuscarPage({
   const results = await searchProducts(q);
 
   return (
-    <main className="min-h-screen bg-[#F8FAFC]">
-      {/* Hero */}
-      <section
-        className="relative overflow-hidden pt-16 pb-20 px-6 text-center"
-        style={{ background: "linear-gradient(150deg,#0F172A 0%,#1E3A8A 55%,#2563EB 100%)" }}
-      >
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-20 -left-20 w-80 h-80 rounded-full bg-blue-400 opacity-10 blur-3xl" />
-          <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-cyan-300 opacity-10 blur-3xl" />
-          <div className="absolute -bottom-16 left-0 right-0 h-24 bg-[#F8FAFC] rounded-t-[32px]" />
-        </div>
-        <div className="relative max-w-3xl mx-auto">
+    <main className="min-h-screen bg-bg">
+      {/* Header strip */}
+      <section className="border-b border-border-subtle bg-bg-elevated">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-7 sm:py-9">
+          <div className="flex items-center gap-2 text-xs text-fg-subtle mb-4">
+            <Link href="/" className="hover:text-fg transition-colors">Inicio</Link>
+            <span>/</span>
+            <span className="text-fg-muted font-medium">Buscar</span>
+          </div>
+
           {q ? (
-            <>
-              <p className="text-blue-300 text-sm font-semibold uppercase tracking-widest mb-2">
-                Resultados de búsqueda
-              </p>
-              <h1 className="text-3xl sm:text-4xl font-extrabold text-white mb-3">
-                &ldquo;{q}&rdquo;
-              </h1>
-              <p className="text-blue-200 text-base">
-                {results.length > 0
-                  ? `${results.length} producto${results.length !== 1 ? "s" : ""} encontrado${results.length !== 1 ? "s" : ""}`
-                  : "No encontramos resultados para esta búsqueda"}
-              </p>
-            </>
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] mb-1.5 text-brand-600">
+                  Resultados de búsqueda
+                </p>
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-fg tracking-tight">
+                  &ldquo;{q}&rdquo;
+                </h1>
+                <p className="mt-2 text-sm text-fg-muted">
+                  {results.length > 0
+                    ? <><span className="font-bold text-fg tabular">{results.length}</span> producto{results.length !== 1 ? "s" : ""} encontrado{results.length !== 1 ? "s" : ""}</>
+                    : "No encontramos resultados para esta búsqueda"}
+                </p>
+              </div>
+              {results.length > 0 && (
+                <Link
+                  href="/ofertas-destacadas"
+                  className="inline-flex items-center gap-1 text-xs font-bold px-4 h-9 rounded-full text-hot-700 border border-hot-100 bg-hot-50 hover:bg-hot-100 transition-all self-start sm:self-end"
+                >
+                  Ver todas las ofertas
+                  <span aria-hidden>→</span>
+                </Link>
+              )}
+            </div>
           ) : (
-            <>
-              <h1 className="text-3xl sm:text-4xl font-extrabold text-white mb-3">
-                Busca cualquier electrodoméstico
-              </h1>
-              <p className="text-blue-200 text-base">
-                Escribe el nombre, marca o modelo en el buscador del menú superior
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] mb-1.5 text-brand-600">
+                Buscar
               </p>
-            </>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-fg tracking-tight">
+                Encuentra cualquier electrodoméstico
+              </h1>
+              <p className="mt-2 text-sm text-fg-muted max-w-md">
+                Usa el buscador del menú superior. Te mostramos los precios de las principales tiendas en tiempo real.
+              </p>
+            </div>
           )}
         </div>
       </section>
 
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
         {!q ? (
-          /* Sin búsqueda — mostrar sugerencias */
-          <div className="text-center py-16">
-            <p className="text-5xl mb-4">🔍</p>
-            <p className="text-lg font-semibold text-[#0F172A] mb-2">¿Qué estás buscando?</p>
-            <p className="text-sm text-[#94A3B8] mb-8">Usa el buscador del menú para encontrar cualquier electrodoméstico</p>
-            <div className="flex flex-wrap justify-center gap-3">
-              {["Lavadora Samsung", 'TV 65"', "Frigorífico No Frost", "Lavavajillas Bosch", "Cafetera Nespresso", "Aspiradora Roomba"].map((s) => (
+          <div className="bg-bg-elevated border border-border rounded-2xl p-10 sm:p-14 text-center">
+            <div className="inline-flex w-14 h-14 rounded-2xl bg-brand-50 border border-brand-100 items-center justify-center mb-4">
+              <svg className="w-6 h-6 text-brand-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+              </svg>
+            </div>
+            <p className="text-base font-bold text-fg mb-1.5">¿Qué estás buscando?</p>
+            <p className="text-sm text-fg-muted mb-7">Prueba con alguna de estas búsquedas populares</p>
+            <div className="flex flex-wrap justify-center gap-2 max-w-2xl mx-auto">
+              {TRENDING_TERMS.map((s) => (
                 <Link
                   key={s}
                   href={`/buscar?q=${encodeURIComponent(s)}`}
-                  className="px-4 py-2 rounded-full border border-[#E2E8F0] bg-white text-sm text-[#475569] hover:border-[#2563EB] hover:text-[#2563EB] transition-colors"
+                  className="px-4 h-9 inline-flex items-center rounded-full border border-border bg-bg-elevated text-sm text-fg-muted hover:text-brand-700 hover:border-brand-200 hover:bg-brand-50 transition-all"
                 >
                   {s}
                 </Link>
@@ -102,17 +121,22 @@ export default async function BuscarPage({
             </div>
           </div>
         ) : results.length === 0 ? (
-          /* Sin resultados */
-          <div className="text-center py-16 bg-white rounded-3xl border border-[#E2E8F0]">
-            <p className="text-5xl mb-4">😕</p>
-            <p className="text-lg font-semibold text-[#0F172A] mb-2">Sin resultados para &ldquo;{q}&rdquo;</p>
-            <p className="text-sm text-[#94A3B8] mb-8">Prueba con otro término o explora nuestras categorías</p>
-            <div className="flex flex-wrap justify-center gap-3">
+          <div className="bg-bg-elevated border border-border rounded-2xl p-10 sm:p-14 text-center">
+            <div className="inline-flex w-14 h-14 rounded-2xl bg-bg-subtle border border-border items-center justify-center mb-4">
+              <svg className="w-6 h-6 text-fg-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+                <circle cx="12" cy="12" r="9" />
+                <path d="M9 9h.01M15 9h.01" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M9 16c1-1 2-1.5 3-1.5s2 .5 3 1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+            <p className="text-base font-bold text-fg mb-1.5">Sin resultados para &ldquo;{q}&rdquo;</p>
+            <p className="text-sm text-fg-muted mb-7">Prueba con otro término o explora nuestras categorías</p>
+            <div className="flex flex-wrap justify-center gap-2 max-w-2xl mx-auto">
               {Object.entries(CATEGORY_LABELS).slice(0, 6).map(([key, label]) => (
                 <Link
                   key={key}
                   href={`/categorias/${key.toLowerCase()}`}
-                  className="px-4 py-2 rounded-full border border-[#E2E8F0] bg-white text-sm text-[#475569] hover:border-[#2563EB] hover:text-[#2563EB] transition-colors"
+                  className="px-4 h-9 inline-flex items-center rounded-full border border-border bg-bg-elevated text-sm text-fg-muted hover:text-brand-700 hover:border-brand-200 hover:bg-brand-50 transition-all"
                 >
                   {label}
                 </Link>
@@ -120,27 +144,13 @@ export default async function BuscarPage({
             </div>
           </div>
         ) : (
-          /* Resultados */
-          <>
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <p className="text-xs font-bold text-[#2563EB] uppercase tracking-widest mb-1">Búsqueda</p>
-                <h2 className="text-xl font-bold text-[#0F172A]">
-                  {results.length} resultado{results.length !== 1 ? "s" : ""} para &ldquo;{q}&rdquo;
-                </h2>
-              </div>
-              <Link href="/ofertas-destacadas" className="text-sm font-semibold text-[#2563EB] hover:underline hidden sm:block">
-                Ver todas las ofertas →
-              </Link>
+          <Suspense>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
+              {results.map((product, i) => (
+                <ProductCard key={product.id} product={product} priority={i === 0} />
+              ))}
             </div>
-            <Suspense>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 pb-16">
-                  {results.map((product, i) => (
-                   <ProductCard key={product.id} product={product} priority={i === 0} />
-                  ))}
-                </div>
-            </Suspense>
-          </>
+          </Suspense>
         )}
       </div>
     </main>
