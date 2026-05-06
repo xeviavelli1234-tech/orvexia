@@ -68,12 +68,12 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
     <>
       <div
         onClick={() => setOpen(true)}
-        className="group bg-white rounded-2xl border border-border hover:border-brand-600/40
-                   hover:shadow-[0_8px_32px_-8px_rgba(37,99,235,0.15)] transition-all duration-200
+        className="group bg-bg-elevated rounded-2xl border border-border hover:border-brand-600/40
+                   hover:shadow-[0_8px_32px_-8px_rgba(79,70,229,0.18)] transition-all duration-200
                    overflow-hidden flex cursor-pointer"
       >
         {/* Imagen */}
-        <div className="relative w-24 sm:w-28 flex-shrink-0 bg-gradient-to-br from-[#F8FAFC] to-[#EFF6FF]">
+        <div className="relative w-24 sm:w-28 flex-shrink-0 bg-gradient-to-br from-bg-subtle to-bg-muted">
           {thumb && !thumbError ? (
             <img
               src={thumb}

@@ -132,7 +132,7 @@ export default async function PopularidadPage({
       <div className="max-w-6xl mx-auto px-6">
 
         {/* Tabs */}
-        <div className="relative z-10 -mt-12 mb-8 bg-white rounded-2xl border border-border
+        <div className="relative z-10 -mt-12 mb-8 bg-bg-elevated rounded-2xl border border-border
                         shadow-[0_18px_48px_-24px_rgba(15,23,42,0.2)] p-4">
           <Suspense>
             <CategoryTabs categories={categories} />
@@ -156,7 +156,7 @@ export default async function PopularidadPage({
 
         {/* Grid */}
         {products.length === 0 ? (
-          <div className="text-center py-24 bg-white rounded-3xl border border-border">
+          <div className="text-center py-24 bg-bg-elevated rounded-3xl border border-border">
             <span className="text-5xl block mb-4">📭</span>
             <p className="text-fg-subtle text-sm font-medium">
               No hay productos con valoraciones en esta categoría todavía.

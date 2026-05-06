@@ -91,7 +91,7 @@ function PickCard({ pick, config, featured = false }: { pick: Pick; config: Guid
 
   return (
     <div
-      className={`relative bg-white rounded-3xl border overflow-hidden flex flex-col ${featured ? "ring-2 ring-offset-2" : ""}`}
+      className={`relative bg-bg-elevated rounded-3xl border overflow-hidden flex flex-col ${featured ? "ring-2 ring-offset-2" : ""}`}
       style={{
         borderColor: meta.border,
         ...(featured ? { ["--tw-ring-color" as any]: config.color } : {}),
@@ -283,7 +283,7 @@ export default function BuyersGuide({ config, picks }: { config: GuideConfig; pi
       <div className="max-w-5xl mx-auto px-5 py-14 space-y-20">
 
         {/* INTRO */}
-        <section className="bg-white rounded-3xl border border-border p-7 sm:p-9 shadow-sm">
+        <section className="bg-bg-elevated rounded-3xl border border-border p-7 sm:p-9 shadow-sm">
           {config.intro.map((p, i) => (
             <p key={i} className={`text-fg text-[15px] leading-relaxed ${i > 0 ? "mt-4" : ""}`}
               dangerouslySetInnerHTML={{ __html: p }} />
@@ -309,7 +309,7 @@ export default function BuyersGuide({ config, picks }: { config: GuideConfig; pi
               ))}
             </div>
           ) : (
-            <div className="bg-white rounded-3xl border border-border p-10 text-center">
+            <div className="bg-bg-elevated rounded-3xl border border-border p-10 text-center">
               <span className="text-5xl mb-3 block opacity-30">{config.emoji}</span>
               <p className="text-sm text-fg-muted">Todavía no hay suficientes modelos en stock. Vuelve pronto.</p>
             </div>
@@ -326,7 +326,7 @@ export default function BuyersGuide({ config, picks }: { config: GuideConfig; pi
               <h2 className="text-3xl font-extrabold text-fg mb-2">Tabla cara a cara</h2>
               <p className="text-fg-muted text-sm">Características clave una al lado de la otra.</p>
             </div>
-            <div className="overflow-x-auto rounded-2xl border border-border bg-white">
+            <div className="overflow-x-auto rounded-2xl border border-border bg-bg-elevated">
               <table className="w-full text-sm">
                 <thead className="bg-bg-subtle border-b border-border">
                   <tr>
@@ -417,7 +417,7 @@ export default function BuyersGuide({ config, picks }: { config: GuideConfig; pi
               {config.paraQuien.map((pq) => {
                 const matchedPick = picks.find((p) => p.hint === pq.pickHint);
                 return (
-                  <div key={pq.title} className="bg-white rounded-3xl border border-border p-6 flex flex-col gap-3">
+                  <div key={pq.title} className="bg-bg-elevated rounded-3xl border border-border p-6 flex flex-col gap-3">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-xl"
                         style={{ background: config.bgLight, border: `1px solid ${config.borderLight}` }}>
@@ -506,7 +506,7 @@ export default function BuyersGuide({ config, picks }: { config: GuideConfig; pi
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {config.criterios.map((c, i) => (
-              <div key={c.title} className="bg-white rounded-2xl border border-border p-5 flex gap-4 hover:shadow-md transition-shadow">
+              <div key={c.title} className="bg-bg-elevated rounded-2xl border border-border p-5 flex gap-4 hover:shadow-md transition-shadow">
                 <div className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 text-xl"
                   style={{ background: config.bgLight, border: `1px solid ${config.borderLight}` }}>
                   {c.icon}
@@ -536,7 +536,7 @@ export default function BuyersGuide({ config, picks }: { config: GuideConfig; pi
           </div>
           <div className="space-y-3">
             {config.faqs.map((f, i) => (
-              <details key={f.q} className="group bg-white rounded-2xl border border-border overflow-hidden hover:shadow-sm open:shadow-sm transition-shadow">
+              <details key={f.q} className="group bg-bg-elevated rounded-2xl border border-border overflow-hidden hover:shadow-sm open:shadow-sm transition-shadow">
                 <summary className="flex items-center gap-4 p-5 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
                   <span className="text-[11px] font-bold tabular-nums w-6 shrink-0"
                     style={{ color: config.color }}>{String(i + 1).padStart(2, "0")}</span>
@@ -573,7 +573,7 @@ export default function BuyersGuide({ config, picks }: { config: GuideConfig; pi
             </div>
             <div className="flex flex-wrap lg:flex-nowrap gap-3">
               <Link href={`/categorias/${config.category.toLowerCase()}`}
-                className="bg-white font-bold px-6 py-3 rounded-2xl text-sm hover:bg-white/90 transition-colors whitespace-nowrap"
+                className="bg-bg-elevated font-bold px-6 py-3 rounded-2xl text-sm hover:bg-white/90 transition-colors whitespace-nowrap"
                 style={{ color: config.color }}>
                 Ver todos los {config.labelPlural.toLowerCase()}
               </Link>

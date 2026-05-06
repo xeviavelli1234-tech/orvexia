@@ -41,7 +41,7 @@ export function MiActividad({
   const [tab, setTab] = useState<"posts" | "comments">("posts");
 
   return (
-    <div className="bg-white rounded-2xl border border-border overflow-hidden">
+    <div className="bg-bg-elevated rounded-2xl border border-border overflow-hidden">
       {/* Header */}
       <div className="px-6 pt-5 pb-0 border-b border-border-subtle">
         <div className="flex items-center justify-between mb-4">

@@ -101,7 +101,7 @@ function ProductSearch({
           <img
             src={selectedProduct.image}
             alt={selectedProduct.name}
-            className="w-12 h-12 rounded-lg object-contain bg-white border border-border p-1 shrink-0"
+            className="w-12 h-12 rounded-lg object-contain bg-bg-elevated border border-border p-1 shrink-0"
           />
         )}
         <div className="flex-1 min-w-0">
@@ -159,7 +159,7 @@ function ProductSearch({
       </div>
 
       {open && results.length > 0 && (
-        <div className="absolute z-50 top-full left-0 right-0 mt-1.5 bg-white border border-border rounded-2xl shadow-xl overflow-hidden">
+        <div className="absolute z-50 top-full left-0 right-0 mt-1.5 bg-bg-elevated border border-border rounded-2xl shadow-xl overflow-hidden">
           {results.map((p) => (
             <button
               key={p.id}
@@ -171,7 +171,7 @@ function ProductSearch({
                 <img
                   src={p.image}
                   alt={p.name}
-                  className="w-10 h-10 rounded-lg object-contain bg-white border border-border p-0.5 shrink-0"
+                  className="w-10 h-10 rounded-lg object-contain bg-bg-elevated border border-border p-0.5 shrink-0"
                 />
               ) : (
                 <div className="w-10 h-10 rounded-lg bg-bg-subtle shrink-0 flex items-center justify-center">
@@ -195,7 +195,7 @@ function ProductSearch({
       )}
 
       {open && !loading && query.length >= 2 && results.length === 0 && (
-        <div className="absolute z-50 top-full left-0 right-0 mt-1.5 bg-white border border-border rounded-2xl shadow-xl px-4 py-4 text-center">
+        <div className="absolute z-50 top-full left-0 right-0 mt-1.5 bg-bg-elevated border border-border rounded-2xl shadow-xl px-4 py-4 text-center">
           <p className="text-sm text-fg-muted">No se encontraron productos</p>
         </div>
       )}
@@ -209,7 +209,7 @@ export function NewPostForm({ productId: initialProductId }: { productId?: strin
   const [selectedProduct, setSelectedProduct] = useState<ProductResult | null>(null);
 
   return (
-    <form action={formAction} className="bg-white border border-border rounded-2xl overflow-hidden shadow-sm">
+    <form action={formAction} className="bg-bg-elevated border border-border rounded-2xl overflow-hidden shadow-sm">
       {/* Accent bar matching selected type */}
       <div
         className="h-1 transition-colors"

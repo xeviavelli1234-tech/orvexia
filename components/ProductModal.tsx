@@ -211,14 +211,14 @@ export default function ProductModal({ product, onClose }: Props) {
       onClick={onClose}
     >
       <div
-        className="modal-card relative w-full h-[95vh] md:h-[58vh] max-h-[95vh] md:max-h-[820px] bg-white rounded-t-3xl md:rounded-3xl shadow-[0_32px_80px_-12px_rgba(0,0,0,0.35)] overflow-hidden flex flex-col md:flex-row"
+        className="modal-card relative w-full h-[95vh] md:h-[58vh] max-h-[95vh] md:max-h-[820px] bg-bg-elevated rounded-t-3xl md:rounded-3xl shadow-[0_32px_80px_-12px_rgba(0,0,0,0.35)] overflow-hidden flex flex-col md:flex-row"
         style={{ maxWidth: "min(1100px, 100vw)" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── Cerrar ── */}
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 md:top-4 md:right-4 z-20 bg-white/90 hover:bg-white text-fg-muted hover:text-fg rounded-full p-1.5 shadow transition-colors"
+          className="absolute top-3 right-3 md:top-4 md:right-4 z-20 bg-white/90 hover:bg-bg-elevated text-fg-muted hover:text-fg rounded-full p-1.5 shadow transition-colors"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -308,7 +308,7 @@ export default function ProductModal({ product, onClose }: Props) {
                 <button
                   key={i}
                   onClick={() => setActive(i)}
-                  className={`flex-shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-xl overflow-hidden border-2 transition-all duration-200 bg-white ${
+                  className={`flex-shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-xl overflow-hidden border-2 transition-all duration-200 bg-bg-elevated ${
                     active === i ? "border-brand-600 shadow-md scale-105" : "border-transparent opacity-50 hover:opacity-90"
                   }`}
                 >

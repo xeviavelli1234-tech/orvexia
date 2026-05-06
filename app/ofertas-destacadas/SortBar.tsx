@@ -41,7 +41,7 @@ export function SortBar() {
               className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold border transition-all duration-150 shrink-0 ${
                 active
                   ? "bg-brand-600 border-brand-600 text-white shadow-sm"
-                  : "bg-white border-border text-fg-muted hover:border-brand-600/50 hover:text-brand-600"
+                  : "bg-bg-elevated border-border text-fg-muted hover:border-brand-600/50 hover:text-brand-600"
               } disabled:opacity-60`}
             >
               {p.label}

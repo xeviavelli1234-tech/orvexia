@@ -68,7 +68,7 @@ function RankBadge({ rank }: { rank: number }) {
   if (rank === 1) return <span className="absolute top-3 left-3 w-8 h-8 rounded-full bg-yellow-400 text-xs font-black flex items-center justify-center shadow-md">🥇</span>;
   if (rank === 2) return <span className="absolute top-3 left-3 w-8 h-8 rounded-full bg-slate-300 text-xs font-black flex items-center justify-center shadow-md">🥈</span>;
   if (rank === 3) return <span className="absolute top-3 left-3 w-8 h-8 rounded-full bg-orange-400 text-xs font-black flex items-center justify-center shadow-md">🥉</span>;
-  return <span className="absolute top-3 left-3 w-7 h-7 rounded-full bg-white border border-border text-fg-muted text-xs font-bold flex items-center justify-center shadow-sm">{rank}</span>;
+  return <span className="absolute top-3 left-3 w-7 h-7 rounded-full bg-bg-elevated border border-border text-fg-muted text-xs font-bold flex items-center justify-center shadow-sm">{rank}</span>;
 }
 
 export function PopularCard({ product, rank }: { product: Product; rank: number }) {
@@ -89,7 +89,7 @@ export function PopularCard({ product, rank }: { product: Product; rank: number 
     <>
       <div
         onClick={() => setOpen(true)}
-        className="group flex flex-col bg-white rounded-2xl border border-border overflow-hidden
+        className="group flex flex-col bg-bg-elevated rounded-2xl border border-border overflow-hidden
                    hover:shadow-xl hover:border-[#7C3AED]/20 transition-all duration-200 cursor-pointer"
       >
         {/* Image */}

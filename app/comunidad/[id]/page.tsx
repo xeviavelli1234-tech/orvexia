@@ -126,7 +126,7 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
           {/* Main column */}
           <div className="space-y-5">
             {/* Post card */}
-            <article className="bg-white border border-border rounded-2xl overflow-hidden shadow-sm">
+            <article className="bg-bg-elevated border border-border rounded-2xl overflow-hidden shadow-sm">
               {/* Accent top bar */}
               <div className="h-1" style={{ backgroundColor: meta.accent }} />
 
@@ -201,7 +201,7 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
                   {post.comments.map((comment, i) => (
                     <div
                       key={comment.id}
-                      className="bg-white border border-border rounded-2xl p-4 flex gap-3 hover:border-border-strong transition-colors"
+                      className="bg-bg-elevated border border-border rounded-2xl p-4 flex gap-3 hover:border-border-strong transition-colors"
                     >
                       <div className="flex flex-col items-center gap-2 shrink-0">
                         <Avatar user={comment.user} size={36} />
@@ -228,7 +228,7 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
 
               {/* Comment form */}
               {session ? (
-                <div className="bg-white border border-border rounded-2xl p-5">
+                <div className="bg-bg-elevated border border-border rounded-2xl p-5">
                   <div className="flex items-center gap-3 mb-4">
                     <Avatar
                       user={{
@@ -244,7 +244,7 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
                   <CommentForm postId={post.id} />
                 </div>
               ) : (
-                <div className="bg-white border border-border rounded-2xl p-6 text-center">
+                <div className="bg-bg-elevated border border-border rounded-2xl p-6 text-center">
                   <div className="w-10 h-10 mx-auto mb-3 rounded-full bg-blue-50 flex items-center justify-center">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="var(--brand-600)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -268,7 +268,7 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
           <aside className="space-y-4">
             {/* Product card */}
             {post.product && (
-              <div className="bg-white border border-border rounded-2xl overflow-hidden">
+              <div className="bg-bg-elevated border border-border rounded-2xl overflow-hidden">
                 <div className="px-4 py-3 border-b border-border-subtle flex items-center gap-2">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                     <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" stroke="#0284C7" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
@@ -284,7 +284,7 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
             )}
 
             {/* About this post */}
-            <div className="bg-white border border-border rounded-2xl p-4 space-y-3">
+            <div className="bg-bg-elevated border border-border rounded-2xl p-4 space-y-3">
               <p className="text-[11px] font-bold text-fg-subtle uppercase tracking-widest">
                 Detalles del post
               </p>
@@ -323,7 +323,7 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
             {/* Back to community */}
             <Link
               href="/comunidad"
-              className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl text-sm font-semibold text-fg-muted bg-white border border-border hover:border-brand-600/30 hover:text-brand-600 transition"
+              className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl text-sm font-semibold text-fg-muted bg-bg-elevated border border-border hover:border-brand-600/30 hover:text-brand-600 transition"
             >
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                 <path d="M10 12L6 8l4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />

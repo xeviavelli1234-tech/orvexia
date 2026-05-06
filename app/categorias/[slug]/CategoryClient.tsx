@@ -300,7 +300,7 @@ export default function CategoryClient({ products, meta, content }: { products: 
           }`}
         >
           <span
-            className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+            className={`absolute top-1 w-4 h-4 rounded-full bg-bg-elevated shadow-sm transition-transform duration-200 ${
               onlyDiscount ? "translate-x-5" : "translate-x-1"
             }`}
           />

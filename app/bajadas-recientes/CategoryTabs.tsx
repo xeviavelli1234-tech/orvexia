@@ -44,7 +44,7 @@ export function CategoryTabs({ categories }: { categories: string[] }) {
             className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
               active
                 ? "bg-[#059669] text-white border-[#059669] shadow-sm"
-                : "bg-white text-fg-muted border-border hover:border-[#059669]/40 hover:text-accent-600"
+                : "bg-bg-elevated text-fg-muted border-border hover:border-[#059669]/40 hover:text-accent-600"
             } disabled:opacity-60`}
           >
             {label}

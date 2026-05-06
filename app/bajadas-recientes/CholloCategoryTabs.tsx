@@ -46,7 +46,7 @@ export function CholloCategoryTabs({ categories }: { categories: string[] }) {
             className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
               active
                 ? "bg-[#D97706] text-white border-[#D97706] shadow-sm"
-                : "bg-white text-fg-muted border-border hover:border-[#D97706]/40 hover:text-hot-700"
+                : "bg-bg-elevated text-fg-muted border-border hover:border-[#D97706]/40 hover:text-hot-700"
             }`}
           >
             {label}

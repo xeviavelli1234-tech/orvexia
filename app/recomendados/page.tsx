@@ -157,7 +157,7 @@ export default async function RecomendadosPage() {
 
         {/* Tarjeta de acceso */}
         <div className="relative z-10 min-h-screen flex items-center justify-center px-6">
-          <div className="max-w-lg w-full bg-white border border-border rounded-3xl shadow-xl p-8 text-center space-y-4">
+          <div className="max-w-lg w-full bg-bg-elevated border border-border rounded-3xl shadow-xl p-8 text-center space-y-4">
             <div className="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-br from-[#2563EB] to-[#7C3AED] flex items-center justify-center text-white text-xl">
               🔒
             </div>
@@ -259,7 +259,7 @@ export default async function RecomendadosPage() {
                 <Link
                   key={category}
                   href={`/categorias/${category.toLowerCase()}`}
-                  className="group bg-white rounded-2xl border border-border p-5 flex flex-col items-center text-center hover:border-brand-600/30 hover:shadow-md transition-all duration-200"
+                  className="group bg-bg-elevated rounded-2xl border border-border p-5 flex flex-col items-center text-center hover:border-brand-600/30 hover:shadow-md transition-all duration-200"
                 >
                   <span className="text-3xl mb-2">{CATEGORY_ICONS[category] ?? "📦"}</span>
                   <p className="text-sm font-semibold text-fg group-hover:text-brand-600 transition-colors">
@@ -288,7 +288,7 @@ export default async function RecomendadosPage() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
                 href="/register"
-                className="bg-white text-[#4C1D95] font-bold px-6 py-3 rounded-xl text-sm hover:bg-[#F5F3FF] transition-all"
+                className="bg-bg-elevated text-[#4C1D95] font-bold px-6 py-3 rounded-xl text-sm hover:bg-[#F5F3FF] transition-all"
               >
                 Crear cuenta gratis
               </Link>

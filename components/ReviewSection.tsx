@@ -251,7 +251,7 @@ function ReviewForm({ productId, initial, onSave, onCancel }: ReviewFormProps) {
           onChange={(e) => setTitle(e.target.value)}
           maxLength={120}
           placeholder="Resume tu experiencia en una frase"
-          className="w-full rounded-xl border border-border bg-white px-3 py-2 text-sm text-fg placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30 focus:border-brand-600 transition"
+          className="w-full rounded-xl border border-border bg-bg-elevated px-3 py-2 text-sm text-fg placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30 focus:border-brand-600 transition"
         />
       </div>
 
@@ -267,7 +267,7 @@ function ReviewForm({ productId, initial, onSave, onCancel }: ReviewFormProps) {
           maxLength={1000}
           rows={4}
           placeholder="Cuéntanos tu experiencia con este producto..."
-          className="w-full rounded-xl border border-border bg-white px-3 py-2 text-sm text-fg placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30 focus:border-brand-600 transition resize-none"
+          className="w-full rounded-xl border border-border bg-bg-elevated px-3 py-2 text-sm text-fg placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30 focus:border-brand-600 transition resize-none"
         />
       </div>
 
@@ -317,7 +317,7 @@ function ReviewCard({
       className={`rounded-2xl border p-4 flex flex-col gap-3 transition-all ${
         isOwn
           ? "border-brand-600/30 bg-[#F0F7FF]"
-          : "border-border bg-white"
+          : "border-border bg-bg-elevated"
       }`}
     >
       {/* Header */}

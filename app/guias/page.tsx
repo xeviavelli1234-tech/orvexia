@@ -166,7 +166,7 @@ export default function GuiasPage() {
             <Link
               key={g.slug}
               href={`/guias/${g.slug}`}
-              className={`group flex flex-col bg-white rounded-2xl border border-border overflow-hidden hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200${i === GUIAS.length - 1 && GUIAS.length % 3 === 1 ? " lg:col-start-2" : ""}`}
+              className={`group flex flex-col bg-bg-elevated rounded-2xl border border-border overflow-hidden hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200${i === GUIAS.length - 1 && GUIAS.length % 3 === 1 ? " lg:col-start-2" : ""}`}
             >
               {/* Header con color */}
               <div

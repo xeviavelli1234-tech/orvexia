@@ -461,7 +461,7 @@ export default async function HomePage() {
                   <div className="flex flex-col sm:flex-row gap-3">
                     <Link
                       href="/register"
-                      className="inline-flex items-center justify-center font-bold px-6 h-12 rounded-xl text-sm bg-white text-fg-strong hover:bg-white/90 transition-all active:scale-[0.97] shadow-lg"
+                      className="inline-flex items-center justify-center font-bold px-6 h-12 rounded-xl text-sm bg-bg-elevated text-fg-strong hover:bg-white/90 transition-all active:scale-[0.97] shadow-lg"
                     >
                       Crear cuenta gratis
                     </Link>

@@ -173,7 +173,7 @@ function FactorCard({
   const pct = noData || score === null ? 0 : (score / max) * 100;
 
   return (
-    <div className="rounded-xl border border-border p-3 flex flex-col gap-2 bg-white">
+    <div className="rounded-xl border border-border p-3 flex flex-col gap-2 bg-bg-elevated">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <span className="text-base leading-none">{icon}</span>
@@ -259,7 +259,7 @@ export function BuySignalPanel({ productId, store }: { productId: string; store:
   }
 
   return (
-    <div className="rounded-2xl border border-border overflow-hidden bg-white">
+    <div className="rounded-2xl border border-border overflow-hidden bg-bg-elevated">
       <button onClick={() => setOpen((o) => !o)} className="w-full flex items-center gap-4 px-4 py-3.5 hover:bg-bg-subtle transition-colors text-left">
         <div className="relative flex-shrink-0 w-[72px] h-[72px]">
           <ScoreGauge score={data.score} color={c.ring} />

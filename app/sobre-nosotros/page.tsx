@@ -119,7 +119,7 @@ export default function SobreNosotrosPage() {
         {/* Stats */}
         <section className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {STATS.map((s) => (
-            <div key={s.label} className="bg-white rounded-2xl border border-border p-5 text-center">
+            <div key={s.label} className="bg-bg-elevated rounded-2xl border border-border p-5 text-center">
               <p className="text-3xl font-extrabold text-[#4F46E5] mb-1">{s.value}</p>
               <p className="text-xs text-fg-muted leading-snug">{s.label}</p>
             </div>
@@ -133,7 +133,7 @@ export default function SobreNosotrosPage() {
             Comparamos precios en tiempo real de las principales tiendas españolas para que siempre
             veas el mejor precio disponible.
           </p>
-          <div className="bg-white rounded-2xl border border-border divide-y divide-[#F1F5F9]">
+          <div className="bg-bg-elevated rounded-2xl border border-border divide-y divide-[#F1F5F9]">
             {[
               {
                 n: "01",
@@ -175,7 +175,7 @@ export default function SobreNosotrosPage() {
           <p className="text-fg-muted mb-8">Lo que nos guía en cada decisión que tomamos.</p>
           <div className="grid sm:grid-cols-2 gap-4">
             {VALUES.map((v) => (
-              <div key={v.title} className="bg-white rounded-2xl border border-border p-6 flex gap-4 items-start">
+              <div key={v.title} className="bg-bg-elevated rounded-2xl border border-border p-6 flex gap-4 items-start">
                 <span
                   className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
                   style={{ backgroundColor: v.bg, color: v.color }}
@@ -201,7 +201,7 @@ export default function SobreNosotrosPage() {
             {STORES.map((s) => (
               <span
                 key={s}
-                className="bg-white border border-border rounded-full px-5 py-2 text-sm font-semibold text-fg"
+                className="bg-bg-elevated border border-border rounded-full px-5 py-2 text-sm font-semibold text-fg"
               >
                 {s}
               </span>
@@ -242,7 +242,7 @@ export default function SobreNosotrosPage() {
             </Link>
             <Link
               href="/"
-              className="inline-flex items-center justify-center gap-2 bg-white hover:bg-bg-subtle border border-border text-fg font-bold px-6 py-3 rounded-xl transition-colors text-sm"
+              className="inline-flex items-center justify-center gap-2 bg-bg-elevated hover:bg-bg-subtle border border-border text-fg font-bold px-6 py-3 rounded-xl transition-colors text-sm"
             >
               Comparar electrodomésticos
             </Link>

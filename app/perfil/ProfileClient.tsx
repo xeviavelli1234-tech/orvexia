@@ -87,7 +87,7 @@ function Section({ title, description, children, collapsible = false, defaultOpe
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="bg-white rounded-2xl border border-[#E8EDF3] shadow-[0_1px_4px_rgba(0,0,0,0.06)] overflow-hidden">
+    <div className="bg-bg-elevated rounded-2xl border border-[#E8EDF3] shadow-[0_1px_4px_rgba(0,0,0,0.06)] overflow-hidden">
       <button
         type="button"
         onClick={() => collapsible && setOpen((o) => !o)}
@@ -140,7 +140,7 @@ function Input({
       maxLength={maxLength}
       disabled={disabled}
       autoComplete={autoComplete}
-      className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-white text-[14px] text-fg placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-brand-600 disabled:bg-bg-subtle disabled:opacity-60 disabled:cursor-not-allowed transition-all"
+      className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-bg-elevated text-[14px] text-fg placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-brand-600 disabled:bg-bg-subtle disabled:opacity-60 disabled:cursor-not-allowed transition-all"
     />
   );
 }
@@ -523,19 +523,19 @@ export function ProfileClient() {
                       {photoUploading ? "Guardando…" : "Guardar foto"}
                     </button>
                     <button type="button" onClick={() => setPendingPhotoUrl(null)} disabled={photoUploading}
-                      className="px-3.5 py-1.5 rounded-lg text-[12px] font-semibold text-fg-muted bg-white border border-border hover:bg-bg-subtle disabled:opacity-50 transition-all">
+                      className="px-3.5 py-1.5 rounded-lg text-[12px] font-semibold text-fg-muted bg-bg-elevated border border-border hover:bg-bg-subtle disabled:opacity-50 transition-all">
                       Cancelar
                     </button>
                   </>
                 ) : (
                   <>
                     <button type="button" onClick={() => fileInputRef.current?.click()}
-                      className="px-3.5 py-1.5 rounded-lg text-[12px] font-semibold text-brand-600 bg-white border border-brand-200 hover:bg-brand-50 transition-all">
+                      className="px-3.5 py-1.5 rounded-lg text-[12px] font-semibold text-brand-600 bg-bg-elevated border border-brand-200 hover:bg-brand-50 transition-all">
                       Subir foto
                     </button>
                     {avatarUrl && (
                       <button type="button" onClick={removePhoto} disabled={photoUploading}
-                        className="px-3.5 py-1.5 rounded-lg text-[12px] font-semibold text-danger-600 bg-white border border-[#FECACA] hover:bg-danger-50 disabled:opacity-40 transition-all">
+                        className="px-3.5 py-1.5 rounded-lg text-[12px] font-semibold text-danger-600 bg-bg-elevated border border-[#FECACA] hover:bg-danger-50 disabled:opacity-40 transition-all">
                         Eliminar
                       </button>
                     )}
@@ -597,7 +597,7 @@ export function ProfileClient() {
                 placeholder="Cuéntanos algo sobre ti…"
                 maxLength={160}
                 rows={3}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-white text-[14px] text-fg placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-brand-600 resize-none transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-bg-elevated text-[14px] text-fg placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-brand-600 resize-none transition-all"
               />
             </Field>
 
@@ -767,7 +767,7 @@ export function ProfileClient() {
         </Section>
 
         {/* ── 4. DANGER ZONE ──────────────────────────────────────────────── */}
-        <div className="bg-white rounded-2xl border border-[#FCA5A5] overflow-hidden">
+        <div className="bg-bg-elevated rounded-2xl border border-[#FCA5A5] overflow-hidden">
           <div className="px-6 py-5 border-b border-[#FEE2E2] bg-[#FFF5F5]">
             <h2 className="text-[15px] font-bold text-[#991B1B]">Zona de peligro</h2>
             <p className="text-[13px] text-[#B91C1C] mt-0.5">
@@ -802,7 +802,7 @@ export function ProfileClient() {
           onClick={() => { if (!deleteLoading) setShowDeleteModal(false); }}
         >
           <div
-            className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 space-y-5"
+            className="w-full max-w-md bg-bg-elevated rounded-2xl shadow-2xl p-6 space-y-5"
             onClick={(e) => e.stopPropagation()}
           >
             <div>

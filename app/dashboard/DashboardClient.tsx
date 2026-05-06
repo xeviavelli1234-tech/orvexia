@@ -158,7 +158,7 @@ function StatCard({
 }) {
   return (
     <div className={`rounded-2xl border p-5 flex items-center gap-4 transition-all ${
-      highlight ? "bg-gradient-to-br from-[#0F172A] to-[#1E1B4B] border-transparent shadow-lg" : "bg-white border-border hover:border-[#C7D7F4]"
+      highlight ? "bg-gradient-to-br from-[#0F172A] to-[#1E1B4B] border-transparent shadow-lg" : "bg-bg-elevated border-border hover:border-[#C7D7F4]"
     }`}>
       <div
         className="w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0"
@@ -406,7 +406,7 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
     return (
       <main className="min-h-screen bg-bg-subtle">
         {/* Header */}
-        <div className="bg-white border-b border-border">
+        <div className="bg-bg-elevated border-b border-border">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 py-5 flex items-center gap-4">
             <Sk className="w-11 h-11 rounded-full" />
             <div className="flex flex-col gap-2"><Sk className="h-5 w-44" /><Sk className="h-3 w-64" /></div>
@@ -461,7 +461,7 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
     <main className="min-h-screen bg-bg-subtle">
 
       {/* ── TOPBAR PERSONALIZADA ─────────────────────────────────────────── */}
-      <div className="bg-white border-b border-border">
+      <div className="bg-bg-elevated border-b border-border">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
 
           {/* Left: avatar + greeting */}
@@ -624,7 +624,7 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
                       });
                     }
                   }}
-                  className="relative overflow-hidden rounded-xl bg-white border border-[#22C55E]/40 px-3 py-2 flex flex-col gap-1 shadow-[0_6px_16px_rgba(34,197,94,0.08)] hover:shadow-[0_10px_24px_rgba(34,197,94,0.14)] transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#22C55E]"
+                  className="relative overflow-hidden rounded-xl bg-bg-elevated border border-[#22C55E]/40 px-3 py-2 flex flex-col gap-1 shadow-[0_6px_16px_rgba(34,197,94,0.08)] hover:shadow-[0_10px_24px_rgba(34,197,94,0.14)] transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#22C55E]"
                 >
                   <span className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-[#22C55E] to-[#16A34A]" aria-hidden="true" />
                   <div className="flex items-start gap-2">
@@ -692,7 +692,7 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                 <Link href="/ofertas-destacadas"
-                  className="bg-white text-brand-700 font-bold px-6 py-3 rounded-xl text-sm hover:bg-brand-50 transition-all w-full sm:w-auto text-center">
+                  className="bg-bg-elevated text-brand-700 font-bold px-6 py-3 rounded-xl text-sm hover:bg-brand-50 transition-all w-full sm:w-auto text-center">
                   Ver ofertas destacadas
                 </Link>
                 <Link href="/categorias"
@@ -709,7 +709,7 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
             {/* LEFT (2/3): Oportunidades ─────────────────────────────────── */}
-            <div className="lg:col-span-2 bg-white rounded-2xl border border-border overflow-hidden">
+            <div className="lg:col-span-2 bg-bg-elevated rounded-2xl border border-border overflow-hidden">
               <SectionHeader
                 accent="linear-gradient(180deg,#10B981,#059669)"
                 label="Bajadas en tu watchlist"
@@ -780,7 +780,7 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
             </div>
 
             {/* RIGHT (1/3): Alertas ────────────────────────────────────────── */}
-            <div className="bg-white rounded-2xl border border-border overflow-hidden">
+            <div className="bg-bg-elevated rounded-2xl border border-border overflow-hidden">
               <SectionHeader
                 accent="linear-gradient(180deg,#7C3AED,#6D28D9)"
                 label="Precio objetivo"
@@ -910,7 +910,7 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
         {/* ── WATCHLIST ─────────────────────────────────────────────────────── */}
         {!isNew && (
           <>
-          <div className="bg-white rounded-2xl border border-border overflow-hidden">
+          <div className="bg-bg-elevated rounded-2xl border border-border overflow-hidden">
             <SectionHeader
               accent="linear-gradient(180deg,#2563EB,#7C3AED)"
               label="Tu lista de seguimiento"
@@ -1055,7 +1055,7 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
         )}
 
         {/* ── RECOMENDADOS ──────────────────────────────────────────────────── */}
-        <div className="bg-white rounded-2xl border border-border overflow-hidden">
+        <div className="bg-bg-elevated rounded-2xl border border-border overflow-hidden">
           <SectionHeader
             accent="linear-gradient(180deg,#F97316,#EF4444)"
             label={isNew ? "Populares ahora" : "Basado en tus guardados"}
@@ -1133,7 +1133,7 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
 
         {/* ── SIN DESCUENTO ─────────────────────────────────────────────────── */}
         {(data?.noDiscount ?? []).length > 0 && (
-          <div className="bg-white rounded-2xl border border-border overflow-hidden">
+          <div className="bg-bg-elevated rounded-2xl border border-border overflow-hidden">
             <div className="px-5 py-4 border-b border-border-subtle flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-1 h-7 rounded-full bg-warn-500" />

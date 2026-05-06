@@ -80,7 +80,7 @@ export default function ForumTab({
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 space-y-6">
       {/* Header */}
-      <header className="bg-white border border-border rounded-3xl shadow-[0_18px_48px_-28px_rgba(15,23,42,0.25)] p-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <header className="bg-bg-elevated border border-border rounded-3xl shadow-[0_18px_48px_-28px_rgba(15,23,42,0.25)] p-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="space-y-1">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">Foro / Discusiones</p>
           <h1 className="text-3xl md:text-4xl font-extrabold text-fg tracking-tight">
@@ -158,7 +158,7 @@ export default function ForumTab({
           </div>
 
           {filtered.length === 0 && (
-            <div className="bg-white border border-dashed border-border-strong rounded-2xl p-8 text-center text-fg-muted">
+            <div className="bg-bg-elevated border border-dashed border-border-strong rounded-2xl p-8 text-center text-fg-muted">
               <p className="text-2xl mb-2">📰</p>
               <p className="font-semibold text-fg">No hay hilos todavía</p>
               <p className="text-sm">Sé el primero en crear uno.</p>
@@ -168,7 +168,7 @@ export default function ForumTab({
           {filtered.map((thread) => (
             <article
               key={thread.id}
-              className="group bg-white border border-border rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow"
+              className="group bg-bg-elevated border border-border rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow"
             >
               <div className="flex flex-wrap items-center gap-2 mb-3">
                 <span className={`px-2.5 py-1 rounded-full text-[12px] font-semibold border ${classBadge(thread.type)}`}>
@@ -310,7 +310,7 @@ export default function ForumTab({
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white border border-border rounded-2xl p-4 shadow-sm">
+    <div className="bg-bg-elevated border border-border rounded-2xl p-4 shadow-sm">
       <p className="text-xs font-bold text-brand-600 uppercase tracking-[0.16em] mb-3">{title}</p>
       {children}
     </div>

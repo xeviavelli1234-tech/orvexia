@@ -57,7 +57,7 @@ export default function CookiePolicyPage() {
 
         <section className="mt-8 space-y-4">
           {sections.map((item) => (
-            <article key={item.title} className="rounded-2xl border border-border bg-white p-5">
+            <article key={item.title} className="rounded-2xl border border-border bg-bg-elevated p-5">
               <h2 className="text-base font-bold text-fg">{item.title}</h2>
               <p className="mt-2 text-sm leading-relaxed text-fg">{item.content}</p>
             </article>

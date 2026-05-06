@@ -72,7 +72,7 @@ export function CholloCard({ product }: { product: Product }) {
     <>
       <div
         onClick={() => setOpen(true)}
-        className="group flex flex-col bg-white rounded-2xl border border-border overflow-hidden
+        className="group flex flex-col bg-bg-elevated rounded-2xl border border-border overflow-hidden
                    hover:shadow-xl hover:border-[#D97706]/30 transition-all duration-200 cursor-pointer"
       >
         {/* Image */}

@@ -68,7 +68,7 @@ export function CookieConsentBanner({ initialConsent }: CookieConsentBannerProps
       {showBanner ? (
         <section
           aria-live="polite"
-          className="fixed inset-x-4 bottom-4 z-50 mx-auto w-auto max-w-4xl rounded-2xl border border-border-strong bg-white p-5 shadow-2xl sm:inset-x-6 sm:p-6"
+          className="fixed inset-x-4 bottom-4 z-50 mx-auto w-auto max-w-4xl rounded-2xl border border-border-strong bg-bg-elevated p-5 shadow-2xl sm:inset-x-6 sm:p-6"
         >
           <p className="text-base font-semibold text-fg">Tu privacidad, bajo control</p>
           <p className="mt-2 text-sm leading-relaxed text-fg">
@@ -118,7 +118,7 @@ export function CookieConsentBanner({ initialConsent }: CookieConsentBannerProps
             role="dialog"
             aria-modal="true"
             aria-label="Configuracion de cookies"
-            className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-2xl"
+            className="w-full max-w-xl rounded-2xl bg-bg-elevated p-6 shadow-2xl"
           >
             <h2 className="text-lg font-bold text-fg">Configurar cookies</h2>
             <p className="mt-2 text-sm text-fg">

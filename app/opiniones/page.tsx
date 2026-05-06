@@ -225,7 +225,7 @@ export default async function OpinionesPage({
             {filteredProduct && (
               <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3">
                 {filteredProduct.image && (
-                  <img src={filteredProduct.image} alt={filteredProduct.name} className="w-10 h-10 object-contain rounded-lg bg-white border border-amber-100 p-0.5 shrink-0" />
+                  <img src={filteredProduct.image} alt={filteredProduct.name} className="w-10 h-10 object-contain rounded-lg bg-bg-elevated border border-amber-100 p-0.5 shrink-0" />
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest">Filtrando por producto</p>
@@ -250,7 +250,7 @@ export default async function OpinionesPage({
                 <Link
                   href={ratingHref(undefined)}
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                    !rating ? "bg-[#1E293B] text-white" : "bg-white border border-border text-fg-muted hover:border-[#1E293B]/30"
+                    !rating ? "bg-[#1E293B] text-white" : "bg-bg-elevated border border-border text-fg-muted hover:border-[#1E293B]/30"
                   }`}
                 >
                   Todas
@@ -263,7 +263,7 @@ export default async function OpinionesPage({
                     key={star}
                     href={ratingHref(star)}
                     className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                      rating === star ? "bg-amber-500 text-white" : "bg-white border border-border text-fg-muted hover:border-amber-300"
+                      rating === star ? "bg-amber-500 text-white" : "bg-bg-elevated border border-border text-fg-muted hover:border-amber-300"
                     }`}
                   >
                     <svg width="11" height="11" viewBox="0 0 24 24" aria-hidden="true">
@@ -275,7 +275,7 @@ export default async function OpinionesPage({
               </div>
 
               {/* Sort */}
-              <div className="flex items-center gap-1 bg-white border border-border rounded-full p-0.5">
+              <div className="flex items-center gap-1 bg-bg-elevated border border-border rounded-full p-0.5">
                 {[{ label: "Reciente", value: "reciente" }, { label: "Mejor valorado", value: "valoracion" }].map((o) => (
                   <Link
                     key={o.value}
@@ -292,7 +292,7 @@ export default async function OpinionesPage({
 
             {/* Reviews list */}
             {reviews.length === 0 ? (
-              <div className="text-center py-24 bg-white border border-border rounded-2xl">
+              <div className="text-center py-24 bg-bg-elevated border border-border rounded-2xl">
                 <div className="text-4xl mb-4">⭐</div>
                 <h2 className="text-lg font-bold text-fg mb-2">Sin reseñas todavía</h2>
                 <p className="text-fg-muted text-sm mb-6 max-w-xs mx-auto">
@@ -309,7 +309,7 @@ export default async function OpinionesPage({
             ) : (
               <div className="space-y-3">
                 {reviews.map((review) => (
-                  <div key={review.id} className="group bg-white border border-border rounded-2xl overflow-hidden hover:border-[#94A3B8]/50 hover:shadow-md transition-all duration-200">
+                  <div key={review.id} className="group bg-bg-elevated border border-border rounded-2xl overflow-hidden hover:border-[#94A3B8]/50 hover:shadow-md transition-all duration-200">
                     {/* Top accent bar — amber gradient */}
                     <div className="h-[3px]" style={{
                       background: `linear-gradient(90deg, #F59E0B ${(review.rating / 5) * 100}%, #E2E8F0 ${(review.rating / 5) * 100}%)`
@@ -407,7 +407,7 @@ export default async function OpinionesPage({
 
             {/* Global rating summary */}
             {avgDisplay && totalReviews > 0 && (
-              <div className="bg-white border border-border rounded-2xl overflow-hidden">
+              <div className="bg-bg-elevated border border-border rounded-2xl overflow-hidden">
                 <div className="px-4 py-3 border-b border-border-subtle">
                   <p className="text-[11px] font-bold text-fg-subtle uppercase tracking-widest">Resumen global</p>
                 </div>
@@ -440,7 +440,7 @@ export default async function OpinionesPage({
 
             {/* Top rated products */}
             {topProductsWithStats.length > 0 && (
-              <div className="bg-white border border-border rounded-2xl overflow-hidden">
+              <div className="bg-bg-elevated border border-border rounded-2xl overflow-hidden">
                 <div className="px-4 py-3 border-b border-border-subtle">
                   <p className="text-[11px] font-bold text-fg-subtle uppercase tracking-widest">Mejor valorados</p>
                 </div>
@@ -474,7 +474,7 @@ export default async function OpinionesPage({
             {/* Link to forum */}
             <Link
               href="/comunidad"
-              className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl text-sm font-semibold text-fg-muted bg-white border border-border hover:border-brand-600/30 hover:text-brand-600 transition"
+              className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl text-sm font-semibold text-fg-muted bg-bg-elevated border border-border hover:border-brand-600/30 hover:text-brand-600 transition"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />

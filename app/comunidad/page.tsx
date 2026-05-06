@@ -214,7 +214,7 @@ export default async function ComunidadPage({
                       className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
                         isActive
                           ? "bg-[#1E293B] text-white shadow-sm"
-                          : "bg-white border border-border text-fg-muted hover:border-[#1E293B]/30 hover:text-fg"
+                          : "bg-bg-elevated border border-border text-fg-muted hover:border-[#1E293B]/30 hover:text-fg"
                       }`}
                     >
                       {meta && (
@@ -232,7 +232,7 @@ export default async function ComunidadPage({
               </div>
 
               {/* Sort tabs */}
-              <div className="flex items-center gap-1 bg-white border border-border rounded-full p-0.5">
+              <div className="flex items-center gap-1 bg-bg-elevated border border-border rounded-full p-0.5">
                 {[
                   { label: "Reciente", value: "reciente" },
                   { label: "Popular",  value: "popular"  },
@@ -254,7 +254,7 @@ export default async function ComunidadPage({
 
             {/* Posts */}
             {posts.length === 0 ? (
-              <div className="text-center py-24 bg-white border border-border rounded-2xl">
+              <div className="text-center py-24 bg-bg-elevated border border-border rounded-2xl">
                 <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-blue-50 flex items-center justify-center text-2xl">
                   {tipo ? TYPE_META[tipo].icon : "💬"}
                 </div>
@@ -285,7 +285,7 @@ export default async function ComunidadPage({
                     <Link
                       key={post.id}
                       href={`/comunidad/${post.id}`}
-                      className="group flex bg-white border border-border rounded-2xl overflow-hidden hover:border-[#94A3B8]/50 hover:shadow-md transition-all duration-200"
+                      className="group flex bg-bg-elevated border border-border rounded-2xl overflow-hidden hover:border-[#94A3B8]/50 hover:shadow-md transition-all duration-200"
                     >
                       {/* Left accent */}
                       <div className="w-[3px] shrink-0" style={{ backgroundColor: meta.accent }} />
@@ -404,7 +404,7 @@ export default async function ComunidadPage({
                 </Link>
               </div>
             ) : (
-              <div className="rounded-2xl p-5 bg-white border border-border">
+              <div className="rounded-2xl p-5 bg-bg-elevated border border-border">
                 <p className="text-sm font-bold text-fg mb-1">Únete a la conversación</p>
                 <p className="text-xs text-fg-muted mb-4 leading-relaxed">
                   Inicia sesión para publicar, comentar y votar las mejores publicaciones.
@@ -421,7 +421,7 @@ export default async function ComunidadPage({
             )}
 
             {/* Categories breakdown */}
-            <div className="bg-white border border-border rounded-2xl overflow-hidden">
+            <div className="bg-bg-elevated border border-border rounded-2xl overflow-hidden">
               <div className="px-4 py-3 border-b border-border-subtle">
                 <p className="text-[11px] font-bold text-fg-subtle uppercase tracking-widest">Categorías</p>
               </div>
@@ -456,7 +456,7 @@ export default async function ComunidadPage({
 
             {/* Latest activity */}
             {latestActivity && (
-              <div className="bg-white border border-border rounded-2xl overflow-hidden">
+              <div className="bg-bg-elevated border border-border rounded-2xl overflow-hidden">
                 <div className="px-4 py-3 border-b border-border-subtle">
                   <p className="text-[11px] font-bold text-fg-subtle uppercase tracking-widest">Actividad reciente</p>
                 </div>
@@ -474,7 +474,7 @@ export default async function ComunidadPage({
             {/* Link to opiniones */}
             <Link
               href="/opiniones"
-              className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-semibold bg-white border border-border hover:border-amber-300 hover:text-amber-600 text-fg-muted transition group"
+              className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-semibold bg-bg-elevated border border-border hover:border-amber-300 hover:text-amber-600 text-fg-muted transition group"
             >
               <span className="text-lg">⭐</span>
               <div className="flex-1 min-w-0">
@@ -487,7 +487,7 @@ export default async function ComunidadPage({
             </Link>
 
             {/* Tips for posting */}
-            <div className="bg-white border border-border rounded-2xl overflow-hidden">
+            <div className="bg-bg-elevated border border-border rounded-2xl overflow-hidden">
               <div className="px-4 py-3 border-b border-border-subtle">
                 <p className="text-[11px] font-bold text-fg-subtle uppercase tracking-widest">Guía para publicar</p>
               </div>

@@ -185,7 +185,7 @@ export default function AvisoLegalPage() {
   return (
     <main className="bg-bg-subtle">
       {/* Header */}
-      <div className="bg-white border-b border-border">
+      <div className="bg-bg-elevated border-b border-border">
         <div className="max-w-4xl mx-auto px-6 py-10">
           <div className="flex items-center gap-2 text-xs text-fg-muted mb-3">
             <Link href="/" className="hover:text-[#4F46E5] transition-colors">Inicio</Link>
@@ -232,7 +232,7 @@ export default function AvisoLegalPage() {
           <article
             key={s.title}
             id={`seccion-${i + 1}`}
-            className="bg-white rounded-2xl border border-border p-6 scroll-mt-6"
+            className="bg-bg-elevated rounded-2xl border border-border p-6 scroll-mt-6"
           >
             <h2 className="text-base font-bold text-fg mb-4">{s.title}</h2>
             <div className="text-sm leading-relaxed text-fg">{s.content}</div>
