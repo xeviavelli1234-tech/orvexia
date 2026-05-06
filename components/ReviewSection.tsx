@@ -95,8 +95,8 @@ function Stars({ rating, size = 14 }: { rating: number; size?: number }) {
           <svg key={star} width={size} height={size} viewBox="0 0 24 24">
             <defs>
               <linearGradient id={`sf-${star}-${size}`}>
-                <stop offset={`${fill * 100}%`} stopColor="#F59E0B" />
-                <stop offset={`${fill * 100}%`} stopColor="#E2E8F0" />
+                <stop offset={`${fill * 100}%`} stopColor="var(--warn-500)" />
+                <stop offset={`${fill * 100}%`} stopColor="var(--border)" />
               </linearGradient>
             </defs>
             <path
@@ -138,8 +138,8 @@ function StarPicker({
             <svg width={28} height={28} viewBox="0 0 24 24">
               <path
                 d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-                fill={active ? "#F59E0B" : "#E2E8F0"}
-                stroke={active ? "#D97706" : "#CBD5E1"}
+                fill={active ? "var(--warn-500)" : "var(--border)"}
+                stroke={active ? "#D97706" : "var(--fg-faint)"}
                 strokeWidth={0.5}
               />
             </svg>
@@ -219,17 +219,17 @@ function ReviewForm({ productId, initial, onSave, onCancel }: ReviewFormProps) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-[#F0F7FF] rounded-2xl border border-[#DBEAFE] p-5 flex flex-col gap-4"
+      className="bg-[#F0F7FF] rounded-2xl border border-brand-100 p-5 flex flex-col gap-4"
     >
       <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold text-[#0F172A]">
+        <p className="text-sm font-semibold text-fg">
           {initial?.id ? "Editar tu reseña" : "Escribe tu reseña"}
         </p>
         {onCancel && (
           <button
             type="button"
             onClick={onCancel}
-            className="text-xs text-[#64748B] hover:text-[#0F172A] transition-colors"
+            className="text-xs text-fg-muted hover:text-fg transition-colors"
           >
             Cancelar
           </button>
@@ -238,27 +238,27 @@ function ReviewForm({ productId, initial, onSave, onCancel }: ReviewFormProps) {
 
       {/* Star picker */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-medium text-[#475569]">Valoración *</label>
+        <label className="text-xs font-medium text-fg-muted">Valoración *</label>
         <StarPicker value={rating} onChange={setRating} />
       </div>
 
       {/* Title */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-medium text-[#475569]">Título (opcional)</label>
+        <label className="text-xs font-medium text-fg-muted">Título (opcional)</label>
         <input
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           maxLength={120}
           placeholder="Resume tu experiencia en una frase"
-          className="w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 text-sm text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30 focus:border-[#2563EB] transition"
+          className="w-full rounded-xl border border-border bg-white px-3 py-2 text-sm text-fg placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30 focus:border-brand-600 transition"
         />
       </div>
 
       {/* Content */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-medium text-[#475569]">
-          Reseña * <span className="text-[#94A3B8]">({content.length}/1000, mín. 10)</span>
+        <label className="text-xs font-medium text-fg-muted">
+          Reseña * <span className="text-fg-subtle">({content.length}/1000, mín. 10)</span>
         </label>
         <textarea
           value={content}
@@ -267,7 +267,7 @@ function ReviewForm({ productId, initial, onSave, onCancel }: ReviewFormProps) {
           maxLength={1000}
           rows={4}
           placeholder="Cuéntanos tu experiencia con este producto..."
-          className="w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 text-sm text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30 focus:border-[#2563EB] transition resize-none"
+          className="w-full rounded-xl border border-border bg-white px-3 py-2 text-sm text-fg placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30 focus:border-brand-600 transition resize-none"
         />
       </div>
 
@@ -278,7 +278,7 @@ function ReviewForm({ productId, initial, onSave, onCancel }: ReviewFormProps) {
       <button
         type="submit"
         disabled={!valid || submitting}
-        className="self-end bg-[#2563EB] hover:bg-[#1D4ED8] disabled:bg-[#CBD5E1] text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors disabled:cursor-not-allowed"
+        className="self-end bg-brand-600 hover:bg-brand-700 disabled:bg-[#CBD5E1] text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors disabled:cursor-not-allowed"
       >
         {submitting ? "Guardando..." : initial?.id ? "Actualizar reseña" : "Publicar reseña"}
       </button>
@@ -316,8 +316,8 @@ function ReviewCard({
     <div
       className={`rounded-2xl border p-4 flex flex-col gap-3 transition-all ${
         isOwn
-          ? "border-[#2563EB]/30 bg-[#F0F7FF]"
-          : "border-[#E2E8F0] bg-white"
+          ? "border-brand-600/30 bg-[#F0F7FF]"
+          : "border-border bg-white"
       }`}
     >
       {/* Header */}
@@ -325,15 +325,15 @@ function ReviewCard({
         <div className="flex items-center gap-2.5">
           <Avatar user={review.user} size={36} />
           <div className="flex flex-col">
-            <span className="text-sm font-semibold text-[#0F172A] leading-tight">
+            <span className="text-sm font-semibold text-fg leading-tight">
               {review.user.name}
               {isOwn && (
-                <span className="ml-1.5 text-[10px] font-bold text-[#2563EB] bg-[#EFF6FF] px-1.5 py-0.5 rounded-full">
+                <span className="ml-1.5 text-[10px] font-bold text-brand-600 bg-brand-50 px-1.5 py-0.5 rounded-full">
                   Tu reseña
                 </span>
               )}
             </span>
-            <span className="text-xs text-[#94A3B8]">{relativeTime(review.createdAt)}</span>
+            <span className="text-xs text-fg-subtle">{relativeTime(review.createdAt)}</span>
           </div>
         </div>
         <Stars rating={review.rating} size={14} />
@@ -341,20 +341,20 @@ function ReviewCard({
 
       {/* Content */}
       {review.title && (
-        <p className="text-sm font-semibold text-[#0F172A] leading-snug">{review.title}</p>
+        <p className="text-sm font-semibold text-fg leading-snug">{review.title}</p>
       )}
-      <p className="text-sm text-[#475569] leading-relaxed whitespace-pre-line">{review.content}</p>
+      <p className="text-sm text-fg-muted leading-relaxed whitespace-pre-line">{review.content}</p>
 
       {/* Own review actions */}
       {isOwn && (
-        <div className="flex items-center gap-2 pt-1 border-t border-[#DBEAFE]">
+        <div className="flex items-center gap-2 pt-1 border-t border-brand-100">
           <button
             onClick={onEdit}
-            className="text-xs font-medium text-[#2563EB] hover:text-[#1D4ED8] transition-colors"
+            className="text-xs font-medium text-brand-600 hover:text-brand-700 transition-colors"
           >
             Editar
           </button>
-          <span className="text-[#CBD5E1] text-xs">·</span>
+          <span className="text-fg-faint text-xs">·</span>
           <button
             onClick={handleDelete}
             disabled={deleting}
@@ -413,9 +413,9 @@ export default function ReviewSection({ productId }: { productId: string }) {
 
   if (loading) {
     return (
-      <div className="mt-6 pt-6 border-t border-[#E2E8F0]">
-        <div className="h-6 w-32 bg-[#F1F5F9] rounded-lg animate-pulse mb-4" />
-        <div className="h-24 bg-[#F1F5F9] rounded-2xl animate-pulse" />
+      <div className="mt-6 pt-6 border-t border-border">
+        <div className="h-6 w-32 bg-bg-subtle rounded-lg animate-pulse mb-4" />
+        <div className="h-24 bg-bg-subtle rounded-2xl animate-pulse" />
       </div>
     );
   }
@@ -425,25 +425,25 @@ export default function ReviewSection({ productId }: { productId: string }) {
   const maxDist = data ? Math.max(...data.dist.map((d) => d.count), 1) : 1;
 
   return (
-    <div className="mt-6 pt-6 border-t border-[#E2E8F0] flex flex-col gap-5">
+    <div className="mt-6 pt-6 border-t border-border flex flex-col gap-5">
       {/* Section header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-base font-bold text-[#0F172A]">Reseñas de la comunidad</h3>
+        <h3 className="text-base font-bold text-fg">Reseñas de la comunidad</h3>
         {data && data.total > 0 && (
-          <span className="text-xs text-[#64748B]">{data.total} {data.total === 1 ? "reseña" : "reseñas"}</span>
+          <span className="text-xs text-fg-muted">{data.total} {data.total === 1 ? "reseña" : "reseñas"}</span>
         )}
       </div>
 
       {/* Average + distribution */}
       {data && data.total > 0 && data.avg !== null && (
-        <div className="bg-[#F8FAFC] rounded-2xl border border-[#E2E8F0] p-4 flex flex-col sm:flex-row items-center gap-5">
+        <div className="bg-bg-subtle rounded-2xl border border-border p-4 flex flex-col sm:flex-row items-center gap-5">
           {/* Big average */}
           <div className="flex flex-col items-center gap-1 shrink-0">
-            <span className="text-5xl font-bold text-[#0F172A] leading-none">
+            <span className="text-5xl font-bold text-fg leading-none">
               {data.avg.toFixed(1)}
             </span>
             <Stars rating={data.avg} size={18} />
-            <span className="text-xs text-[#94A3B8] mt-0.5">de 5 estrellas</span>
+            <span className="text-xs text-fg-subtle mt-0.5">de 5 estrellas</span>
           </div>
 
           {/* Distribution bars */}
@@ -453,20 +453,20 @@ export default function ReviewSection({ productId }: { productId: string }) {
               const pct = maxDist > 0 ? (entry.count / maxDist) * 100 : 0;
               return (
                 <div key={star} className="flex items-center gap-2">
-                  <span className="text-xs text-[#64748B] w-4 text-right shrink-0">{star}</span>
+                  <span className="text-xs text-fg-muted w-4 text-right shrink-0">{star}</span>
                   <svg width={12} height={12} viewBox="0 0 24 24" className="shrink-0">
                     <path
                       d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-                      fill="#F59E0B"
+                      fill="var(--warn-500)"
                     />
                   </svg>
-                  <div className="flex-1 h-2 bg-[#E2E8F0] rounded-full overflow-hidden">
+                  <div className="flex-1 h-2 bg-bg-muted rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-[#F59E0B] rounded-full transition-all duration-500"
+                      className="h-full bg-warn-500 rounded-full transition-all duration-500"
                       style={{ width: `${pct}%` }}
                     />
                   </div>
-                  <span className="text-xs text-[#94A3B8] w-4 shrink-0">{entry.count}</span>
+                  <span className="text-xs text-fg-subtle w-4 shrink-0">{entry.count}</span>
                 </div>
               );
             })}
@@ -476,7 +476,7 @@ export default function ReviewSection({ productId }: { productId: string }) {
 
       {/* Empty state */}
       {data && data.total === 0 && (
-        <div className="text-center py-8 text-[#94A3B8]">
+        <div className="text-center py-8 text-fg-subtle">
           <svg className="w-10 h-10 mx-auto mb-3 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
           </svg>
@@ -511,9 +511,9 @@ export default function ReviewSection({ productId }: { productId: string }) {
 
       {/* Not logged in nudge */}
       {loggedIn === false && (
-        <div className="rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-4 text-center">
-          <p className="text-sm text-[#475569]">
-            <a href="/login" className="text-[#2563EB] font-semibold hover:underline">Inicia sesión</a>
+        <div className="rounded-2xl border border-border bg-bg-subtle px-4 py-4 text-center">
+          <p className="text-sm text-fg-muted">
+            <a href="/login" className="text-brand-600 font-semibold hover:underline">Inicia sesión</a>
             {" "}para escribir una reseña
           </p>
         </div>

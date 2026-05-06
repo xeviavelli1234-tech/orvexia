@@ -77,11 +77,11 @@ function OtpInput({
           placeholder="-"
           className="w-11 h-14 text-center text-xl font-bold rounded-xl border-2 transition-all outline-none"
           style={{
-            borderColor: d ? "#2563EB" : "#94A3B8",
-            background: d ? "#EFF6FF" : "#fff",
-            color: "#0F172A",
+            borderColor: d ? "var(--brand-600)" : "var(--fg-subtle)",
+            background: d ? "var(--brand-50)" : "#fff",
+            color: "var(--fg)",
             boxShadow: d ? "0 0 0 3px rgba(37,99,235,0.12)" : "none",
-            caretColor: "#2563EB",
+            caretColor: "var(--brand-600)",
           }}
         />
       ))}
@@ -194,16 +194,16 @@ function VerifyForm() {
       <div className={`${inter.className}`}>
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="w-14 h-14 rounded-2xl bg-[#EFF6FF] flex items-center justify-center text-3xl mx-auto mb-4">
+          <div className="w-14 h-14 rounded-2xl bg-brand-50 flex items-center justify-center text-3xl mx-auto mb-4">
             📧
           </div>
-          <p className="text-xs font-bold text-[#2563EB] uppercase tracking-widest mb-2">
+          <p className="text-xs font-bold text-brand-600 uppercase tracking-widest mb-2">
             Un paso más
           </p>
-          <h1 className="text-2xl font-extrabold text-[#0F172A] tracking-tight mb-2">
+          <h1 className="text-2xl font-extrabold text-fg tracking-tight mb-2">
             Verifica tu correo
           </h1>
-          <p className="text-sm text-[#64748B]">
+          <p className="text-sm text-fg-muted">
             Ingresa el código de 6 dígitos que enviamos a tu email
           </p>
         </div>
@@ -211,14 +211,14 @@ function VerifyForm() {
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Email */}
           <div>
-            <label className="block text-sm font-medium text-[#0F172A] mb-1.5">
+            <label className="block text-sm font-medium text-fg mb-1.5">
               Correo
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="p-3 rounded-xl block bg-[#F8FAFC] text-[#0F172A] w-full border border-[#E2E8F0] placeholder-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 focus:outline-none transition-all text-sm"
+              className="p-3 rounded-xl block bg-bg-subtle text-fg w-full border border-border placeholder-[#94A3B8] focus:border-brand-600 focus:ring-2 focus:ring-[#2563EB]/20 focus:outline-none transition-all text-sm"
               placeholder="tu@email.com"
               required
             />
@@ -227,7 +227,7 @@ function VerifyForm() {
                 className="text-xs mt-1.5 px-3 py-2 rounded-lg"
                 style={{
                   color: info.startsWith("✓") ? "#166534" : "#1e40af",
-                  background: info.startsWith("✓") ? "#DCFCE7" : "#EFF6FF",
+                  background: info.startsWith("✓") ? "#DCFCE7" : "var(--brand-50)",
                 }}
               >
                 {info}
@@ -238,14 +238,14 @@ function VerifyForm() {
           {/* OTP */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <label className="text-sm font-medium text-[#0F172A]">
+              <label className="text-sm font-medium text-fg">
                 Código de verificación
               </label>
               <button
                 type="button"
                 onClick={handleResend}
                 disabled={resendLoading || resendCountdown > 0}
-                className="text-xs font-semibold text-[#2563EB] hover:text-[#1D4ED8] disabled:opacity-50 transition-colors"
+                className="text-xs font-semibold text-brand-600 hover:text-brand-700 disabled:opacity-50 transition-colors"
               >
                 {resendLoading
                   ? "Enviando..."
@@ -258,7 +258,7 @@ function VerifyForm() {
           </div>
 
           {error && (
-            <p className="text-xs text-[#EF4444] bg-[#FEF2F2] px-3 py-2 rounded-lg text-center">
+            <p className="text-xs text-danger-500 bg-danger-50 px-3 py-2 rounded-lg text-center">
               {error}
             </p>
           )}
@@ -266,7 +266,7 @@ function VerifyForm() {
           <button
             type="submit"
             disabled={loading || !isComplete}
-            className="w-full bg-[#2563EB] hover:bg-[#1D4ED8] active:scale-[0.98] text-white font-semibold p-3 rounded-xl shadow-[0_8px_24px_-8px_rgba(37,99,235,0.5)] transition-all duration-150 disabled:opacity-50"
+            className="w-full bg-brand-600 hover:bg-brand-700 active:scale-[0.98] text-white font-semibold p-3 rounded-xl shadow-[0_8px_24px_-8px_rgba(37,99,235,0.5)] transition-all duration-150 disabled:opacity-50"
           >
             {loading ? "Verificando..." : "Verificar y continuar →"}
           </button>

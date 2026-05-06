@@ -16,9 +16,9 @@ const TYPE_META: Record<
   CommunityPostType,
   { label: string; bg: string; color: string; dot: string; accent: string; icon: string }
 > = {
-  DISCUSION: { label: "Discusión", bg: "#EFF6FF", color: "#2563EB", dot: "#2563EB", accent: "#2563EB", icon: "💬" },
-  PREGUNTA:  { label: "Pregunta",  bg: "#FEF3C7", color: "#B45309", dot: "#F59E0B", accent: "#F59E0B", icon: "❓" },
-  CHOLLO:    { label: "Chollo",    bg: "#DCFCE7", color: "#15803D", dot: "#16A34A", accent: "#16A34A", icon: "🏷️" },
+  DISCUSION: { label: "Discusión", bg: "var(--brand-50)", color: "var(--brand-600)", dot: "var(--brand-600)", accent: "var(--brand-600)", icon: "💬" },
+  PREGUNTA:  { label: "Pregunta",  bg: "#FEF3C7", color: "#B45309", dot: "var(--warn-500)", accent: "var(--warn-500)", icon: "❓" },
+  CHOLLO:    { label: "Chollo",    bg: "#DCFCE7", color: "#15803D", dot: "var(--accent-600)", accent: "var(--accent-600)", icon: "🏷️" },
   CONSEJO:   { label: "Consejo",   bg: "#F3E8FF", color: "#6D28D9", dot: "#7C3AED", accent: "#7C3AED", icon: "💡" },
 };
 
@@ -214,7 +214,7 @@ export default async function ComunidadPage({
                       className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
                         isActive
                           ? "bg-[#1E293B] text-white shadow-sm"
-                          : "bg-white border border-[#E2E8F0] text-[#475569] hover:border-[#1E293B]/30 hover:text-[#1E293B]"
+                          : "bg-white border border-border text-fg-muted hover:border-[#1E293B]/30 hover:text-fg"
                       }`}
                     >
                       {meta && (
@@ -222,7 +222,7 @@ export default async function ComunidadPage({
                       )}
                       {tab.label}
                       {tab.count !== undefined && tab.count > 0 && (
-                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none ${isActive ? "bg-white/20 text-white" : "bg-[#F1F5F9] text-[#94A3B8]"}`}>
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none ${isActive ? "bg-white/20 text-white" : "bg-bg-subtle text-fg-subtle"}`}>
                           {tab.count}
                         </span>
                       )}
@@ -232,7 +232,7 @@ export default async function ComunidadPage({
               </div>
 
               {/* Sort tabs */}
-              <div className="flex items-center gap-1 bg-white border border-[#E2E8F0] rounded-full p-0.5">
+              <div className="flex items-center gap-1 bg-white border border-border rounded-full p-0.5">
                 {[
                   { label: "Reciente", value: "reciente" },
                   { label: "Popular",  value: "popular"  },
@@ -243,7 +243,7 @@ export default async function ComunidadPage({
                     className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
                       orden === o.value
                         ? "bg-[#1E293B] text-white"
-                        : "text-[#64748B] hover:text-[#1E293B]"
+                        : "text-fg-muted hover:text-fg"
                     }`}
                   >
                     {o.label}
@@ -254,14 +254,14 @@ export default async function ComunidadPage({
 
             {/* Posts */}
             {posts.length === 0 ? (
-              <div className="text-center py-24 bg-white border border-[#E2E8F0] rounded-2xl">
+              <div className="text-center py-24 bg-white border border-border rounded-2xl">
                 <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-blue-50 flex items-center justify-center text-2xl">
                   {tipo ? TYPE_META[tipo].icon : "💬"}
                 </div>
-                <h2 className="text-lg font-bold text-[#0F172A] mb-2">
+                <h2 className="text-lg font-bold text-fg mb-2">
                   {tipo ? `Aún no hay publicaciones de tipo ${TYPE_META[tipo].label}` : "Sin publicaciones todavía"}
                 </h2>
-                <p className="text-[#64748B] text-sm mb-6 max-w-xs mx-auto leading-relaxed">
+                <p className="text-fg-muted text-sm mb-6 max-w-xs mx-auto leading-relaxed">
                   Sé el primero en compartir algo con la comunidad.
                 </p>
                 <Link
@@ -285,7 +285,7 @@ export default async function ComunidadPage({
                     <Link
                       key={post.id}
                       href={`/comunidad/${post.id}`}
-                      className="group flex bg-white border border-[#E2E8F0] rounded-2xl overflow-hidden hover:border-[#94A3B8]/50 hover:shadow-md transition-all duration-200"
+                      className="group flex bg-white border border-border rounded-2xl overflow-hidden hover:border-[#94A3B8]/50 hover:shadow-md transition-all duration-200"
                     >
                       {/* Left accent */}
                       <div className="w-[3px] shrink-0" style={{ backgroundColor: meta.accent }} />
@@ -334,12 +334,12 @@ export default async function ComunidadPage({
                             </div>
 
                             {/* Title */}
-                            <h2 className="text-[15px] font-bold text-[#0F172A] group-hover:text-[#2563EB] transition-colors leading-snug line-clamp-2">
+                            <h2 className="text-[15px] font-bold text-fg group-hover:text-brand-600 transition-colors leading-snug line-clamp-2">
                               {post.title}
                             </h2>
 
                             {/* Excerpt */}
-                            <p className="text-[13px] text-[#64748B] line-clamp-2 leading-relaxed">
+                            <p className="text-[13px] text-fg-muted line-clamp-2 leading-relaxed">
                               {post.content}
                             </p>
 
@@ -347,12 +347,12 @@ export default async function ComunidadPage({
                             <div className="flex items-center gap-3 pt-0.5 flex-wrap">
                               <div className="flex items-center gap-1.5">
                                 <Avatar user={post.user} size={18} />
-                                <span className="text-xs font-semibold text-[#475569]">{post.user.name}</span>
+                                <span className="text-xs font-semibold text-fg-muted">{post.user.name}</span>
                               </div>
-                              <span className="text-[#CBD5E1] text-xs">·</span>
-                              <RelativeTime iso={post.createdAt.toISOString()} className="text-[11px] text-[#94A3B8]" />
-                              <span className="text-[#CBD5E1] text-xs">·</span>
-                              <span className="flex items-center gap-1 text-[11px] text-[#94A3B8]">
+                              <span className="text-fg-faint text-xs">·</span>
+                              <RelativeTime iso={post.createdAt.toISOString()} className="text-[11px] text-fg-subtle" />
+                              <span className="text-fg-faint text-xs">·</span>
+                              <span className="flex items-center gap-1 text-[11px] text-fg-subtle">
                                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                 </svg>
@@ -367,7 +367,7 @@ export default async function ComunidadPage({
                               <img
                                 src={post.product.image}
                                 alt={post.product.name}
-                                className="w-14 h-14 rounded-xl object-contain bg-[#F8FAFC] border border-[#E2E8F0] p-1"
+                                className="w-14 h-14 rounded-xl object-contain bg-bg-subtle border border-border p-1"
                               />
                             </div>
                           )}
@@ -404,13 +404,13 @@ export default async function ComunidadPage({
                 </Link>
               </div>
             ) : (
-              <div className="rounded-2xl p-5 bg-white border border-[#E2E8F0]">
-                <p className="text-sm font-bold text-[#0F172A] mb-1">Únete a la conversación</p>
-                <p className="text-xs text-[#64748B] mb-4 leading-relaxed">
+              <div className="rounded-2xl p-5 bg-white border border-border">
+                <p className="text-sm font-bold text-fg mb-1">Únete a la conversación</p>
+                <p className="text-xs text-fg-muted mb-4 leading-relaxed">
                   Inicia sesión para publicar, comentar y votar las mejores publicaciones.
                 </p>
                 <div className="flex gap-2">
-                  <Link href="/login" className="flex-1 flex items-center justify-center px-3 py-2 rounded-xl text-xs font-bold text-[#475569] border border-[#E2E8F0] hover:border-[#2563EB]/30 hover:text-[#2563EB] transition">
+                  <Link href="/login" className="flex-1 flex items-center justify-center px-3 py-2 rounded-xl text-xs font-bold text-fg-muted border border-border hover:border-brand-600/30 hover:text-brand-600 transition">
                     Iniciar sesión
                   </Link>
                   <Link href="/registro" className="flex-1 flex items-center justify-center px-3 py-2 rounded-xl text-xs font-bold text-white transition hover:-translate-y-0.5" style={{ background: "linear-gradient(135deg,#2563EB,#4F46E5)" }}>
@@ -421,9 +421,9 @@ export default async function ComunidadPage({
             )}
 
             {/* Categories breakdown */}
-            <div className="bg-white border border-[#E2E8F0] rounded-2xl overflow-hidden">
-              <div className="px-4 py-3 border-b border-[#F1F5F9]">
-                <p className="text-[11px] font-bold text-[#94A3B8] uppercase tracking-widest">Categorías</p>
+            <div className="bg-white border border-border rounded-2xl overflow-hidden">
+              <div className="px-4 py-3 border-b border-border-subtle">
+                <p className="text-[11px] font-bold text-fg-subtle uppercase tracking-widest">Categorías</p>
               </div>
               <div className="divide-y divide-[#F8FAFC]">
                 {(Object.entries(TYPE_META) as [CommunityPostType, typeof TYPE_META[CommunityPostType]][]).map(([key, meta]) => {
@@ -433,15 +433,15 @@ export default async function ComunidadPage({
                     <Link
                       key={key}
                       href={`/comunidad?tipo=${key}`}
-                      className={`flex items-center gap-3 px-4 py-3 hover:bg-[#F8FAFC] transition-colors ${tipo === key ? "bg-[#F8FAFC]" : ""}`}
+                      className={`flex items-center gap-3 px-4 py-3 hover:bg-bg-subtle transition-colors ${tipo === key ? "bg-bg-subtle" : ""}`}
                     >
                       <span className="text-base">{meta.icon}</span>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs font-semibold text-[#0F172A]">{meta.label}</span>
-                          <span className="text-[11px] font-bold text-[#94A3B8]">{count}</span>
+                          <span className="text-xs font-semibold text-fg">{meta.label}</span>
+                          <span className="text-[11px] font-bold text-fg-subtle">{count}</span>
                         </div>
-                        <div className="h-1 bg-[#F1F5F9] rounded-full overflow-hidden">
+                        <div className="h-1 bg-bg-subtle rounded-full overflow-hidden">
                           <div
                             className="h-full rounded-full transition-all"
                             style={{ width: `${pct}%`, backgroundColor: meta.dot }}
@@ -456,16 +456,16 @@ export default async function ComunidadPage({
 
             {/* Latest activity */}
             {latestActivity && (
-              <div className="bg-white border border-[#E2E8F0] rounded-2xl overflow-hidden">
-                <div className="px-4 py-3 border-b border-[#F1F5F9]">
-                  <p className="text-[11px] font-bold text-[#94A3B8] uppercase tracking-widest">Actividad reciente</p>
+              <div className="bg-white border border-border rounded-2xl overflow-hidden">
+                <div className="px-4 py-3 border-b border-border-subtle">
+                  <p className="text-[11px] font-bold text-fg-subtle uppercase tracking-widest">Actividad reciente</p>
                 </div>
-                <Link href={`/comunidad/${latestActivity.post.id}`} className="flex items-start gap-3 p-4 hover:bg-[#F8FAFC] transition-colors">
+                <Link href={`/comunidad/${latestActivity.post.id}`} className="flex items-start gap-3 p-4 hover:bg-bg-subtle transition-colors">
                   <Avatar user={latestActivity.user} size={30} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-[#0F172A] line-clamp-1">{latestActivity.user.name} comentó en</p>
-                    <p className="text-xs text-[#2563EB] line-clamp-2 mt-0.5 font-medium">{latestActivity.post.title}</p>
-                    <RelativeTime iso={latestActivity.createdAt.toISOString()} className="text-[11px] text-[#94A3B8] mt-1 block" />
+                    <p className="text-xs font-semibold text-fg line-clamp-1">{latestActivity.user.name} comentó en</p>
+                    <p className="text-xs text-brand-600 line-clamp-2 mt-0.5 font-medium">{latestActivity.post.title}</p>
+                    <RelativeTime iso={latestActivity.createdAt.toISOString()} className="text-[11px] text-fg-subtle mt-1 block" />
                   </div>
                 </Link>
               </div>
@@ -474,22 +474,22 @@ export default async function ComunidadPage({
             {/* Link to opiniones */}
             <Link
               href="/opiniones"
-              className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-semibold bg-white border border-[#E2E8F0] hover:border-amber-300 hover:text-amber-600 text-[#475569] transition group"
+              className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-semibold bg-white border border-border hover:border-amber-300 hover:text-amber-600 text-fg-muted transition group"
             >
               <span className="text-lg">⭐</span>
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-sm text-[#0F172A] group-hover:text-amber-600 transition-colors">Opiniones &amp; Reseñas</p>
-                <p className="text-[11px] text-[#94A3B8]">Lo que dicen los compradores</p>
+                <p className="font-bold text-sm text-fg group-hover:text-amber-600 transition-colors">Opiniones &amp; Reseñas</p>
+                <p className="text-[11px] text-fg-subtle">Lo que dicen los compradores</p>
               </div>
-              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-[#CBD5E1] group-hover:text-amber-400 transition-colors">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-fg-faint group-hover:text-amber-400 transition-colors">
                 <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </Link>
 
             {/* Tips for posting */}
-            <div className="bg-white border border-[#E2E8F0] rounded-2xl overflow-hidden">
-              <div className="px-4 py-3 border-b border-[#F1F5F9]">
-                <p className="text-[11px] font-bold text-[#94A3B8] uppercase tracking-widest">Guía para publicar</p>
+            <div className="bg-white border border-border rounded-2xl overflow-hidden">
+              <div className="px-4 py-3 border-b border-border-subtle">
+                <p className="text-[11px] font-bold text-fg-subtle uppercase tracking-widest">Guía para publicar</p>
               </div>
               <ul className="divide-y divide-[#F8FAFC]">
                 {[
@@ -500,7 +500,7 @@ export default async function ComunidadPage({
                 ].map((tip) => (
                   <li key={tip.icon} className="flex items-start gap-2.5 px-4 py-3">
                     <span className="text-sm shrink-0 mt-0.5">{tip.icon}</span>
-                    <p className="text-[12px] text-[#64748B] leading-relaxed">{tip.text}</p>
+                    <p className="text-[12px] text-fg-muted leading-relaxed">{tip.text}</p>
                   </li>
                 ))}
               </ul>

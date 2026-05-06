@@ -27,8 +27,8 @@ const GUIAS = [
     title: "Mejor Televisor 2026",
     desc: "QLED vs OLED, tamaños, HDR, Hz... guía completa para acertar con tu próxima TV.",
     icon: "📺",
-    color: "#2563EB",
-    colorLight: "#DBEAFE",
+    color: "var(--brand-600)",
+    colorLight: "var(--brand-100)",
     tag: "Guía completa",
     time: "10 min lectura",
     ready: true,
@@ -51,8 +51,8 @@ const GUIAS = [
     title: "Mejor Lavavajillas 2026",
     desc: "Integrado o libre instalación, cubiertos, programas y eficiencia.",
     icon: "🍽️",
-    color: "#059669",
-    colorLight: "#D1FAE5",
+    color: "var(--accent-600)",
+    colorLight: "var(--accent-100)",
     tag: "Guía completa",
     time: "6 min lectura",
     ready: true,
@@ -99,7 +99,7 @@ const GUIAS = [
     title: "Mejor Horno 2026",
     desc: "Integrable, multifunción, vapor... qué horno encaja mejor en tu cocina.",
     icon: "🔥",
-    color: "#DC2626",
+    color: "var(--danger-600)",
     colorLight: "#FEE2E2",
     tag: "Guía completa",
     time: "6 min lectura",
@@ -134,7 +134,7 @@ const GUIAS = [
 
 export default function GuiasPage() {
   return (
-    <main className="min-h-screen bg-[#F8FAFC]">
+    <main className="min-h-screen bg-bg-subtle">
 
       {/* HERO */}
       <section className="bg-gradient-to-br from-[#0F172A] via-[#1E1B4B] to-[#312E81] pt-16 pb-24 px-6 relative overflow-hidden">
@@ -158,7 +158,7 @@ export default function GuiasPage() {
       </section>
 
       <div className="max-w-5xl mx-auto px-6 -mt-6 pb-16">
-        <p className="text-xs font-bold text-[#94A3B8] uppercase tracking-widest mb-5">{GUIAS.length} guías disponibles</p>
+        <p className="text-xs font-bold text-fg-subtle uppercase tracking-widest mb-5">{GUIAS.length} guías disponibles</p>
 
         {/* GRID: 2 col en tablet, 3 col en desktop */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -166,7 +166,7 @@ export default function GuiasPage() {
             <Link
               key={g.slug}
               href={`/guias/${g.slug}`}
-              className={`group flex flex-col bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200${i === GUIAS.length - 1 && GUIAS.length % 3 === 1 ? " lg:col-start-2" : ""}`}
+              className={`group flex flex-col bg-white rounded-2xl border border-border overflow-hidden hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200${i === GUIAS.length - 1 && GUIAS.length % 3 === 1 ? " lg:col-start-2" : ""}`}
             >
               {/* Header con color */}
               <div
@@ -186,15 +186,15 @@ export default function GuiasPage() {
                   <span className="text-[10px] font-bold px-2.5 py-1 rounded-full text-white" style={{ backgroundColor: g.color }}>
                     {g.tag}
                   </span>
-                  <span className="text-[11px] text-[#94A3B8] flex items-center gap-1">
+                  <span className="text-[11px] text-fg-subtle flex items-center gap-1">
                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     {g.time}
                   </span>
                 </div>
-                <h2 className="font-extrabold text-[#0F172A] text-base mb-1.5 leading-snug">{g.title}</h2>
-                <p className="text-xs text-[#64748B] leading-relaxed flex-1">{g.desc}</p>
+                <h2 className="font-extrabold text-fg text-base mb-1.5 leading-snug">{g.title}</h2>
+                <p className="text-xs text-fg-muted leading-relaxed flex-1">{g.desc}</p>
                 <div className="mt-4 flex items-center gap-1.5 text-xs font-bold transition-transform group-hover:translate-x-0.5" style={{ color: g.color }}>
                   Leer la guía
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>

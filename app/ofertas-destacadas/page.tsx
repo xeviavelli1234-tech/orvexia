@@ -108,7 +108,7 @@ export default async function OfertasDestacadasPage({
     : 0;
 
   return (
-    <main className="min-h-screen bg-[#F8FAFC]">
+    <main className="min-h-screen bg-bg-subtle">
 
       {/* Hero */}
       <section className="relative overflow-hidden pt-20 pb-24 px-6 text-center"
@@ -116,7 +116,7 @@ export default async function OfertasDestacadasPage({
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute -top-20 -left-20 w-80 h-80 rounded-full bg-blue-400 opacity-10 blur-3xl" />
           <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-cyan-300 opacity-10 blur-3xl" />
-          <div className="absolute -bottom-16 left-0 right-0 h-24 bg-[#F8FAFC] rounded-t-[32px]" />
+          <div className="absolute -bottom-16 left-0 right-0 h-24 bg-bg-subtle rounded-t-[32px]" />
         </div>
 
         <div className="relative max-w-4xl mx-auto">
@@ -155,7 +155,7 @@ export default async function OfertasDestacadasPage({
       <div className="max-w-6xl mx-auto px-6">
 
         {/* Sort bar - overlapping card, same pattern that popularidad uses */}
-        <div className="relative z-10 -mt-12 mb-8 bg-white rounded-2xl border border-[#E2E8F0]
+        <div className="relative z-10 -mt-12 mb-8 bg-white rounded-2xl border border-border
                         shadow-[0_18px_48px_-24px_rgba(15,23,42,0.2)] p-4">
           <Suspense>
             <SortBar />
@@ -165,21 +165,21 @@ export default async function OfertasDestacadasPage({
         {/* Section header */}
         <div className="flex items-end justify-between mb-6">
           <div>
-            <p className="text-xs font-bold text-[#2563EB] uppercase tracking-widest mb-1">
+            <p className="text-xs font-bold text-brand-600 uppercase tracking-widest mb-1">
               Selección premium
             </p>
-            <h2 className="text-2xl font-bold text-[#0F172A]">Ofertas verificadas</h2>
+            <h2 className="text-2xl font-bold text-fg">Ofertas verificadas</h2>
           </div>
-          <span className="text-sm text-[#94A3B8] hidden sm:block">
+          <span className="text-sm text-fg-subtle hidden sm:block">
             Mostrando {deals.length} oferta{deals.length !== 1 ? "s" : ""} con {SORT_LABEL[orden] ?? "mayor descuento"}
           </span>
         </div>
 
         {/* Grid */}
         {deals.length === 0 ? (
-          <div className="text-center py-24 bg-white rounded-3xl border border-[#E2E8F0]">
+          <div className="text-center py-24 bg-white rounded-3xl border border-border">
             <p className="text-5xl mb-4">⌛</p>
-            <p className="text-[#94A3B8] text-sm font-medium">No hay ofertas disponibles ahora mismo.</p>
+            <p className="text-fg-subtle text-sm font-medium">No hay ofertas disponibles ahora mismo.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 pb-16">

@@ -37,7 +37,7 @@ export function VoteButton({ postId, initialLiked, initialCount }: VoteButtonPro
       className={`group inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all duration-150 disabled:opacity-60 ${
         liked
           ? "bg-red-50 text-red-500 border border-red-200"
-          : "bg-[#F8FAFC] text-[#64748B] border border-[#E2E8F0] hover:bg-red-50 hover:text-red-500 hover:border-red-200"
+          : "bg-bg-subtle text-fg-muted border border-border hover:bg-red-50 hover:text-red-500 hover:border-red-200"
       }`}
     >
       <svg

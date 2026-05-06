@@ -17,7 +17,7 @@ export default async function NuevaPublicacionPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#F8FAFC]">
+    <main className="min-h-screen bg-bg-subtle">
       {/* Sub-header */}
       <div
         className="px-6 py-10"

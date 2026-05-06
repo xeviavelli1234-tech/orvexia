@@ -21,8 +21,8 @@ const CATEGORIES: {
     key: "TELEVISORES",
     label: "Televisores",
     icon: "📺",
-    color: "#2563EB",
-    bg: "#EFF6FF",
+    color: "var(--brand-600)",
+    bg: "var(--brand-50)",
     gradient: "from-[#EFF6FF] to-[#DBEAFE]",
     desc: "Smart TV, QLED, OLED y más",
   },
@@ -48,8 +48,8 @@ const CATEGORIES: {
     key: "LAVAVAJILLAS",
     label: "Lavavajillas",
     icon: "🍽️",
-    color: "#059669",
-    bg: "#ECFDF5",
+    color: "var(--accent-600)",
+    bg: "var(--accent-50)",
     gradient: "from-[#ECFDF5] to-[#D1FAE5]",
     desc: "Integrado, libre instalación y compacto",
   },
@@ -66,8 +66,8 @@ const CATEGORIES: {
     key: "HORNOS",
     label: "Hornos",
     icon: "🔥",
-    color: "#DC2626",
-    bg: "#FEF2F2",
+    color: "var(--danger-600)",
+    bg: "var(--danger-50)",
     gradient: "from-[#FEF2F2] to-[#FEE2E2]",
     desc: "Integrable, sobremesa y microondas-horno",
   },
@@ -169,16 +169,16 @@ export default async function CategoriasPage() {
   const categoriasConProductos = counts.length;
 
   return (
-    <main className="min-h-screen bg-[#F8FAFC]">
+    <main className="min-h-screen bg-bg-subtle">
 
       {/* HERO */}
       <section className="bg-gradient-to-br from-[#0F172A] via-[#1E1B4B] to-[#2563EB] pt-14 pb-20 px-6 relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-[#3B82F6] opacity-10 blur-3xl" />
-          <div className="absolute bottom-0 left-1/4 w-64 h-64 rounded-full bg-[#10B981] opacity-10 blur-3xl" />
+          <div className="absolute bottom-0 left-1/4 w-64 h-64 rounded-full bg-accent-500 opacity-10 blur-3xl" />
         </div>
         <div className="relative max-w-4xl mx-auto text-center">
-          <p className="text-xs font-semibold text-[#34D399] uppercase tracking-widest mb-3">Explorar</p>
+          <p className="text-xs font-semibold text-accent-300 uppercase tracking-widest mb-3">Explorar</p>
           <h1 className="text-4xl sm:text-5xl font-extrabold text-white mb-4 tracking-tight">
             Todas las categorías
           </h1>
@@ -207,7 +207,7 @@ export default async function CategoriasPage() {
         {/* Wave */}
         <div className="absolute bottom-0 left-0 right-0 leading-none">
           <svg viewBox="0 0 1440 40" fill="none" className="w-full h-10">
-            <path d="M0 40L720 0L1440 40V40H0V40Z" fill="#F8FAFC" />
+            <path d="M0 40L720 0L1440 40V40H0V40Z" fill="var(--bg)" />
           </svg>
         </div>
       </section>
@@ -229,8 +229,8 @@ export default async function CategoriasPage() {
                     {cat.icon}
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-[#0F172A]">{cat.label}</h2>
-                    <p className="text-sm text-[#64748B]">
+                    <h2 className="text-xl font-bold text-fg">{cat.label}</h2>
+                    <p className="text-sm text-fg-muted">
                       {count > 0 ? `${count} producto${count !== 1 ? "s" : ""}` : "Próximamente"} · {cat.desc}
                     </p>
                   </div>

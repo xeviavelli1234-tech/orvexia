@@ -68,7 +68,7 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
     <>
       <div
         onClick={() => setOpen(true)}
-        className="group bg-white rounded-2xl border border-[#E2E8F0] hover:border-[#2563EB]/40
+        className="group bg-white rounded-2xl border border-border hover:border-brand-600/40
                    hover:shadow-[0_8px_32px_-8px_rgba(37,99,235,0.15)] transition-all duration-200
                    overflow-hidden flex cursor-pointer"
       >
@@ -97,7 +97,7 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
             </div>
           )}
           {realDiscount > 0 && (
-            <span className="absolute top-2 left-2 bg-[#EF4444] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md">
+            <span className="absolute top-2 left-2 bg-danger-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md">
               -{realDiscount}%
             </span>
           )}
@@ -108,8 +108,8 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
           <p className="text-[11px] font-semibold uppercase tracking-wide mb-1" style={{ color: catColor }}>
             {product.brand}
           </p>
-          <h3 className="text-sm font-semibold text-[#0F172A] leading-snug line-clamp-2
-                         group-hover:text-[#2563EB] transition-colors mb-auto">
+          <h3 className="text-sm font-semibold text-fg leading-snug line-clamp-2
+                         group-hover:text-brand-600 transition-colors mb-auto">
             {product.name}
           </h3>
           {oferta ? (
@@ -126,11 +126,11 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
               />
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-base sm:text-lg font-extrabold text-[#0F172A]">
+                  <span className="text-base sm:text-lg font-extrabold text-fg">
                     {formatPrice(oferta.priceCurrent)}
                   </span>
                   {showOldPrice && (
-                    <span className="ml-1.5 text-xs text-[#94A3B8] line-through">
+                    <span className="ml-1.5 text-xs text-fg-subtle line-through">
                       {formatPrice(oferta.priceOld!)}
                     </span>
                   )}
@@ -149,8 +149,8 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
                       key={o.store}
                       className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${
                         o.store === oferta.store
-                          ? "bg-[#EFF6FF] border-[#BFDBFE] text-[#1D4ED8]"
-                          : "bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B]"
+                          ? "bg-brand-50 border-brand-200 text-brand-700"
+                          : "bg-bg-subtle border-border text-fg-muted"
                       }`}
                     >
                       {o.store} {formatPrice(o.priceCurrent)}
@@ -160,7 +160,7 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
               )}
             </div>
           ) : (
-            <p className="mt-2 text-xs text-[#94A3B8]">Sin oferta</p>
+            <p className="mt-2 text-xs text-fg-subtle">Sin oferta</p>
           )}
         </div>
       </div>

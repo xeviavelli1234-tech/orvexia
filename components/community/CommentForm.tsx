@@ -55,7 +55,7 @@ export function CommentForm({ postId }: { postId: string }) {
         minLength={2}
         maxLength={600}
         rows={3}
-        className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3 text-sm text-[#0F172A] placeholder-[#CBD5E1] focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/15 outline-none transition resize-none"
+        className="w-full rounded-xl border border-border bg-bg-subtle px-4 py-3 text-sm text-fg placeholder-[#CBD5E1] focus:border-brand-600 focus:ring-2 focus:ring-[#2563EB]/15 outline-none transition resize-none"
         placeholder="Comparte tu opinión o experiencia..."
       />
 
@@ -88,7 +88,7 @@ export function CommentForm({ postId }: { postId: string }) {
       )}
 
       <div className="flex items-center justify-between">
-        <span className="text-[11px] text-[#94A3B8]">Máximo 600 caracteres</span>
+        <span className="text-[11px] text-fg-subtle">Máximo 600 caracteres</span>
         <SubmitButton />
       </div>
     </form>

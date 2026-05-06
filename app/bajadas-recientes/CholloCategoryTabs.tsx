@@ -46,14 +46,14 @@ export function CholloCategoryTabs({ categories }: { categories: string[] }) {
             className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
               active
                 ? "bg-[#D97706] text-white border-[#D97706] shadow-sm"
-                : "bg-white text-[#64748B] border-[#E2E8F0] hover:border-[#D97706]/40 hover:text-[#D97706]"
+                : "bg-white text-fg-muted border-border hover:border-[#D97706]/40 hover:text-hot-700"
             }`}
           >
             {label}
           </button>
         );
       })}
-      {pending && <span className="ml-1 text-xs text-[#D97706] self-center animate-pulse">Cargando…</span>}
+      {pending && <span className="ml-1 text-xs text-hot-700 self-center animate-pulse">Cargando…</span>}
     </div>
   );
 }

@@ -26,7 +26,7 @@ export function PasswordChecklist({ password }: { password: string }) {
           key={req.label}
           role="listitem"
           className={`flex items-center gap-2 text-xs transition-colors duration-200 ${
-            req.met ? "text-[#22C55E]" : "text-[#94A3B8]"
+            req.met ? "text-[#22C55E]" : "text-fg-subtle"
           }`}
         >
           <span

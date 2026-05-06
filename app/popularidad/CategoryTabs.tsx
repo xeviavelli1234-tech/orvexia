@@ -61,7 +61,7 @@ export function CategoryTabs({ categories }: { categories: string[] }) {
             className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap border transition-all duration-150 shrink-0 ${
               isActive
                 ? "bg-[#7C3AED] border-[#7C3AED] text-white shadow-sm"
-                : "bg-white border-[#E2E8F0] text-[#475569] hover:border-[#7C3AED]/50 hover:text-[#7C3AED]"
+                : "bg-white border-border text-fg-muted hover:border-[#7C3AED]/50 hover:text-[#7C3AED]"
             } disabled:opacity-60`}
           >
             <span>{tab.emoji}</span>

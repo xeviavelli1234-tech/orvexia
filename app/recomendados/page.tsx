@@ -157,12 +157,12 @@ export default async function RecomendadosPage() {
 
         {/* Tarjeta de acceso */}
         <div className="relative z-10 min-h-screen flex items-center justify-center px-6">
-          <div className="max-w-lg w-full bg-white border border-[#E2E8F0] rounded-3xl shadow-xl p-8 text-center space-y-4">
+          <div className="max-w-lg w-full bg-white border border-border rounded-3xl shadow-xl p-8 text-center space-y-4">
             <div className="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-br from-[#2563EB] to-[#7C3AED] flex items-center justify-center text-white text-xl">
               🔒
             </div>
-            <h1 className="text-2xl font-bold text-[#0F172A]">Recomendaciones personalizadas</h1>
-            <p className="text-[#64748B] text-sm">
+            <h1 className="text-2xl font-bold text-fg">Recomendaciones personalizadas</h1>
+            <p className="text-fg-muted text-sm">
               Inicia sesión o crea una cuenta para ver recomendaciones basadas en tus productos guardados.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -175,7 +175,7 @@ export default async function RecomendadosPage() {
               </Link>
               <Link
                 href="/register"
-                className="px-5 py-2.5 rounded-xl text-sm font-semibold text-[#2563EB] border border-[#2563EB] hover:bg-[#EFF6FF]"
+                className="px-5 py-2.5 rounded-xl text-sm font-semibold text-brand-600 border border-brand-600 hover:bg-brand-50"
               >
                 Crear cuenta
               </Link>
@@ -195,7 +195,7 @@ export default async function RecomendadosPage() {
   });
 
   return (
-    <main className="min-h-screen bg-[#F8FAFC]">
+    <main className="min-h-screen bg-bg-subtle">
       {/* Hero */}
       <section
         className="relative overflow-hidden pt-16 pb-20 px-6 text-center"
@@ -204,7 +204,7 @@ export default async function RecomendadosPage() {
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute -top-20 -left-20 w-80 h-80 rounded-full bg-purple-400 opacity-10 blur-3xl" />
           <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-indigo-300 opacity-10 blur-3xl" />
-          <div className="absolute -bottom-16 left-0 right-0 h-24 bg-[#F8FAFC] rounded-t-[32px]" />
+          <div className="absolute -bottom-16 left-0 right-0 h-24 bg-bg-subtle rounded-t-[32px]" />
         </div>
         <div className="relative max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 mb-5 px-4 py-1.5 rounded-full border border-white/20 bg-white/10 text-xs font-semibold text-white/90">
@@ -228,13 +228,13 @@ export default async function RecomendadosPage() {
               <div className="flex items-center gap-3">
                 <div className="w-1 h-8 rounded-full bg-gradient-to-b from-[#F59E0B] to-[#EAB308]" />
                 <div>
-                  <p className="text-[10px] font-bold text-[#F59E0B] uppercase tracking-widest">Usuarios satisfechos</p>
-                  <h2 id="top-rated-heading" className="text-xl font-bold text-[#0F172A]">
+                  <p className="text-[10px] font-bold text-warn-500 uppercase tracking-widest">Usuarios satisfechos</p>
+                  <h2 id="top-rated-heading" className="text-xl font-bold text-fg">
                     Recomendados para ti
                   </h2>
                 </div>
               </div>
-              <Link href="/popularidad" className="text-sm font-semibold text-[#2563EB] hover:underline">
+              <Link href="/popularidad" className="text-sm font-semibold text-brand-600 hover:underline">
                 Ver ranking →
               </Link>
             </div>
@@ -248,8 +248,8 @@ export default async function RecomendadosPage() {
             <div className="flex items-center gap-3 mb-6">
               <div className="w-1 h-8 rounded-full bg-gradient-to-b from-[#2563EB] to-[#7C3AED]" />
               <div>
-                <p className="text-[10px] font-bold text-[#2563EB] uppercase tracking-widest">Explorar</p>
-                <h2 id="category-heading" className="text-xl font-bold text-[#0F172A]">
+                <p className="text-[10px] font-bold text-brand-600 uppercase tracking-widest">Explorar</p>
+                <h2 id="category-heading" className="text-xl font-bold text-fg">
                   Por categoría
                 </h2>
               </div>
@@ -259,13 +259,13 @@ export default async function RecomendadosPage() {
                 <Link
                   key={category}
                   href={`/categorias/${category.toLowerCase()}`}
-                  className="group bg-white rounded-2xl border border-[#E2E8F0] p-5 flex flex-col items-center text-center hover:border-[#2563EB]/30 hover:shadow-md transition-all duration-200"
+                  className="group bg-white rounded-2xl border border-border p-5 flex flex-col items-center text-center hover:border-brand-600/30 hover:shadow-md transition-all duration-200"
                 >
                   <span className="text-3xl mb-2">{CATEGORY_ICONS[category] ?? "📦"}</span>
-                  <p className="text-sm font-semibold text-[#0F172A] group-hover:text-[#2563EB] transition-colors">
+                  <p className="text-sm font-semibold text-fg group-hover:text-brand-600 transition-colors">
                     {CATEGORY_LABELS[category] ?? category}
                   </p>
-                  <p className="text-xs text-[#94A3B8] mt-0.5">
+                  <p className="text-xs text-fg-subtle mt-0.5">
                     {_count.id} producto{_count.id !== 1 ? "s" : ""}
                   </p>
                 </Link>

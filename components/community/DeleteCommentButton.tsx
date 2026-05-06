@@ -21,7 +21,7 @@ export function DeleteCommentButton({ commentId, postId }: { commentId: string; 
       onClick={handle}
       disabled={pending}
       aria-label="Eliminar comentario"
-      className="ml-auto p-1 rounded-lg text-[#CBD5E1] hover:text-red-400 hover:bg-red-50 transition disabled:opacity-50"
+      className="ml-auto p-1 rounded-lg text-fg-faint hover:text-red-400 hover:bg-red-50 transition disabled:opacity-50"
     >
       {pending ? (
         <svg className="animate-spin" width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">

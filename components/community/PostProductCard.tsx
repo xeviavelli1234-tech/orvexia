@@ -54,7 +54,7 @@ export function PostProductCard({ product }: { product: BasicProduct }) {
       {product.image && (
         <button
           onClick={openModal}
-          className="w-full h-36 rounded-xl bg-[#F8FAFC] border border-[#F1F5F9] p-2 mb-3 flex items-center justify-center overflow-hidden hover:border-[#2563EB]/30 transition cursor-pointer group"
+          className="w-full h-36 rounded-xl bg-bg-subtle border border-border-subtle p-2 mb-3 flex items-center justify-center overflow-hidden hover:border-brand-600/30 transition cursor-pointer group"
           aria-label={`Ver detalles de ${product.name}`}
         >
           <img
@@ -66,7 +66,7 @@ export function PostProductCard({ product }: { product: BasicProduct }) {
       )}
 
       {/* Product name */}
-      <p className="text-sm font-bold text-[#0F172A] leading-snug mb-3">
+      <p className="text-sm font-bold text-fg leading-snug mb-3">
         {product.name}
       </p>
 

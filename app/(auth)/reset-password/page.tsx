@@ -88,20 +88,20 @@ function ResetPasswordForm() {
   return (
     <AuthShell accent="green">
       <div className={`space-y-1 text-center mb-6 ${inter.className}`}>
-        <p className="text-xs font-semibold text-[#10B981] uppercase tracking-widest mb-2">
+        <p className="text-xs font-semibold text-accent-500 uppercase tracking-widest mb-2">
           Casi listo
         </p>
-        <h1 className="text-2xl font-extrabold text-[#0F172A] tracking-tight">
+        <h1 className="text-2xl font-extrabold text-fg tracking-tight">
           Nueva contraseña
         </h1>
-        <p className="text-sm text-[#64748B]">
+        <p className="text-sm text-fg-muted">
           Usa el enlace que recibiste en tu correo. Si expiró, solicita uno nuevo.
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className={`space-y-4 ${inter.className}`}>
         {tokenError && (
-          <p role="alert" aria-live="polite" className="text-xs text-[#EF4444] bg-[#FEF2F2] px-3 py-2 rounded-lg">
+          <p role="alert" aria-live="polite" className="text-xs text-danger-500 bg-danger-50 px-3 py-2 rounded-lg">
             {tokenError}
           </p>
         )}
@@ -138,7 +138,7 @@ function ResetPasswordForm() {
         />
 
         {serverError && (
-          <p className="text-xs text-[#EF4444] bg-[#FEF2F2] px-3 py-2 rounded-lg" role="alert" aria-live="polite">
+          <p className="text-xs text-danger-500 bg-danger-50 px-3 py-2 rounded-lg" role="alert" aria-live="polite">
             {serverError}
           </p>
         )}
@@ -156,16 +156,16 @@ function ResetPasswordForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-[#10B981] hover:bg-[#059669] active:scale-[0.98] text-white font-semibold p-3 rounded-xl shadow-[0_8px_24px_-8px_rgba(16,185,129,0.5)] transition-all duration-150 disabled:opacity-50"
+          className="w-full bg-accent-500 hover:bg-[#059669] active:scale-[0.98] text-white font-semibold p-3 rounded-xl shadow-[0_8px_24px_-8px_rgba(16,185,129,0.5)] transition-all duration-150 disabled:opacity-50"
         >
           {loading ? "Guardando..." : "Actualizar contraseña"}
         </button>
 
-        <div className="text-center text-sm text-[#64748B] pt-1">
+        <div className="text-center text-sm text-fg-muted pt-1">
           <button
             type="button"
             onClick={() => router.push("/forgot-password")}
-            className="text-[#2563EB] hover:text-[#1D4ED8] font-medium transition-colors"
+            className="text-brand-600 hover:text-brand-700 font-medium transition-colors"
           >
             Solicitar un nuevo enlace
           </button>

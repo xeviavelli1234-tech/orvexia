@@ -48,7 +48,7 @@ export function CardVoteButton({
       aria-pressed={liked}
       aria-label={liked ? "Quitar voto" : "Votar"}
       className={`flex flex-col items-center gap-0.5 group/vote transition-all disabled:opacity-50 ${
-        liked ? "text-red-500" : "text-[#CBD5E1] hover:text-red-400"
+        liked ? "text-red-500" : "text-fg-faint hover:text-red-400"
       }`}
     >
       <svg

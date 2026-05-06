@@ -38,8 +38,8 @@ const VALUES = [
     ),
     title: "Comunidad real",
     desc: "Detrás de cada análisis hay personas reales que han comprado, probado y opinado. La comunidad es el corazón de Orvexia.",
-    color: "#059669",
-    bg: "#ECFDF5",
+    color: "var(--accent-600)",
+    bg: "var(--accent-50)",
   },
   {
     icon: (
@@ -49,8 +49,8 @@ const VALUES = [
     ),
     title: "Solo España",
     desc: "Nos especializamos en el mercado español. Los precios, tiendas y disponibilidad que ves son reales para compradores en España.",
-    color: "#DC2626",
-    bg: "#FEF2F2",
+    color: "var(--danger-600)",
+    bg: "var(--danger-50)",
   },
 ];
 
@@ -65,7 +65,7 @@ const STORES = ["Amazon", "PcComponentes", "El Corte Inglés", "Fnac"];
 
 export default function SobreNosotrosPage() {
   return (
-    <main className="bg-[#F8FAFC]">
+    <main className="bg-bg-subtle">
       {/* Hero */}
       <section className="bg-gradient-to-br from-[#0F172A] via-[#1E1B4B] to-[#312E81] pt-16 pb-20 px-6 relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0">
@@ -94,8 +94,8 @@ export default function SobreNosotrosPage() {
 
         {/* Quiénes somos */}
         <section>
-          <h2 className="text-2xl font-extrabold text-[#0F172A] mb-4">¿Quiénes somos?</h2>
-          <div className="prose prose-slate max-w-none text-[#475569] leading-relaxed space-y-4">
+          <h2 className="text-2xl font-extrabold text-fg mb-4">¿Quiénes somos?</h2>
+          <div className="prose prose-slate max-w-none text-fg-muted leading-relaxed space-y-4">
             <p>
               Orvexia nació de una frustración muy concreta: comprar un electrodoméstico en España es
               más difícil de lo que debería. Los comparadores genéricos mezclan categorías sin criterio,
@@ -119,21 +119,21 @@ export default function SobreNosotrosPage() {
         {/* Stats */}
         <section className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {STATS.map((s) => (
-            <div key={s.label} className="bg-white rounded-2xl border border-[#E2E8F0] p-5 text-center">
+            <div key={s.label} className="bg-white rounded-2xl border border-border p-5 text-center">
               <p className="text-3xl font-extrabold text-[#4F46E5] mb-1">{s.value}</p>
-              <p className="text-xs text-[#64748B] leading-snug">{s.label}</p>
+              <p className="text-xs text-fg-muted leading-snug">{s.label}</p>
             </div>
           ))}
         </section>
 
         {/* Cómo funciona */}
         <section>
-          <h2 className="text-2xl font-extrabold text-[#0F172A] mb-2">Cómo funciona Orvexia</h2>
-          <p className="text-[#64748B] mb-8">
+          <h2 className="text-2xl font-extrabold text-fg mb-2">Cómo funciona Orvexia</h2>
+          <p className="text-fg-muted mb-8">
             Comparamos precios en tiempo real de las principales tiendas españolas para que siempre
             veas el mejor precio disponible.
           </p>
-          <div className="bg-white rounded-2xl border border-[#E2E8F0] divide-y divide-[#F1F5F9]">
+          <div className="bg-white rounded-2xl border border-border divide-y divide-[#F1F5F9]">
             {[
               {
                 n: "01",
@@ -161,8 +161,8 @@ export default function SobreNosotrosPage() {
                   {step.n}
                 </span>
                 <div>
-                  <p className="font-bold text-[#0F172A] mb-1">{step.title}</p>
-                  <p className="text-sm text-[#64748B] leading-relaxed">{step.desc}</p>
+                  <p className="font-bold text-fg mb-1">{step.title}</p>
+                  <p className="text-sm text-fg-muted leading-relaxed">{step.desc}</p>
                 </div>
               </div>
             ))}
@@ -171,11 +171,11 @@ export default function SobreNosotrosPage() {
 
         {/* Valores */}
         <section>
-          <h2 className="text-2xl font-extrabold text-[#0F172A] mb-2">Nuestros principios</h2>
-          <p className="text-[#64748B] mb-8">Lo que nos guía en cada decisión que tomamos.</p>
+          <h2 className="text-2xl font-extrabold text-fg mb-2">Nuestros principios</h2>
+          <p className="text-fg-muted mb-8">Lo que nos guía en cada decisión que tomamos.</p>
           <div className="grid sm:grid-cols-2 gap-4">
             {VALUES.map((v) => (
-              <div key={v.title} className="bg-white rounded-2xl border border-[#E2E8F0] p-6 flex gap-4 items-start">
+              <div key={v.title} className="bg-white rounded-2xl border border-border p-6 flex gap-4 items-start">
                 <span
                   className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
                   style={{ backgroundColor: v.bg, color: v.color }}
@@ -183,8 +183,8 @@ export default function SobreNosotrosPage() {
                   {v.icon}
                 </span>
                 <div>
-                  <p className="font-bold text-[#0F172A] mb-1">{v.title}</p>
-                  <p className="text-sm text-[#64748B] leading-relaxed">{v.desc}</p>
+                  <p className="font-bold text-fg mb-1">{v.title}</p>
+                  <p className="text-sm text-fg-muted leading-relaxed">{v.desc}</p>
                 </div>
               </div>
             ))}
@@ -193,15 +193,15 @@ export default function SobreNosotrosPage() {
 
         {/* Tiendas */}
         <section>
-          <h2 className="text-2xl font-extrabold text-[#0F172A] mb-2">Tiendas que comparamos</h2>
-          <p className="text-[#64748B] mb-6">
+          <h2 className="text-2xl font-extrabold text-fg mb-2">Tiendas que comparamos</h2>
+          <p className="text-fg-muted mb-6">
             Trabajamos con las principales tiendas de tecnología y electrodomésticos en España.
           </p>
           <div className="flex flex-wrap gap-3">
             {STORES.map((s) => (
               <span
                 key={s}
-                className="bg-white border border-[#E2E8F0] rounded-full px-5 py-2 text-sm font-semibold text-[#334155]"
+                className="bg-white border border-border rounded-full px-5 py-2 text-sm font-semibold text-fg"
               >
                 {s}
               </span>
@@ -210,7 +210,7 @@ export default function SobreNosotrosPage() {
         </section>
 
         {/* Transparencia afiliados */}
-        <section className="bg-[#FFFBEB] border border-[#FDE68A] rounded-2xl p-6">
+        <section className="bg-amber-50 border border-[#FDE68A] rounded-2xl p-6">
           <div className="flex gap-3 items-start">
             <span className="text-xl flex-shrink-0">💡</span>
             <div>
@@ -228,8 +228,8 @@ export default function SobreNosotrosPage() {
 
         {/* Contacto */}
         <section className="text-center">
-          <h2 className="text-2xl font-extrabold text-[#0F172A] mb-3">¿Tienes alguna pregunta?</h2>
-          <p className="text-[#64748B] mb-6 max-w-lg mx-auto">
+          <h2 className="text-2xl font-extrabold text-fg mb-3">¿Tienes alguna pregunta?</h2>
+          <p className="text-fg-muted mb-6 max-w-lg mx-auto">
             Si eres una marca, tienda o afiliado y quieres ponerte en contacto con nosotros, escríbenos.
             También atendemos sugerencias de usuarios.
           </p>
@@ -242,7 +242,7 @@ export default function SobreNosotrosPage() {
             </Link>
             <Link
               href="/"
-              className="inline-flex items-center justify-center gap-2 bg-white hover:bg-[#F8FAFC] border border-[#E2E8F0] text-[#334155] font-bold px-6 py-3 rounded-xl transition-colors text-sm"
+              className="inline-flex items-center justify-center gap-2 bg-white hover:bg-bg-subtle border border-border text-fg font-bold px-6 py-3 rounded-xl transition-colors text-sm"
             >
               Comparar electrodomésticos
             </Link>

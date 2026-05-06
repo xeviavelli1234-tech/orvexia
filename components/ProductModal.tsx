@@ -72,7 +72,7 @@ function StoreLogo({ store, logo }: { store: string; logo: { src: string; alt: s
 
   if (!logo || failed) {
     return (
-      <span className="inline-flex items-center justify-center w-6 h-6 rounded-sm bg-[#EFF6FF] text-[#1D4ED8] text-[10px] font-bold">
+      <span className="inline-flex items-center justify-center w-6 h-6 rounded-sm bg-brand-50 text-brand-700 text-[10px] font-bold">
         {store.slice(0, 2).toUpperCase()}
       </span>
     );
@@ -119,7 +119,7 @@ function SpecBadges({ description }: { description: string | null }) {
         return (
           <span
             key={regex.toString()}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#F0F7FF] text-[#1E40AF] text-xs font-semibold rounded-xl border border-[#DBEAFE]"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#F0F7FF] text-brand-800 text-xs font-semibold rounded-xl border border-brand-100"
           >
             <span>{icon}</span>
             {label(match)}
@@ -142,7 +142,7 @@ function Stars({ rating }: { rating: number }) {
             </svg>
             {fill > 0 && (
               <span className="absolute inset-0 overflow-hidden" style={{ width: `${fill * 100}%` }}>
-                <svg className="w-4 h-4 text-[#F59E0B]" viewBox="0 0 20 20" fill="currentColor">
+                <svg className="w-4 h-4 text-warn-500" viewBox="0 0 20 20" fill="currentColor">
                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                 </svg>
               </span>
@@ -218,7 +218,7 @@ export default function ProductModal({ product, onClose }: Props) {
         {/* ── Cerrar ── */}
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 md:top-4 md:right-4 z-20 bg-white/90 hover:bg-white text-[#64748B] hover:text-[#0F172A] rounded-full p-1.5 shadow transition-colors"
+          className="absolute top-3 right-3 md:top-4 md:right-4 z-20 bg-white/90 hover:bg-white text-fg-muted hover:text-fg rounded-full p-1.5 shadow transition-colors"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -235,7 +235,7 @@ export default function ProductModal({ product, onClose }: Props) {
           <div className="relative flex-1 overflow-hidden">
             {/* Badge de descuento sobre la imagen — coherente con la card */}
             {realDiscount > 0 && (
-              <span className="absolute top-3 left-3 z-20 bg-[#EF4444] text-white text-xs font-bold px-2 py-1 rounded-lg shadow">
+              <span className="absolute top-3 left-3 z-20 bg-danger-500 text-white text-xs font-bold px-2 py-1 rounded-lg shadow">
                 -{realDiscount}%
               </span>
             )}
@@ -309,7 +309,7 @@ export default function ProductModal({ product, onClose }: Props) {
                   key={i}
                   onClick={() => setActive(i)}
                   className={`flex-shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-xl overflow-hidden border-2 transition-all duration-200 bg-white ${
-                    active === i ? "border-[#2563EB] shadow-md scale-105" : "border-transparent opacity-50 hover:opacity-90"
+                    active === i ? "border-brand-600 shadow-md scale-105" : "border-transparent opacity-50 hover:opacity-90"
                   }`}
                 >
                   <img
@@ -333,9 +333,9 @@ export default function ProductModal({ product, onClose }: Props) {
         <div className="md:w-1/2 flex flex-col flex-1 min-h-0 overflow-y-auto">
           <div className="p-4 md:p-6 flex flex-col gap-4 flex-1">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold tracking-widest text-[#2563EB] uppercase">{product.brand}</span>
-              <span className="text-[#CBD5E1]">·</span>
-              <span className="text-xs text-[#64748B]">{{
+              <span className="text-xs font-bold tracking-widest text-brand-600 uppercase">{product.brand}</span>
+              <span className="text-fg-faint">·</span>
+              <span className="text-xs text-fg-muted">{{
                 TELEVISORES: "Televisores", LAVADORAS: "Lavadoras", FRIGORIFICOS: "Frigoríficos",
                 LAVAVAJILLAS: "Lavavajillas", SECADORAS: "Secadoras", HORNOS: "Hornos",
                 MICROONDAS: "Microondas", ASPIRADORAS: "Aspiradoras", CAFETERAS: "Cafeteras",
@@ -344,7 +344,7 @@ export default function ProductModal({ product, onClose }: Props) {
             </div>
 
             <div className="flex items-start justify-between gap-3">
-              <h2 className="text-lg md:text-xl font-bold text-[#0F172A] leading-snug">{product.name}</h2>
+              <h2 className="text-lg md:text-xl font-bold text-fg leading-snug">{product.name}</h2>
               <div className="flex items-center gap-2 flex-wrap">
                 {mejorOferta && (
                   <PriceAlertButton
@@ -360,14 +360,14 @@ export default function ProductModal({ product, onClose }: Props) {
 
             {product.rating != null && (
               <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-[#0F172A]">{product.rating.toFixed(1)}</span>
+                <span className="text-sm font-bold text-fg">{product.rating.toFixed(1)}</span>
                 <Stars rating={product.rating} />
                 {product.reviewCount != null && (
                   <a
                     href={mejorOferta?.externalUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-[#2563EB] hover:underline"
+                    className="text-xs text-brand-600 hover:underline"
                   >
                     {product.reviewCount.toLocaleString("es-ES")} reseñas
                   </a>
@@ -377,14 +377,14 @@ export default function ProductModal({ product, onClose }: Props) {
 
             {mejorOferta && (
               <div className="flex items-end gap-2 md:gap-3 flex-wrap py-3 border-t border-b border-[#E5F0FF]">
-                <span className="text-2xl md:text-3xl font-bold text-[#0F172A]">{formatEuro(mejorOferta.priceCurrent)} €</span>
+                <span className="text-2xl md:text-3xl font-bold text-fg">{formatEuro(mejorOferta.priceCurrent)} €</span>
                 {mejorOferta.priceOld != null && mejorOferta.priceOld > mejorOferta.priceCurrent &&
                   mejorOferta.priceOld / mejorOferta.priceCurrent <= 2.5 && (
-                  <span className="text-base text-[#94A3B8] line-through mb-0.5">{formatEuro(mejorOferta.priceOld)} €</span>
+                  <span className="text-base text-fg-subtle line-through mb-0.5">{formatEuro(mejorOferta.priceOld)} €</span>
                 )}
                 {realDiscount > 0 &&
                   mejorOferta.priceOld != null && (
-                  <span className="mb-0.5 px-2 py-0.5 bg-[#EFF6FF] text-[#2563EB] text-xs font-bold rounded-lg">
+                  <span className="mb-0.5 px-2 py-0.5 bg-brand-50 text-brand-600 text-xs font-bold rounded-lg">
                     -{realDiscount}%
                   </span>
                 )}
@@ -403,7 +403,7 @@ export default function ProductModal({ product, onClose }: Props) {
             )}
 
             {product.description && (
-              <p className="text-sm text-[#475569] leading-relaxed">{product.description}</p>
+              <p className="text-sm text-fg-muted leading-relaxed">{product.description}</p>
             )}
 
             {/* ── Specs destacadas ── */}
@@ -421,7 +421,7 @@ export default function ProductModal({ product, onClose }: Props) {
             {product.slug && (
               <a
                 href={`/opiniones?producto=${product.slug}`}
-                className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl text-sm font-semibold border border-[#E2E8F0] text-[#475569] hover:border-amber-400 hover:text-amber-600 hover:bg-amber-50 transition-all"
+                className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl text-sm font-semibold border border-border text-fg-muted hover:border-amber-400 hover:text-amber-600 hover:bg-amber-50 transition-all"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                   <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -439,13 +439,13 @@ export default function ProductModal({ product, onClose }: Props) {
               <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-[#E5F0FF]">
                 <div className="flex items-center gap-2">
                   <StoreLogo store={mejorOferta.store} logo={storeLogo} />
-                  <span className="text-sm font-medium text-[#0F172A]">{mejorOferta.store}</span>
+                  <span className="text-sm font-medium text-fg">{mejorOferta.store}</span>
                 </div>
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 ml-0 sm:ml-auto w-full sm:w-auto">
                   {product.slug && (
                     <a
                       href={`/productos/${product.slug}`}
-                      className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-sm font-semibold border border-[#CBD5E1] text-[#334155] hover:border-[#94A3B8] hover:bg-[#F8FAFC] transition-colors w-full sm:w-auto"
+                      className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-sm font-semibold border border-border-strong text-fg hover:border-[#94A3B8] hover:bg-bg-subtle transition-colors w-full sm:w-auto"
                     >
                       Ver análisis
                     </a>
@@ -454,7 +454,7 @@ export default function ProductModal({ product, onClose }: Props) {
                     href={mejorOferta.externalUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm text-center w-full sm:w-auto"
+                    className="bg-brand-600 hover:bg-brand-700 text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm text-center w-full sm:w-auto"
                   >
                     Ver en {mejorOferta.store} →
                   </a>

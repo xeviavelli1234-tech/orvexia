@@ -23,12 +23,12 @@ interface BuySignalData {
 }
 
 const COLOR_MAP = {
-  green: { bg: "#DCFCE7", text: "#166534", dot: "#22C55E", bar: "#22C55E", ring: "#22C55E", light: "#F0FDF4" },
-  blue: { bg: "#DBEAFE", text: "#1E40AF", dot: "#3B82F6", bar: "#3B82F6", ring: "#3B82F6", light: "#EFF6FF" },
+  green: { bg: "#DCFCE7", text: "#166534", dot: "#22C55E", bar: "#22C55E", ring: "#22C55E", light: "var(--accent-50)" },
+  blue: { bg: "var(--brand-100)", text: "#1E40AF", dot: "var(--brand-500)", bar: "var(--brand-500)", ring: "var(--brand-500)", light: "var(--brand-50)" },
   yellow: { bg: "#FEF9C3", text: "#854D0E", dot: "#EAB308", bar: "#EAB308", ring: "#EAB308", light: "#FEFCE8" },
   orange: { bg: "#FFEDD5", text: "#9A3412", dot: "#F97316", bar: "#F97316", ring: "#F97316", light: "#FFF7ED" },
-  red: { bg: "#FEE2E2", text: "#991B1B", dot: "#EF4444", bar: "#EF4444", ring: "#EF4444", light: "#FEF2F2" },
-  gray: { bg: "#F1F5F9", text: "#64748B", dot: "#94A3B8", bar: "#94A3B8", ring: "#94A3B8", light: "#F8FAFC" },
+  red: { bg: "#FEE2E2", text: "#991B1B", dot: "var(--danger-500)", bar: "var(--danger-500)", ring: "var(--danger-500)", light: "var(--danger-50)" },
+  gray: { bg: "var(--bg-subtle)", text: "var(--fg-muted)", dot: "var(--fg-subtle)", bar: "var(--fg-subtle)", ring: "var(--fg-subtle)", light: "var(--bg)" },
 };
 
 export function BuySignalBadge({ productId, store }: { productId: string; store: string }) {
@@ -47,8 +47,8 @@ export function BuySignalBadge({ productId, store }: { productId: string; store:
 
   if (loading) {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#F1F5F9] animate-pulse">
-        <span className="w-8 h-3 rounded bg-[#E2E8F0]" />
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-bg-subtle animate-pulse">
+        <span className="w-8 h-3 rounded bg-bg-muted" />
       </span>
     );
   }
@@ -72,7 +72,7 @@ function ScoreGauge({ score, color }: { score: number; color: string }) {
 
   return (
     <svg width="72" height="72" viewBox="0 0 72 72" className="rotate-[-90deg]">
-      <circle cx="36" cy="36" r={r} fill="none" stroke="#E2E8F0" strokeWidth="7" />
+      <circle cx="36" cy="36" r={r} fill="none" stroke="var(--border)" strokeWidth="7" />
       <circle
         cx="36"
         cy="36"
@@ -93,7 +93,7 @@ function TrendArrow({ slope }: { slope: number | null }) {
 
   const up = slope > 0.1;
   const down = slope < -0.1;
-  const color = up ? "#EF4444" : down ? "#22C55E" : "#94A3B8";
+  const color = up ? "var(--danger-500)" : down ? "#22C55E" : "var(--fg-subtle)";
   const icon = up ? "↗" : down ? "↘" : "→";
   const text = up
     ? `Subiendo ${slope.toFixed(2)} EUR/dia`
@@ -131,10 +131,10 @@ function PriceRangeBar({
 
   return (
     <div className="space-y-2">
-      <p className="text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider">
+      <p className="text-[10px] font-semibold text-fg-subtle uppercase tracking-wider">
         Rango de precio - 90 dias {estimated ? "(estimado)" : ""}
       </p>
-      <div className="relative h-2.5 rounded-full bg-[#E2E8F0] overflow-visible">
+      <div className="relative h-2.5 rounded-full bg-bg-muted overflow-visible">
         <div className="absolute left-0 top-0 h-full rounded-full" style={{ width: `${pctCur}%`, backgroundColor: barColor, opacity: 0.35 }} />
         <div className="absolute top-1/2 -translate-y-1/2 w-0.5 h-3.5 rounded-full bg-[#94A3B8]" style={{ left: `${pctAvg}%` }} />
         <div
@@ -143,9 +143,9 @@ function PriceRangeBar({
         />
       </div>
       <div className="flex justify-between text-[10px] font-semibold">
-        <span className="text-[#64748B]">Min {min.toFixed(0)} EUR</span>
-        <span className="text-[#94A3B8]">Media {avg.toFixed(0)} EUR</span>
-        <span className="text-[#64748B]">Max {max.toFixed(0)} EUR</span>
+        <span className="text-fg-muted">Min {min.toFixed(0)} EUR</span>
+        <span className="text-fg-subtle">Media {avg.toFixed(0)} EUR</span>
+        <span className="text-fg-muted">Max {max.toFixed(0)} EUR</span>
       </div>
     </div>
   );
@@ -173,18 +173,18 @@ function FactorCard({
   const pct = noData || score === null ? 0 : (score / max) * 100;
 
   return (
-    <div className="rounded-xl border border-[#E2E8F0] p-3 flex flex-col gap-2 bg-white">
+    <div className="rounded-xl border border-border p-3 flex flex-col gap-2 bg-white">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <span className="text-base leading-none">{icon}</span>
-          <span className={`text-[10px] font-bold uppercase tracking-wide ${noData ? "text-[#CBD5E1]" : "text-[#475569]"}`}>{label}</span>
+          <span className={`text-[10px] font-bold uppercase tracking-wide ${noData ? "text-fg-faint" : "text-fg-muted"}`}>{label}</span>
         </div>
-        <span className={`text-xs font-black ${noData ? "text-[#CBD5E1]" : "text-[#0F172A]"}`}>{noData ? "-" : `${score}/${max}`}</span>
+        <span className={`text-xs font-black ${noData ? "text-fg-faint" : "text-fg"}`}>{noData ? "-" : `${score}/${max}`}</span>
       </div>
-      <div className="h-1.5 rounded-full bg-[#F1F5F9] overflow-hidden">
-        <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: noData ? "#E2E8F0" : barColor }} />
+      <div className="h-1.5 rounded-full bg-bg-subtle overflow-hidden">
+        <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: noData ? "var(--border)" : barColor }} />
       </div>
-      <p className={`text-[10px] leading-tight ${noData ? "text-[#CBD5E1]" : "text-[#94A3B8]"}`}>
+      <p className={`text-[10px] leading-tight ${noData ? "text-fg-faint" : "text-fg-subtle"}`}>
         {noData ? "Sin datos aun" : estimated ? `Estimado: ${context}` : context}
       </p>
     </div>
@@ -208,12 +208,12 @@ export function BuySignalPanel({ productId, store }: { productId: string; store:
 
   if (loading) {
     return (
-      <div className="rounded-2xl border border-[#E2E8F0] p-4 animate-pulse bg-[#F8FAFC]">
+      <div className="rounded-2xl border border-border p-4 animate-pulse bg-bg-subtle">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-[#E2E8F0]" />
+          <div className="w-12 h-12 rounded-full bg-bg-muted" />
           <div className="flex-1 space-y-2">
-            <div className="h-3.5 w-32 bg-[#E2E8F0] rounded" />
-            <div className="h-2.5 w-20 bg-[#E2E8F0] rounded" />
+            <div className="h-3.5 w-32 bg-bg-muted rounded" />
+            <div className="h-2.5 w-20 bg-bg-muted rounded" />
           </div>
         </div>
       </div>
@@ -259,21 +259,21 @@ export function BuySignalPanel({ productId, store }: { productId: string; store:
   }
 
   return (
-    <div className="rounded-2xl border border-[#E2E8F0] overflow-hidden bg-white">
-      <button onClick={() => setOpen((o) => !o)} className="w-full flex items-center gap-4 px-4 py-3.5 hover:bg-[#F8FAFC] transition-colors text-left">
+    <div className="rounded-2xl border border-border overflow-hidden bg-white">
+      <button onClick={() => setOpen((o) => !o)} className="w-full flex items-center gap-4 px-4 py-3.5 hover:bg-bg-subtle transition-colors text-left">
         <div className="relative flex-shrink-0 w-[72px] h-[72px]">
           <ScoreGauge score={data.score} color={c.ring} />
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <span className="text-lg font-black leading-none" style={{ color: c.text }}>
               {data.score}
             </span>
-            <span className="text-[9px] font-semibold text-[#94A3B8] leading-tight">/100</span>
+            <span className="text-[9px] font-semibold text-fg-subtle leading-tight">/100</span>
           </div>
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8] mb-0.5">Analisis de compra</p>
-          <p className="text-base font-black text-[#0F172A] leading-tight">{data.label}</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-fg-subtle mb-0.5">Analisis de compra</p>
+          <p className="text-base font-black text-fg leading-tight">{data.label}</p>
           <div className="flex items-center gap-2 mt-1 flex-wrap">
             <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: c.bg, color: c.text }}>
               <span className="w-1 h-1 rounded-full" style={{ backgroundColor: c.dot }} />
@@ -288,20 +288,20 @@ export function BuySignalPanel({ productId, store }: { productId: string; store:
           </div>
         </div>
 
-        <svg className={`w-4 h-4 text-[#94A3B8] flex-shrink-0 transition-transform duration-300 ${open ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <svg className={`w-4 h-4 text-fg-subtle flex-shrink-0 transition-transform duration-300 ${open ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
         </svg>
       </button>
 
       {open && (
-        <div className="border-t border-[#F1F5F9] px-4 pb-4 space-y-4 pt-3">
+        <div className="border-t border-border-subtle px-4 pb-4 space-y-4 pt-3">
           <div className="rounded-xl px-3.5 py-3 flex gap-2.5 items-start" style={{ backgroundColor: c.light }}>
             <span className="text-base leading-none mt-0.5">💬</span>
-            <p className="text-xs text-[#475569] leading-relaxed">{data.recommendation}</p>
+            <p className="text-xs text-fg-muted leading-relaxed">{data.recommendation}</p>
           </div>
 
           {hasPrice && reconstructedCurrent !== null && (
-            <div className="rounded-xl border border-[#E2E8F0] px-4 py-3">
+            <div className="rounded-xl border border-border px-4 py-3">
               <PriceRangeBar
                 min={data.priceMin90d!}
                 avg={data.priceAvg90d!}

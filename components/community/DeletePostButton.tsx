@@ -20,7 +20,7 @@ export function DeletePostButton({ postId }: { postId: string }) {
   if (confirm) {
     return (
       <div className="flex items-center gap-2">
-        <span className="text-xs text-[#64748B]">¿Eliminar?</span>
+        <span className="text-xs text-fg-muted">¿Eliminar?</span>
         <button
           onClick={handle}
           disabled={pending}
@@ -31,7 +31,7 @@ export function DeletePostButton({ postId }: { postId: string }) {
         <button
           onClick={() => setConfirm(false)}
           disabled={pending}
-          className="px-3 py-1.5 rounded-lg text-xs font-semibold text-[#64748B] bg-[#F1F5F9] hover:bg-[#E2E8F0] transition"
+          className="px-3 py-1.5 rounded-lg text-xs font-semibold text-fg-muted bg-bg-subtle hover:bg-bg-muted transition"
         >
           Cancelar
         </button>

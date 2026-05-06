@@ -44,14 +44,14 @@ export function CategoryTabs({ categories }: { categories: string[] }) {
             className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
               active
                 ? "bg-[#059669] text-white border-[#059669] shadow-sm"
-                : "bg-white text-[#64748B] border-[#E2E8F0] hover:border-[#059669]/40 hover:text-[#059669]"
+                : "bg-white text-fg-muted border-border hover:border-[#059669]/40 hover:text-accent-600"
             } disabled:opacity-60`}
           >
             {label}
           </button>
         );
       })}
-      {pending && <span className="ml-1 text-xs text-[#059669] self-center animate-pulse">Cargando…</span>}
+      {pending && <span className="ml-1 text-xs text-accent-600 self-center animate-pulse">Cargando…</span>}
     </div>
   );
 }

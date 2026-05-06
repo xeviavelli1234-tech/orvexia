@@ -7,7 +7,7 @@ export function CookieSettingsButton() {
     <button
       type="button"
       onClick={() => window.dispatchEvent(new CustomEvent(COOKIE_SETTINGS_EVENT))}
-      className="text-xs text-[#64748B] hover:text-white transition-colors"
+      className="text-xs text-fg-muted hover:text-white transition-colors"
     >
       Gestionar cookies
     </button>

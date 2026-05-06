@@ -83,11 +83,11 @@ export function InputField({
     ? "border-[#EF4444] focus:border-[#EF4444] focus:ring-[#EF4444]/20"
     : hasSuccess
     ? "border-[#22C55E] focus:border-[#22C55E] focus:ring-[#22C55E]/20"
-    : "border-[#E2E8F0] focus:border-[#2563EB] focus:ring-[#2563EB]/20";
+    : "border-border focus:border-brand-600 focus:ring-[#2563EB]/20";
 
   return (
     <div className="space-y-1">
-      <label htmlFor={id} className="block text-sm font-medium text-[#0F172A]">
+      <label htmlFor={id} className="block text-sm font-medium text-fg">
         {label}
       </label>
 
@@ -104,7 +104,7 @@ export function InputField({
           disabled={disabled}
           aria-invalid={hasError}
           aria-describedby={hasError ? `${id}-error` : undefined}
-          className={`p-3 pr-10 rounded-[10px] block bg-[#F8FAFC] text-[#0F172A] w-full border placeholder-[#94A3B8] focus:outline-none focus:ring-2 transition-all duration-200 ${borderCls} disabled:opacity-60`}
+          className={`p-3 pr-10 rounded-[10px] block bg-bg-subtle text-fg w-full border placeholder-[#94A3B8] focus:outline-none focus:ring-2 transition-all duration-200 ${borderCls} disabled:opacity-60`}
         />
 
         {hasSuccess && (
@@ -113,7 +113,7 @@ export function InputField({
           </span>
         )}
         {hasError && (
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#EF4444] pointer-events-none">
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-danger-500 pointer-events-none">
             <XIcon />
           </span>
         )}
@@ -124,7 +124,7 @@ export function InputField({
           id={`${id}-error`}
           role="alert"
           aria-live="polite"
-          className="text-xs text-[#EF4444] flex items-center gap-1 field-msg"
+          className="text-xs text-danger-500 flex items-center gap-1 field-msg"
         >
           <ErrorIcon />
           {error}

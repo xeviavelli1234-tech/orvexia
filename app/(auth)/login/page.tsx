@@ -16,16 +16,16 @@ export default async function LoginPage({
   const { error } = await searchParams;
 
   return (
-    <AuthShell accent="orange">
-      <div className={`space-y-1 text-center mb-6 ${inter.className}`}>
-        <p className="text-xs font-semibold text-[#F97316] uppercase tracking-widest mb-2">
+    <AuthShell accent="blue">
+      <div className={`space-y-1 text-center mb-7 ${inter.className}`}>
+        <p className="text-[10px] font-bold text-brand-600 uppercase tracking-[0.2em] mb-2.5">
           Bienvenido de vuelta
         </p>
-        <h1 className="text-2xl font-extrabold text-[#0F172A] tracking-tight">
+        <h1 className="text-2xl font-extrabold text-fg tracking-tight">
           Inicia sesión
         </h1>
-        <p className="text-sm text-[#64748B]">
-          Accede a tu cuenta para ver tus ofertas guardadas
+        <p className="text-sm text-fg-muted mt-1.5">
+          Accede para ver tus alertas y favoritos
         </p>
       </div>
       <LoginForm oauthError={error} />

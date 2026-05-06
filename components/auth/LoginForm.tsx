@@ -32,9 +32,9 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="w-full bg-[#F97316] text-white p-3 rounded-[10px] shadow-[0_16px_30px_-14px_rgba(249,115,22,0.55)] hover:bg-[#EA580C] hover:translate-y-[-1px] hover:shadow-[0_18px_34px_-14px_rgba(249,115,22,0.65)] transition disabled:opacity-50"
+      className="w-full bg-brand-600 hover:bg-brand-700 active:scale-[0.98] text-white font-bold h-11 rounded-xl shadow-md shadow-brand-600/25 hover:shadow-lg hover:shadow-brand-600/35 transition-all disabled:opacity-50 disabled:pointer-events-none"
     >
-      {pending ? "Iniciando sesión..." : "Login"}
+      {pending ? "Iniciando sesión…" : "Iniciar sesión"}
     </button>
   );
 }
@@ -141,13 +141,13 @@ export function LoginForm({ oauthError }: { oauthError?: string }) {
         <p
           role="alert"
           aria-live="polite"
-          className="text-xs text-[#EF4444] text-center field-msg"
+          className="text-xs text-danger-500 text-center field-msg"
         >
           {errorMsg}
         </p>
       )}
 
-      <div className="text-center text-[#94A3B8] text-[11px] tracking-[0.18em] uppercase">
+      <div className="text-center text-fg-subtle text-[11px] tracking-[0.18em] uppercase">
         o ingresa con email
       </div>
 
@@ -163,7 +163,7 @@ export function LoginForm({ oauthError }: { oauthError?: string }) {
         className="space-y-4"
       >
         {info && (
-          <p className="text-xs text-[#64748B] text-center field-msg">{info}</p>
+          <p className="text-xs text-fg-muted text-center field-msg">{info}</p>
         )}
 
         <InputField
@@ -198,9 +198,9 @@ export function LoginForm({ oauthError }: { oauthError?: string }) {
           <input
             type="checkbox"
             name="rememberMe"
-            className="h-4 w-4 rounded border-[#CBD5E1] accent-[#F97316]"
+            className="h-4 w-4 rounded border-border-strong accent-brand-600"
           />
-          <span className="text-sm text-[#64748B]">Recuérdame</span>
+          <span className="text-sm text-fg-muted">Recuérdame</span>
         </label>
 
         {needsVerification && (
@@ -208,17 +208,17 @@ export function LoginForm({ oauthError }: { oauthError?: string }) {
             <p
               role="alert"
               aria-live="polite"
-              className="text-xs text-[#EF4444] field-msg"
+              className="text-xs text-danger-500 field-msg"
             >
               Debes verificar tu correo antes de ingresar.
             </p>
-            <div className="flex items-center justify-between text-xs text-[#334155]">
+            <div className="flex items-center justify-between text-xs text-fg">
               <span>¿No recibiste el correo?</span>
               <button
                 type="button"
                 onClick={handleResend}
                 disabled={resendLoading}
-                className="text-[#2563EB] hover:text-[#1D4ED8] transition-colors disabled:opacity-60"
+                className="text-brand-600 hover:text-brand-700 transition-colors disabled:opacity-60"
               >
                 {resendLoading ? "Reenviando..." : "Reenviar verificación"}
               </button>
@@ -229,14 +229,14 @@ export function LoginForm({ oauthError }: { oauthError?: string }) {
         <SubmitButton />
       </form>
 
-      <p className={`text-center text-sm text-[#64748B] ${playfair.className}`}>
+      <p className={`text-center text-sm text-fg-muted ${playfair.className}`}>
         ¿No tienes cuenta?{" "}
-        <Link href="/register" className="font-medium text-[#2563EB] hover:underline">
+        <Link href="/register" className="font-medium text-brand-600 hover:underline">
           Regístrate
         </Link>
       </p>
-      <p className="text-center text-xs text-[#64748B]">
-        <Link href="/forgot-password" className="text-[#2563EB] hover:text-[#1D4ED8]">
+      <p className="text-center text-xs text-fg-muted">
+        <Link href="/forgot-password" className="text-brand-600 hover:text-brand-700">
           ¿Olvidaste tu contraseña?
         </Link>
       </p>

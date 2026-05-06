@@ -54,7 +54,7 @@ export default function FotosPage() {
               >
                 Ir al foro
               </a>
-              <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-[#0F172A] bg-white shadow-[0_10px_30px_rgba(255,255,255,0.15)]">
+              <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-fg bg-white shadow-[0_10px_30px_rgba(255,255,255,0.15)]">
                 Lanzamiento: pronto
               </span>
             </div>

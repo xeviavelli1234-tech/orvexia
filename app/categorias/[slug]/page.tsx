@@ -10,12 +10,12 @@ const CATEGORY_META: Record<string, {
   key: Category; label: string; icon: string;
   color: string; bg: string; gradient: string; desc: string;
 }> = {
-  televisores:          { key: "TELEVISORES",          label: "Televisores",          icon: "📺", color: "#2563EB", bg: "#EFF6FF", gradient: "from-[#1E40AF] to-[#2563EB]", desc: "Smart TV, QLED, OLED, 4K y más" },
+  televisores:          { key: "TELEVISORES",          label: "Televisores",          icon: "📺", color: "var(--brand-600)", bg: "var(--brand-50)", gradient: "from-[#1E40AF] to-[#2563EB]", desc: "Smart TV, QLED, OLED, 4K y más" },
   lavadoras:            { key: "LAVADORAS",             label: "Lavadoras",            icon: "🫧", color: "#7C3AED", bg: "#F5F3FF", gradient: "from-[#6D28D9] to-[#7C3AED]", desc: "Carga frontal, superior y secadora-lavadora" },
   frigorificos:         { key: "FRIGORIFICOS",          label: "Frigoríficos",         icon: "🧊", color: "#0891B2", bg: "#ECFEFF", gradient: "from-[#0E7490] to-[#0891B2]", desc: "Combi, americano, bajo encimera" },
-  lavavajillas:         { key: "LAVAVAJILLAS",          label: "Lavavajillas",         icon: "🍽️", color: "#059669", bg: "#ECFDF5", gradient: "from-[#047857] to-[#059669]", desc: "Integrado, libre instalación y compacto" },
+  lavavajillas:         { key: "LAVAVAJILLAS",          label: "Lavavajillas",         icon: "🍽️", color: "var(--accent-600)", bg: "var(--accent-50)", gradient: "from-[#047857] to-[#059669]", desc: "Integrado, libre instalación y compacto" },
   secadoras:            { key: "SECADORAS",             label: "Secadoras",            icon: "💨", color: "#D97706", bg: "#FFFBEB", gradient: "from-[#B45309] to-[#D97706]", desc: "Bomba de calor y condensación" },
-  hornos:               { key: "HORNOS",                label: "Hornos",               icon: "🔥", color: "#DC2626", bg: "#FEF2F2", gradient: "from-[#B91C1C] to-[#DC2626]", desc: "Integrable, sobremesa y microondas-horno" },
+  hornos:               { key: "HORNOS",                label: "Hornos",               icon: "🔥", color: "var(--danger-600)", bg: "var(--danger-50)", gradient: "from-[#B91C1C] to-[#DC2626]", desc: "Integrable, sobremesa y microondas-horno" },
   microondas:           { key: "MICROONDAS",            label: "Microondas",           icon: "📡", color: "#9333EA", bg: "#FAF5FF", gradient: "from-[#7E22CE] to-[#9333EA]", desc: "Grill, convección y libre instalación" },
   aspiradoras:          { key: "ASPIRADORAS",           label: "Aspiradoras",          icon: "🌀", color: "#0369A1", bg: "#F0F9FF", gradient: "from-[#075985] to-[#0369A1]", desc: "Robot, sin cable y con bolsa" },
   cafeteras:            { key: "CAFETERAS",             label: "Cafeteras",            icon: "☕", color: "#92400E", bg: "#FEF3C7", gradient: "from-[#78350F] to-[#92400E]", desc: "Espresso, cápsulas y de goteo" },

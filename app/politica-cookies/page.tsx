@@ -45,21 +45,21 @@ const sections = [
 
 export default function CookiePolicyPage() {
   return (
-    <main className="bg-[#F8FAFC]">
+    <main className="bg-bg-subtle">
       <div className="mx-auto max-w-4xl px-6 py-12 sm:py-16">
-        <h1 className="text-3xl font-black tracking-tight text-[#0F172A] sm:text-4xl">
+        <h1 className="text-3xl font-black tracking-tight text-fg sm:text-4xl">
           Politica de cookies
         </h1>
-        <p className="mt-4 text-sm leading-relaxed text-[#334155]">
+        <p className="mt-4 text-sm leading-relaxed text-fg">
           Esta politica explica como usamos cookies en Orvexia y como puedes gestionar tu
           consentimiento.
         </p>
 
         <section className="mt-8 space-y-4">
           {sections.map((item) => (
-            <article key={item.title} className="rounded-2xl border border-[#E2E8F0] bg-white p-5">
-              <h2 className="text-base font-bold text-[#0F172A]">{item.title}</h2>
-              <p className="mt-2 text-sm leading-relaxed text-[#334155]">{item.content}</p>
+            <article key={item.title} className="rounded-2xl border border-border bg-white p-5">
+              <h2 className="text-base font-bold text-fg">{item.title}</h2>
+              <p className="mt-2 text-sm leading-relaxed text-fg">{item.content}</p>
             </article>
           ))}
         </section>

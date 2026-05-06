@@ -21,8 +21,8 @@ const SECTIONS = [
             ["Actividad", "Comparador de precios de electrodomésticos y tecnología de hogar"],
           ].map(([k, v]) => (
             <li key={k as string} className="flex gap-2 text-sm">
-              <span className="font-semibold text-[#0F172A] flex-shrink-0">{k}:</span>
-              <span className="text-[#475569]">{v}</span>
+              <span className="font-semibold text-fg flex-shrink-0">{k}:</span>
+              <span className="text-fg-muted">{v}</span>
             </li>
           ))}
         </ul>
@@ -57,7 +57,7 @@ const SECTIONS = [
           ].map((item) => (
             <li key={item} className="flex gap-3 items-start text-sm">
               <span className="mt-1 w-1.5 h-1.5 rounded-full bg-[#4F46E5] flex-shrink-0" />
-              <span className="text-[#475569]">{item}</span>
+              <span className="text-fg-muted">{item}</span>
             </li>
           ))}
         </ul>
@@ -137,7 +137,7 @@ const SECTIONS = [
         ].map((item) => (
           <li key={item} className="flex gap-3 items-start text-sm">
             <span className="mt-1 w-1.5 h-1.5 rounded-full bg-[#4F46E5] flex-shrink-0" />
-            <span className="text-[#475569]">{item}</span>
+            <span className="text-fg-muted">{item}</span>
           </li>
         ))}
       </ul>
@@ -183,22 +183,22 @@ const SECTIONS = [
 
 export default function AvisoLegalPage() {
   return (
-    <main className="bg-[#F8FAFC]">
+    <main className="bg-bg-subtle">
       {/* Header */}
-      <div className="bg-white border-b border-[#E2E8F0]">
+      <div className="bg-white border-b border-border">
         <div className="max-w-4xl mx-auto px-6 py-10">
-          <div className="flex items-center gap-2 text-xs text-[#64748B] mb-3">
+          <div className="flex items-center gap-2 text-xs text-fg-muted mb-3">
             <Link href="/" className="hover:text-[#4F46E5] transition-colors">Inicio</Link>
             <span>/</span>
             <span>Aviso legal</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-black text-[#0F172A] tracking-tight mb-3">
+          <h1 className="text-3xl sm:text-4xl font-black text-fg tracking-tight mb-3">
             Aviso Legal y Términos de Uso
           </h1>
-          <p className="text-sm text-[#64748B]">
-            Última actualización: <strong className="text-[#334155]">18 de abril de 2026</strong>
+          <p className="text-sm text-fg-muted">
+            Última actualización: <strong className="text-fg">18 de abril de 2026</strong>
           </p>
-          <p className="mt-3 text-sm text-[#475569] leading-relaxed max-w-2xl">
+          <p className="mt-3 text-sm text-fg-muted leading-relaxed max-w-2xl">
             Este documento establece las condiciones legales que rigen el acceso y uso de{" "}
             <strong>orvexia.es</strong>, en cumplimiento de la{" "}
             <strong>Ley 34/2002 de Servicios de la Sociedad de la Información (LSSICE)</strong> y
@@ -232,22 +232,22 @@ export default function AvisoLegalPage() {
           <article
             key={s.title}
             id={`seccion-${i + 1}`}
-            className="bg-white rounded-2xl border border-[#E2E8F0] p-6 scroll-mt-6"
+            className="bg-white rounded-2xl border border-border p-6 scroll-mt-6"
           >
-            <h2 className="text-base font-bold text-[#0F172A] mb-4">{s.title}</h2>
-            <div className="text-sm leading-relaxed text-[#334155]">{s.content}</div>
+            <h2 className="text-base font-bold text-fg mb-4">{s.title}</h2>
+            <div className="text-sm leading-relaxed text-fg">{s.content}</div>
           </article>
         ))}
 
         {/* Footer legal */}
         <div className="text-center pt-4">
-          <p className="text-xs text-[#94A3B8]">
+          <p className="text-xs text-fg-subtle">
             Orvexia · orvexia.es ·{" "}
             <a href="mailto:orvexiaesp@gmail.com" className="hover:text-[#4F46E5] transition-colors">
               orvexiaesp@gmail.com
             </a>
           </p>
-          <p className="text-xs text-[#94A3B8] mt-1">
+          <p className="text-xs text-fg-subtle mt-1">
             Versión 1.0 — Última revisión: 18 de abril de 2026
           </p>
         </div>

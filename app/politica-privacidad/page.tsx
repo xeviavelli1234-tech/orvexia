@@ -52,8 +52,8 @@ const SECTIONS = [
             <li key={item.label} className="flex gap-3 items-start">
               <span className="mt-0.5 w-2 h-2 rounded-full bg-[#4F46E5] flex-shrink-0" />
               <span>
-                <strong className="text-[#0F172A]">{item.label}:</strong>{" "}
-                <span className="text-[#475569]">{item.desc}</span>
+                <strong className="text-fg">{item.label}:</strong>{" "}
+                <span className="text-fg-muted">{item.desc}</span>
               </span>
             </li>
           ))}
@@ -66,9 +66,9 @@ const SECTIONS = [
     content: (
       <table className="w-full text-sm border-collapse mt-1">
         <thead>
-          <tr className="bg-[#F1F5F9]">
-            <th className="text-left px-3 py-2 font-semibold text-[#0F172A] rounded-tl-lg">Finalidad</th>
-            <th className="text-left px-3 py-2 font-semibold text-[#0F172A] rounded-tr-lg">Base legal</th>
+          <tr className="bg-bg-subtle">
+            <th className="text-left px-3 py-2 font-semibold text-fg rounded-tl-lg">Finalidad</th>
+            <th className="text-left px-3 py-2 font-semibold text-fg rounded-tr-lg">Base legal</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-[#F1F5F9]">
@@ -81,8 +81,8 @@ const SECTIONS = [
             ["Cumplimiento de obligaciones legales", "Obligación legal (Art. 6.1.c RGPD)"],
           ].map(([fin, base]) => (
             <tr key={fin}>
-              <td className="px-3 py-2 text-[#334155]">{fin}</td>
-              <td className="px-3 py-2 text-[#64748B]">{base}</td>
+              <td className="px-3 py-2 text-fg">{fin}</td>
+              <td className="px-3 py-2 text-fg-muted">{base}</td>
             </tr>
           ))}
         </tbody>
@@ -102,8 +102,8 @@ const SECTIONS = [
           <li key={tipo as string} className="flex gap-3 items-start">
             <span className="mt-0.5 w-2 h-2 rounded-full bg-[#4F46E5] flex-shrink-0" />
             <span>
-              <strong className="text-[#0F172A]">{tipo}:</strong>{" "}
-              <span className="text-[#475569]">{plazo}</span>
+              <strong className="text-fg">{tipo}:</strong>{" "}
+              <span className="text-fg-muted">{plazo}</span>
             </span>
           </li>
         ))}
@@ -127,13 +127,13 @@ const SECTIONS = [
             <li key={dest as string} className="flex gap-3 items-start">
               <span className="mt-0.5 w-2 h-2 rounded-full bg-[#4F46E5] flex-shrink-0" />
               <span>
-                <strong className="text-[#0F172A]">{dest}:</strong>{" "}
-                <span className="text-[#475569]">{info}</span>
+                <strong className="text-fg">{dest}:</strong>{" "}
+                <span className="text-fg-muted">{info}</span>
               </span>
             </li>
           ))}
         </ul>
-        <p className="mt-3 text-[#475569]">
+        <p className="mt-3 text-fg-muted">
           No vendemos, alquilamos ni cedemos tus datos a terceros con fines comerciales propios.
         </p>
       </>
@@ -157,13 +157,13 @@ const SECTIONS = [
             ["Retirar consentimiento", "En cualquier momento para los tratamientos basados en él, sin efecto retroactivo."],
             ["Reclamar ante la AEPD", "Si consideras que tus derechos han sido vulnerados puedes presentar una reclamación ante la Agencia Española de Protección de Datos (aepd.es)."],
           ].map(([der, desc]) => (
-            <div key={der as string} className="bg-[#F8FAFC] rounded-xl p-4 border border-[#E2E8F0]">
-              <p className="font-semibold text-[#0F172A] text-sm mb-1">{der}</p>
-              <p className="text-xs text-[#64748B] leading-relaxed">{desc}</p>
+            <div key={der as string} className="bg-bg-subtle rounded-xl p-4 border border-border">
+              <p className="font-semibold text-fg text-sm mb-1">{der}</p>
+              <p className="text-xs text-fg-muted leading-relaxed">{desc}</p>
             </div>
           ))}
         </div>
-        <p className="mt-4 text-sm text-[#475569]">
+        <p className="mt-4 text-sm text-fg-muted">
           Para ejercer cualquiera de estos derechos escríbenos a{" "}
           <a href="mailto:orvexiaesp@gmail.com" className="text-[#4F46E5] hover:underline">
             orvexiaesp@gmail.com
@@ -225,22 +225,22 @@ const SECTIONS = [
 
 export default function PrivacyPolicyPage() {
   return (
-    <main className="bg-[#F8FAFC]">
+    <main className="bg-bg-subtle">
       {/* Header */}
-      <div className="bg-white border-b border-[#E2E8F0]">
+      <div className="bg-white border-b border-border">
         <div className="max-w-4xl mx-auto px-6 py-10">
-          <div className="flex items-center gap-2 text-xs text-[#64748B] mb-3">
+          <div className="flex items-center gap-2 text-xs text-fg-muted mb-3">
             <Link href="/" className="hover:text-[#4F46E5] transition-colors">Inicio</Link>
             <span>/</span>
             <span>Política de privacidad</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-black text-[#0F172A] tracking-tight mb-3">
+          <h1 className="text-3xl sm:text-4xl font-black text-fg tracking-tight mb-3">
             Política de Privacidad
           </h1>
-          <p className="text-sm text-[#64748B]">
-            Última actualización: <strong className="text-[#334155]">18 de abril de 2026</strong>
+          <p className="text-sm text-fg-muted">
+            Última actualización: <strong className="text-fg">18 de abril de 2026</strong>
           </p>
-          <p className="mt-3 text-sm text-[#475569] leading-relaxed max-w-2xl">
+          <p className="mt-3 text-sm text-fg-muted leading-relaxed max-w-2xl">
             En Orvexia nos tomamos muy en serio la privacidad de nuestros usuarios. Esta política explica
             qué datos recogemos, para qué los usamos y cuáles son tus derechos conforme al{" "}
             <strong>Reglamento General de Protección de Datos (RGPD)</strong> y la{" "}
@@ -274,22 +274,22 @@ export default function PrivacyPolicyPage() {
           <article
             key={s.title}
             id={`seccion-${i + 1}`}
-            className="bg-white rounded-2xl border border-[#E2E8F0] p-6 scroll-mt-6"
+            className="bg-white rounded-2xl border border-border p-6 scroll-mt-6"
           >
-            <h2 className="text-base font-bold text-[#0F172A] mb-4">{s.title}</h2>
-            <div className="text-sm leading-relaxed text-[#334155]">{s.content}</div>
+            <h2 className="text-base font-bold text-fg mb-4">{s.title}</h2>
+            <div className="text-sm leading-relaxed text-fg">{s.content}</div>
           </article>
         ))}
 
         {/* Footer legal */}
         <div className="text-center pt-4">
-          <p className="text-xs text-[#94A3B8]">
+          <p className="text-xs text-fg-subtle">
             Orvexia · orvexia.es ·{" "}
             <a href="mailto:orvexiaesp@gmail.com" className="hover:text-[#4F46E5] transition-colors">
               orvexiaesp@gmail.com
             </a>
           </p>
-          <p className="text-xs text-[#94A3B8] mt-1">
+          <p className="text-xs text-fg-subtle mt-1">
             Versión 1.0 — Última revisión: 18 de abril de 2026
           </p>
         </div>

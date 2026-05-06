@@ -80,22 +80,22 @@ export default function ForumTab({
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 space-y-6">
       {/* Header */}
-      <header className="bg-white border border-[#E2E8F0] rounded-3xl shadow-[0_18px_48px_-28px_rgba(15,23,42,0.25)] p-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <header className="bg-white border border-border rounded-3xl shadow-[0_18px_48px_-28px_rgba(15,23,42,0.25)] p-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="space-y-1">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#2563EB]">Foro / Discusiones</p>
-          <h1 className="text-3xl md:text-4xl font-extrabold text-[#0F172A] tracking-tight">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">Foro / Discusiones</p>
+          <h1 className="text-3xl md:text-4xl font-extrabold text-fg tracking-tight">
             Decide mejor con la comunidad
           </h1>
-          <p className="text-sm text-[#475569]">Comparte dudas, compara productos y valida ofertas antes de comprar.</p>
+          <p className="text-sm text-fg-muted">Comparte dudas, compara productos y valida ofertas antes de comprar.</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
           <div className="relative flex-1 min-w-[220px]">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94A3B8]">🔎</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-subtle">🔎</span>
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Busca modelo, tienda o tema"
-              className="w-full rounded-2xl border border-[#E2E8F0] pl-10 pr-3 py-2.5 text-sm focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20"
+              className="w-full rounded-2xl border border-border pl-10 pr-3 py-2.5 text-sm focus:border-brand-600 focus:ring-2 focus:ring-[#2563EB]/20"
             />
           </div>
           <button className="px-5 py-2.5 rounded-2xl text-sm font-semibold text-white bg-gradient-to-r from-[#2563EB] to-[#7C3AED] shadow-md hover:shadow-lg transition">
@@ -110,13 +110,13 @@ export default function ForumTab({
         <aside className="space-y-4">
           <Card title="Categorías">
             {categories.length === 0 ? (
-              <p className="text-sm text-[#94A3B8]">Sin categorías aún</p>
+              <p className="text-sm text-fg-subtle">Sin categorías aún</p>
             ) : (
               <div className="space-y-2">
                 {categories.map((c) => (
                   <div key={c.label} className="flex items-center justify-between text-sm">
-                    <span className="text-[#0F172A]">{c.label}</span>
-                    {c.count != null && <span className="text-[#94A3B8] font-semibold">{c.count}</span>}
+                    <span className="text-fg">{c.label}</span>
+                    {c.count != null && <span className="text-fg-subtle font-semibold">{c.count}</span>}
                   </div>
                 ))}
               </div>
@@ -125,11 +125,11 @@ export default function ForumTab({
 
           <Card title="Tags populares">
             {tags.length === 0 ? (
-              <p className="text-sm text-[#94A3B8]">Sin tags todavía</p>
+              <p className="text-sm text-fg-subtle">Sin tags todavía</p>
             ) : (
               <div className="flex flex-wrap gap-2">
                 {tags.map((tag) => (
-                  <span key={tag} className="px-3 py-1 rounded-full text-[12px] font-semibold bg-[#EEF2FF] text-[#2563EB]">
+                  <span key={tag} className="px-3 py-1 rounded-full text-[12px] font-semibold bg-[#EEF2FF] text-brand-600">
                     #{tag}
                   </span>
                 ))}
@@ -148,7 +148,7 @@ export default function ForumTab({
                   key={t}
                   onClick={() => setTypeFilter(t)}
                   className={`px-3 py-1.5 rounded-full text-sm font-semibold border transition ${
-                    active ? "border-[#2563EB] bg-[#EEF2FF] text-[#1D4ED8]" : "border-[#E2E8F0] text-[#0F172A] hover:border-[#CBD5E1]"
+                    active ? "border-brand-600 bg-[#EEF2FF] text-brand-700" : "border-border text-fg hover:border-border-strong"
                   }`}
                 >
                   {t}
@@ -158,9 +158,9 @@ export default function ForumTab({
           </div>
 
           {filtered.length === 0 && (
-            <div className="bg-white border border-dashed border-[#CBD5E1] rounded-2xl p-8 text-center text-[#475569]">
+            <div className="bg-white border border-dashed border-border-strong rounded-2xl p-8 text-center text-fg-muted">
               <p className="text-2xl mb-2">📰</p>
-              <p className="font-semibold text-[#0F172A]">No hay hilos todavía</p>
+              <p className="font-semibold text-fg">No hay hilos todavía</p>
               <p className="text-sm">Sé el primero en crear uno.</p>
             </div>
           )}
@@ -168,7 +168,7 @@ export default function ForumTab({
           {filtered.map((thread) => (
             <article
               key={thread.id}
-              className="group bg-white border border-[#E2E8F0] rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow"
+              className="group bg-white border border-border rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow"
             >
               <div className="flex flex-wrap items-center gap-2 mb-3">
                 <span className={`px-2.5 py-1 rounded-full text-[12px] font-semibold border ${classBadge(thread.type)}`}>
@@ -188,24 +188,24 @@ export default function ForumTab({
               </div>
 
               <div className="flex flex-col gap-2 mb-3">
-                <h3 className="text-lg font-bold text-[#0F172A] group-hover:text-[#2563EB] transition-colors">
+                <h3 className="text-lg font-bold text-fg group-hover:text-brand-600 transition-colors">
                   {thread.title}
                 </h3>
-                <p className="text-sm text-[#475569] leading-relaxed">{thread.excerpt}</p>
+                <p className="text-sm text-fg-muted leading-relaxed">{thread.excerpt}</p>
               </div>
 
               <div className="flex flex-wrap gap-2 mb-3">
                 {thread.tags.map((tag) => (
-                  <span key={tag} className="px-3 py-1 rounded-full text-[12px] font-semibold bg-[#F8FAFC] border border-[#E2E8F0] text-[#475569]">
+                  <span key={tag} className="px-3 py-1 rounded-full text-[12px] font-semibold bg-bg-subtle border border-border text-fg-muted">
                     #{tag}
                   </span>
                 ))}
               </div>
 
-              <div className="flex flex-wrap items-center gap-3 mb-3 text-[12px] text-[#475569]">
+              <div className="flex flex-wrap items-center gap-3 mb-3 text-[12px] text-fg-muted">
                 <span className="flex items-center gap-2">
                   <Avatar label={thread.avatar} />
-                  <span className="font-semibold text-[#0F172A]">{thread.author}</span>
+                  <span className="font-semibold text-fg">{thread.author}</span>
                 </span>
                 <span>· {thread.date}</span>
                 <span className="flex items-center gap-1">💬 {thread.replies} respuestas</span>
@@ -217,26 +217,26 @@ export default function ForumTab({
                 {thread.products.map((p) => (
                   <div
                     key={p.name}
-                    className="px-3 py-2 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-sm text-[#0F172A] flex items-center gap-2"
+                    className="px-3 py-2 rounded-xl bg-bg-subtle border border-border text-sm text-fg flex items-center gap-2"
                   >
                     <span className="font-semibold">{p.name}</span>
-                    <span className="text-[#2563EB] font-bold">{p.price}</span>
-                    <span className="text-[#94A3B8]">{p.store}</span>
-                    {p.badge && <span className="px-2 py-0.5 rounded-full text-[11px] bg-[#ECFDF3] text-[#16A34A] font-semibold">{p.badge}</span>}
+                    <span className="text-brand-600 font-bold">{p.price}</span>
+                    <span className="text-fg-subtle">{p.store}</span>
+                    {p.badge && <span className="px-2 py-0.5 rounded-full text-[11px] bg-[#ECFDF3] text-accent-600 font-semibold">{p.badge}</span>}
                   </div>
                 ))}
               </div>
 
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm text-[#475569]">
-                  <button className="px-3 py-1.5 rounded-full bg-[#F8FAFC] border border-[#E2E8F0] hover:border-[#2563EB] transition">
+                <div className="flex items-center gap-2 text-sm text-fg-muted">
+                  <button className="px-3 py-1.5 rounded-full bg-bg-subtle border border-border hover:border-brand-600 transition">
                     Seguir hilo
                   </button>
-                  <button className="px-3 py-1.5 rounded-full bg-[#2563EB] text-white font-semibold hover:shadow-md transition">
+                  <button className="px-3 py-1.5 rounded-full bg-brand-600 text-white font-semibold hover:shadow-md transition">
                     Abrir hilo →
                   </button>
                 </div>
-                <span className="text-xs text-[#94A3B8]">Moderado · sin spam</span>
+                <span className="text-xs text-fg-subtle">Moderado · sin spam</span>
               </div>
             </article>
           ))}
@@ -246,11 +246,11 @@ export default function ForumTab({
         <aside className="space-y-4">
           <Card title="Tendencias">
             {trends.length === 0 ? (
-              <p className="text-sm text-[#94A3B8]">Sin tendencias aún</p>
+              <p className="text-sm text-fg-subtle">Sin tendencias aún</p>
             ) : (
               <div className="space-y-2">
                 {trends.map((t) => (
-                  <Link key={t.title} href={t.link ?? "#"} className="flex items-center justify-between text-sm text-[#0F172A] hover:text-[#2563EB]">
+                  <Link key={t.title} href={t.link ?? "#"} className="flex items-center justify-between text-sm text-fg hover:text-brand-600">
                     <span>{t.title}</span>
                     {t.delta && <span className="text-emerald-600 font-semibold">{t.delta}</span>}
                   </Link>
@@ -261,7 +261,7 @@ export default function ForumTab({
 
           <Card title="Usuarios top">
             {topUsers.length === 0 ? (
-              <p className="text-sm text-[#94A3B8]">No hay usuarios destacados todavía</p>
+              <p className="text-sm text-fg-subtle">No hay usuarios destacados todavía</p>
             ) : (
               <div className="space-y-3">
                 {topUsers.map((u) => (
@@ -269,11 +269,11 @@ export default function ForumTab({
                     <div className="flex items-center gap-2">
                       <Avatar label={u.name.slice(0, 2)} />
                       <div>
-                        <p className="text-sm font-semibold text-[#0F172A]">{u.name}</p>
-                        {u.badge && <p className="text-[12px] text-[#475569]">{u.badge}</p>}
+                        <p className="text-sm font-semibold text-fg">{u.name}</p>
+                        {u.badge && <p className="text-[12px] text-fg-muted">{u.badge}</p>}
                       </div>
                     </div>
-                    <span className="text-sm font-semibold text-[#2563EB]">{u.score}</span>
+                    <span className="text-sm font-semibold text-brand-600">{u.score}</span>
                   </div>
                 ))}
               </div>
@@ -282,20 +282,20 @@ export default function ForumTab({
 
           <Card title="Ofertas destacadas">
             {featuredDeals.length === 0 ? (
-              <p className="text-sm text-[#94A3B8]">Aún no hay ofertas destacadas</p>
+              <p className="text-sm text-fg-subtle">Aún no hay ofertas destacadas</p>
             ) : (
               <div className="space-y-2">
                 {featuredDeals.map((d) => (
-                  <div key={d.name} className="p-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC]">
-                    <p className="text-sm font-semibold text-[#0F172A]">{d.name}</p>
+                  <div key={d.name} className="p-3 rounded-xl border border-border bg-bg-subtle">
+                    <p className="text-sm font-semibold text-fg">{d.name}</p>
                     <div className="flex items-center gap-2 text-sm">
-                      <span className="text-[#2563EB] font-bold">{d.price}</span>
+                      <span className="text-brand-600 font-bold">{d.price}</span>
                       {d.badge && (
-                        <span className="px-2 py-0.5 rounded-full bg-[#ECFDF3] text-[#16A34A] text-[11px] font-semibold">
+                        <span className="px-2 py-0.5 rounded-full bg-[#ECFDF3] text-accent-600 text-[11px] font-semibold">
                           {d.badge}
                         </span>
                       )}
-                      {d.store && <span className="text-[#94A3B8]">{d.store}</span>}
+                      {d.store && <span className="text-fg-subtle">{d.store}</span>}
                     </div>
                   </div>
                 ))}
@@ -310,8 +310,8 @@ export default function ForumTab({
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white border border-[#E2E8F0] rounded-2xl p-4 shadow-sm">
-      <p className="text-xs font-bold text-[#2563EB] uppercase tracking-[0.16em] mb-3">{title}</p>
+    <div className="bg-white border border-border rounded-2xl p-4 shadow-sm">
+      <p className="text-xs font-bold text-brand-600 uppercase tracking-[0.16em] mb-3">{title}</p>
       {children}
     </div>
   );

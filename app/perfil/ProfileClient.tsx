@@ -23,15 +23,15 @@ interface ProfileData {
 
 const AVATAR_COLORS = [
   // Blues
-  "#1E40AF", "#2563EB", "#3B82F6", "#0EA5E9", "#06B6D4", "#0891B2",
+  "#1E40AF", "var(--brand-600)", "var(--brand-500)", "#0EA5E9", "#06B6D4", "#0891B2",
   // Purples / pinks
   "#7C3AED", "#9333EA", "#A21CAF", "#C026D3", "#DB2777", "#E11D48",
   // Reds / oranges
-  "#DC2626", "#EA580C", "#F97316", "#D97706", "#CA8A04",
+  "var(--danger-600)", "#EA580C", "#F97316", "#D97706", "#CA8A04",
   // Greens / teals
-  "#16A34A", "#15803D", "#059669", "#0D9488",
+  "var(--accent-600)", "#15803D", "var(--accent-600)", "#0D9488",
   // Dark / neutral
-  "#0F172A", "#1E293B", "#334155", "#475569", "#64748B", "#94A3B8",
+  "var(--fg)", "var(--fg)", "var(--fg)", "var(--fg-muted)", "var(--fg-muted)", "var(--fg-subtle)",
   // Vibrant accents
   "#BE185D", "#4F46E5", "#7C2D12", "#064E3B",
 ];
@@ -91,15 +91,15 @@ function Section({ title, description, children, collapsible = false, defaultOpe
       <button
         type="button"
         onClick={() => collapsible && setOpen((o) => !o)}
-        className={`w-full px-6 py-4 flex items-center justify-between gap-3 text-left ${collapsible ? "hover:bg-[#F8FAFC] transition-colors" : "cursor-default"}`}
+        className={`w-full px-6 py-4 flex items-center justify-between gap-3 text-left ${collapsible ? "hover:bg-bg-subtle transition-colors" : "cursor-default"}`}
       >
         <div>
-          <h2 className="text-[15px] font-bold text-[#0F172A]">{title}</h2>
-          {description && <p className="text-[13px] text-[#64748B] mt-0.5">{description}</p>}
+          <h2 className="text-[15px] font-bold text-fg">{title}</h2>
+          {description && <p className="text-[13px] text-fg-muted mt-0.5">{description}</p>}
         </div>
         {collapsible && (
           <svg
-            className={`w-4 h-4 text-[#94A3B8] shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+            className={`w-4 h-4 text-fg-subtle shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
             fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
           >
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
@@ -107,7 +107,7 @@ function Section({ title, description, children, collapsible = false, defaultOpe
         )}
       </button>
       {(!collapsible || open) && (
-        <div className="border-t border-[#F1F5F9] px-6 py-5">{children}</div>
+        <div className="border-t border-border-subtle px-6 py-5">{children}</div>
       )}
     </div>
   );
@@ -118,9 +118,9 @@ function Field({ label, children, hint }: {
 }) {
   return (
     <div className="space-y-1.5">
-      <label className="block text-[13px] font-semibold text-[#0F172A]">{label}</label>
+      <label className="block text-[13px] font-semibold text-fg">{label}</label>
       {children}
-      {hint && <p className="text-[11px] text-[#94A3B8]">{hint}</p>}
+      {hint && <p className="text-[11px] text-fg-subtle">{hint}</p>}
     </div>
   );
 }
@@ -140,7 +140,7 @@ function Input({
       maxLength={maxLength}
       disabled={disabled}
       autoComplete={autoComplete}
-      className="w-full px-3.5 py-2.5 rounded-xl border border-[#E2E8F0] bg-white text-[14px] text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] disabled:bg-[#F8FAFC] disabled:opacity-60 disabled:cursor-not-allowed transition-all"
+      className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-white text-[14px] text-fg placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-brand-600 disabled:bg-bg-subtle disabled:opacity-60 disabled:cursor-not-allowed transition-all"
     />
   );
 }
@@ -187,7 +187,7 @@ function Toast({ message, type }: { message: string; type: "success" | "error" }
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
 function Sk({ className, style }: { className?: string; style?: React.CSSProperties }) {
-  return <div className={`animate-pulse bg-[#E2E8F0] rounded-xl ${className ?? ""}`} style={style} />;
+  return <div className={`animate-pulse bg-bg-muted rounded-xl ${className ?? ""}`} style={style} />;
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
@@ -201,7 +201,7 @@ export function ProfileClient() {
   // Editable fields
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
-  const [avatarColor, setAvatarColor] = useState("#2563EB");
+  const [avatarColor, setAvatarColor] = useState("var(--brand-600)");
   const [avatarEmoji, setAvatarEmoji] = useState<string>("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
@@ -431,12 +431,12 @@ export function ProfileClient() {
     : 3;
 
   const pwdStrengthLabel = ["", "Débil", "Media", "Buena", "Fuerte"][pwdStrength];
-  const pwdStrengthColor = ["", "#EF4444", "#F97316", "#22C55E", "#16A34A"][pwdStrength];
+  const pwdStrengthColor = ["", "var(--danger-500)", "#F97316", "#22C55E", "var(--accent-600)"][pwdStrength];
 
   // ── Loading skeleton ────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#F8FAFC]">
+      <main className="min-h-screen bg-bg-subtle">
         {/* Skeleton header */}
         <div className="w-full animate-pulse bg-[#1E293B]">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 flex items-center gap-5">
@@ -448,7 +448,7 @@ export function ProfileClient() {
           </div>
         </div>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-7 space-y-5">
-          {[120, 220, 240, 120].map((h, i) => <Sk key={i} className="rounded-2xl bg-[#E2E8F0]" style={{ height: h }} />)}
+          {[120, 220, 240, 120].map((h, i) => <Sk key={i} className="rounded-2xl bg-bg-muted" style={{ height: h }} />)}
         </div>
       </main>
     );
@@ -460,7 +460,7 @@ export function ProfileClient() {
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <main className="min-h-screen bg-[#F8FAFC]">
+    <main className="min-h-screen bg-bg-subtle">
 
       {/* Profile header — avatar + name inside the banner */}
       <div className="w-full" style={{ background: "linear-gradient(135deg, #0F172A 0%, #1E3A5F 50%, #2563EB 100%)" }}>
@@ -512,8 +512,8 @@ export function ProfileClient() {
             </div>
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) previewPhoto(f); e.target.value = ""; }} />
             <div className="flex-1 min-w-0">
-              <p className="text-[14px] font-semibold text-[#0F172A]">Foto de perfil</p>
-              <p className="text-[12px] text-[#64748B] mt-0.5">JPG, PNG o WebP · máx. 8 MB</p>
+              <p className="text-[14px] font-semibold text-fg">Foto de perfil</p>
+              <p className="text-[12px] text-fg-muted mt-0.5">JPG, PNG o WebP · máx. 8 MB</p>
               <div className="flex items-center gap-2 mt-2.5">
                 {pendingPhotoUrl ? (
                   <>
@@ -523,19 +523,19 @@ export function ProfileClient() {
                       {photoUploading ? "Guardando…" : "Guardar foto"}
                     </button>
                     <button type="button" onClick={() => setPendingPhotoUrl(null)} disabled={photoUploading}
-                      className="px-3.5 py-1.5 rounded-lg text-[12px] font-semibold text-[#475569] bg-white border border-[#E2E8F0] hover:bg-[#F8FAFC] disabled:opacity-50 transition-all">
+                      className="px-3.5 py-1.5 rounded-lg text-[12px] font-semibold text-fg-muted bg-white border border-border hover:bg-bg-subtle disabled:opacity-50 transition-all">
                       Cancelar
                     </button>
                   </>
                 ) : (
                   <>
                     <button type="button" onClick={() => fileInputRef.current?.click()}
-                      className="px-3.5 py-1.5 rounded-lg text-[12px] font-semibold text-[#2563EB] bg-white border border-[#BFDBFE] hover:bg-[#EFF6FF] transition-all">
+                      className="px-3.5 py-1.5 rounded-lg text-[12px] font-semibold text-brand-600 bg-white border border-brand-200 hover:bg-brand-50 transition-all">
                       Subir foto
                     </button>
                     {avatarUrl && (
                       <button type="button" onClick={removePhoto} disabled={photoUploading}
-                        className="px-3.5 py-1.5 rounded-lg text-[12px] font-semibold text-[#DC2626] bg-white border border-[#FECACA] hover:bg-[#FEF2F2] disabled:opacity-40 transition-all">
+                        className="px-3.5 py-1.5 rounded-lg text-[12px] font-semibold text-danger-600 bg-white border border-[#FECACA] hover:bg-danger-50 disabled:opacity-40 transition-all">
                         Eliminar
                       </button>
                     )}
@@ -553,9 +553,9 @@ export function ProfileClient() {
                   <button key={e || "none"} type="button" onClick={() => setAvatarEmoji(e)}
                     aria-label={e ? `Emoji ${e}` : "Sin emoji"} aria-pressed={avatarEmoji === e}
                     className={`w-8 h-8 rounded-lg text-base flex items-center justify-center transition-all focus-visible:outline-2 focus-visible:outline-[#2563EB] ${
-                      avatarEmoji === e ? "ring-2 ring-[#2563EB] bg-[#EFF6FF] scale-110" : "bg-[#F8FAFC] hover:bg-[#F1F5F9] hover:scale-110"
+                      avatarEmoji === e ? "ring-2 ring-[#2563EB] bg-brand-50 scale-110" : "bg-bg-subtle hover:bg-bg-subtle hover:scale-110"
                     }`}>
-                    {e || <span className="text-[10px] font-bold text-[#94A3B8]">Aa</span>}
+                    {e || <span className="text-[10px] font-bold text-fg-subtle">Aa</span>}
                   </button>
                 ))}
               </div>
@@ -587,7 +587,7 @@ export function ProfileClient() {
 
             <Field label="Email">
               <Input value={profile.email} onChange={() => {}} disabled type="email" />
-              <p className="text-[11px] text-[#94A3B8] mt-1">
+              <p className="text-[11px] text-fg-subtle mt-1">
                 {profile.isGoogleUser ? "Email vinculado a tu cuenta de Google. No se puede cambiar aquí." : "El cambio de email requiere verificación y estará disponible próximamente."}
               </p>
             </Field>
@@ -597,13 +597,13 @@ export function ProfileClient() {
                 placeholder="Cuéntanos algo sobre ti…"
                 maxLength={160}
                 rows={3}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[#E2E8F0] bg-white text-[14px] text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] resize-none transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-white text-[14px] text-fg placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-brand-600 resize-none transition-all"
               />
             </Field>
 
             <div className="flex items-center justify-between pt-1">
               {identityDirty && (
-                <p className="text-[12px] text-[#F97316] font-medium">Cambios sin guardar</p>
+                <p className="text-[12px] text-hot-500 font-medium">Cambios sin guardar</p>
               )}
               <div className="ml-auto">
                 <SaveBtn loading={identitySaving} onClick={saveIdentity} disabled={!identityDirty} />
@@ -639,7 +639,7 @@ export function ProfileClient() {
                   type="button"
                   onClick={() => setShowCurrent((s) => !s)}
                   aria-label={showCurrent ? "Ocultar contraseña" : "Mostrar contraseña"}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#475569]"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-fg-subtle hover:text-fg-muted"
                 >
                   {showCurrent ? (
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
@@ -668,7 +668,7 @@ export function ProfileClient() {
                   type="button"
                   onClick={() => setShowNew((s) => !s)}
                   aria-label={showNew ? "Ocultar" : "Mostrar"}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#475569]"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-fg-subtle hover:text-fg-muted"
                 >
                   {showNew ? (
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
@@ -690,7 +690,7 @@ export function ProfileClient() {
                       <div
                         key={lvl}
                         className="h-1.5 flex-1 rounded-full transition-all duration-300"
-                        style={{ backgroundColor: lvl <= pwdStrength ? pwdStrengthColor : "#E2E8F0" }}
+                        style={{ backgroundColor: lvl <= pwdStrength ? pwdStrengthColor : "var(--border)" }}
                       />
                     ))}
                   </div>
@@ -714,7 +714,7 @@ export function ProfileClient() {
                   type="button"
                   onClick={() => setShowConfirm((s) => !s)}
                   aria-label={showConfirm ? "Ocultar" : "Mostrar"}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#475569]"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-fg-subtle hover:text-fg-muted"
                 >
                   {showConfirm ? (
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
@@ -729,10 +729,10 @@ export function ProfileClient() {
                 </button>
               </div>
               {confirmPwd && newPwd !== confirmPwd && (
-                <p className="text-[11px] text-[#EF4444] mt-1">Las contraseñas no coinciden</p>
+                <p className="text-[11px] text-danger-500 mt-1">Las contraseñas no coinciden</p>
               )}
               {confirmPwd && newPwd === confirmPwd && newPwd.length >= 8 && (
-                <p className="text-[11px] text-[#16A34A] mt-1">✓ Las contraseñas coinciden</p>
+                <p className="text-[11px] text-accent-600 mt-1">✓ Las contraseñas coinciden</p>
               )}
             </Field>
 
@@ -755,11 +755,11 @@ export function ProfileClient() {
               { label: "Email", value: profile.email, icon: "✉️" },
               { label: "Tipo de cuenta", value: profile.isGoogleUser ? "Google" : "Email", icon: profile.isGoogleUser ? "🔗" : "🔒" },
             ].map((s) => (
-              <div key={s.label} className="flex items-center gap-3 flex-1 bg-[#F8FAFC] rounded-xl px-4 py-3 border border-[#F1F5F9]">
+              <div key={s.label} className="flex items-center gap-3 flex-1 bg-bg-subtle rounded-xl px-4 py-3 border border-border-subtle">
                 <span className="text-2xl">{s.icon}</span>
                 <div>
-                  <p className="text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wide">{s.label}</p>
-                  <p className="text-[13px] font-semibold text-[#0F172A]">{s.value}</p>
+                  <p className="text-[11px] font-semibold text-fg-subtle uppercase tracking-wide">{s.label}</p>
+                  <p className="text-[13px] font-semibold text-fg">{s.value}</p>
                 </div>
               </div>
             ))}
@@ -777,8 +777,8 @@ export function ProfileClient() {
           <div className="px-6 py-5">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
-                <p className="text-[14px] font-semibold text-[#0F172A]">Eliminar mi cuenta</p>
-                <p className="text-[12px] text-[#64748B] mt-0.5">
+                <p className="text-[14px] font-semibold text-fg">Eliminar mi cuenta</p>
+                <p className="text-[12px] text-fg-muted mt-0.5">
                   Se eliminarán permanentemente tu cuenta, productos guardados y alertas.
                 </p>
               </div>
@@ -809,8 +809,8 @@ export function ProfileClient() {
               <div className="w-12 h-12 rounded-full bg-[#FEE2E2] flex items-center justify-center text-2xl mx-auto mb-3">
                 ⚠️
               </div>
-              <h3 className="text-[16px] font-bold text-[#0F172A] text-center">¿Eliminar tu cuenta?</h3>
-              <p className="text-[13px] text-[#64748B] text-center mt-1">
+              <h3 className="text-[16px] font-bold text-fg text-center">¿Eliminar tu cuenta?</h3>
+              <p className="text-[13px] text-fg-muted text-center mt-1">
                 Esta acción no se puede deshacer. Se eliminarán todos tus datos permanentemente.
               </p>
             </div>
@@ -841,7 +841,7 @@ export function ProfileClient() {
                 type="button"
                 onClick={() => { setShowDeleteModal(false); setDeleteConfirmText(""); setDeletePassword(""); }}
                 disabled={deleteLoading}
-                className="flex-1 px-4 py-2.5 rounded-xl text-[13px] font-semibold text-[#475569] bg-[#F1F5F9] hover:bg-[#E2E8F0] transition-colors disabled:opacity-50"
+                className="flex-1 px-4 py-2.5 rounded-xl text-[13px] font-semibold text-fg-muted bg-bg-subtle hover:bg-bg-muted transition-colors disabled:opacity-50"
               >
                 Cancelar
               </button>

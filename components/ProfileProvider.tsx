@@ -39,7 +39,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
       .then((data) => {
         if (data) {
           setProfile({
-            avatarColor: data.avatarColor ?? "#2563EB",
+            avatarColor: data.avatarColor ?? "var(--brand-600)",
             avatarEmoji: data.avatarEmoji ?? null,
             avatarUrl: data.avatarUrl ?? null,
             name: data.name ?? "",

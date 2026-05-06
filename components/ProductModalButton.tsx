@@ -64,7 +64,7 @@ export function ProductModalButton({ slug, children, className, "aria-label": ar
         {loading && (
           <span className="absolute inset-0 flex items-center justify-center rounded-inherit bg-white/60">
             <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <circle cx="12" cy="12" r="10" stroke="#2563EB" strokeWidth="3" strokeDasharray="31.416" strokeDashoffset="10" />
+              <circle cx="12" cy="12" r="10" stroke="var(--brand-600)" strokeWidth="3" strokeDasharray="31.416" strokeDashoffset="10" />
             </svg>
           </span>
         )}

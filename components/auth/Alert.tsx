@@ -4,9 +4,9 @@ type AlertProps = {
 };
 
 const styles: Record<NonNullable<AlertProps["variant"]>, string> = {
-  info: "bg-[#2563EB]/10 text-[#0F172A] border-[#2563EB]/30",
-  success: "bg-[#16A34A]/10 text-[#0F172A] border-[#16A34A]/30",
-  error: "bg-[#DC2626]/10 text-[#0F172A] border-[#DC2626]/30",
+  info: "bg-brand-600/10 text-fg border-brand-600/30",
+  success: "bg-[#16A34A]/10 text-fg border-[#16A34A]/30",
+  error: "bg-[#DC2626]/10 text-fg border-[#DC2626]/30",
   warning: "bg-amber-500/10 text-amber-900 border-amber-300/60",
 };
 

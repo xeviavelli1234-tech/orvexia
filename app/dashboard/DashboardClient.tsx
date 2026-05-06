@@ -91,15 +91,15 @@ function getDecision(discountPercent: number | null, drop?: number): {
 } {
   const pct = discountPercent ?? 0;
   if (pct >= 25) return { label: "Compra ahora", icon: "✓", bg: "#DCFCE7", text: "#166534", border: "#86EFAC" };
-  if (pct >= 15) return { label: "Buen precio",  icon: "↓", bg: "#DBEAFE", text: "#1E40AF", border: "#93C5FD" };
+  if (pct >= 15) return { label: "Buen precio",  icon: "↓", bg: "var(--brand-100)", text: "#1E40AF", border: "#93C5FD" };
   if (pct >= 5)  return { label: "Precio justo", icon: "~", bg: "#FEF9C3", text: "#854D0E", border: "#FDE047" };
-  return              { label: "Considera esperar", icon: "⏱", bg: "#F1F5F9", text: "#475569", border: "#CBD5E1" };
+  return              { label: "Considera esperar", icon: "⏱", bg: "var(--bg-subtle)", text: "var(--fg-muted)", border: "var(--fg-faint)" };
 }
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
 function Sk({ className }: { className?: string }) {
-  return <div className={`animate-pulse bg-[#E2E8F0] rounded-xl ${className ?? ""}`} />;
+  return <div className={`animate-pulse bg-bg-muted rounded-xl ${className ?? ""}`} />;
 }
 
 // ─── Section header ───────────────────────────────────────────────────────────
@@ -110,7 +110,7 @@ function SectionHeader({
   accent: string; label: string; title: string; count?: number; action?: React.ReactNode;
 }) {
   return (
-    <div className="px-5 py-4 border-b border-[#F1F5F9] flex items-center justify-between gap-3">
+    <div className="px-5 py-4 border-b border-border-subtle flex items-center justify-between gap-3">
       <div className="flex items-center gap-3">
         <div className="w-1 h-8 rounded-full shrink-0" style={{ background: accent }} />
         <div>
@@ -118,10 +118,10 @@ function SectionHeader({
             style={{ color: accent.includes(",") ? "#7C3AED" : accent }}>
             {label}
           </p>
-          <h2 className="text-[15px] font-bold text-[#0F172A] leading-tight flex items-center gap-2">
+          <h2 className="text-[15px] font-bold text-fg leading-tight flex items-center gap-2">
             {title}
             {count !== undefined && count > 0 && (
-              <span className="text-xs font-bold text-[#94A3B8] font-normal">({count})</span>
+              <span className="text-xs font-bold text-fg-subtle font-normal">({count})</span>
             )}
           </h2>
         </div>
@@ -136,7 +136,7 @@ function SectionHeader({
 function ProductThumb({ src, name, size = 48 }: { src: string | null; name: string; size?: number }) {
   return (
     <div
-      className="rounded-xl bg-[#F8FAFC] flex items-center justify-center overflow-hidden shrink-0 relative"
+      className="rounded-xl bg-bg-subtle flex items-center justify-center overflow-hidden shrink-0 relative"
       style={{ width: size, height: size }}
     >
       {src ? (
@@ -158,7 +158,7 @@ function StatCard({
 }) {
   return (
     <div className={`rounded-2xl border p-5 flex items-center gap-4 transition-all ${
-      highlight ? "bg-gradient-to-br from-[#0F172A] to-[#1E1B4B] border-transparent shadow-lg" : "bg-white border-[#E2E8F0] hover:border-[#C7D7F4]"
+      highlight ? "bg-gradient-to-br from-[#0F172A] to-[#1E1B4B] border-transparent shadow-lg" : "bg-white border-border hover:border-[#C7D7F4]"
     }`}>
       <div
         className="w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0"
@@ -167,14 +167,14 @@ function StatCard({
         {icon}
       </div>
       <div className="min-w-0">
-        <p className={`text-[22px] font-extrabold leading-tight ${highlight ? "text-white" : "text-[#0F172A]"}`}>
+        <p className={`text-[22px] font-extrabold leading-tight ${highlight ? "text-white" : "text-fg"}`}>
           {value}
         </p>
-        <p className={`text-[13px] font-semibold truncate ${highlight ? "text-white/80" : "text-[#475569]"}`}>
+        <p className={`text-[13px] font-semibold truncate ${highlight ? "text-white/80" : "text-fg-muted"}`}>
           {label}
         </p>
         {sub && (
-          <p className={`text-[11px] mt-0.5 truncate ${highlight ? "text-white/50" : "text-[#94A3B8]"}`}>{sub}</p>
+          <p className={`text-[11px] mt-0.5 truncate ${highlight ? "text-white/50" : "text-fg-subtle"}`}>{sub}</p>
         )}
       </div>
     </div>
@@ -205,16 +205,16 @@ function PriceDisplay({
 }) {
   return (
     <div className="flex items-baseline gap-2 flex-wrap">
-      <span className={`font-extrabold text-[#0F172A] ${large ? "text-2xl" : "text-base"}`}>
+      <span className={`font-extrabold text-fg ${large ? "text-2xl" : "text-base"}`}>
         {current.toFixed(2)}€
       </span>
       {old && old > current && (
-        <span className={`text-[#94A3B8] line-through ${large ? "text-sm" : "text-xs"}`}>
+        <span className={`text-fg-subtle line-through ${large ? "text-sm" : "text-xs"}`}>
           {old.toFixed(2)}€
         </span>
       )}
       {discount && discount > 0 && (
-        <span className={`font-bold text-[#10B981] ${large ? "text-sm" : "text-xs"}`}>
+        <span className={`font-bold text-accent-500 ${large ? "text-sm" : "text-xs"}`}>
           −{discount}%
         </span>
       )}
@@ -233,8 +233,8 @@ function EmptyState({
     <div className="py-10 px-6 flex flex-col items-center text-center gap-3">
       <span className="text-4xl">{emoji}</span>
       <div>
-        <p className="text-[15px] font-semibold text-[#0F172A]">{title}</p>
-        <p className="text-[13px] text-[#94A3B8] mt-1 max-w-xs">{sub}</p>
+        <p className="text-[15px] font-semibold text-fg">{title}</p>
+        <p className="text-[13px] text-fg-subtle mt-1 max-w-xs">{sub}</p>
       </div>
       {cta && href && (
         <Link href={href}
@@ -404,9 +404,9 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
   // ─── LOADING ───────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#F8FAFC]">
+      <main className="min-h-screen bg-bg-subtle">
         {/* Header */}
-        <div className="bg-white border-b border-[#E2E8F0]">
+        <div className="bg-white border-b border-border">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 py-5 flex items-center gap-4">
             <Sk className="w-11 h-11 rounded-full" />
             <div className="flex flex-col gap-2"><Sk className="h-5 w-44" /><Sk className="h-3 w-64" /></div>
@@ -438,16 +438,16 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
   // ─── ERROR ─────────────────────────────────────────────────────────────────
   if (error) {
     return (
-      <main className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
+      <main className="min-h-screen bg-bg-subtle flex items-center justify-center">
         <div className="text-center px-6 py-16 max-w-sm">
           <p className="text-5xl mb-4">⚠️</p>
-          <h2 className="text-lg font-bold text-[#0F172A] mb-2">No se pudo cargar el dashboard</h2>
-          <p className="text-sm text-[#94A3B8] mb-6">
+          <h2 className="text-lg font-bold text-fg mb-2">No se pudo cargar el dashboard</h2>
+          <p className="text-sm text-fg-subtle mb-6">
             Ha ocurrido un error al obtener tus datos. Inténtalo de nuevo.
           </p>
           <button
             onClick={load}
-            className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-[#2563EB] hover:bg-[#1D4ED8] transition-colors"
+            className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 transition-colors"
           >
             Reintentar
           </button>
@@ -458,10 +458,10 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
 
   // ─── MAIN RENDER ───────────────────────────────────────────────────────────
   return (
-    <main className="min-h-screen bg-[#F8FAFC]">
+    <main className="min-h-screen bg-bg-subtle">
 
       {/* ── TOPBAR PERSONALIZADA ─────────────────────────────────────────── */}
-      <div className="bg-white border-b border-[#E2E8F0]">
+      <div className="bg-white border-b border-border">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
 
           {/* Left: avatar + greeting */}
@@ -490,10 +490,10 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
 
             {/* Text */}
             <div className="min-w-0">
-              <h1 className="text-[16px] font-bold text-[#0F172A] leading-tight truncate">
+              <h1 className="text-[16px] font-bold text-fg leading-tight truncate">
                 Hola, {firstName} 👋
               </h1>
-              <p className="text-[12px] text-[#94A3B8] mt-0.5 truncate">
+              <p className="text-[12px] text-fg-subtle mt-0.5 truncate">
                 {isNew
                   ? "Empieza guardando productos para seguir sus precios"
                   : `${data!.stats.savedCount} en seguimiento · ${data!.stats.alertsActive} alerta${data!.stats.alertsActive !== 1 ? "s" : ""} activa${data!.stats.alertsActive !== 1 ? "s" : ""}`}
@@ -504,7 +504,7 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
           {/* Right: refresh indicator + CTA */}
           <div className="hidden sm:flex items-center gap-2 shrink-0">
             {lastUpdated && (
-              <span className="text-[11px] text-[#CBD5E1] tabular-nums">
+              <span className="text-[11px] text-fg-faint tabular-nums">
                 {refreshing ? "Actualizando…" : `${lastUpdated.toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })}`}
               </span>
             )}
@@ -513,7 +513,7 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
               disabled={refreshing}
               title="Actualizar datos"
               aria-label="Actualizar dashboard"
-              className={`flex items-center justify-center w-7 h-7 rounded-lg text-[#94A3B8] hover:text-[#475569] hover:bg-[#F1F5F9] transition-all disabled:opacity-30 ${refreshing ? "animate-spin" : ""}`}
+              className={`flex items-center justify-center w-7 h-7 rounded-lg text-fg-subtle hover:text-fg-muted hover:bg-bg-subtle transition-all disabled:opacity-30 ${refreshing ? "animate-spin" : ""}`}
             >
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
@@ -630,8 +630,8 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
                   <div className="flex items-start gap-2">
                     <span className="w-2 h-2 rounded-full bg-[#22C55E] mt-2" aria-hidden="true" />
                     <div className="min-w-0">
-                      <p className="text-[13px] font-semibold text-[#0F172A] line-clamp-1">{a.productName}</p>
-                      <p className="text-[11px] text-[#16A34A] font-bold">
+                      <p className="text-[13px] font-semibold text-fg line-clamp-1">{a.productName}</p>
+                      <p className="text-[11px] text-accent-600 font-bold">
                         Ahora {a.currentPrice?.toFixed(0)}€{" "}
                         {a.basePrice ? (
                           <span className="text-[#14532D] font-semibold">
@@ -656,14 +656,14 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
             icon="💰" label="Ahorro potencial"
             value={data!.stats.potentialSavings > 0 ? `${data!.stats.potentialSavings.toFixed(0)}€` : "—"}
             sub={data!.stats.potentialSavings > 0 ? "en tus productos guardados" : "Guarda productos con descuento"}
-            accent="#10B981"
+            accent="var(--accent-500)"
             highlight={data!.stats.potentialSavings > 0}
           />
           <StatCard
             icon="📦" label="Productos guardados"
             value={data!.stats.savedCount}
             sub={data!.stats.savedCount === 0 ? "Guarda tu primer producto" : `${data!.recentDrops.length} con bajada reciente`}
-            accent="#2563EB"
+            accent="var(--brand-600)"
           />
           <StatCard
             icon="🔔" label="Alertas activas"
@@ -692,7 +692,7 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                 <Link href="/ofertas-destacadas"
-                  className="bg-white text-[#1D4ED8] font-bold px-6 py-3 rounded-xl text-sm hover:bg-[#EFF6FF] transition-all w-full sm:w-auto text-center">
+                  className="bg-white text-brand-700 font-bold px-6 py-3 rounded-xl text-sm hover:bg-brand-50 transition-all w-full sm:w-auto text-center">
                   Ver ofertas destacadas
                 </Link>
                 <Link href="/categorias"
@@ -709,7 +709,7 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
             {/* LEFT (2/3): Oportunidades ─────────────────────────────────── */}
-            <div className="lg:col-span-2 bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden">
+            <div className="lg:col-span-2 bg-white rounded-2xl border border-border overflow-hidden">
               <SectionHeader
                 accent="linear-gradient(180deg,#10B981,#059669)"
                 label="Bajadas en tu watchlist"
@@ -731,7 +731,7 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
                       role="button"
                       tabIndex={0}
                       aria-label={`Ver detalles de ${drop.name}`}
-                      className="flex items-center gap-3 p-4 hover:bg-[#F8FAFC] transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-[#2563EB] focus-visible:outline-offset-[-2px]"
+                      className="flex items-center gap-3 p-4 hover:bg-bg-subtle transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-[#2563EB] focus-visible:outline-offset-[-2px]"
                       onClick={() => openModal({
                         id: drop.productId, name: drop.name, brand: drop.brand,
                         category: drop.category, description: drop.description,
@@ -752,10 +752,10 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
 
                       {/* Info */}
                       <div className="flex-1 min-w-0">
-                        <p className="text-[14px] font-semibold text-[#0F172A] line-clamp-1 leading-snug">
+                        <p className="text-[14px] font-semibold text-fg line-clamp-1 leading-snug">
                           {drop.name}
                         </p>
-                        <p className="text-[12px] text-[#94A3B8] mb-1">{drop.store}</p>
+                        <p className="text-[12px] text-fg-subtle mb-1">{drop.store}</p>
                         <PriceDisplay current={drop.priceCurrent} old={drop.priceOld} discount={drop.dropPercent} />
                       </div>
 
@@ -769,7 +769,7 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
                         rel="noopener noreferrer"
                         aria-label={`Comprar ${drop.name} en ${drop.store}`}
                         onClick={(e) => e.stopPropagation()}
-                        className="shrink-0 text-[12px] font-bold text-white bg-[#2563EB] hover:bg-[#1D4ED8] px-3 py-2 rounded-xl transition-colors whitespace-nowrap"
+                        className="shrink-0 text-[12px] font-bold text-white bg-brand-600 hover:bg-brand-700 px-3 py-2 rounded-xl transition-colors whitespace-nowrap"
                       >
                         Ver →
                       </a>
@@ -780,7 +780,7 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
             </div>
 
             {/* RIGHT (1/3): Alertas ────────────────────────────────────────── */}
-            <div className="bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden">
+            <div className="bg-white rounded-2xl border border-border overflow-hidden">
               <SectionHeader
                 accent="linear-gradient(180deg,#7C3AED,#6D28D9)"
                 label="Precio objetivo"
@@ -788,7 +788,7 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
                 count={data!.alerts.length}
                 action={
                   triggeredAlerts.length > 0 ? (
-                    <span className="text-[11px] font-bold text-white bg-[#EF4444] px-2 py-0.5 rounded-full">
+                    <span className="text-[11px] font-bold text-white bg-danger-500 px-2 py-0.5 rounded-full">
                       {triggeredAlerts.length} activ{triggeredAlerts.length > 1 ? "as" : "a"}
                     </span>
                   ) : undefined
@@ -810,7 +810,7 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
                       <div
                         key={alert.id}
                         className={`flex items-start gap-3 p-4 transition-colors cursor-pointer ${
-                          reached ? "bg-[#ECFDF3] border-l-4 border-[#22C55E]/60" : "hover:bg-[#F8FAFC]"
+                          reached ? "bg-[#ECFDF3] border-l-4 border-[#22C55E]/60" : "hover:bg-bg-subtle"
                         }`}
                         onClick={() => openModal({
                           id: alert.productId,
@@ -860,19 +860,19 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
                           aria-hidden="true"
                         />
                         <div className="flex-1 min-w-0">
-                          <p className="text-[13px] font-semibold text-[#0F172A] line-clamp-1 leading-snug">
+                          <p className="text-[13px] font-semibold text-fg line-clamp-1 leading-snug">
                             {alert.productName}
                           </p>
                           <p className="text-[11px] mt-0.5">
-                            <span className="font-medium text-[#475569]">Precio base:</span>{" "}
+                            <span className="font-medium text-fg-muted">Precio base:</span>{" "}
                             <span className={reached ? "text-[#14532D] font-semibold" : "text-[#6B7280]"}>
                               {alert.basePrice ? `${alert.basePrice.toFixed(0)}€` : "—"}
                             </span>
                             {alert.currentPrice !== null && (
                               <>
                                 {" · "}
-                                <span className="font-medium text-[#475569]">Ahora:</span>{" "}
-                                <span className={reached ? "font-bold text-[#16A34A]" : alert.currentPrice === alert.basePrice ? "text-[#94A3B8]" : "text-[#0F172A]"}>
+                                <span className="font-medium text-fg-muted">Ahora:</span>{" "}
+                                <span className={reached ? "font-bold text-accent-600" : alert.currentPrice === alert.basePrice ? "text-fg-subtle" : "text-fg"}>
                                   {alert.currentPrice.toFixed(0)}€
                                 </span>
                                 {reached && alert.basePrice ? (
@@ -892,7 +892,7 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
                       <button
                         onClick={(e) => { e.stopPropagation(); deleteAlert(alert.id); }}
                         aria-label={`Eliminar alerta de ${alert.productName}`}
-                        className="shrink-0 text-[#CBD5E1] hover:text-[#EF4444] transition-colors p-1 rounded focus-visible:outline-2 focus-visible:outline-[#EF4444]"
+                        className="shrink-0 text-fg-faint hover:text-danger-500 transition-colors p-1 rounded focus-visible:outline-2 focus-visible:outline-[#EF4444]"
                       >
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M18 6L6 18M6 6l12 12" />
@@ -910,7 +910,7 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
         {/* ── WATCHLIST ─────────────────────────────────────────────────────── */}
         {!isNew && (
           <>
-          <div className="bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden">
+          <div className="bg-white rounded-2xl border border-border overflow-hidden">
             <SectionHeader
               accent="linear-gradient(180deg,#2563EB,#7C3AED)"
               label="Tu lista de seguimiento"
@@ -929,7 +929,7 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
             ) : (
               <>
                 {/* Table header — desktop only */}
-                <div className="hidden sm:grid grid-cols-[1fr_auto_auto_auto] gap-3 px-5 py-2.5 bg-[#F8FAFC] border-b border-[#F1F5F9] text-[11px] font-bold text-[#94A3B8] uppercase tracking-wider">
+                <div className="hidden sm:grid grid-cols-[1fr_auto_auto_auto] gap-3 px-5 py-2.5 bg-bg-subtle border-b border-border-subtle text-[11px] font-bold text-fg-subtle uppercase tracking-wider">
                   <span>Producto</span>
                   <span className="text-right">Precio</span>
                   <span className="text-center w-32">¿Compro ahora?</span>
@@ -940,7 +940,7 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
                   {savedProductsToShow.map((sp) => (
                     <div
                       key={sp.id}
-                      className="group relative flex sm:grid sm:grid-cols-[1fr_auto_auto_auto] items-center gap-3 px-4 sm:px-5 py-3.5 hover:bg-[#F8FAFC] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#2563EB]"
+                      className="group relative flex sm:grid sm:grid-cols-[1fr_auto_auto_auto] items-center gap-3 px-4 sm:px-5 py-3.5 hover:bg-bg-subtle transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#2563EB]"
                       role="button"
                       tabIndex={0}
                       aria-label={`Ver detalles de ${sp.name}`}
@@ -963,15 +963,15 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
                       <div className="flex items-center gap-3 min-w-0 flex-1">
                         <ProductThumb src={sp.image} name={sp.name} size={44} />
                         <div className="min-w-0">
-                          <p className="text-[14px] font-semibold text-[#0F172A] line-clamp-1 leading-snug">
+                          <p className="text-[14px] font-semibold text-fg line-clamp-1 leading-snug">
                             {sp.name}
                           </p>
-                          <p className="text-[11px] text-[#94A3B8]">
+                          <p className="text-[11px] text-fg-subtle">
                             {CATEGORY_LABELS[sp.category] ?? sp.category}
                             {sp.store && <> · {sp.store}</>}
                           </p>
                           {sp.notifyOnDiscount && !sp.discountPercent && (
-                            <span className="inline-flex items-center gap-1 mt-0.5 text-[10px] font-semibold text-[#D97706] bg-[#FFFBEB] border border-[#FDE68A] px-1.5 py-0.5 rounded-md">
+                            <span className="inline-flex items-center gap-1 mt-0.5 text-[10px] font-semibold text-hot-700 bg-amber-50 border border-[#FDE68A] px-1.5 py-0.5 rounded-md">
                               <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0 1 18 14.158V11a6.002 6.002 0 0 0-4-5.659V5a2 2 0 1 0-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 1 1-6 0v-1m6 0H9" />
                               </svg>
@@ -1008,7 +1008,7 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
                             target="_blank"
                             rel="noopener noreferrer"
                             aria-label={`Ver ${sp.name} en tienda`}
-                            className="text-[12px] font-bold text-[#2563EB] hover:underline"
+                            className="text-[12px] font-bold text-brand-600 hover:underline"
                           >
                             Ver →
                           </a>
@@ -1016,7 +1016,7 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
                         <button
                           onClick={async (e) => { e.stopPropagation(); await unsave(sp.productId); }}
                           aria-label={`Quitar ${sp.name} de la watchlist`}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 rounded-full border border-[#E2E8F0] flex items-center justify-center text-[#94A3B8] hover:text-[#EF4444] hover:border-[#EF4444] shrink-0"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 rounded-full border border-border flex items-center justify-center text-fg-subtle hover:text-danger-500 hover:border-[#EF4444] shrink-0"
                         >
                           <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden="true">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M18 6L6 18M6 6l12 12" />
@@ -1027,17 +1027,17 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
                       {/* Mobile: price + unsave */}
                       <div className="sm:hidden flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
                         {sp.priceCurrent !== null && (
-                          <span className="text-[14px] font-bold text-[#0F172A]">
+                          <span className="text-[14px] font-bold text-fg">
                             {sp.priceCurrent.toFixed(0)}€
                           </span>
                         )}
                         {sp.discountPercent && sp.discountPercent > 0 && (
-                          <span className="text-[11px] font-bold text-[#10B981]">−{sp.discountPercent}%</span>
+                          <span className="text-[11px] font-bold text-accent-500">−{sp.discountPercent}%</span>
                         )}
                         <button
                           onClick={async (e) => { e.stopPropagation(); await unsave(sp.productId); }}
                           aria-label={`Quitar ${sp.name} de la watchlist`}
-                          className="w-6 h-6 rounded-full border border-[#E2E8F0] flex items-center justify-center text-[#94A3B8] hover:text-[#EF4444] hover:border-[#EF4444] shrink-0"
+                          className="w-6 h-6 rounded-full border border-border flex items-center justify-center text-fg-subtle hover:text-danger-500 hover:border-[#EF4444] shrink-0"
                         >
                           <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden="true">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M18 6L6 18M6 6l12 12" />
@@ -1055,14 +1055,14 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
         )}
 
         {/* ── RECOMENDADOS ──────────────────────────────────────────────────── */}
-        <div className="bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden">
+        <div className="bg-white rounded-2xl border border-border overflow-hidden">
           <SectionHeader
             accent="linear-gradient(180deg,#F97316,#EF4444)"
             label={isNew ? "Populares ahora" : "Basado en tus guardados"}
             title="Recomendados para ti"
             action={
               <Link href="/ofertas-destacadas"
-                className="text-[12px] font-semibold text-[#2563EB] hover:underline shrink-0">
+                className="text-[12px] font-semibold text-brand-600 hover:underline shrink-0">
                 Ver todos →
               </Link>
             }
@@ -1082,7 +1082,7 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
                   role="button"
                   tabIndex={0}
                   aria-label={`Ver detalles de ${p.name}`}
-                  className="group flex gap-3 p-3 rounded-xl border border-[#F1F5F9] hover:border-[#C7D7F4] hover:shadow-sm transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-[#2563EB]"
+                  className="group flex gap-3 p-3 rounded-xl border border-border-subtle hover:border-[#C7D7F4] hover:shadow-sm transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-[#2563EB]"
                   onClick={() => openModal({
                     id: p.id, name: p.name, brand: p.brand,
                     category: p.category, description: p.description,
@@ -1102,7 +1102,7 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
                   <div className="relative shrink-0">
                     <ProductThumb src={p.image} name={p.name} size={52} />
                     {p.discountPercent && p.discountPercent > 0 && (
-                      <span className="absolute -top-1 -left-1 text-[9px] font-black text-white bg-[#EF4444] px-1 py-0.5 rounded-md leading-none">
+                      <span className="absolute -top-1 -left-1 text-[9px] font-black text-white bg-danger-500 px-1 py-0.5 rounded-md leading-none">
                         −{p.discountPercent}%
                       </span>
                     )}
@@ -1110,10 +1110,10 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-semibold text-[#0F172A] line-clamp-2 leading-snug mb-1">
+                    <p className="text-[13px] font-semibold text-fg line-clamp-2 leading-snug mb-1">
                       {p.name}
                     </p>
-                    <p className="text-[11px] text-[#94A3B8] mb-1.5">
+                    <p className="text-[11px] text-fg-subtle mb-1.5">
                       {CATEGORY_LABELS[p.category] ?? p.category}
                     </p>
                     {p.priceCurrent !== null && (
@@ -1133,13 +1133,13 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
 
         {/* ── SIN DESCUENTO ─────────────────────────────────────────────────── */}
         {(data?.noDiscount ?? []).length > 0 && (
-          <div className="bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden">
-            <div className="px-5 py-4 border-b border-[#F1F5F9] flex items-center justify-between">
+          <div className="bg-white rounded-2xl border border-border overflow-hidden">
+            <div className="px-5 py-4 border-b border-border-subtle flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-1 h-7 rounded-full bg-[#F59E0B]" />
+                <div className="w-1 h-7 rounded-full bg-warn-500" />
                 <div>
-                  <p className="text-[10px] font-bold text-[#F59E0B] uppercase tracking-widest">Explora más</p>
-                  <h2 className="text-[15px] font-bold text-[#0F172A]">Disponibles sin oferta</h2>
+                  <p className="text-[10px] font-bold text-warn-500 uppercase tracking-widest">Explora más</p>
+                  <h2 className="text-[15px] font-bold text-fg">Disponibles sin oferta</h2>
                 </div>
               </div>
               <Link
@@ -1157,7 +1157,7 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
                   role="button"
                   tabIndex={0}
                   aria-label={`Ver detalles de ${p.name}`}
-                  className="group flex gap-3 p-3 rounded-xl border border-[#F1F5F9] hover:border-[#C7D7F4] hover:shadow-sm transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-[#2563EB]"
+                  className="group flex gap-3 p-3 rounded-xl border border-border-subtle hover:border-[#C7D7F4] hover:shadow-sm transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-[#2563EB]"
                   onClick={() => openModal({ id: p.id, name: p.name, brand: p.brand, category: p.category, description: p.description, image: p.image, images: p.images, rating: p.rating, reviewCount: p.reviewCount, offers: p.offers })}
                   onKeyDown={(e) => e.key === "Enter" && openModal({ id: p.id, name: p.name, brand: p.brand, category: p.category, description: p.description, image: p.image, images: p.images, rating: p.rating, reviewCount: p.reviewCount, offers: p.offers })}
                 >
@@ -1168,10 +1168,10 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-semibold text-[#0F172A] line-clamp-2 leading-snug mb-1">
+                    <p className="text-[13px] font-semibold text-fg line-clamp-2 leading-snug mb-1">
                       {p.name}
                     </p>
-                    <p className="text-[11px] text-[#94A3B8] mb-1.5">
+                    <p className="text-[11px] text-fg-subtle mb-1.5">
                       {CATEGORY_LABELS[p.category] ?? p.category}
                     </p>
                     {p.priceCurrent !== null && (

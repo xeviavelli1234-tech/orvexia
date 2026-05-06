@@ -62,7 +62,7 @@ export default async function BajadasRecientesPage({
   ]);
 
   return (
-    <main className="min-h-screen bg-[#F8FAFC]">
+    <main className="min-h-screen bg-bg-subtle">
 
       {/* Hero */}
       <section
@@ -72,7 +72,7 @@ export default async function BajadasRecientesPage({
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute -top-20 -left-20 w-80 h-80 rounded-full bg-emerald-400 opacity-10 blur-3xl" />
           <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-teal-300 opacity-10 blur-3xl" />
-          <div className="absolute -bottom-16 left-0 right-0 h-24 bg-[#F8FAFC] rounded-t-[32px]" />
+          <div className="absolute -bottom-16 left-0 right-0 h-24 bg-bg-subtle rounded-t-[32px]" />
         </div>
 
         <div className="relative max-w-4xl mx-auto">
@@ -108,7 +108,7 @@ export default async function BajadasRecientesPage({
       <div className="max-w-6xl mx-auto px-6">
 
         {/* Category tabs */}
-        <div className="relative z-10 -mt-12 mb-8 bg-white rounded-2xl border border-[#E2E8F0] shadow-[0_18px_48px_-24px_rgba(15,23,42,0.2)] p-4">
+        <div className="relative z-10 -mt-12 mb-8 bg-white rounded-2xl border border-border shadow-[0_18px_48px_-24px_rgba(15,23,42,0.2)] p-4">
           <Suspense>
             <CategoryTabs categories={categories} />
           </Suspense>
@@ -119,22 +119,22 @@ export default async function BajadasRecientesPage({
           <div className="flex items-center gap-4">
             <div className="w-1 h-10 rounded-full" style={{ backgroundImage: "linear-gradient(180deg, #059669, #34D399)" }} />
             <div>
-              <span className="inline-block text-[10px] font-bold text-[#059669] uppercase tracking-[0.15em] mb-0.5">
+              <span className="inline-block text-[10px] font-bold text-accent-600 uppercase tracking-[0.15em] mb-0.5">
                 {categoria ? CATEGORY_LABELS[categoria] ?? categoria : "Todas las categorías"}
               </span>
-              <h2 className="text-2xl font-bold text-[#0F172A] leading-tight">Bajadas recientes</h2>
+              <h2 className="text-2xl font-bold text-fg leading-tight">Bajadas recientes</h2>
             </div>
           </div>
-          <span className="text-sm text-[#94A3B8] hidden sm:block">
+          <span className="text-sm text-fg-subtle hidden sm:block">
             {products.length} producto{products.length !== 1 ? "s" : ""}
           </span>
         </div>
 
         {/* Grid */}
         {products.length === 0 ? (
-          <div className="text-center py-24 bg-white rounded-3xl border border-[#E2E8F0]">
+          <div className="text-center py-24 bg-white rounded-3xl border border-border">
             <span className="text-5xl block mb-4">📉</span>
-            <p className="text-[#94A3B8] text-sm font-medium">
+            <p className="text-fg-subtle text-sm font-medium">
               No hay bajadas detectadas en esta categoría todavía.
             </p>
           </div>

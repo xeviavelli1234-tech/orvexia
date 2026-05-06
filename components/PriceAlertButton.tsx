@@ -74,8 +74,8 @@ export function PriceAlertButton({ productId, store, currentPrice, className = "
       aria-pressed={active}
       className={`flex items-center justify-center rounded-full transition-all duration-150 ${
         active
-          ? "bg-[#EEF2FF] text-[#2563EB] hover:bg-[#DBEAFE]"
-          : "bg-[#F1F5F9] text-[#94A3B8] hover:bg-[#E2E8F0] hover:text-[#475569]"
+          ? "bg-[#EEF2FF] text-brand-600 hover:bg-brand-100"
+          : "bg-bg-subtle text-fg-subtle hover:bg-bg-muted hover:text-fg-muted"
       } disabled:opacity-50 ${className}`}
     >
       <svg

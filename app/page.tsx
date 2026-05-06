@@ -138,7 +138,7 @@ const REGISTER_PERKS: { title: string; desc: string; accent: string; icon: React
   {
     title: "Notificaciones de oferta",
     desc: "Guarda un producto sin descuento y te avisamos cuando entre en oferta o baje de precio.",
-    accent: "#34D399",
+    accent: "var(--accent-300)",
     icon: (
       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />

@@ -45,8 +45,8 @@ function Stars({ rating, size = 13 }: { rating: number; size?: number }) {
           <svg key={star} width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
             <defs>
               <linearGradient id={id}>
-                <stop offset={`${fill * 100}%`} stopColor="#F59E0B" />
-                <stop offset={`${fill * 100}%`} stopColor="#E2E8F0" />
+                <stop offset={`${fill * 100}%`} stopColor="var(--warn-500)" />
+                <stop offset={`${fill * 100}%`} stopColor="var(--border)" />
               </linearGradient>
             </defs>
             <path
@@ -229,7 +229,7 @@ export default async function OpinionesPage({
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest">Filtrando por producto</p>
-                  <p className="text-sm font-bold text-[#0F172A] truncate">{filteredProduct.name}</p>
+                  <p className="text-sm font-bold text-fg truncate">{filteredProduct.name}</p>
                 </div>
                 <Link
                   href={clearProductHref()}
@@ -250,11 +250,11 @@ export default async function OpinionesPage({
                 <Link
                   href={ratingHref(undefined)}
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                    !rating ? "bg-[#1E293B] text-white" : "bg-white border border-[#E2E8F0] text-[#475569] hover:border-[#1E293B]/30"
+                    !rating ? "bg-[#1E293B] text-white" : "bg-white border border-border text-fg-muted hover:border-[#1E293B]/30"
                   }`}
                 >
                   Todas
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none ${!rating ? "bg-white/20 text-white" : "bg-[#F1F5F9] text-[#94A3B8]"}`}>
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none ${!rating ? "bg-white/20 text-white" : "bg-bg-subtle text-fg-subtle"}`}>
                     {totalReviews}
                   </span>
                 </Link>
@@ -263,7 +263,7 @@ export default async function OpinionesPage({
                     key={star}
                     href={ratingHref(star)}
                     className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                      rating === star ? "bg-amber-500 text-white" : "bg-white border border-[#E2E8F0] text-[#475569] hover:border-amber-300"
+                      rating === star ? "bg-amber-500 text-white" : "bg-white border border-border text-fg-muted hover:border-amber-300"
                     }`}
                   >
                     <svg width="11" height="11" viewBox="0 0 24 24" aria-hidden="true">
@@ -275,13 +275,13 @@ export default async function OpinionesPage({
               </div>
 
               {/* Sort */}
-              <div className="flex items-center gap-1 bg-white border border-[#E2E8F0] rounded-full p-0.5">
+              <div className="flex items-center gap-1 bg-white border border-border rounded-full p-0.5">
                 {[{ label: "Reciente", value: "reciente" }, { label: "Mejor valorado", value: "valoracion" }].map((o) => (
                   <Link
                     key={o.value}
                     href={ordenHref(o.value)}
                     className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                      orden === o.value ? "bg-[#1E293B] text-white" : "text-[#64748B] hover:text-[#1E293B]"
+                      orden === o.value ? "bg-[#1E293B] text-white" : "text-fg-muted hover:text-fg"
                     }`}
                   >
                     {o.label}
@@ -292,10 +292,10 @@ export default async function OpinionesPage({
 
             {/* Reviews list */}
             {reviews.length === 0 ? (
-              <div className="text-center py-24 bg-white border border-[#E2E8F0] rounded-2xl">
+              <div className="text-center py-24 bg-white border border-border rounded-2xl">
                 <div className="text-4xl mb-4">⭐</div>
-                <h2 className="text-lg font-bold text-[#0F172A] mb-2">Sin reseñas todavía</h2>
-                <p className="text-[#64748B] text-sm mb-6 max-w-xs mx-auto">
+                <h2 className="text-lg font-bold text-fg mb-2">Sin reseñas todavía</h2>
+                <p className="text-fg-muted text-sm mb-6 max-w-xs mx-auto">
                   {filteredProduct
                     ? `No hay reseñas de ${filteredProduct.name} todavía.`
                     : rating
@@ -309,7 +309,7 @@ export default async function OpinionesPage({
             ) : (
               <div className="space-y-3">
                 {reviews.map((review) => (
-                  <div key={review.id} className="group bg-white border border-[#E2E8F0] rounded-2xl overflow-hidden hover:border-[#94A3B8]/50 hover:shadow-md transition-all duration-200">
+                  <div key={review.id} className="group bg-white border border-border rounded-2xl overflow-hidden hover:border-[#94A3B8]/50 hover:shadow-md transition-all duration-200">
                     {/* Top accent bar — amber gradient */}
                     <div className="h-[3px]" style={{
                       background: `linear-gradient(90deg, #F59E0B ${(review.rating / 5) * 100}%, #E2E8F0 ${(review.rating / 5) * 100}%)`
@@ -327,10 +327,10 @@ export default async function OpinionesPage({
                             <img
                               src={review.product.image}
                               alt={review.product.name}
-                              className="w-16 h-16 rounded-xl object-contain bg-[#F8FAFC] border border-[#E2E8F0] p-1 hover:border-[#2563EB]/30 transition-colors"
+                              className="w-16 h-16 rounded-xl object-contain bg-bg-subtle border border-border p-1 hover:border-brand-600/30 transition-colors"
                             />
                           ) : (
-                            <div className="w-16 h-16 rounded-xl bg-[#F1F5F9] border border-[#E2E8F0] flex items-center justify-center text-2xl">
+                            <div className="w-16 h-16 rounded-xl bg-bg-subtle border border-border flex items-center justify-center text-2xl">
                               📦
                             </div>
                           )}
@@ -340,11 +340,11 @@ export default async function OpinionesPage({
                           {/* Product name */}
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
-                              <p className="text-[10px] font-semibold text-[#94A3B8] uppercase tracking-widest mb-0.5">
+                              <p className="text-[10px] font-semibold text-fg-subtle uppercase tracking-widest mb-0.5">
                                 {review.product.brand}
                               </p>
                               <ProductModalButton slug={review.product.slug} aria-label={`Ver ${review.product.name}`}>
-                                <span className="text-sm font-bold text-[#0F172A] hover:text-[#2563EB] transition-colors line-clamp-1 text-left block">
+                                <span className="text-sm font-bold text-fg hover:text-brand-600 transition-colors line-clamp-1 text-left block">
                                   {review.product.name}
                                 </span>
                               </ProductModalButton>
@@ -352,26 +352,26 @@ export default async function OpinionesPage({
                             {/* Stars + rating */}
                             <div className="flex items-center gap-1.5 shrink-0">
                               <Stars rating={review.rating} size={14} />
-                              <span className="text-xs font-bold text-[#0F172A]">{review.rating}.0</span>
+                              <span className="text-xs font-bold text-fg">{review.rating}.0</span>
                             </div>
                           </div>
 
                           {/* Review content */}
                           {review.title && (
-                            <p className="text-sm font-bold text-[#0F172A] leading-snug">{review.title}</p>
+                            <p className="text-sm font-bold text-fg leading-snug">{review.title}</p>
                           )}
-                          <p className="text-[13px] text-[#475569] leading-relaxed line-clamp-3">
+                          <p className="text-[13px] text-fg-muted leading-relaxed line-clamp-3">
                             {review.content}
                           </p>
 
                           {/* Author + date */}
                           <div className="flex items-center gap-2 pt-1">
                             <Avatar user={review.user} size={20} />
-                            <span className="text-xs font-semibold text-[#475569]">{review.user.name}</span>
-                            <span className="text-[#CBD5E1] text-xs">·</span>
-                            <RelativeTime iso={review.createdAt.toISOString()} className="text-[11px] text-[#94A3B8]" />
+                            <span className="text-xs font-semibold text-fg-muted">{review.user.name}</span>
+                            <span className="text-fg-faint text-xs">·</span>
+                            <RelativeTime iso={review.createdAt.toISOString()} className="text-[11px] text-fg-subtle" />
                             {session?.userId === review.userId && (
-                              <span className="ml-auto text-[10px] font-bold text-[#2563EB] bg-blue-50 px-2 py-0.5 rounded-full">
+                              <span className="ml-auto text-[10px] font-bold text-brand-600 bg-blue-50 px-2 py-0.5 rounded-full">
                                 Tu reseña
                               </span>
                             )}
@@ -407,14 +407,14 @@ export default async function OpinionesPage({
 
             {/* Global rating summary */}
             {avgDisplay && totalReviews > 0 && (
-              <div className="bg-white border border-[#E2E8F0] rounded-2xl overflow-hidden">
-                <div className="px-4 py-3 border-b border-[#F1F5F9]">
-                  <p className="text-[11px] font-bold text-[#94A3B8] uppercase tracking-widest">Resumen global</p>
+              <div className="bg-white border border-border rounded-2xl overflow-hidden">
+                <div className="px-4 py-3 border-b border-border-subtle">
+                  <p className="text-[11px] font-bold text-fg-subtle uppercase tracking-widest">Resumen global</p>
                 </div>
                 <div className="p-4 flex flex-col items-center gap-2">
-                  <span className="text-4xl font-extrabold text-[#0F172A]">{avgDisplay}</span>
+                  <span className="text-4xl font-extrabold text-fg">{avgDisplay}</span>
                   <Stars rating={parseFloat(avgDisplay)} size={20} />
-                  <p className="text-xs text-[#94A3B8]">sobre {totalReviews} reseñas</p>
+                  <p className="text-xs text-fg-subtle">sobre {totalReviews} reseñas</p>
                   {/* Distribution */}
                   <div className="w-full mt-2 space-y-1.5">
                     {[5, 4, 3, 2, 1].map((star) => {
@@ -422,14 +422,14 @@ export default async function OpinionesPage({
                       const pct = totalReviews > 0 ? (count / totalReviews) * 100 : 0;
                       return (
                         <Link key={star} href={ratingHref(star)} className="flex items-center gap-2 group/bar">
-                          <span className="text-xs text-[#64748B] w-3 shrink-0">{star}</span>
+                          <span className="text-xs text-fg-muted w-3 shrink-0">{star}</span>
                           <svg width="10" height="10" viewBox="0 0 24 24" className="shrink-0" aria-hidden="true">
-                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#F59E0B" />
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="var(--warn-500)" />
                           </svg>
-                          <div className="flex-1 h-1.5 bg-[#F1F5F9] rounded-full overflow-hidden">
+                          <div className="flex-1 h-1.5 bg-bg-subtle rounded-full overflow-hidden">
                             <div className="h-full bg-amber-400 rounded-full transition-all group-hover/bar:bg-amber-500" style={{ width: `${pct}%` }} />
                           </div>
-                          <span className="text-[10px] text-[#94A3B8] w-4 shrink-0 text-right">{count}</span>
+                          <span className="text-[10px] text-fg-subtle w-4 shrink-0 text-right">{count}</span>
                         </Link>
                       );
                     })}
@@ -440,9 +440,9 @@ export default async function OpinionesPage({
 
             {/* Top rated products */}
             {topProductsWithStats.length > 0 && (
-              <div className="bg-white border border-[#E2E8F0] rounded-2xl overflow-hidden">
-                <div className="px-4 py-3 border-b border-[#F1F5F9]">
-                  <p className="text-[11px] font-bold text-[#94A3B8] uppercase tracking-widest">Mejor valorados</p>
+              <div className="bg-white border border-border rounded-2xl overflow-hidden">
+                <div className="px-4 py-3 border-b border-border-subtle">
+                  <p className="text-[11px] font-bold text-fg-subtle uppercase tracking-widest">Mejor valorados</p>
                 </div>
                 <div className="divide-y divide-[#F8FAFC]">
                   {topProductsWithStats.map(({ product, avg, count }, i) => (
@@ -450,19 +450,19 @@ export default async function OpinionesPage({
                       key={product.id}
                       slug={product.slug}
                       aria-label={`Ver ${product.name}`}
-                      className="flex items-center gap-3 px-4 py-3 hover:bg-[#F8FAFC] transition-colors w-full text-left"
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-bg-subtle transition-colors w-full text-left"
                     >
-                      <span className="text-xs font-bold text-[#94A3B8] w-4 shrink-0">#{i + 1}</span>
+                      <span className="text-xs font-bold text-fg-subtle w-4 shrink-0">#{i + 1}</span>
                       {product.image ? (
-                        <img src={product.image} alt={product.name} className="w-9 h-9 rounded-lg object-contain bg-[#F8FAFC] border border-[#E2E8F0] p-0.5 shrink-0" />
+                        <img src={product.image} alt={product.name} className="w-9 h-9 rounded-lg object-contain bg-bg-subtle border border-border p-0.5 shrink-0" />
                       ) : (
-                        <div className="w-9 h-9 rounded-lg bg-[#F1F5F9] shrink-0" />
+                        <div className="w-9 h-9 rounded-lg bg-bg-subtle shrink-0" />
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-[#0F172A] line-clamp-1">{product.name}</p>
+                        <p className="text-xs font-semibold text-fg line-clamp-1">{product.name}</p>
                         <div className="flex items-center gap-1 mt-0.5">
                           <Stars rating={avg} size={10} />
-                          <span className="text-[10px] text-[#94A3B8]">{avg.toFixed(1)} · {count} op.</span>
+                          <span className="text-[10px] text-fg-subtle">{avg.toFixed(1)} · {count} op.</span>
                         </div>
                       </div>
                     </ProductModalButton>
@@ -474,7 +474,7 @@ export default async function OpinionesPage({
             {/* Link to forum */}
             <Link
               href="/comunidad"
-              className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl text-sm font-semibold text-[#475569] bg-white border border-[#E2E8F0] hover:border-[#2563EB]/30 hover:text-[#2563EB] transition"
+              className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl text-sm font-semibold text-fg-muted bg-white border border-border hover:border-brand-600/30 hover:text-brand-600 transition"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />

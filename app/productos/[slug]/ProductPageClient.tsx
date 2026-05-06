@@ -187,10 +187,10 @@ function PriceHistoryChart({
             strokeLinecap="round" strokeLinejoin="round"
           />
 
-          <circle cx={pts[minIdx].x} cy={pts[minIdx].y} r="12" fill="#10B981" fillOpacity="0.12" />
-          <circle cx={pts[minIdx].x} cy={pts[minIdx].y} r="6" fill="#10B981" stroke="white" strokeWidth="2.5" />
+          <circle cx={pts[minIdx].x} cy={pts[minIdx].y} r="12" fill="var(--accent-500)" fillOpacity="0.12" />
+          <circle cx={pts[minIdx].x} cy={pts[minIdx].y} r="6" fill="var(--accent-500)" stroke="white" strokeWidth="2.5" />
 
-          <circle cx={pts[maxIdx].x} cy={pts[maxIdx].y} r="6" fill="#DC2626" stroke="white" strokeWidth="2.5" />
+          <circle cx={pts[maxIdx].x} cy={pts[maxIdx].y} r="6" fill="var(--danger-600)" stroke="white" strokeWidth="2.5" />
 
           <circle cx={pts[pts.length - 1].x} cy={pts[pts.length - 1].y} r="6" fill="#4F46E5" stroke="white" strokeWidth="2.5" />
 

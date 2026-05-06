@@ -4,9 +4,9 @@ import type { GuideConfig } from "@/lib/guides/config";
 import type { Pick } from "@/lib/guides/picks";
 
 const HINT_LABELS: Record<Pick["hint"], { badge: string; tone: string; bg: string; border: string }> = {
-  best:    { badge: "🏆 Ganador general", tone: "#0F172A", bg: "#FAFAF9", border: "#E2E8F0" },
-  value:   { badge: "💰 Calidad-precio",  tone: "#15803D", bg: "#F0FDF4", border: "#BBF7D0" },
-  cheap:   { badge: "🪙 Más barato",      tone: "#1D4ED8", bg: "#EFF6FF", border: "#BFDBFE" },
+  best:    { badge: "🏆 Ganador general", tone: "var(--fg)", bg: "#FAFAF9", border: "var(--border)" },
+  value:   { badge: "💰 Calidad-precio",  tone: "#15803D", bg: "var(--accent-50)", border: "#BBF7D0" },
+  cheap:   { badge: "🪙 Más barato",      tone: "var(--brand-700)", bg: "var(--brand-50)", border: "var(--brand-200)" },
   premium: { badge: "👑 Premium",         tone: "#B45309", bg: "#FFFBEB", border: "#FDE68A" },
 };
 
@@ -107,13 +107,13 @@ function PickCard({ pick, config, featured = false }: { pick: Pick; config: Guid
 
       {/* Discount tag */}
       {o.discountPercent && o.discountPercent >= 5 && (
-        <div className="absolute top-3 right-3 z-10 text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#EF4444] text-white">
+        <div className="absolute top-3 right-3 z-10 text-[11px] font-bold px-2.5 py-1 rounded-full bg-danger-500 text-white">
           -{o.discountPercent}%
         </div>
       )}
 
       {/* Image */}
-      <Link href={`/productos/${pick.product.slug}`} className="block aspect-[4/3] bg-[#F8FAFC] relative overflow-hidden">
+      <Link href={`/productos/${pick.product.slug}`} className="block aspect-[4/3] bg-bg-subtle relative overflow-hidden">
         {pick.product.image ? (
           <Image
             src={pick.product.image}
@@ -134,7 +134,7 @@ function PickCard({ pick, config, featured = false }: { pick: Pick; config: Guid
             {pick.product.brand}
           </p>
           <Link href={`/productos/${pick.product.slug}`}>
-            <h3 className="font-extrabold text-[15px] leading-snug text-[#0F172A] line-clamp-2 hover:underline">
+            <h3 className="font-extrabold text-[15px] leading-snug text-fg line-clamp-2 hover:underline">
               {pick.product.name}
             </h3>
           </Link>
@@ -148,14 +148,14 @@ function PickCard({ pick, config, featured = false }: { pick: Pick; config: Guid
                 <svg key={s} width="12" height="12" viewBox="0 0 24 24" className="shrink-0">
                   <path
                     d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-                    fill={s <= Math.round(pick.product.rating!) ? "#F59E0B" : "#E2E8F0"}
+                    fill={s <= Math.round(pick.product.rating!) ? "var(--warn-500)" : "var(--border)"}
                   />
                 </svg>
               ))}
             </div>
-            <span className="text-[#0F172A] font-bold">{pick.product.rating.toFixed(1)}</span>
+            <span className="text-fg font-bold">{pick.product.rating.toFixed(1)}</span>
             {pick.product.reviewCount && pick.product.reviewCount > 0 && (
-              <span className="text-[#94A3B8]">({pick.product.reviewCount} {pick.product.reviewCount === 1 ? "reseña" : "reseñas"})</span>
+              <span className="text-fg-subtle">({pick.product.reviewCount} {pick.product.reviewCount === 1 ? "reseña" : "reseñas"})</span>
             )}
           </div>
         )}
@@ -175,19 +175,19 @@ function PickCard({ pick, config, featured = false }: { pick: Pick; config: Guid
         {/* Pros / Cons */}
         <div className="space-y-1.5 text-[12px] leading-relaxed">
           {pros.map((p) => (
-            <p key={p} className="flex gap-1.5 text-[#475569]"><span className="text-emerald-600 mt-px">✓</span>{p}</p>
+            <p key={p} className="flex gap-1.5 text-fg-muted"><span className="text-emerald-600 mt-px">✓</span>{p}</p>
           ))}
           {cons.map((c) => (
-            <p key={c} className="flex gap-1.5 text-[#94A3B8]"><span className="text-[#94A3B8] mt-px">·</span>{c}</p>
+            <p key={c} className="flex gap-1.5 text-fg-subtle"><span className="text-fg-subtle mt-px">·</span>{c}</p>
           ))}
         </div>
 
         {/* Price + CTA */}
-        <div className="mt-auto pt-3 border-t border-[#F1F5F9]">
+        <div className="mt-auto pt-3 border-t border-border-subtle">
           <div className="flex items-baseline gap-2 mb-3">
-            <span className="text-2xl font-black text-[#0F172A] tabular-nums">{formatEUR(o.priceCurrent)}</span>
+            <span className="text-2xl font-black text-fg tabular-nums">{formatEUR(o.priceCurrent)}</span>
             {o.priceOld && o.priceOld > o.priceCurrent && (
-              <span className="text-xs text-[#94A3B8] line-through tabular-nums">{formatEUR(o.priceOld)}</span>
+              <span className="text-xs text-fg-subtle line-through tabular-nums">{formatEUR(o.priceOld)}</span>
             )}
           </div>
           <div className="flex flex-col gap-2">
@@ -202,7 +202,7 @@ function PickCard({ pick, config, featured = false }: { pick: Pick; config: Guid
             </a>
             <Link
               href={`/productos/${pick.product.slug}`}
-              className="text-center text-xs font-semibold text-[#64748B] hover:text-[#0F172A] transition-colors"
+              className="text-center text-xs font-semibold text-fg-muted hover:text-fg transition-colors"
             >
               Ver análisis completo
             </Link>
@@ -219,7 +219,7 @@ export default function BuyersGuide({ config, picks }: { config: GuideConfig; pi
   const otherGuides = []; // Internal links computed below
 
   return (
-    <main className="min-h-screen bg-[#F8FAFC]">
+    <main className="min-h-screen bg-bg-subtle">
       <FaqJsonLd faqs={config.faqs} />
       <ItemListJsonLd picks={picks} label={config.label} slug={config.slug} />
 
@@ -283,9 +283,9 @@ export default function BuyersGuide({ config, picks }: { config: GuideConfig; pi
       <div className="max-w-5xl mx-auto px-5 py-14 space-y-20">
 
         {/* INTRO */}
-        <section className="bg-white rounded-3xl border border-[#E2E8F0] p-7 sm:p-9 shadow-sm">
+        <section className="bg-white rounded-3xl border border-border p-7 sm:p-9 shadow-sm">
           {config.intro.map((p, i) => (
-            <p key={i} className={`text-[#334155] text-[15px] leading-relaxed ${i > 0 ? "mt-4" : ""}`}
+            <p key={i} className={`text-fg text-[15px] leading-relaxed ${i > 0 ? "mt-4" : ""}`}
               dangerouslySetInnerHTML={{ __html: p }} />
           ))}
         </section>
@@ -296,8 +296,8 @@ export default function BuyersGuide({ config, picks }: { config: GuideConfig; pi
             <p className="text-[11px] font-bold uppercase tracking-[0.2em] mb-2" style={{ color: config.color }}>
               Veredicto rápido
             </p>
-            <h2 className="text-3xl font-extrabold text-[#0F172A] mb-2">Los 4 ganadores ahora mismo</h2>
-            <p className="text-[#64748B] text-sm">
+            <h2 className="text-3xl font-extrabold text-fg mb-2">Los 4 ganadores ahora mismo</h2>
+            <p className="text-fg-muted text-sm">
               Calculados a partir de precio actual, valoraciones reales y stock disponible. Se actualizan en cada visita.
             </p>
           </div>
@@ -309,9 +309,9 @@ export default function BuyersGuide({ config, picks }: { config: GuideConfig; pi
               ))}
             </div>
           ) : (
-            <div className="bg-white rounded-3xl border border-[#E2E8F0] p-10 text-center">
+            <div className="bg-white rounded-3xl border border-border p-10 text-center">
               <span className="text-5xl mb-3 block opacity-30">{config.emoji}</span>
-              <p className="text-sm text-[#64748B]">Todavía no hay suficientes modelos en stock. Vuelve pronto.</p>
+              <p className="text-sm text-fg-muted">Todavía no hay suficientes modelos en stock. Vuelve pronto.</p>
             </div>
           )}
         </section>
@@ -323,66 +323,66 @@ export default function BuyersGuide({ config, picks }: { config: GuideConfig; pi
               <p className="text-[11px] font-bold uppercase tracking-[0.2em] mb-2" style={{ color: config.color }}>
                 Comparativa directa
               </p>
-              <h2 className="text-3xl font-extrabold text-[#0F172A] mb-2">Tabla cara a cara</h2>
-              <p className="text-[#64748B] text-sm">Características clave una al lado de la otra.</p>
+              <h2 className="text-3xl font-extrabold text-fg mb-2">Tabla cara a cara</h2>
+              <p className="text-fg-muted text-sm">Características clave una al lado de la otra.</p>
             </div>
-            <div className="overflow-x-auto rounded-2xl border border-[#E2E8F0] bg-white">
+            <div className="overflow-x-auto rounded-2xl border border-border bg-white">
               <table className="w-full text-sm">
-                <thead className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
+                <thead className="bg-bg-subtle border-b border-border">
                   <tr>
-                    <th className="text-left p-4 text-[11px] font-bold uppercase tracking-wider text-[#64748B]">Modelo</th>
+                    <th className="text-left p-4 text-[11px] font-bold uppercase tracking-wider text-fg-muted">Modelo</th>
                     {picks.map((p) => (
-                      <th key={p.product.id} className="text-center p-4 text-[11px] font-bold uppercase tracking-wider text-[#0F172A] min-w-[180px]">
+                      <th key={p.product.id} className="text-center p-4 text-[11px] font-bold uppercase tracking-wider text-fg min-w-[180px]">
                         {HINT_LABELS[p.hint].badge}
                       </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="border-b border-[#F1F5F9]">
-                    <td className="p-4 font-semibold text-[#64748B]">Producto</td>
+                  <tr className="border-b border-border-subtle">
+                    <td className="p-4 font-semibold text-fg-muted">Producto</td>
                     {picks.map((p) => (
                       <td key={p.product.id} className="p-4 text-center">
-                        <p className="font-semibold text-[13px] text-[#0F172A] leading-tight">{p.product.brand}</p>
-                        <Link href={`/productos/${p.product.slug}`} className="text-[12px] text-[#64748B] hover:underline line-clamp-2">{p.product.name}</Link>
+                        <p className="font-semibold text-[13px] text-fg leading-tight">{p.product.brand}</p>
+                        <Link href={`/productos/${p.product.slug}`} className="text-[12px] text-fg-muted hover:underline line-clamp-2">{p.product.name}</Link>
                       </td>
                     ))}
                   </tr>
-                  <tr className="border-b border-[#F1F5F9] bg-[#FAFAF9]">
-                    <td className="p-4 font-semibold text-[#64748B]">Precio</td>
+                  <tr className="border-b border-border-subtle bg-[#FAFAF9]">
+                    <td className="p-4 font-semibold text-fg-muted">Precio</td>
                     {picks.map((p) => (
                       <td key={p.product.id} className="p-4 text-center">
-                        <p className="font-extrabold text-base text-[#0F172A] tabular-nums">{formatEUR(p.product.bestOffer.priceCurrent)}</p>
+                        <p className="font-extrabold text-base text-fg tabular-nums">{formatEUR(p.product.bestOffer.priceCurrent)}</p>
                         {p.product.bestOffer.priceOld && p.product.bestOffer.priceOld > p.product.bestOffer.priceCurrent && (
-                          <p className="text-[11px] text-[#94A3B8] line-through tabular-nums">{formatEUR(p.product.bestOffer.priceOld)}</p>
+                          <p className="text-[11px] text-fg-subtle line-through tabular-nums">{formatEUR(p.product.bestOffer.priceOld)}</p>
                         )}
                       </td>
                     ))}
                   </tr>
-                  <tr className="border-b border-[#F1F5F9]">
-                    <td className="p-4 font-semibold text-[#64748B]">Tienda</td>
+                  <tr className="border-b border-border-subtle">
+                    <td className="p-4 font-semibold text-fg-muted">Tienda</td>
                     {picks.map((p) => (
-                      <td key={p.product.id} className="p-4 text-center text-[13px] text-[#0F172A]">{p.product.bestOffer.store}</td>
+                      <td key={p.product.id} className="p-4 text-center text-[13px] text-fg">{p.product.bestOffer.store}</td>
                     ))}
                   </tr>
-                  <tr className="border-b border-[#F1F5F9] bg-[#FAFAF9]">
-                    <td className="p-4 font-semibold text-[#64748B]">Valoración</td>
+                  <tr className="border-b border-border-subtle bg-[#FAFAF9]">
+                    <td className="p-4 font-semibold text-fg-muted">Valoración</td>
                     {picks.map((p) => (
-                      <td key={p.product.id} className="p-4 text-center text-[13px] text-[#0F172A]">
+                      <td key={p.product.id} className="p-4 text-center text-[13px] text-fg">
                         {p.product.rating !== null ? `${p.product.rating.toFixed(1)} / 5` : "—"}
                       </td>
                     ))}
                   </tr>
-                  <tr className="border-b border-[#F1F5F9]">
-                    <td className="p-4 font-semibold text-[#64748B]">Especificaciones</td>
+                  <tr className="border-b border-border-subtle">
+                    <td className="p-4 font-semibold text-fg-muted">Especificaciones</td>
                     {picks.map((p) => (
-                      <td key={p.product.id} className="p-4 text-center text-[12px] text-[#475569]">
+                      <td key={p.product.id} className="p-4 text-center text-[12px] text-fg-muted">
                         {extractSpecLabels(p.product.name, config.specRegex).join(" · ") || "—"}
                       </td>
                     ))}
                   </tr>
                   <tr>
-                    <td className="p-4 font-semibold text-[#64748B]"></td>
+                    <td className="p-4 font-semibold text-fg-muted"></td>
                     {picks.map((p) => (
                       <td key={p.product.id} className="p-4 text-center">
                         <a
@@ -410,29 +410,29 @@ export default function BuyersGuide({ config, picks }: { config: GuideConfig; pi
               <p className="text-[11px] font-bold uppercase tracking-[0.2em] mb-2" style={{ color: config.color }}>
                 ¿Cuál te conviene?
               </p>
-              <h2 className="text-3xl font-extrabold text-[#0F172A] mb-2">Para quién es cada uno</h2>
-              <p className="text-[#64748B] text-sm">Elige según tu caso, no según el ranking.</p>
+              <h2 className="text-3xl font-extrabold text-fg mb-2">Para quién es cada uno</h2>
+              <p className="text-fg-muted text-sm">Elige según tu caso, no según el ranking.</p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {config.paraQuien.map((pq) => {
                 const matchedPick = picks.find((p) => p.hint === pq.pickHint);
                 return (
-                  <div key={pq.title} className="bg-white rounded-3xl border border-[#E2E8F0] p-6 flex flex-col gap-3">
+                  <div key={pq.title} className="bg-white rounded-3xl border border-border p-6 flex flex-col gap-3">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-xl"
                         style={{ background: config.bgLight, border: `1px solid ${config.borderLight}` }}>
                         {pq.icon}
                       </div>
-                      <h3 className="text-[15px] font-extrabold text-[#0F172A]">{pq.title}</h3>
+                      <h3 className="text-[15px] font-extrabold text-fg">{pq.title}</h3>
                     </div>
-                    <p className="text-[13px] text-[#475569] leading-relaxed">{pq.desc}</p>
+                    <p className="text-[13px] text-fg-muted leading-relaxed">{pq.desc}</p>
                     {matchedPick && (
-                      <div className="mt-2 pt-3 border-t border-[#F1F5F9] flex items-center justify-between gap-3">
+                      <div className="mt-2 pt-3 border-t border-border-subtle flex items-center justify-between gap-3">
                         <div className="min-w-0">
-                          <Link href={`/productos/${matchedPick.product.slug}`} className="text-[12px] font-bold text-[#0F172A] hover:underline line-clamp-1 block">
+                          <Link href={`/productos/${matchedPick.product.slug}`} className="text-[12px] font-bold text-fg hover:underline line-clamp-1 block">
                             {matchedPick.product.brand} · {matchedPick.product.name}
                           </Link>
-                          <p className="text-[11px] text-[#64748B] mt-0.5">
+                          <p className="text-[11px] text-fg-muted mt-0.5">
                             <span className="font-bold tabular-nums">{formatEUR(matchedPick.product.bestOffer.priceCurrent)}</span> · {matchedPick.product.bestOffer.store}
                           </p>
                         </div>
@@ -460,8 +460,8 @@ export default function BuyersGuide({ config, picks }: { config: GuideConfig; pi
             <p className="text-[11px] font-bold uppercase tracking-[0.2em] mb-2" style={{ color: config.color }}>
               Antes de comprar
             </p>
-            <h2 className="text-3xl font-extrabold text-[#0F172A] mb-2">Tipos de {config.label.toLowerCase()}</h2>
-            <p className="text-[#64748B] text-sm">El formato condiciona el espacio, el uso y el precio.</p>
+            <h2 className="text-3xl font-extrabold text-fg mb-2">Tipos de {config.label.toLowerCase()}</h2>
+            <p className="text-fg-muted text-sm">El formato condiciona el espacio, el uso y el precio.</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {config.tipos.map((t) => (
@@ -469,14 +469,14 @@ export default function BuyersGuide({ config, picks }: { config: GuideConfig; pi
                 style={{ backgroundColor: t.bg, borderColor: t.border }}>
                 <div>
                   <span className="text-2xl">{t.emoji}</span>
-                  <h3 className="font-extrabold text-[#0F172A] mt-2 text-base">{t.title}</h3>
+                  <h3 className="font-extrabold text-fg mt-2 text-base">{t.title}</h3>
                   <p className="text-xs font-medium mt-1" style={{ color: t.color }}>Ideal para: {t.ideal}</p>
                 </div>
                 <div className="space-y-3 text-xs">
                   {t.pros.length > 0 && (
                     <div>
                       <p className="font-bold text-emerald-700 mb-1.5">✓ Ventajas</p>
-                      <ul className="space-y-1 text-[#475569]">
+                      <ul className="space-y-1 text-fg-muted">
                         {t.pros.map((p) => <li key={p} className="flex gap-1.5"><span className="text-emerald-600 mt-px">·</span>{p}</li>)}
                       </ul>
                     </div>
@@ -484,7 +484,7 @@ export default function BuyersGuide({ config, picks }: { config: GuideConfig; pi
                   {t.cons.length > 0 && (
                     <div className="pt-2 border-t" style={{ borderColor: t.border }}>
                       <p className="font-bold text-red-500 mb-1.5">✗ Inconvenientes</p>
-                      <ul className="space-y-1 text-[#475569]">
+                      <ul className="space-y-1 text-fg-muted">
                         {t.cons.map((c) => <li key={c} className="flex gap-1.5"><span className="text-red-400 mt-px">·</span>{c}</li>)}
                       </ul>
                     </div>
@@ -501,12 +501,12 @@ export default function BuyersGuide({ config, picks }: { config: GuideConfig; pi
             <p className="text-[11px] font-bold uppercase tracking-[0.2em] mb-2" style={{ color: config.color }}>
               Cómo elegir
             </p>
-            <h2 className="text-3xl font-extrabold text-[#0F172A] mb-2">{config.criterios.length} criterios que importan</h2>
-            <p className="text-[#64748B] text-sm">Las cosas que sí marcan diferencia en el día a día.</p>
+            <h2 className="text-3xl font-extrabold text-fg mb-2">{config.criterios.length} criterios que importan</h2>
+            <p className="text-fg-muted text-sm">Las cosas que sí marcan diferencia en el día a día.</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {config.criterios.map((c, i) => (
-              <div key={c.title} className="bg-white rounded-2xl border border-[#E2E8F0] p-5 flex gap-4 hover:shadow-md transition-shadow">
+              <div key={c.title} className="bg-white rounded-2xl border border-border p-5 flex gap-4 hover:shadow-md transition-shadow">
                 <div className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 text-xl"
                   style={{ background: config.bgLight, border: `1px solid ${config.borderLight}` }}>
                   {c.icon}
@@ -517,9 +517,9 @@ export default function BuyersGuide({ config, picks }: { config: GuideConfig; pi
                       style={{ background: config.bgLight, color: config.color }}>
                       #{i + 1}
                     </span>
-                    <h3 className="font-bold text-[#0F172A] text-sm">{c.title}</h3>
+                    <h3 className="font-bold text-fg text-sm">{c.title}</h3>
                   </div>
-                  <p className="text-xs text-[#64748B] leading-relaxed">{c.desc}</p>
+                  <p className="text-xs text-fg-muted leading-relaxed">{c.desc}</p>
                 </div>
               </div>
             ))}
@@ -532,15 +532,15 @@ export default function BuyersGuide({ config, picks }: { config: GuideConfig; pi
             <p className="text-[11px] font-bold uppercase tracking-[0.2em] mb-2" style={{ color: config.color }}>
               FAQ
             </p>
-            <h2 className="text-3xl font-extrabold text-[#0F172A]">Preguntas frecuentes</h2>
+            <h2 className="text-3xl font-extrabold text-fg">Preguntas frecuentes</h2>
           </div>
           <div className="space-y-3">
             {config.faqs.map((f, i) => (
-              <details key={f.q} className="group bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden hover:shadow-sm open:shadow-sm transition-shadow">
+              <details key={f.q} className="group bg-white rounded-2xl border border-border overflow-hidden hover:shadow-sm open:shadow-sm transition-shadow">
                 <summary className="flex items-center gap-4 p-5 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
                   <span className="text-[11px] font-bold tabular-nums w-6 shrink-0"
                     style={{ color: config.color }}>{String(i + 1).padStart(2, "0")}</span>
-                  <span className="font-bold text-[#0F172A] text-[14px] flex-1 leading-snug">{f.q}</span>
+                  <span className="font-bold text-fg text-[14px] flex-1 leading-snug">{f.q}</span>
                   <span className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-transform duration-200 group-open:rotate-180"
                     style={{ background: config.bgLight, color: config.color }}>
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -548,7 +548,7 @@ export default function BuyersGuide({ config, picks }: { config: GuideConfig; pi
                     </svg>
                   </span>
                 </summary>
-                <div className="px-5 pb-5 pl-[3.25rem] text-[13px] text-[#475569] leading-relaxed">
+                <div className="px-5 pb-5 pl-[3.25rem] text-[13px] text-fg-muted leading-relaxed">
                   {f.a}
                 </div>
               </details>

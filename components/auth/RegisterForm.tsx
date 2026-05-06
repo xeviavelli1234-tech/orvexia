@@ -37,9 +37,9 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="w-full bg-[#F97316] text-white p-3 rounded-[10px] shadow-[0_16px_30px_-14px_rgba(249,115,22,0.55)] hover:bg-[#EA580C] hover:translate-y-[-1px] hover:shadow-[0_18px_34px_-14px_rgba(249,115,22,0.65)] transition disabled:opacity-50"
+      className="w-full bg-brand-600 hover:bg-brand-700 active:scale-[0.98] text-white font-bold h-11 rounded-xl shadow-md shadow-brand-600/25 hover:shadow-lg hover:shadow-brand-600/35 transition-all disabled:opacity-50 disabled:pointer-events-none"
     >
-      {pending ? "Registrando..." : "Crear cuenta"}
+      {pending ? "Creando cuenta…" : "Crear cuenta"}
     </button>
   );
 }
@@ -106,7 +106,7 @@ export function RegisterForm() {
     <div className={`space-y-4 ${inter.className}`}>
       <GoogleButton label="Registrarse con Google" />
 
-      <div className="text-center text-[#94A3B8] text-[11px] tracking-[0.18em] mb-1 uppercase">
+      <div className="text-center text-fg-subtle text-[11px] tracking-[0.18em] mb-1 uppercase">
         o regístrate con email
       </div>
 
@@ -168,9 +168,9 @@ export function RegisterForm() {
         <SubmitButton />
       </form>
 
-      <p className={`text-center text-sm text-[#64748B] ${playfair.className}`}>
+      <p className={`text-center text-sm text-fg-muted ${playfair.className}`}>
         ¿Ya tienes cuenta?{" "}
-        <Link href="/login" className="font-medium text-[#2563EB] hover:underline">
+        <Link href="/login" className="font-medium text-brand-600 hover:underline">
           Inicia sesión
         </Link>
       </p>

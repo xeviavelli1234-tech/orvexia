@@ -68,20 +68,20 @@ export function CookieConsentBanner({ initialConsent }: CookieConsentBannerProps
       {showBanner ? (
         <section
           aria-live="polite"
-          className="fixed inset-x-4 bottom-4 z-50 mx-auto w-auto max-w-4xl rounded-2xl border border-[#CBD5E1] bg-white p-5 shadow-2xl sm:inset-x-6 sm:p-6"
+          className="fixed inset-x-4 bottom-4 z-50 mx-auto w-auto max-w-4xl rounded-2xl border border-border-strong bg-white p-5 shadow-2xl sm:inset-x-6 sm:p-6"
         >
-          <p className="text-base font-semibold text-[#0F172A]">Tu privacidad, bajo control</p>
-          <p className="mt-2 text-sm leading-relaxed text-[#334155]">
+          <p className="text-base font-semibold text-fg">Tu privacidad, bajo control</p>
+          <p className="mt-2 text-sm leading-relaxed text-fg">
             Usamos cookies tecnicas para el funcionamiento del sitio y, si aceptas, cookies de
             analitica y publicidad para mejorar contenidos y medir resultados.
           </p>
-          <p className="mt-2 text-xs text-[#475569]">
+          <p className="mt-2 text-xs text-fg-muted">
             Más información en la{" "}
-            <Link href="/politica-privacidad" className="font-semibold text-[#2563EB] hover:underline">
+            <Link href="/politica-privacidad" className="font-semibold text-brand-600 hover:underline">
               política de privacidad
             </Link>
             {" "}y la{" "}
-            <Link href="/politica-cookies" className="font-semibold text-[#2563EB] hover:underline">
+            <Link href="/politica-cookies" className="font-semibold text-brand-600 hover:underline">
               política de cookies
             </Link>
             .
@@ -90,21 +90,21 @@ export function CookieConsentBanner({ initialConsent }: CookieConsentBannerProps
             <button
               type="button"
               onClick={acceptAll}
-              className="inline-flex items-center justify-center rounded-xl bg-[#2563EB] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#1E40AF]"
+              className="inline-flex items-center justify-center rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#1E40AF]"
             >
               Aceptar todas
             </button>
             <button
               type="button"
               onClick={rejectOptional}
-              className="inline-flex items-center justify-center rounded-xl border border-[#CBD5E1] px-4 py-2.5 text-sm font-semibold text-[#0F172A] hover:bg-[#F8FAFC]"
+              className="inline-flex items-center justify-center rounded-xl border border-border-strong px-4 py-2.5 text-sm font-semibold text-fg hover:bg-bg-subtle"
             >
               Rechazar opcionales
             </button>
             <button
               type="button"
               onClick={() => setShowSettings(true)}
-              className="inline-flex items-center justify-center rounded-xl border border-transparent px-4 py-2.5 text-sm font-semibold text-[#334155] hover:bg-[#F1F5F9]"
+              className="inline-flex items-center justify-center rounded-xl border border-transparent px-4 py-2.5 text-sm font-semibold text-fg hover:bg-bg-subtle"
             >
               Configurar
             </button>
@@ -120,26 +120,26 @@ export function CookieConsentBanner({ initialConsent }: CookieConsentBannerProps
             aria-label="Configuracion de cookies"
             className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-2xl"
           >
-            <h2 className="text-lg font-bold text-[#0F172A]">Configurar cookies</h2>
-            <p className="mt-2 text-sm text-[#334155]">
+            <h2 className="text-lg font-bold text-fg">Configurar cookies</h2>
+            <p className="mt-2 text-sm text-fg">
               Puedes aceptar o rechazar cookies no necesarias en cualquier momento.
             </p>
 
             <div className="mt-5 space-y-4">
-              <div className="rounded-xl border border-[#E2E8F0] p-4">
-                <p className="text-sm font-semibold text-[#0F172A]">Tecnicas (necesarias)</p>
-                <p className="mt-1 text-xs text-[#475569]">
+              <div className="rounded-xl border border-border p-4">
+                <p className="text-sm font-semibold text-fg">Tecnicas (necesarias)</p>
+                <p className="mt-1 text-xs text-fg-muted">
                   Imprescindibles para seguridad, sesion y funciones basicas.
                 </p>
-                <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-[#2563EB]">
+                <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-brand-600">
                   Siempre activas
                 </p>
               </div>
 
-              <label className="flex cursor-pointer items-start justify-between gap-4 rounded-xl border border-[#E2E8F0] p-4">
+              <label className="flex cursor-pointer items-start justify-between gap-4 rounded-xl border border-border p-4">
                 <span>
-                  <span className="block text-sm font-semibold text-[#0F172A]">Analitica</span>
-                  <span className="mt-1 block text-xs text-[#475569]">
+                  <span className="block text-sm font-semibold text-fg">Analitica</span>
+                  <span className="mt-1 block text-xs text-fg-muted">
                     Mide el uso para mejorar busquedas, categorias y rendimiento.
                   </span>
                 </span>
@@ -151,10 +151,10 @@ export function CookieConsentBanner({ initialConsent }: CookieConsentBannerProps
                 />
               </label>
 
-              <label className="flex cursor-pointer items-start justify-between gap-4 rounded-xl border border-[#E2E8F0] p-4">
+              <label className="flex cursor-pointer items-start justify-between gap-4 rounded-xl border border-border p-4">
                 <span>
-                  <span className="block text-sm font-semibold text-[#0F172A]">Publicidad</span>
-                  <span className="mt-1 block text-xs text-[#475569]">
+                  <span className="block text-sm font-semibold text-fg">Publicidad</span>
+                  <span className="mt-1 block text-xs text-fg-muted">
                     Personaliza anuncios y mide conversiones en plataformas externas.
                   </span>
                 </span>
@@ -171,21 +171,21 @@ export function CookieConsentBanner({ initialConsent }: CookieConsentBannerProps
               <button
                 type="button"
                 onClick={saveSettings}
-                className="inline-flex items-center justify-center rounded-xl bg-[#2563EB] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#1E40AF]"
+                className="inline-flex items-center justify-center rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#1E40AF]"
               >
                 Guardar configuracion
               </button>
               <button
                 type="button"
                 onClick={rejectOptional}
-                className="inline-flex items-center justify-center rounded-xl border border-[#CBD5E1] px-4 py-2.5 text-sm font-semibold text-[#0F172A] hover:bg-[#F8FAFC]"
+                className="inline-flex items-center justify-center rounded-xl border border-border-strong px-4 py-2.5 text-sm font-semibold text-fg hover:bg-bg-subtle"
               >
                 Rechazar opcionales
               </button>
               <button
                 type="button"
                 onClick={() => setShowSettings(false)}
-                className="inline-flex items-center justify-center rounded-xl border border-transparent px-4 py-2.5 text-sm font-semibold text-[#334155] hover:bg-[#F1F5F9]"
+                className="inline-flex items-center justify-center rounded-xl border border-transparent px-4 py-2.5 text-sm font-semibold text-fg hover:bg-bg-subtle"
               >
                 Cerrar
               </button>
