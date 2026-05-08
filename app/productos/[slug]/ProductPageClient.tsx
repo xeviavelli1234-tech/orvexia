@@ -266,7 +266,7 @@ export default function ProductPageClient({ product, specs, description, catLabe
 
         {/* GALERÍA */}
         <div className="space-y-3">
-          <div className="bg-bg-elevated rounded-2xl border border-border overflow-hidden aspect-square flex items-center justify-center relative group">
+          <div className="bg-white rounded-2xl border border-border overflow-hidden aspect-square flex items-center justify-center relative group">
             {images[activeImage] ? (
               <Image
                 src={images[activeImage]}
@@ -696,7 +696,7 @@ export default function ProductPageClient({ product, specs, description, catLabe
                   href={`/productos/${p.slug}`}
                   className="group bg-bg-elevated rounded-2xl border border-border overflow-hidden hover:border-border-strong hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
                 >
-                  <div className="aspect-square relative bg-gradient-to-br from-bg-subtle to-bg-muted">
+                  <div className="aspect-square relative bg-white">
                     {thumb ? (
                       <Image src={thumb} alt={p.name} fill className="object-contain p-3 transition-transform duration-300 group-hover:scale-[1.04]" sizes="200px" />
                     ) : (

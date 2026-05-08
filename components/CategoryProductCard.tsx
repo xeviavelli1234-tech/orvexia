@@ -73,7 +73,7 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
                    overflow-hidden flex cursor-pointer"
       >
         {/* Imagen */}
-        <div className="relative w-24 sm:w-28 flex-shrink-0 bg-gradient-to-br from-bg-subtle to-bg-muted">
+        <div className="relative w-24 sm:w-28 flex-shrink-0 bg-white">
           {thumb && !thumbError ? (
             <img
               src={thumb}

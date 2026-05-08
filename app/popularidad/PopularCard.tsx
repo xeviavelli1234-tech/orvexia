@@ -93,7 +93,7 @@ export function PopularCard({ product, rank }: { product: Product; rank: number 
                    hover:shadow-xl hover:border-[#7C3AED]/20 transition-all duration-200 cursor-pointer"
       >
         {/* Image */}
-        <div className="relative h-52 bg-bg-subtle flex items-center justify-center">
+        <div className="relative h-52 bg-white flex items-center justify-center">
           {cardImages.length > 0 ? (
             <Image src={cardImages[0]} alt={product.name} fill className="object-contain p-5"
               sizes="(max-width:640px) 100vw,(max-width:1024px) 50vw,33vw" />

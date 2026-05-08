@@ -124,7 +124,7 @@ export default function ProductCard({ product, priority = false }: Props) {
         onClick={handleOpen}
       >
         {/* Image area */}
-        <div className="relative aspect-[4/3] bg-gradient-to-br from-bg-subtle to-bg-muted">
+        <div className="relative aspect-[4/3] bg-white">
           {cardImages.length > 0 && !cardImageErrored ? (
             <img
               key={cardImages[active]}

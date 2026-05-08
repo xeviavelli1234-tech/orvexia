@@ -227,7 +227,7 @@ export default function ProductModal({ product, onClose }: Props) {
 
         {/* ── Columna izquierda: carrusel ── */}
         <div
-          className="h-[40vh] min-h-[260px] md:h-auto md:min-h-0 md:w-1/2 bg-bg-subtle flex flex-col"
+          className="h-[40vh] min-h-[260px] md:h-auto md:min-h-0 md:w-1/2 bg-white flex flex-col"
           onMouseEnter={() => setPaused(true)}
           onMouseLeave={() => setPaused(false)}
         >
