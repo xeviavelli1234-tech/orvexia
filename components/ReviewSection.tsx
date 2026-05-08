@@ -219,7 +219,7 @@ function ReviewForm({ productId, initial, onSave, onCancel }: ReviewFormProps) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-[#F0F7FF] rounded-2xl border border-brand-100 p-5 flex flex-col gap-4"
+      className="bg-bg-subtle rounded-2xl border border-border p-5 flex flex-col gap-4"
     >
       <div className="flex items-center justify-between">
         <p className="text-sm font-semibold text-fg">
@@ -316,7 +316,7 @@ function ReviewCard({
     <div
       className={`rounded-2xl border p-4 flex flex-col gap-3 transition-all ${
         isOwn
-          ? "border-brand-600/30 bg-[#F0F7FF]"
+          ? "border-brand-600/30 bg-bg-subtle"
           : "border-border bg-bg-elevated"
       }`}
     >

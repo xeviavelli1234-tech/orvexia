@@ -119,7 +119,7 @@ function SpecBadges({ description }: { description: string | null }) {
         return (
           <span
             key={regex.toString()}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#F0F7FF] text-brand-800 text-xs font-semibold rounded-xl border border-brand-100"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-bg-subtle text-fg text-xs font-semibold rounded-xl border border-border"
           >
             <span>{icon}</span>
             {label(match)}
@@ -218,7 +218,7 @@ export default function ProductModal({ product, onClose }: Props) {
         {/* ── Cerrar ── */}
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 md:top-4 md:right-4 z-20 bg-white/90 hover:bg-bg-elevated text-fg-muted hover:text-fg rounded-full p-1.5 shadow transition-colors"
+          className="absolute top-3 right-3 md:top-4 md:right-4 z-20 bg-bg-elevated/90 hover:bg-bg-elevated text-fg-muted hover:text-fg rounded-full p-1.5 shadow transition-colors"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -227,7 +227,7 @@ export default function ProductModal({ product, onClose }: Props) {
 
         {/* ── Columna izquierda: carrusel ── */}
         <div
-          className="h-[40vh] min-h-[260px] md:h-auto md:min-h-0 md:w-1/2 bg-[#F0F7FF] flex flex-col"
+          className="h-[40vh] min-h-[260px] md:h-auto md:min-h-0 md:w-1/2 bg-bg-subtle flex flex-col"
           onMouseEnter={() => setPaused(true)}
           onMouseLeave={() => setPaused(false)}
         >
@@ -301,7 +301,7 @@ export default function ProductModal({ product, onClose }: Props) {
           {all.length > 1 && (
             <div
               ref={thumbsRef}
-              className="flex gap-1.5 md:gap-2 p-2 md:p-3 overflow-x-auto border-t border-[#E5F0FF] bg-white/60"
+              className="flex gap-1.5 md:gap-2 p-2 md:p-3 overflow-x-auto border-t border-border bg-bg-elevated/60"
               style={{ scrollbarWidth: "none" }}
             >
               {all.map((src, i) => (
@@ -376,7 +376,7 @@ export default function ProductModal({ product, onClose }: Props) {
             )}
 
             {mejorOferta && (
-              <div className="flex items-end gap-2 md:gap-3 flex-wrap py-3 border-t border-b border-[#E5F0FF]">
+              <div className="flex items-end gap-2 md:gap-3 flex-wrap py-3 border-t border-b border-border">
                 <span className="text-2xl md:text-3xl font-bold text-fg">{formatEuro(mejorOferta.priceCurrent)} €</span>
                 {mejorOferta.priceOld != null && mejorOferta.priceOld > mejorOferta.priceCurrent &&
                   mejorOferta.priceOld / mejorOferta.priceCurrent <= 2.5 && (
@@ -436,7 +436,7 @@ export default function ProductModal({ product, onClose }: Props) {
             <div className="flex-1" />
 
             {mejorOferta && (
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-[#E5F0FF]">
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-border">
                 <div className="flex items-center gap-2">
                   <StoreLogo store={mejorOferta.store} logo={storeLogo} />
                   <span className="text-sm font-medium text-fg">{mejorOferta.store}</span>
