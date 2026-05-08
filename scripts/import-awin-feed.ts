@@ -7,11 +7,13 @@
  *   - DATABASE_URL              → conexión a Postgres
  *   - AWIN_FEED_URL_ECI         → URL completa del feed de ECI (con apikey)
  *   - AWIN_FEED_URL_FNAC        → URL completa del feed de Fnac (opcional)
+ *   - AWIN_FEED_URL_LG          → URL completa del feed de LG España (opcional)
  *
  * Uso:
- *   npx tsx scripts/import-awin-feed.ts          # actualiza ECI y Fnac si están definidos
+ *   npx tsx scripts/import-awin-feed.ts          # actualiza todas las tiendas con URL definida
  *   npx tsx scripts/import-awin-feed.ts eci      # solo ECI
  *   npx tsx scripts/import-awin-feed.ts fnac     # solo Fnac
+ *   npx tsx scripts/import-awin-feed.ts lg       # solo LG
  *   npx tsx scripts/import-awin-feed.ts --dry-run
  */
 import { PrismaClient } from "../app/generated/prisma/client";
@@ -57,6 +59,11 @@ const FEEDS: FeedConfig[] = [
     // Acepta AWIN_FEED_URL_FNAC explícito o AWIN_FEED_URL (multi-feed
     // configurado por el usuario en su .env con los 4 FIDs de Fnac).
     url: process.env.AWIN_FEED_URL_FNAC ?? process.env.AWIN_FEED_URL,
+  },
+  {
+    storeName: "LG",
+    storeMatcher: /\blg\b/i,
+    url: process.env.AWIN_FEED_URL_LG,
   },
 ];
 

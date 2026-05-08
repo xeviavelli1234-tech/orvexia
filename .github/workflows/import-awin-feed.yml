@@ -1,4 +1,4 @@
-name: Importar precios Awin (ECI + Fnac)
+name: Importar precios Awin (ECI + Fnac + LG)
 
 on:
   schedule:
@@ -31,9 +31,10 @@ jobs:
       - name: Generar cliente Prisma
         run: npx prisma generate
 
-      - name: Importar feed Awin (ECI + Fnac)
+      - name: Importar feed Awin (ECI + Fnac + LG)
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           AWIN_FEED_URL_ECI: ${{ secrets.AWIN_FEED_URL_ECI }}
           AWIN_FEED_URL_FNAC: ${{ secrets.AWIN_FEED_URL_FNAC }}
+          AWIN_FEED_URL_LG: ${{ secrets.AWIN_FEED_URL_LG }}
         run: npx tsx scripts/import-awin-feed.ts
