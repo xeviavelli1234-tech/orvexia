@@ -99,6 +99,24 @@ async function head(url: string): Promise<boolean> {
   }
 }
 
+/**
+ * Verifica con HEAD que una URL devuelva 200. Devuelve true si está viva.
+ * Hace caching en memoria por proceso para evitar HEADs duplicados.
+ */
+const headCache = new Map<string, boolean>();
+async function isUrlAlive(url: string): Promise<boolean> {
+  if (headCache.has(url)) return headCache.get(url)!;
+  // Productserve URLs siempre las consideramos válidas (son thumbnails proxy
+  // y pueden bloquear HEAD pero servir GET; evitamos romper esa funcionalidad)
+  if (url.includes("productserve.com")) {
+    headCache.set(url, true);
+    return true;
+  }
+  const ok = await head(url);
+  headCache.set(url, ok);
+  return ok;
+}
+
 // ────────────────────────────────────────────────────────────────────────
 // HTML parsing
 // ────────────────────────────────────────────────────────────────────────
@@ -268,14 +286,28 @@ async function processOffer(
 
   // Orden de prioridad: imagen canónica del og:image, luego enumeradas S-NN,
   // luego las que aparecen en HTML, luego las que ya teníamos en BD.
-  // El dedupe se encarga de duplicados; conservamos productserve como fallback
-  // visual si una rama deja la galería corta.
+  // Dedupe automático.
   add(baseImage);
   for (const u of enumerated) add(u);
   for (const u of pageImages) add(u);
   for (const u of currentImages) add(u);
 
-  const finalImages = out.slice(0, MAX_TOTAL_IMAGES);
+  // Verificar cada URL con HEAD. Sólo conservar las que devuelven 200.
+  // Esto evita guardar URLs muertas (LG retira imágenes de modelos outlet).
+  const verified: string[] = [];
+  for (const u of out) {
+    if (await isUrlAlive(u)) verified.push(u);
+  }
+
+  const finalImages = verified.slice(0, MAX_TOTAL_IMAGES);
+
+  // Si no quedó ninguna URL viva, no tocar BD (mejor conservar la basura
+  // existente que dejar el producto sin imágenes y romper la card).
+  if (finalImages.length === 0) {
+    notes.push("todas las URLs candidatas devolvieron error");
+    return { finalImages: currentImages, source: "none", notes };
+  }
+
   const source: ProcessResult["source"] =
     pageImages.length > 0 && enumerated.length > 0
       ? "page+enum"
