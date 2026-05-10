@@ -43,7 +43,7 @@ async function calcOne(productId: string, store: string) {
   const historyDays  = cleanHistory.length;
 
   // StoreScore
-  const TRUSTED = ["amazon", "pccomponente", "fnac", "corte"];
+  const TRUSTED = ["pccomponente", "fnac", "corte", "lg"];
   const isTrusted = TRUSTED.some(s => store.toLowerCase().includes(s));
   const storeScore = isTrusted
     ? 17

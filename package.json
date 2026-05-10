@@ -6,7 +6,6 @@
     "dev": "next dev",
     "dev:nofork": "node dev-no-fork.cjs",
     "postinstall": "prisma generate",
-    "db:sync-tv-prices": "tsx scripts/sync-tv-prices.ts",
     "db:sync-fnac-lavadoras-prices": "tsx scripts/sync-fnac-lavadoras-prices.ts",
     "db:sync-fnac-frigorificos-prices": "tsx scripts/sync-fnac-frigorificos-prices.ts",
     "db:sync-eci-lavadoras-stock": "tsx scripts/sync-eci-lavadoras-stock.ts",
