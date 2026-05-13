@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { THEME_COOKIE } from "@/lib/theme";
+
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 year
 
 export function ThemeToggle() {
   const [theme, setTheme] = useState<"light" | "dark">("light");
@@ -20,9 +23,7 @@ export function ThemeToggle() {
     } else {
       document.documentElement.removeAttribute("data-theme");
     }
-    try {
-      localStorage.setItem("theme", next);
-    } catch {}
+    document.cookie = `${THEME_COOKIE}=${next}; Path=/; Max-Age=${COOKIE_MAX_AGE}; SameSite=Lax`;
   }
 
   if (!mounted) {

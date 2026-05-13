@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ExploreDropdown } from "@/components/ExploreDropdown";
 import { CommunityDropdown } from "@/components/CommunityDropdown";
@@ -77,6 +78,7 @@ export function HeaderClient({
   isLoggedIn: boolean;
   logoutAction: () => Promise<void>;
 }) {
+  const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -122,6 +124,8 @@ export function HeaderClient({
       document.removeEventListener("keydown", handler);
     };
   }, [profileOpen]);
+
+  if (pathname?.startsWith("/sellers")) return null;
 
   return (
     <>

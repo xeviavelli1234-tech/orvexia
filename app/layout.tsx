@@ -4,11 +4,13 @@ import { cookies } from "next/headers";
 import "./globals.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { FooterGate } from "@/components/FooterGate";
 import { SavedProvider } from "@/components/SavedProvider";
 import { ProfileProvider } from "@/components/ProfileProvider";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 import { CookieConsentScripts } from "@/components/CookieConsentScripts";
 import { COOKIE_CONSENT_COOKIE, parseCookieConsent } from "@/lib/cookie-consent";
+import { THEME_COOKIE, parseTheme } from "@/lib/theme";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
@@ -30,18 +32,6 @@ export const metadata: Metadata = {
   },
 };
 
-// Inline script — set theme before paint to avoid flash
-const themeInitScript = `
-(function () {
-  try {
-    var stored = localStorage.getItem('theme');
-    var prefers = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    var theme = stored || prefers;
-    if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
-  } catch (e) {}
-})();
-`;
-
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -49,12 +39,14 @@ export default async function RootLayout({
 }>) {
   const cookieStore = await cookies();
   const initialConsent = parseCookieConsent(cookieStore.get(COOKIE_CONSENT_COOKIE)?.value);
+  const theme = parseTheme(cookieStore.get(THEME_COOKIE)?.value);
 
   return (
-    <html lang="es" className={geist.variable} suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-      </head>
+    <html
+      lang="es"
+      className={geist.variable}
+      {...(theme === "dark" ? { "data-theme": "dark" } : {})}
+    >
       <body className="font-sans antialiased bg-bg text-fg">
         <a
           href="#main-content"
@@ -67,7 +59,9 @@ export default async function RootLayout({
           <SavedProvider>
             <div id="main-content">{children}</div>
           </SavedProvider>
-          <Footer />
+          <FooterGate>
+            <Footer />
+          </FooterGate>
         </ProfileProvider>
         <CookieConsentScripts initialConsent={initialConsent} />
         <CookieConsentBanner initialConsent={initialConsent} />

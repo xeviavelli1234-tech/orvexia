@@ -31,6 +31,7 @@ model User {
   communityComments CommunityComment[]
   communityVotes    CommunityVote[]
   reviews           Review[]
+  sellerAccount     SellerAccount?
 }
 
 // ─── Categorías disponibles ───────────────────────────────────────────────────
@@ -269,6 +270,107 @@ model Review {
   @@unique([productId, userId])
   @@index([productId])
   @@index([userId])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  MÓDULO REPRICER (sellers B2B) — independiente del comparador B2C
+// ═══════════════════════════════════════════════════════════════════════════
+
+enum SellerPlan {
+  TRIAL
+  PRO
+}
+
+model SellerAccount {
+  id              String     @id @default(cuid())
+  userId          String     @unique
+  amazonSellerId  String     @unique
+  marketplaceId   String     @default("A1RKKUPIHCS9HS")
+  refreshToken    String     @db.Text
+  spApiEnv        String     @default("sandbox")
+
+  plan            SellerPlan @default(TRIAL)
+  trialEndsAt     DateTime?
+  intervalSeconds Int        @default(900)
+
+  active          Boolean    @default(true)
+  lastSyncAt      DateTime?
+  lastRunAt       DateTime?
+
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listings SellerListing[]
+  runs     RepricingRun[]
+
+  @@index([active, lastRunAt])
+}
+
+model SellerListing {
+  id              String   @id @default(cuid())
+  sellerAccountId String
+
+  asin            String
+  sku             String
+  title           String
+  imageUrl        String?
+  productType     String?                            // SP-API productType (TELEVISION, etc), required for PATCH
+
+  priceCurrent    Float
+  priceMin        Float?
+  priceMax        Float?
+  currency        String   @default("EUR")
+
+  repricingEnabled Boolean  @default(false)
+  lastRepricedAt   DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  sellerAccount SellerAccount    @relation(fields: [sellerAccountId], references: [id], onDelete: Cascade)
+  events        RepricingEvent[]
+
+  @@unique([sellerAccountId, sku])
+  @@index([sellerAccountId, repricingEnabled])
+}
+
+model RepricingRun {
+  id              String    @id @default(cuid())
+  sellerAccountId String
+  startedAt       DateTime  @default(now())
+  finishedAt      DateTime?
+
+  listingsProcessed Int     @default(0)
+  listingsRepriced  Int     @default(0)
+  errors            Int     @default(0)
+  errorMessage      String? @db.Text
+
+  sellerAccount SellerAccount    @relation(fields: [sellerAccountId], references: [id], onDelete: Cascade)
+  events        RepricingEvent[]
+
+  @@index([sellerAccountId, startedAt])
+}
+
+model RepricingEvent {
+  id              String   @id @default(cuid())
+  runId           String
+  listingId       String
+
+  priceBefore     Float
+  priceAfter      Float
+  competitorPrice Float?
+  reason          String
+  success         Boolean  @default(true)
+  errorMessage    String?  @db.Text
+
+  createdAt       DateTime @default(now())
+
+  run     RepricingRun  @relation(fields: [runId], references: [id], onDelete: Cascade)
+  listing SellerListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId, createdAt])
+  @@index([runId])
 }
 
 // ─── Modelos futuros (fase 2) ─────────────────────────────────────────────────
