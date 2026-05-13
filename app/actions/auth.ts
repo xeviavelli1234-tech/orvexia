@@ -122,7 +122,21 @@ export async function loginAction(
 
   const rememberMe = formData.get("rememberMe") === "on";
   await createSession({ userId: user.id, name: user.name, email: user.email }, rememberMe);
-  redirect("/dashboard");
+  const nextRaw = formData.get("next");
+  redirect(safeNext(typeof nextRaw === "string" ? nextRaw : null) ?? "/dashboard");
+}
+
+/**
+ * Only accept same-origin relative paths. Rejects protocol-relative ("//evil"),
+ * absolute URLs, and anything not starting with a single "/". This avoids
+ * open-redirect attacks via ?next=.
+ */
+function safeNext(raw: string | null): string | null {
+  if (!raw) return null;
+  if (!raw.startsWith("/")) return null;
+  if (raw.startsWith("//")) return null;
+  if (raw.startsWith("/\\")) return null;
+  return raw;
 }
 
 export async function logoutAction(): Promise<void> {

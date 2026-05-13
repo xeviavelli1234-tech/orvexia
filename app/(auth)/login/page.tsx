@@ -11,9 +11,9 @@ const inter = Inter({ subsets: ["latin"], weight: ["400", "500", "600"] });
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; next?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { error, next } = await searchParams;
 
   return (
     <AuthShell accent="blue">
@@ -28,7 +28,7 @@ export default async function LoginPage({
           Accede para ver tus alertas y favoritos
         </p>
       </div>
-      <LoginForm oauthError={error} />
+      <LoginForm oauthError={error} next={next} />
     </AuthShell>
   );
 }

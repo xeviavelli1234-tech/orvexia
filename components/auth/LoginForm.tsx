@@ -48,7 +48,7 @@ const oauthMessages: Record<string, string> = {
 
 // --- Component ---
 
-export function LoginForm({ oauthError }: { oauthError?: string }) {
+export function LoginForm({ oauthError, next }: { oauthError?: string; next?: string }) {
   const [state, action] = useActionState<ActionResult, FormData>(
     loginAction,
     null
@@ -162,6 +162,7 @@ export function LoginForm({ oauthError }: { oauthError?: string }) {
         }}
         className="space-y-4"
       >
+        {next && <input type="hidden" name="next" value={next} />}
         {info && (
           <p className="text-xs text-fg-muted text-center field-msg">{info}</p>
         )}
