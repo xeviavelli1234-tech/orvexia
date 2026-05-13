@@ -1,17 +1,10 @@
+export const dynamic = "force-dynamic";
+
 import React from "react";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import ProductCard from "@/components/ProductCard";
 import { HeroSearch } from "@/components/HeroSearch";
-
-function isAmazonStore(store?: string | null): boolean {
-  return (store ?? "").toLowerCase().includes("amazon");
-}
-
-function isPcComponentesStore(store?: string | null): boolean {
-  const s = (store ?? "").toLowerCase();
-  return s.includes("pccomponentes") || s.includes("pccomponente");
-}
 
 async function getTopDeals() {
   const products = await prisma.product.findMany({
@@ -38,21 +31,31 @@ async function getTopDeals() {
       return savB - savA;
     });
 
-  const amazonDeals = sorted.filter((p) => isAmazonStore(p.offers[0]?.store));
-  const pcDeals = sorted.filter((p) => isPcComponentesStore(p.offers[0]?.store));
-  const otherDeals = sorted.filter(
-    (p) => !isAmazonStore(p.offers[0]?.store) && !isPcComponentesStore(p.offers[0]?.store)
-  );
-
-  const mixed: typeof sorted = [];
-  let ai = 0;
-  let pi = 0;
-  while (ai < amazonDeals.length || pi < pcDeals.length) {
-    for (let i = 0; i < 3 && ai < amazonDeals.length; i++) mixed.push(amazonDeals[ai++]);
-    for (let i = 0; i < 3 && pi < pcDeals.length; i++) mixed.push(pcDeals[pi++]);
+  // Diversificar por categoría: máximo 2 por categoría en el top 8.
+  // Sin esto el grid lo monopolizan TVs OLED premium porque su ahorro
+  // absoluto en € siempre vence al de electrodomésticos pequeños.
+  const MAX_PER_CATEGORY = 2;
+  const counts: Record<string, number> = {};
+  const diversified: typeof sorted = [];
+  for (const p of sorted) {
+    if ((counts[p.category] ?? 0) >= MAX_PER_CATEGORY) continue;
+    counts[p.category] = (counts[p.category] ?? 0) + 1;
+    diversified.push(p);
+    if (diversified.length >= 8) break;
   }
 
-  return [...mixed, ...otherDeals].slice(0, 8);
+  // Si por la diversificación no se llenan los 8 huecos (poca oferta),
+  // rellenar con el resto sorted respetando el orden por ahorro.
+  if (diversified.length < 8) {
+    const seen = new Set(diversified.map((p) => p.id));
+    for (const p of sorted) {
+      if (seen.has(p.id)) continue;
+      diversified.push(p);
+      if (diversified.length >= 8) break;
+    }
+  }
+
+  return diversified;
 }
 
 async function getStats() {
