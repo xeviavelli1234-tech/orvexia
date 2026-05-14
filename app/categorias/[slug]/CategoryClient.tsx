@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
+import { FuturisticFX } from "@/components/FuturisticFX";
 
 interface Offer {
   store: string;
@@ -136,15 +137,18 @@ export default function CategoryClient({ products, meta, content }: { products: 
   ];
 
   const sidebarJSX = (
-    <div className="bg-bg-elevated rounded-2xl border border-border p-5 space-y-6">
+    <div className="bg-bg-elevated rounded-2xl border border-white/[0.08] p-5 space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-bold text-fg">Filtros</h3>
+        <div>
+          <p className="font-mono-ui text-[10px] uppercase tracking-wider text-cyan-300/80 mb-0.5">▸ /filters</p>
+          <h3 className="text-sm font-bold text-fg">Refinar resultados</h3>
+        </div>
         {activeCount > 0 && (
           <button
             onClick={clearAll}
-            className="text-xs font-semibold text-fg-subtle hover:text-fg transition-colors"
+            className="font-mono-ui text-[10px] uppercase tracking-wider text-white/45 hover:text-white transition-colors"
           >
-            Limpiar
+            limpiar
           </button>
         )}
       </div>
@@ -215,8 +219,8 @@ export default function CategoryClient({ products, meta, content }: { products: 
               onClick={() => setMaxPrice(maxPrice === v ? 9999 : v)}
               className={`text-xs h-8 rounded-md font-semibold border transition-colors tabular ${
                 maxPrice === v
-                  ? "bg-brand-600 text-white border-brand-600"
-                  : "border-border text-fg-muted hover:text-fg hover:border-border-strong"
+                  ? "bg-cyan-400/15 text-cyan-200 border-cyan-400/50"
+                  : "border-white/10 text-fg-muted hover:text-fg hover:border-white/25"
               }`}
             >
               {v}€
@@ -236,8 +240,8 @@ export default function CategoryClient({ products, meta, content }: { products: 
                 onClick={() => toggle(selectedTechs, t, setSelectedTechs)}
                 className={`px-3 h-8 rounded-md text-xs font-bold border transition-all ${
                   selectedTechs.includes(t)
-                    ? "bg-brand-600 text-white border-brand-600"
-                    : "border-border text-fg-muted hover:text-fg hover:border-border-strong"
+                    ? "bg-cyan-400/15 text-cyan-200 border-cyan-400/50"
+                    : "border-white/10 text-fg-muted hover:text-fg hover:border-white/25"
                 }`}
               >
                 {t}
@@ -277,8 +281,8 @@ export default function CategoryClient({ products, meta, content }: { products: 
               onClick={() => setMinRating(minRating === r ? 0 : r)}
               className={`h-8 rounded-md text-xs font-bold border transition-all ${
                 minRating === r
-                  ? "bg-warn-500 text-white border-warn-500"
-                  : "border-border text-fg-muted hover:text-fg hover:border-border-strong"
+                  ? "bg-amber-400/15 text-amber-200 border-amber-400/50"
+                  : "border-white/10 text-fg-muted hover:text-fg hover:border-white/25"
               }`}
             >
               ★{r}+
@@ -291,16 +295,16 @@ export default function CategoryClient({ products, meta, content }: { products: 
       <button
         type="button"
         onClick={() => setOnlyDiscount((v) => !v)}
-        className="w-full flex items-center justify-between pt-2 border-t border-border-subtle"
+        className="w-full flex items-center justify-between pt-2 border-t border-white/10"
       >
         <span className="text-sm font-semibold text-fg-muted select-none">Solo con descuento</span>
         <span
           className={`relative w-10 h-6 rounded-full transition-colors duration-200 flex-shrink-0 ${
-            onlyDiscount ? "bg-brand-600" : "bg-bg-muted"
+            onlyDiscount ? "bg-cyan-400/40 shadow-[0_0_12px_-2px_rgba(94,234,212,0.6)]" : "bg-white/10"
           }`}
         >
           <span
-            className={`absolute top-1 w-4 h-4 rounded-full bg-bg-elevated shadow-sm transition-transform duration-200 ${
+            className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${
               onlyDiscount ? "translate-x-5" : "translate-x-1"
             }`}
           />
@@ -310,58 +314,61 @@ export default function CategoryClient({ products, meta, content }: { products: 
   );
 
   return (
-    <main className="min-h-screen bg-bg">
+    <main className="min-h-screen">
       {/* HERO con accent de la categoría */}
-      <section
-        className="relative overflow-hidden"
-        style={{
-          background: `linear-gradient(135deg, color-mix(in srgb, ${meta.color} 88%, black) 0%, color-mix(in srgb, ${meta.color} 70%, black) 50%, color-mix(in srgb, ${meta.color} 60%, black) 100%)`,
-        }}
-      >
-        <div className="pointer-events-none absolute inset-0">
-          <div
-            className="absolute -top-32 -right-20 w-[500px] h-[500px] rounded-full opacity-30"
-            style={{ background: `radial-gradient(circle, ${meta.color} 0%, transparent 70%)` }}
-          />
-          <div
-            className="absolute inset-0 opacity-20"
-            style={{
-              backgroundImage:
-                "linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px)",
-              backgroundSize: "48px 48px",
-              maskImage: "radial-gradient(ellipse at center, black 30%, transparent 80%)",
-              WebkitMaskImage: "radial-gradient(ellipse at center, black 30%, transparent 80%)",
-            }}
-          />
+      <section className="relative overflow-hidden border-b border-white/[0.06]">
+        <div className="absolute inset-0 bg-grid-cyber opacity-50 pointer-events-none" />
+        <div className="absolute inset-0 pointer-events-none">
+          <FuturisticFX particleCount={5} streamCount={2} beam seed={meta.label.length} />
         </div>
+        <div
+          className="absolute -top-40 left-1/2 -translate-x-1/2 w-[1200px] h-[600px] rounded-full halo-breathe pointer-events-none"
+          style={{ background: `radial-gradient(ellipse at center, ${meta.color}33, transparent 65%)` }}
+        />
+        <div
+          className="absolute -top-20 -right-32 w-[500px] h-[500px] rounded-full opacity-50 pointer-events-none"
+          style={{ background: `radial-gradient(circle, ${meta.color}33, transparent 70%)` }}
+        />
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 pt-10 pb-12 sm:pt-12 sm:pb-14">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 pt-10 pb-14 sm:pt-14 sm:pb-16">
           {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-xs text-white/50 mb-7">
-            <Link href="/" className="hover:text-white/90 transition-colors">Inicio</Link>
-            <span>/</span>
-            <Link href="/categorias" className="hover:text-white/90 transition-colors">Categorías</Link>
-            <span>/</span>
-            <span className="text-white/85 font-semibold">{meta.label}</span>
+          <div className="flex items-center gap-2 font-mono-ui text-[10px] uppercase tracking-wider text-white/40 mb-8">
+            <Link href="/" className="hover:text-cyan-300 transition-colors">~/</Link>
+            <span className="text-white/25">›</span>
+            <Link href="/categorias" className="hover:text-cyan-300 transition-colors">categorias</Link>
+            <span className="text-white/25">›</span>
+            <span style={{ color: meta.color }}>{meta.label.toLowerCase()}</span>
           </div>
 
           <div className="flex flex-col lg:flex-row lg:items-end gap-6 lg:gap-10">
             <div className="flex items-center gap-4">
               <div
-                className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 flex items-center justify-center text-3xl sm:text-4xl shadow-xl"
+                className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center text-3xl sm:text-4xl shadow-xl relative"
+                style={{
+                  background: `color-mix(in srgb, ${meta.color} 14%, transparent)`,
+                  border: `1px solid color-mix(in srgb, ${meta.color} 45%, transparent)`,
+                  boxShadow: `0 0 40px -6px ${meta.color}66`,
+                }}
               >
                 {meta.icon}
               </div>
               <div>
-                <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">{meta.label}</h1>
-                <p className="text-white/60 text-sm mt-1.5">{meta.desc}</p>
-                <div className="flex items-center gap-2 mt-3 flex-wrap">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-white/85 bg-white/[0.08] border border-white/10 px-2.5 h-6 inline-flex items-center rounded-md tabular">
-                    {products.length} producto{products.length !== 1 ? "s" : ""}
+                <p className="font-mono-ui text-[10px] uppercase tracking-wider mb-1.5"
+                   style={{ color: meta.color }}>
+                  ▸ /catalog/{meta.label.toLowerCase().replace(/\s+/g, "_")}
+                </p>
+                <h1 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-[1] mb-2">
+                  {meta.label}
+                </h1>
+                <p className="text-white/55 text-sm">{meta.desc}</p>
+                <div className="flex items-center gap-2 mt-4 flex-wrap">
+                  <span className="font-mono-ui text-[10px] font-bold uppercase tracking-wider text-white/80 border border-white/[0.12] bg-white/[0.04] px-2.5 h-6 inline-flex items-center rounded-md tabular">
+                    {products.length} item{products.length !== 1 ? "s" : ""}
                   </span>
                   {products.some((p) => p.offers[0]?.discountPercent) && (
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-300 bg-emerald-500/15 border border-emerald-500/30 px-2.5 h-6 inline-flex items-center rounded-md">
-                      Ofertas activas
+                    <span className="font-mono-ui text-[10px] font-bold uppercase tracking-wider text-emerald-300 bg-emerald-500/10 border border-emerald-500/30 px-2.5 h-6 inline-flex items-center rounded-md">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 pulse-dot" />
+                      live deals
                     </span>
                   )}
                 </div>
@@ -370,7 +377,7 @@ export default function CategoryClient({ products, meta, content }: { products: 
 
             {/* Inline search */}
             <div className="flex-1 max-w-md lg:ml-auto w-full">
-              <div className="flex items-center gap-2 bg-white/[0.08] backdrop-blur-md border border-white/15 hover:border-white/25 focus-within:border-white/40 focus-within:bg-white/[0.12] rounded-xl px-4 h-11 transition-all">
+              <div className="flex items-center gap-2 bg-white/[0.04] backdrop-blur-md border border-white/[0.10] hover:border-white/25 focus-within:border-cyan-400/50 focus-within:bg-white/[0.06] rounded-xl px-4 h-11 transition-all">
                 <svg className="w-4 h-4 text-white/45 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
                 </svg>
@@ -396,20 +403,26 @@ export default function CategoryClient({ products, meta, content }: { products: 
 
       {/* CONTENIDO EDITORIAL */}
       {content && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-8">
-          <div className="bg-bg-elevated rounded-2xl border border-border p-6 flex flex-col gap-5">
-            <p className="text-fg-muted text-sm leading-relaxed">{content.intro}</p>
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-10">
+          <div className="bg-bg-elevated rounded-2xl border border-white/[0.08] p-6 flex flex-col gap-5">
+            <div className="flex items-center gap-2 font-mono-ui text-[10px] uppercase tracking-wider text-cyan-300/80 mb-1">
+              ▸ /briefing
+            </div>
+            <p className="text-fg-muted text-sm leading-relaxed -mt-3">{content.intro}</p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {content.tips.map((t) => (
                 <div
                   key={t.title}
                   className="flex gap-3 p-3.5 rounded-xl border"
-                  style={{ backgroundColor: meta.bg, borderColor: `color-mix(in srgb, ${meta.color} 14%, transparent)` }}
+                  style={{
+                    background: `color-mix(in srgb, ${meta.color} 6%, transparent)`,
+                    borderColor: `color-mix(in srgb, ${meta.color} 25%, transparent)`,
+                  }}
                 >
-                  <span className="text-xl flex-shrink-0">{t.icon}</span>
+                  <span className="text-xl flex-shrink-0" style={{ filter: `drop-shadow(0 0 8px ${meta.color}80)` }}>{t.icon}</span>
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-fg leading-tight">{t.title}</p>
-                    <p className="text-xs text-fg-muted mt-1 leading-relaxed">{t.desc}</p>
+                    <p className="text-xs font-bold text-white leading-tight">{t.title}</p>
+                    <p className="text-xs text-white/55 mt-1 leading-relaxed">{t.desc}</p>
                   </div>
                 </div>
               ))}
@@ -417,14 +430,19 @@ export default function CategoryClient({ products, meta, content }: { products: 
             {content.guideSlug && (
               <Link
                 href={`/guias/${content.guideSlug}`}
-                className="self-start inline-flex items-center gap-1.5 text-xs font-bold transition-opacity hover:opacity-80"
-                style={{ color: meta.color }}
+                className="self-start inline-flex items-center gap-2 font-mono-ui text-[11px] uppercase font-bold px-4 h-9 rounded-full transition-all hover:scale-[1.02]"
+                style={{
+                  color: meta.color,
+                  background: `${meta.color}12`,
+                  border: `1px solid ${meta.color}40`,
+                  boxShadow: `0 0 14px -4px ${meta.color}60`,
+                }}
               >
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                   <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
                   <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
                 </svg>
-                Ver guía de compra completa →
+                ver guía completa →
               </Link>
             )}
           </div>
@@ -445,21 +463,21 @@ export default function CategoryClient({ products, meta, content }: { products: 
 
           {/* Barra de control */}
           <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
-            <p className="text-sm text-fg-muted">
-              <span className="font-bold text-fg tabular">{filtered.length}</span> resultado{filtered.length !== 1 ? "s" : ""}
-              {search && <> para &ldquo;<span className="text-brand-600 font-semibold">{search}</span>&rdquo;</>}
+            <p className="font-mono-ui text-[11px] uppercase tracking-wider text-white/55">
+              <span className="text-emerald-300 tabular">{filtered.length.toString().padStart(2, "0")}</span> result{filtered.length !== 1 ? "s" : ""}
+              {search && <> · query=&ldquo;<span className="text-cyan-300">{search}</span>&rdquo;</>}
             </p>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowFilters((v) => !v)}
-                className="lg:hidden flex items-center gap-1.5 text-sm font-semibold px-3 h-9 bg-bg-elevated border border-border rounded-lg hover:border-border-strong transition-colors"
+                className="lg:hidden flex items-center gap-1.5 text-sm font-semibold px-3 h-9 bg-bg-elevated border border-white/[0.10] rounded-lg hover:border-white/25 transition-colors text-white/80"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h18M7 8h10M11 12h2" />
                 </svg>
                 Filtros
                 {activeCount > 0 && (
-                  <span className="bg-brand-600 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center tabular">
+                  <span className="bg-cyan-400/20 text-cyan-200 border border-cyan-400/40 text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center tabular">
                     {activeCount}
                   </span>
                 )}
@@ -467,7 +485,7 @@ export default function CategoryClient({ products, meta, content }: { products: 
               <select
                 value={sort}
                 onChange={(e) => setSort(e.target.value as SortKey)}
-                className="text-sm font-medium border border-border bg-bg-elevated rounded-lg px-3 h-9 outline-none hover:border-border-strong focus-visible:border-brand-500 focus-visible:ring-2 focus-visible:ring-brand-500/15 transition-all cursor-pointer text-fg"
+                className="text-sm font-medium border border-white/[0.10] bg-bg-elevated rounded-lg px-3 h-9 outline-none hover:border-white/25 focus-visible:border-cyan-400/50 focus-visible:ring-2 focus-visible:ring-cyan-400/15 transition-all cursor-pointer text-fg"
               >
                 <option value="relevancia">Relevancia</option>
                 <option value="precio_asc">Precio: menor a mayor</option>
@@ -485,7 +503,7 @@ export default function CategoryClient({ products, meta, content }: { products: 
                 <button
                   key={c.label}
                   onClick={c.clear}
-                  className="inline-flex items-center gap-1 text-xs font-semibold px-3 h-7 rounded-full bg-brand-50 text-brand-700 border border-brand-100 hover:bg-brand-100 transition-colors"
+                  className="inline-flex items-center gap-1 text-xs font-semibold px-3 h-7 rounded-full bg-cyan-400/10 text-cyan-200 border border-cyan-400/30 hover:bg-cyan-400/15 hover:border-cyan-400/50 transition-colors"
                 >
                   {c.label}
                   <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round">
@@ -495,9 +513,9 @@ export default function CategoryClient({ products, meta, content }: { products: 
               ))}
               <button
                 onClick={clearAll}
-                className="text-xs font-semibold text-fg-subtle hover:text-fg ml-1 transition-colors"
+                className="font-mono-ui text-[10px] uppercase tracking-wider text-white/45 hover:text-white ml-1 transition-colors"
               >
-                Limpiar todo
+                limpiar todo
               </button>
             </div>
           )}
@@ -517,15 +535,16 @@ export default function CategoryClient({ products, meta, content }: { products: 
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-20 text-center bg-bg-elevated rounded-2xl border border-border">
-              <span className="text-5xl mb-4 opacity-50">{meta.icon}</span>
+            <div className="flex flex-col items-center justify-center py-20 text-center bg-bg-elevated rounded-2xl border border-white/[0.08]">
+              <span className="text-5xl mb-4 opacity-50" style={{ filter: `drop-shadow(0 0 16px ${meta.color}80)` }}>{meta.icon}</span>
+              <p className="font-mono-ui text-[10px] uppercase tracking-wider text-white/40 mb-2">stand_by · 0 results</p>
               <h3 className="text-base font-bold text-fg mb-1.5">Sin resultados</h3>
               <p className="text-sm text-fg-muted mb-6 max-w-sm">
                 {search ? `No encontramos "${search}" con estos filtros.` : "Ningún producto coincide con los filtros seleccionados."}
               </p>
               <button
                 onClick={clearAll}
-                className="text-sm font-bold text-white px-5 h-10 rounded-lg bg-brand-600 hover:bg-brand-700 transition-colors"
+                className="text-sm font-bold text-white px-5 h-10 rounded-lg bg-cyan-400/15 border border-cyan-400/40 hover:bg-cyan-400/25 hover:border-cyan-400/60 transition-colors shadow-[0_0_18px_-6px_rgba(94,234,212,0.5)]"
               >
                 Limpiar filtros
               </button>

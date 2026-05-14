@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
 import ProductCard from "@/components/ProductCard";
 import { CategoryTabs } from "./CategoryTabs";
+import { FuturisticFX } from "@/components/FuturisticFX";
 import type { Product, Offer } from "@/app/generated/prisma/client";
 
 type ProductWithOffers = Product & { offers: Offer[] };
@@ -62,89 +63,96 @@ export default async function BajadasRecientesPage({
   ]);
 
   return (
-    <main className="min-h-screen bg-bg-subtle">
+    <main className="min-h-screen">
 
       {/* Hero */}
-      <section
-        className="relative overflow-hidden pt-20 pb-24 px-6 text-center"
-        style={{ background: "linear-gradient(150deg, #0F172A 0%, #064E3B 55%, #059669 100%)" }}
-      >
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-20 -left-20 w-80 h-80 rounded-full bg-emerald-400 opacity-10 blur-3xl" />
-          <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-teal-300 opacity-10 blur-3xl" />
-          <div className="absolute -bottom-16 left-0 right-0 h-24 bg-bg-subtle rounded-t-[32px]" />
+      <section className="relative overflow-hidden border-b border-white/[0.06]">
+        <div className="absolute inset-0 bg-grid-cyber opacity-50 pointer-events-none" />
+        <div className="absolute inset-0 pointer-events-none">
+          <FuturisticFX particleCount={6} streamCount={3} beam seed={7} />
         </div>
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[1200px] h-[600px] rounded-full halo-breathe pointer-events-none"
+             style={{ background: "radial-gradient(ellipse at center, rgba(16,185,129,0.25), transparent 65%)" }} />
+        <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-50 pointer-events-none"
+             style={{ background: "radial-gradient(circle, rgba(94,234,212,0.20), transparent 65%)" }} />
 
-        <div className="relative max-w-4xl mx-auto">
-          <div className="inline-flex items-center gap-2 mb-5 px-4 py-1.5 rounded-full border border-white/20 bg-white/10 text-xs font-semibold text-white/90">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#34D399] animate-pulse" />
-            Precios actualizados en tiempo real
+        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 pt-16 sm:pt-24 pb-16 sm:pb-24 text-center">
+          <div className="inline-flex items-center gap-2 mb-6 px-3 h-7 rounded-full bg-white/[0.04] border border-white/[0.10] font-mono-ui">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
+            </span>
+            <span className="text-[10px] uppercase tracking-wider text-white/65">
+              ▸ /price_drops · stream
+            </span>
           </div>
 
-          <h1 className="text-4xl sm:text-5xl font-extrabold text-white mb-4 tracking-tight">
-            Bajadas recientes
+          <h1 className="font-extrabold tracking-tight text-white mb-5"
+              style={{ fontSize: "clamp(2.4rem, 6vw, 4.5rem)", lineHeight: 1, letterSpacing: "-0.045em" }}>
+            Bajadas <span className="text-gradient-neon">recientes</span>
           </h1>
-          <p className="text-emerald-200 text-lg max-w-xl mx-auto mb-8 leading-relaxed">
-            Productos cuyo precio ha bajado recientemente. Detectamos cada cambio
-            para que no te pierdas ninguna oportunidad.
+          <p className="text-white/55 text-base max-w-xl mx-auto mb-9 leading-relaxed">
+            Productos cuyo precio acaba de bajar. Monitorizamos cada cambio en tiempo real para que no te pierdas ninguna oportunidad.
           </p>
 
-          <div className="flex flex-wrap justify-center gap-3 text-sm text-white/80">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 max-w-2xl mx-auto">
             {stats.bestDiscount > 0 && (
-              <span className="px-3 py-2 rounded-full bg-white/10 border border-white/15">
-                📉 Hasta -{stats.bestDiscount}% de bajada
-              </span>
+              <div className="rounded-xl bg-white/[0.025] border border-white/[0.10] p-3 sm:p-4 backdrop-blur-sm">
+                <p className="font-mono-ui text-[9px] uppercase text-lime-300 mb-1">▸ max.drop</p>
+                <p className="tabular font-extrabold text-xl sm:text-2xl text-white">-{stats.bestDiscount}%</p>
+                <p className="text-[10px] sm:text-xs text-white/45 mt-0.5">mayor bajada</p>
+              </div>
             )}
-            <span className="px-3 py-2 rounded-full bg-white/10 border border-white/15">
-              🔄 {stats.recent} bajada{stats.recent !== 1 ? "s" : ""} detectada{stats.recent !== 1 ? "s" : ""}
-            </span>
-            <span className="px-3 py-2 rounded-full bg-white/10 border border-white/15">
-              🏬 Amazon · MediaMarkt · PC Componentes
-            </span>
+            <div className="rounded-xl bg-white/[0.025] border border-white/[0.10] p-3 sm:p-4 backdrop-blur-sm">
+              <p className="font-mono-ui text-[9px] uppercase text-emerald-300 mb-1">▸ db.detected</p>
+              <p className="tabular font-extrabold text-xl sm:text-2xl text-white">{stats.recent}</p>
+              <p className="text-[10px] sm:text-xs text-white/45 mt-0.5">bajadas activas</p>
+            </div>
+            <div className="rounded-xl bg-white/[0.025] border border-white/[0.10] p-3 sm:p-4 backdrop-blur-sm col-span-2 sm:col-span-1">
+              <p className="font-mono-ui text-[9px] uppercase text-cyan-300 mb-1">▸ sync.nodes</p>
+              <p className="tabular font-extrabold text-xl sm:text-2xl text-white">4</p>
+              <p className="text-[10px] sm:text-xs text-white/45 mt-0.5">tiendas conectadas</p>
+            </div>
           </div>
         </div>
       </section>
 
-      <div className="max-w-6xl mx-auto px-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
 
-        {/* Category tabs */}
-        <div className="relative z-10 -mt-12 mb-8 bg-bg-elevated rounded-2xl border border-border shadow-[0_18px_48px_-24px_rgba(15,23,42,0.2)] p-4">
+        <div className="relative z-10 -mt-8 mb-8 bg-bg-elevated rounded-2xl border border-white/[0.10] shadow-[0_24px_60px_-24px_rgba(0,0,0,0.5)] p-4">
           <Suspense>
             <CategoryTabs categories={categories} />
           </Suspense>
         </div>
 
-        {/* Section header */}
         <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <div className="w-1 h-10 rounded-full" style={{ backgroundImage: "linear-gradient(180deg, #059669, #34D399)" }} />
-            <div>
-              <span className="inline-block text-[10px] font-bold text-accent-600 uppercase tracking-[0.15em] mb-0.5">
-                {categoria ? CATEGORY_LABELS[categoria] ?? categoria : "Todas las categorías"}
-              </span>
-              <h2 className="text-2xl font-bold text-fg leading-tight">Bajadas recientes</h2>
-            </div>
+          <div>
+            <p className="font-mono-ui text-[10px] uppercase tracking-wider text-emerald-300 mb-1">
+              ▸ /stream/{(categoria || "all").toLowerCase()}
+            </p>
+            <h2 className="text-2xl font-bold text-white leading-tight">
+              {categoria ? CATEGORY_LABELS[categoria] ?? categoria : "Todas las bajadas"}
+            </h2>
           </div>
-          <span className="text-sm text-fg-subtle hidden sm:block">
-            {products.length} producto{products.length !== 1 ? "s" : ""}
+          <span className="font-mono-ui text-[11px] uppercase tracking-wider text-white/45 hidden sm:block">
+            {products.length.toString().padStart(2, "0")} item{products.length !== 1 ? "s" : ""}
           </span>
         </div>
 
-        {/* Grid */}
         {products.length === 0 ? (
-          <div className="text-center py-24 bg-bg-elevated rounded-3xl border border-border">
+          <div className="text-center py-24 bg-bg-elevated rounded-3xl border border-white/[0.08]">
             <span className="text-5xl block mb-4">📉</span>
-            <p className="text-fg-subtle text-sm font-medium">
-              No hay bajadas detectadas en esta categoría todavía.
+            <p className="font-mono-ui text-[11px] uppercase tracking-wider text-white/45">
+              no_drops · stand_by
             </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 pb-16">
-          {products.map((p, i) => (
-            <ProductCard key={p.id} product={p} priority={i === 0} />
-          ))}
-        </div>
-      )}
+            {products.map((p, i) => (
+              <ProductCard key={p.id} product={p} priority={i === 0} />
+            ))}
+          </div>
+        )}
       </div>
     </main>
   );

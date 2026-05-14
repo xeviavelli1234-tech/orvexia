@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { RelativeTime } from "@/components/community/RelativeTime";
 import { ProductModalButton } from "@/components/ProductModalButton";
+import { FuturisticFX } from "@/components/FuturisticFX";
 
 export const runtime = "nodejs";
 export const metadata = {
@@ -145,66 +146,55 @@ export default async function OpinionesPage({
   };
 
   return (
-    <main className="min-h-screen bg-[#F0F4F8]">
-      {/* ── Hero ────────────────────────────────────────────────────────── */}
-      <section
-        className="relative overflow-hidden"
-        style={{ background: "linear-gradient(135deg, #0F172A 0%, #1E3A5F 100%)" }}
-      >
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-24 -left-20 w-96 h-96 rounded-full bg-amber-400 opacity-[0.05] blur-3xl" />
-          <div className="absolute top-10 right-20 w-64 h-64 rounded-full bg-yellow-300 opacity-[0.04] blur-3xl" />
-          <div className="absolute inset-0 opacity-[0.03]" style={{
-            backgroundImage: "linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px)",
-            backgroundSize: "40px 40px",
-          }} />
+    <main className="min-h-screen">
+      {/* Hero */}
+      <section className="relative overflow-hidden border-b border-white/[0.06]">
+        <div className="absolute inset-0 bg-grid-cyber opacity-50 pointer-events-none" />
+        <div className="absolute inset-0 pointer-events-none">
+          <FuturisticFX particleCount={5} streamCount={2} beam seed={15} />
         </div>
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[1200px] h-[600px] rounded-full halo-breathe pointer-events-none"
+             style={{ background: "radial-gradient(ellipse at center, rgba(251,191,36,0.20), transparent 65%)" }} />
 
-        <div className="relative max-w-6xl mx-auto px-6 py-12">
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-12">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
             <div>
-              <div className="inline-flex items-center gap-2 mb-3 px-3 py-1 rounded-full bg-white/5 border border-white/10">
-                <span className="text-amber-400 text-sm">⭐</span>
-                <span className="text-[11px] font-bold text-amber-300 uppercase tracking-widest">Opiniones Orvexia</span>
+              <div className="inline-flex items-center gap-2 mb-3 px-3 h-7 rounded-full bg-white/[0.04] border border-white/[0.10] font-mono-ui">
+                <span className="text-sm" style={{ filter: "drop-shadow(0 0 4px rgba(251,191,36,0.6))" }}>⭐</span>
+                <span className="text-[10px] uppercase tracking-wider text-white/65">▸ /reviews · genuine</span>
               </div>
-              <h1 className="text-3xl sm:text-4xl font-extrabold text-white mb-2 tracking-tight">
-                Opiniones &amp; Reseñas
+              <h1 className="font-extrabold text-white mb-2 tracking-tight"
+                  style={{ fontSize: "clamp(2rem, 4.5vw, 3.2rem)", lineHeight: 1, letterSpacing: "-0.04em" }}>
+                Opiniones &amp; <span className="text-gradient-neon">Reseñas</span>
               </h1>
-              <p className="text-blue-200/70 text-sm max-w-lg leading-relaxed">
+              <p className="text-white/55 text-sm max-w-lg leading-relaxed">
                 Lo que dicen compradores reales sobre los productos. Sin filtros, sin patrocinios.
               </p>
 
-              {/* Stats */}
-              <div className="flex items-center gap-5 mt-5 flex-wrap">
+              <div className="flex items-center gap-5 mt-6 flex-wrap font-mono-ui text-[11px] uppercase tracking-wider">
                 {avgDisplay && (
-                  <div className="flex items-center gap-2">
-                    <Stars rating={parseFloat(avgDisplay)} size={15} />
-                    <span className="text-white font-bold text-sm">{avgDisplay}</span>
-                    <span className="text-blue-300/60 text-xs">media global</span>
-                  </div>
+                  <span className="flex items-center gap-2 text-white/55">
+                    <Stars rating={parseFloat(avgDisplay)} size={14} />
+                    <span className="text-amber-300 font-bold tabular">{avgDisplay}★</span>
+                    <span className="text-white/40">media</span>
+                  </span>
                 )}
-                <div className="flex items-center gap-1.5">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" stroke="#60A5FA" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  <span className="text-xs text-blue-300/80">
-                    <span className="font-bold text-white">{totalReviews}</span> reseñas
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" stroke="#60A5FA" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  <span className="text-xs text-blue-300/80">
-                    <span className="font-bold text-white">{totalProductsReviewed}</span> productos valorados
-                  </span>
-                </div>
+                <span className="text-white/15">·</span>
+                <span className="flex items-center gap-1.5 text-white/55">
+                  <span className="text-cyan-300">▸</span>
+                  <span className="text-white/85 tabular">{totalReviews.toLocaleString("es-ES")}</span> reseñas
+                </span>
+                <span className="text-white/15">·</span>
+                <span className="flex items-center gap-1.5 text-white/55">
+                  <span className="text-fuchsia-300">▸</span>
+                  <span className="text-white/85 tabular">{totalProductsReviewed}</span> productos
+                </span>
               </div>
             </div>
 
             <Link
               href="/comunidad"
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold text-white border border-white/20 hover:bg-white/10 transition shrink-0"
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold text-white border border-white/15 hover:bg-white/[0.06] hover:border-white/30 transition shrink-0"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />

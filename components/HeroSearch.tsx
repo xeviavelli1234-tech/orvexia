@@ -163,12 +163,14 @@ export function HeroSearch() {
             className="flex-1 min-w-0 text-base text-slate-900 placeholder:text-slate-400 outline-none bg-transparent"
             style={{ color: "#0B0D12" }}
           />
-          <button
-            type="submit"
-            className="shrink-0 inline-flex items-center justify-center bg-brand-600 hover:bg-brand-700 active:scale-[0.97] text-white text-sm font-bold px-5 sm:px-6 h-10 sm:h-11 rounded-xl transition-all duration-150 shadow-md shadow-brand-600/30"
-          >
-            Buscar
-          </button>
+          <span className="aura-cta inline-flex rounded-xl shrink-0">
+            <button
+              type="submit"
+              className="inline-flex items-center justify-center bg-brand-600 hover:bg-brand-700 active:scale-[0.97] text-white text-sm font-bold px-5 sm:px-6 h-10 sm:h-11 rounded-xl transition-all duration-150"
+            >
+              Buscar
+            </button>
+          </span>
         </form>
 
         {open && results.length > 0 && (

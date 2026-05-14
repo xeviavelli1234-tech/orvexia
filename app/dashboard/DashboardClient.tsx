@@ -458,11 +458,14 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
 
   // ─── MAIN RENDER ───────────────────────────────────────────────────────────
   return (
-    <main className="min-h-screen bg-bg-subtle">
+    <main className="min-h-screen">
 
       {/* ── TOPBAR PERSONALIZADA ─────────────────────────────────────────── */}
-      <div className="bg-bg-elevated border-b border-border">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
+      <div className="bg-bg-elevated/95 backdrop-blur-md border-b border-white/[0.08] relative overflow-hidden">
+        <span aria-hidden className="absolute left-0 right-0 top-0 h-px" style={{
+          background: "linear-gradient(90deg, transparent, rgba(94,234,212,0.4) 30%, rgba(129,140,248,0.4) 70%, transparent)",
+        }} />
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
 
           {/* Left: avatar + greeting */}
           <div className="flex items-center gap-3 min-w-0">
@@ -472,15 +475,16 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
               <img
                 src={avatarProfile.avatarUrl}
                 alt={user.name}
-                className="w-12 h-12 rounded-2xl object-cover shrink-0 shadow-sm"
+                className="w-12 h-12 rounded-2xl object-cover shrink-0 shadow-lg"
                 aria-hidden="true"
               />
             ) : (
               <div
-                className="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-white shrink-0 shadow-sm select-none"
+                className="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-white shrink-0 shadow-lg select-none"
                 style={{
-                  background: avatarProfile?.avatarColor ?? "linear-gradient(135deg,#2563EB,#7C3AED)",
+                  background: avatarProfile?.avatarColor ?? "linear-gradient(135deg,#4F46E5,#A855F7)",
                   fontSize: avatarProfile?.avatarEmoji ? 22 : 15,
+                  boxShadow: "0 0 24px -6px rgba(94,234,212,0.4)",
                 }}
                 aria-hidden="true"
               >
@@ -490,10 +494,13 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
 
             {/* Text */}
             <div className="min-w-0">
-              <h1 className="text-[16px] font-bold text-fg leading-tight truncate">
+              <p className="font-mono-ui text-[10px] uppercase tracking-wider text-cyan-300/80 mb-0.5">
+                ▸ /dashboard · user
+              </p>
+              <h1 className="text-[16px] font-bold text-white leading-tight truncate">
                 Hola, {firstName} 👋
               </h1>
-              <p className="text-[12px] text-fg-subtle mt-0.5 truncate">
+              <p className="text-[12px] text-white/45 mt-0.5 truncate">
                 {isNew
                   ? "Empieza guardando productos para seguir sus precios"
                   : `${data!.stats.savedCount} en seguimiento · ${data!.stats.alertsActive} alerta${data!.stats.alertsActive !== 1 ? "s" : ""} activa${data!.stats.alertsActive !== 1 ? "s" : ""}`}
@@ -519,13 +526,14 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
                 <path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
               </svg>
             </button>
-            <Link
-              href="/ofertas-destacadas"
-              className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-white px-4 py-2 rounded-full hover:opacity-90 transition-opacity shadow-sm"
-              style={{ background: "linear-gradient(135deg,#2563EB,#7C3AED)" }}
-            >
-              Explorar ofertas →
-            </Link>
+            <span className="aura-cta inline-flex rounded-full">
+              <Link
+                href="/ofertas-destacadas"
+                className="inline-flex items-center gap-1.5 text-[13px] font-bold text-cyan-200 px-4 py-2 rounded-full hover:bg-cyan-400/15 transition-all border border-cyan-400/40 bg-cyan-400/10"
+              >
+                Explorar ofertas →
+              </Link>
+            </span>
           </div>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { FuturisticFX } from "@/components/FuturisticFX";
 
 export const metadata: Metadata = {
   title: "Sobre Nosotros | Orvexia",
@@ -65,25 +66,30 @@ const STORES = ["Amazon", "PcComponentes", "El Corte Inglés", "Fnac"];
 
 export default function SobreNosotrosPage() {
   return (
-    <main className="bg-bg-subtle">
+    <main>
       {/* Hero */}
-      <section className="bg-gradient-to-br from-[#0F172A] via-[#1E1B4B] to-[#312E81] pt-16 pb-20 px-6 relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full bg-[#4F46E5] opacity-10 blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-80 h-80 rounded-full bg-[#7C3AED] opacity-10 blur-3xl" />
+      <section className="relative overflow-hidden border-b border-white/[0.06]">
+        <div className="absolute inset-0 bg-grid-cyber opacity-50 pointer-events-none" />
+        <div className="absolute inset-0 pointer-events-none">
+          <FuturisticFX particleCount={7} streamCount={3} beam seed={17} />
         </div>
-        <div className="relative max-w-3xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 text-xs text-white/70 font-medium mb-6">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#34D399] inline-block" />
-            Comparador independiente
-          </div>
-          <h1 className="text-5xl sm:text-6xl font-extrabold text-white mb-5 tracking-tight leading-tight">
-            Sobre{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#A78BFA] to-[#60A5FA]">
-              Orvexia
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[1200px] h-[700px] rounded-full halo-breathe pointer-events-none"
+             style={{ background: "radial-gradient(ellipse at center, rgba(129,140,248,0.25), transparent 65%)" }} />
+        <div className="absolute top-0 right-0 w-96 h-96 rounded-full pointer-events-none opacity-60"
+             style={{ background: "radial-gradient(circle, rgba(240,171,252,0.18), transparent 65%)" }} />
+
+        <div className="relative max-w-3xl mx-auto px-4 sm:px-6 pt-16 sm:pt-24 pb-16 sm:pb-20 text-center">
+          <div className="inline-flex items-center gap-2 mb-6 px-3 h-7 rounded-full bg-white/[0.04] border border-white/[0.10] font-mono-ui">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-dot" />
+            <span className="text-[10px] uppercase tracking-wider text-white/65">
+              ▸ /about · comparador independiente
             </span>
+          </div>
+          <h1 className="font-extrabold tracking-tight text-white mb-5"
+              style={{ fontSize: "clamp(2.6rem, 6vw, 5rem)", lineHeight: 0.98, letterSpacing: "-0.045em" }}>
+            Sobre <span className="text-gradient-neon">Orvexia</span>
           </h1>
-          <p className="text-white/60 text-lg max-w-2xl mx-auto leading-relaxed">
+          <p className="text-white/55 text-lg max-w-2xl mx-auto leading-relaxed">
             Somos un comparador de electrodomésticos independiente. Nuestro objetivo es uno:
             ayudarte a tomar la mejor decisión de compra con información honesta y precios reales.
           </p>

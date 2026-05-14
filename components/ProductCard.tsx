@@ -120,7 +120,7 @@ export default function ProductCard({ product, priority = false }: Props) {
   return (
     <>
       <div
-        className="group h-full rounded-2xl overflow-hidden bg-bg-elevated border border-border hover:border-border-strong hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 ease-out cursor-pointer flex flex-col"
+        className="group shine-on-hover h-full rounded-2xl overflow-hidden bg-bg-elevated border border-white/[0.08] hover:border-cyan-400/30 hover:shadow-[0_0_24px_-6px_rgba(94,234,212,0.35)] hover:-translate-y-0.5 transition-all duration-200 ease-out cursor-pointer flex flex-col"
         onClick={handleOpen}
       >
         {/* Image area */}
@@ -149,12 +149,20 @@ export default function ProductCard({ product, priority = false }: Props) {
 
           {/* Discount pill */}
           {realDiscount > 0 && (
-            <div className="absolute top-3 left-3 inline-flex items-center gap-1 px-2 h-6 rounded-md bg-fg-strong text-bg text-[11px] font-bold shadow-md">
+            <div
+              className="absolute top-3 left-3 inline-flex items-center gap-1 px-2 h-6 rounded-md text-[11px] font-bold shadow-lg backdrop-blur-sm font-mono-ui"
+              style={{
+                background: "linear-gradient(135deg, rgba(5,6,15,0.95), rgba(15,18,28,0.9))",
+                color: "#A3E635",
+                border: "1px solid rgba(163,230,53,0.35)",
+                boxShadow: "0 0 14px -2px rgba(163,230,53,0.4)",
+              }}
+            >
               <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <polyline points="19 12 12 19 5 12" />
                 <line x1="12" y1="19" x2="12" y2="5" />
               </svg>
-              {realDiscount}%
+              -{realDiscount}%
             </div>
           )}
 

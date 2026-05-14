@@ -6,7 +6,6 @@ import { ExploreDropdown } from "@/components/ExploreDropdown";
 import { CommunityDropdown } from "@/components/CommunityDropdown";
 import { HeaderSearch } from "@/components/HeaderSearch";
 import { useProfile } from "@/components/ProfileProvider";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 function MiniAvatar({ color, emoji, avatarUrl, name, size = 32 }: {
   color: string; emoji: string | null; avatarUrl?: string | null; name: string; size?: number;
@@ -44,17 +43,21 @@ function OrvexiaLogo() {
     <span className="flex items-center gap-2.5 select-none">
       <span
         aria-hidden
-        className="relative flex items-center justify-center w-9 h-9 rounded-xl text-white text-base font-black"
+        className="relative flex items-center justify-center w-9 h-9 rounded-xl text-white text-base font-black overflow-hidden"
         style={{
-          backgroundImage: "linear-gradient(135deg, var(--brand-600) 0%, var(--brand-400) 50%, var(--accent-500) 100%)",
-          boxShadow: "0 6px 20px -8px rgba(79, 70, 229, 0.55), inset 0 1px 0 rgba(255,255,255,0.25)",
+          backgroundImage: "linear-gradient(135deg, #4F46E5 0%, #818CF8 35%, #5EEAD4 70%, #A3E635 100%)",
+          boxShadow: "0 0 24px -4px rgba(94,234,212,0.55), inset 0 1px 0 rgba(255,255,255,0.25)",
         }}
       >
-        O
+        <span className="absolute inset-0 opacity-30" style={{
+          backgroundImage: "linear-gradient(rgba(255,255,255,0.18) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.18) 1px, transparent 1px)",
+          backgroundSize: "6px 6px",
+        }} />
+        <span className="relative">O</span>
       </span>
       <span className="flex items-baseline text-[1.15rem] tracking-[-0.02em] leading-none">
         <span className="font-medium text-fg">Orv</span>
-        <span className="font-extrabold text-gradient-brand">exia</span>
+        <span className="font-extrabold text-gradient-neon">exia</span>
       </span>
     </span>
   );
@@ -125,7 +128,12 @@ export function HeaderClient({
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-bg/80 backdrop-blur-xl border-b border-border-subtle">
+      <header className="sticky top-0 z-40 backdrop-blur-xl border-b border-white/[0.06]"
+              style={{ background: "rgba(4,5,11,0.78)" }}>
+        {/* Top neon hairline */}
+        <span aria-hidden className="absolute left-0 right-0 top-0 h-px" style={{
+          background: "linear-gradient(90deg, transparent, rgba(94,234,212,0.45) 25%, rgba(129,140,248,0.45) 50%, rgba(240,171,252,0.45) 75%, transparent)",
+        }} />
         <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 h-16 flex items-center gap-4">
 
           <Link
@@ -167,8 +175,14 @@ export function HeaderClient({
             <CommunityDropdown />
           </div>
 
-          <div className="hidden md:flex items-center shrink-0">
-            <ThemeToggle />
+          {/* Live status pill — replaces theme toggle */}
+          <div
+            className="hidden lg:inline-flex items-center gap-1.5 h-9 px-2.5 rounded-lg border border-emerald-400/20 bg-emerald-400/[0.04] font-mono-ui text-[10px] uppercase tracking-wider text-white/55 shrink-0 hover:border-emerald-400/40 hover:bg-emerald-400/[0.08] transition-colors"
+            title="Sistema sincronizando precios"
+            aria-label="Estado del sistema: en línea"
+          >
+            <span className="relative flex h-1.5 w-1.5 rounded-full bg-emerald-400 node-pulse" />
+            live
           </div>
 
           <nav className="hidden md:flex items-center gap-2 shrink-0" aria-label="Cuenta de usuario">
@@ -312,8 +326,10 @@ export function HeaderClient({
           >
             <nav className="p-4 space-y-1">
               <div className="flex items-center justify-between mb-2 px-2">
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-fg-subtle">Navegar</p>
-                <ThemeToggle />
+                <p className="font-mono-ui text-[10px] uppercase tracking-[0.2em] text-cyan-300/80">▸ /navigate</p>
+                <span className="font-mono-ui text-[10px] uppercase tracking-wider text-emerald-400/80 inline-flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-dot" /> live
+                </span>
               </div>
               {MOBILE_NAV.map((item) => (
                 <Link
@@ -339,7 +355,7 @@ export function HeaderClient({
                     <Link
                       href="/dashboard"
                       onClick={() => setMobileOpen(false)}
-                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-brand-600 bg-brand-50 hover:bg-brand-100 transition-colors"
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-brand-300 bg-brand-500/10 border border-brand-400/30 hover:bg-brand-500/15 transition-colors"
                     >
                       <span className="text-lg" aria-hidden="true">📊</span>
                       Mi panel

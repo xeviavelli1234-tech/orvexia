@@ -30,15 +30,11 @@ export const metadata: Metadata = {
   },
 };
 
-// Inline script — set theme before paint to avoid flash
+// Inline script — force dark (futuristic) theme before paint
 const themeInitScript = `
 (function () {
-  try {
-    var stored = localStorage.getItem('theme');
-    var prefers = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    var theme = stored || prefers;
-    if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
-  } catch (e) {}
+  document.documentElement.setAttribute('data-theme', 'dark');
+  document.documentElement.style.colorScheme = 'dark';
 })();
 `;
 

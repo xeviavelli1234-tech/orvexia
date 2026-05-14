@@ -4,6 +4,7 @@ import { getSession } from "@/lib/session";
 import { CommunityPostType } from "@/app/generated/prisma/client";
 import { RelativeTime } from "@/components/community/RelativeTime";
 import { CardVoteButton } from "@/components/community/CardVoteButton";
+import { FuturisticFX } from "@/components/FuturisticFX";
 
 export const runtime = "nodejs";
 
@@ -109,83 +110,70 @@ export default async function ComunidadPage({
   };
 
   return (
-    <main className="min-h-screen bg-[#F0F4F8]">
+    <main className="min-h-screen">
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <section
-        className="relative overflow-hidden"
-        style={{ background: "linear-gradient(135deg, #0F172A 0%, #1E3A5F 100%)" }}
-      >
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-24 -left-20 w-96 h-96 rounded-full bg-blue-500 opacity-[0.07] blur-3xl" />
-          <div className="absolute top-10 right-20 w-64 h-64 rounded-full bg-violet-400 opacity-[0.06] blur-3xl" />
-          <div className="absolute -bottom-12 left-1/3 w-80 h-80 rounded-full bg-sky-400 opacity-[0.05] blur-3xl" />
-          {/* Decorative grid lines */}
-          <div className="absolute inset-0 opacity-[0.03]" style={{
-            backgroundImage: "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)",
-            backgroundSize: "40px 40px",
-          }} />
+      <section className="relative overflow-hidden border-b border-white/[0.06]">
+        <div className="absolute inset-0 bg-grid-cyber opacity-50 pointer-events-none" />
+        <div className="absolute inset-0 pointer-events-none">
+          <FuturisticFX particleCount={5} streamCount={2} beam seed={13} />
         </div>
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[1200px] h-[600px] rounded-full halo-breathe pointer-events-none"
+             style={{ background: "radial-gradient(ellipse at center, rgba(129,140,248,0.20), transparent 65%)" }} />
+        <div className="absolute top-1/3 -right-32 w-[500px] h-[500px] rounded-full opacity-50 pointer-events-none"
+             style={{ background: "radial-gradient(circle, rgba(240,171,252,0.16), transparent 65%)" }} />
 
-        <div className="relative max-w-6xl mx-auto px-6 py-12">
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-12">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
             <div>
-              <div className="inline-flex items-center gap-2 mb-3 px-3 py-1 rounded-full bg-white/5 border border-white/10">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-[11px] font-bold text-blue-300 uppercase tracking-widest">
-                  Comunidad Orvexia
+              <div className="inline-flex items-center gap-2 mb-3 px-3 h-7 rounded-full bg-white/[0.04] border border-white/[0.10] font-mono-ui">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-dot" />
+                <span className="text-[10px] uppercase tracking-wider text-white/65">
+                  ▸ /community · live
                 </span>
               </div>
-              <h1 className="text-3xl sm:text-4xl font-extrabold text-white mb-2 tracking-tight">
-                Foro &amp; Discusiones
+              <h1 className="font-extrabold text-white mb-2 tracking-tight"
+                  style={{ fontSize: "clamp(2rem, 4.5vw, 3.2rem)", lineHeight: 1, letterSpacing: "-0.04em" }}>
+                Foro &amp; <span className="text-gradient-neon">Discusiones</span>
               </h1>
-              <p className="text-blue-200/70 text-sm max-w-lg leading-relaxed">
+              <p className="text-white/55 text-sm max-w-lg leading-relaxed">
                 Comparte tu experiencia, resuelve dudas, descubre chollos y da consejos sobre electrodomésticos.
               </p>
 
               {/* Stats row */}
-              <div className="flex items-center gap-5 mt-5 flex-wrap">
-                <div className="flex items-center gap-1.5">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="#60A5FA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  <span className="text-xs text-blue-300/80">
-                    <span className="font-bold text-white">{totalCount}</span> posts
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="#60A5FA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  <span className="text-xs text-blue-300/80">
-                    <span className="font-bold text-white">{totalUsers}</span> miembros
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke="#60A5FA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  <span className="text-xs text-blue-300/80">
-                    <span className="font-bold text-white">{totalComments}</span> respuestas
-                  </span>
-                </div>
+              <div className="flex items-center gap-5 mt-6 flex-wrap font-mono-ui text-[11px] uppercase tracking-wider">
+                <span className="flex items-center gap-1.5 text-white/55">
+                  <span className="text-cyan-300">▸</span>
+                  <span className="text-white/85 tabular">{totalCount}</span> posts
+                </span>
+                <span className="text-white/15">·</span>
+                <span className="flex items-center gap-1.5 text-white/55">
+                  <span className="text-fuchsia-300">▸</span>
+                  <span className="text-white/85 tabular">{totalUsers}</span> miembros
+                </span>
+                <span className="text-white/15">·</span>
+                <span className="flex items-center gap-1.5 text-white/55">
+                  <span className="text-lime-300">▸</span>
+                  <span className="text-white/85 tabular">{totalComments}</span> respuestas
+                </span>
               </div>
             </div>
 
             {session ? (
-              <Link
-                href="/comunidad/nueva"
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold text-white shrink-0 transition hover:-translate-y-0.5"
-                style={{ background: "linear-gradient(135deg, #2563EB, #4F46E5)", boxShadow: "0 4px 24px rgba(79,70,229,0.4)" }}
-              >
-                <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true">
-                  <path d="M7.5 1.5v12M1.5 7.5h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                </svg>
-                Nueva publicación
-              </Link>
+              <span className="aura-cta inline-flex rounded-xl shrink-0">
+                <Link
+                  href="/comunidad/nueva"
+                  className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold text-cyan-200 transition hover:-translate-y-0.5 border border-cyan-400/40 bg-cyan-400/10 hover:bg-cyan-400/20"
+                >
+                  <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true">
+                    <path d="M7.5 1.5v12M1.5 7.5h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  </svg>
+                  Nueva publicación
+                </Link>
+              </span>
             ) : (
               <Link
                 href="/login?next=/comunidad/nueva"
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold text-white border border-white/20 hover:bg-white/10 transition shrink-0"
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold text-white border border-white/15 hover:bg-white/[0.06] hover:border-white/30 transition shrink-0"
               >
                 Nueva publicación
               </Link>
@@ -213,8 +201,8 @@ export default async function ComunidadPage({
                       href={tab.href}
                       className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
                         isActive
-                          ? "bg-[#1E293B] text-white shadow-sm"
-                          : "bg-bg-elevated border border-border text-fg-muted hover:border-[#1E293B]/30 hover:text-fg"
+                          ? "bg-cyan-400/15 text-cyan-200 border border-cyan-400/50 shadow-[0_0_14px_-4px_rgba(94,234,212,0.5)]"
+                          : "bg-white/[0.025] border border-white/[0.10] text-white/65 hover:border-white/30 hover:text-white"
                       }`}
                     >
                       {meta && (
@@ -222,7 +210,7 @@ export default async function ComunidadPage({
                       )}
                       {tab.label}
                       {tab.count !== undefined && tab.count > 0 && (
-                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none ${isActive ? "bg-white/20 text-white" : "bg-bg-subtle text-fg-subtle"}`}>
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none tabular ${isActive ? "bg-cyan-400/20 text-cyan-200" : "bg-white/[0.04] text-white/45"}`}>
                           {tab.count}
                         </span>
                       )}
@@ -232,7 +220,7 @@ export default async function ComunidadPage({
               </div>
 
               {/* Sort tabs */}
-              <div className="flex items-center gap-1 bg-bg-elevated border border-border rounded-full p-0.5">
+              <div className="flex items-center gap-1 bg-white/[0.025] border border-white/[0.10] rounded-full p-0.5">
                 {[
                   { label: "Reciente", value: "reciente" },
                   { label: "Popular",  value: "popular"  },
@@ -242,8 +230,8 @@ export default async function ComunidadPage({
                     href={ordenHref(o.value)}
                     className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
                       orden === o.value
-                        ? "bg-[#1E293B] text-white"
-                        : "text-fg-muted hover:text-fg"
+                        ? "bg-cyan-400/15 text-cyan-200 border border-cyan-400/40"
+                        : "text-white/55 hover:text-white"
                     }`}
                   >
                     {o.label}

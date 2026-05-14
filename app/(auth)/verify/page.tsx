@@ -75,13 +75,13 @@ function OtpInput({
           onPaste={handlePaste}
           onFocus={(e) => e.target.select()}
           placeholder="-"
-          className="w-11 h-14 text-center text-xl font-bold rounded-xl border-2 transition-all outline-none"
+          className="font-mono-ui w-11 h-14 text-center text-xl font-bold rounded-xl border-2 transition-all outline-none"
           style={{
-            borderColor: d ? "var(--brand-600)" : "var(--fg-subtle)",
-            background: d ? "var(--brand-50)" : "#fff",
-            color: "var(--fg)",
-            boxShadow: d ? "0 0 0 3px rgba(37,99,235,0.12)" : "none",
-            caretColor: "var(--brand-600)",
+            borderColor: d ? "rgba(94,234,212,0.6)" : "rgba(255,255,255,0.14)",
+            background: d ? "rgba(94,234,212,0.10)" : "rgba(255,255,255,0.03)",
+            color: "#ECFEFF",
+            boxShadow: d ? "0 0 14px -4px rgba(94,234,212,0.5)" : "none",
+            caretColor: "#5EEAD4",
           }}
         />
       ))}
@@ -194,16 +194,21 @@ function VerifyForm() {
       <div className={`${inter.className}`}>
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="w-14 h-14 rounded-2xl bg-brand-50 flex items-center justify-center text-3xl mx-auto mb-4">
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4"
+               style={{
+                 background: "rgba(94,234,212,0.10)",
+                 border: "1px solid rgba(94,234,212,0.35)",
+                 boxShadow: "0 0 24px -6px rgba(94,234,212,0.5)",
+               }}>
             📧
           </div>
-          <p className="text-xs font-bold text-brand-600 uppercase tracking-widest mb-2">
-            Un paso más
+          <p className="font-mono-ui text-[10px] font-bold text-cyan-300 uppercase tracking-[0.2em] mb-3">
+            ▸ /auth · verify
           </p>
-          <h1 className="text-2xl font-extrabold text-fg tracking-tight mb-2">
+          <h1 className="text-2xl font-extrabold text-white tracking-tight mb-2">
             Verifica tu correo
           </h1>
-          <p className="text-sm text-fg-muted">
+          <p className="text-sm text-white/55">
             Ingresa el código de 6 dígitos que enviamos a tu email
           </p>
         </div>

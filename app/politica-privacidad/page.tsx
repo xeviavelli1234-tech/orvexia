@@ -225,40 +225,44 @@ const SECTIONS = [
 
 export default function PrivacyPolicyPage() {
   return (
-    <main className="bg-bg-subtle">
+    <main>
       {/* Header */}
-      <div className="bg-bg-elevated border-b border-border">
-        <div className="max-w-4xl mx-auto px-6 py-10">
-          <div className="flex items-center gap-2 text-xs text-fg-muted mb-3">
-            <Link href="/" className="hover:text-[#4F46E5] transition-colors">Inicio</Link>
-            <span>/</span>
-            <span>Política de privacidad</span>
+      <div className="relative border-b border-white/[0.06] overflow-hidden">
+        <div className="absolute inset-0 bg-grid-cyber opacity-40 pointer-events-none" />
+        <div className="absolute -top-32 left-1/3 w-[800px] h-[400px] rounded-full pointer-events-none"
+             style={{ background: "radial-gradient(ellipse, rgba(129,140,248,0.16), transparent 65%)" }} />
+        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 py-12">
+          <div className="flex items-center gap-2 font-mono-ui text-[10px] uppercase tracking-wider text-white/40 mb-4">
+            <Link href="/" className="hover:text-cyan-300 transition-colors">~/</Link>
+            <span className="text-white/25">›</span>
+            <span className="text-cyan-300">privacidad</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-black text-fg tracking-tight mb-3">
-            Política de Privacidad
+          <p className="font-mono-ui text-[10px] uppercase tracking-wider text-cyan-300 mb-2">▸ /legal · privacy</p>
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-3">
+            Política de <span className="text-gradient-neon">Privacidad</span>
           </h1>
-          <p className="text-sm text-fg-muted">
-            Última actualización: <strong className="text-fg">18 de abril de 2026</strong>
+          <p className="text-sm text-white/55">
+            Última actualización: <strong className="text-white/85">18 de abril de 2026</strong>
           </p>
-          <p className="mt-3 text-sm text-fg-muted leading-relaxed max-w-2xl">
+          <p className="mt-3 text-sm text-white/55 leading-relaxed max-w-2xl">
             En Orvexia nos tomamos muy en serio la privacidad de nuestros usuarios. Esta política explica
             qué datos recogemos, para qué los usamos y cuáles son tus derechos conforme al{" "}
-            <strong>Reglamento General de Protección de Datos (RGPD)</strong> y la{" "}
-            <strong>Ley Orgánica 3/2018 de Protección de Datos (LOPDGDD)</strong>.
+            <strong className="text-white/85">Reglamento General de Protección de Datos (RGPD)</strong> y la{" "}
+            <strong className="text-white/85">Ley Orgánica 3/2018 de Protección de Datos (LOPDGDD)</strong>.
           </p>
         </div>
       </div>
 
       {/* Índice rápido */}
-      <div className="max-w-4xl mx-auto px-6 py-6">
-        <div className="bg-[#EEF2FF] border border-[#C7D2FE] rounded-2xl p-5">
-          <p className="text-xs font-bold text-[#4F46E5] uppercase tracking-widest mb-3">Índice</p>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
+        <div className="rounded-2xl p-5 bg-cyan-400/[0.06] border border-cyan-400/25">
+          <p className="font-mono-ui text-[10px] font-bold text-cyan-300 uppercase tracking-[0.2em] mb-3">▸ /index</p>
           <ol className="grid sm:grid-cols-2 gap-1">
             {SECTIONS.map((s, i) => (
               <li key={s.title}>
                 <a
                   href={`#seccion-${i + 1}`}
-                  className="text-sm text-[#4338CA] hover:text-[#312E81] hover:underline transition-colors"
+                  className="text-sm text-cyan-200 hover:text-cyan-100 hover:underline transition-colors"
                 >
                   {s.title}
                 </a>
@@ -269,28 +273,27 @@ export default function PrivacyPolicyPage() {
       </div>
 
       {/* Secciones */}
-      <div className="max-w-4xl mx-auto px-6 pb-16 space-y-4">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 pb-16 space-y-4">
         {SECTIONS.map((s, i) => (
           <article
             key={s.title}
             id={`seccion-${i + 1}`}
-            className="bg-bg-elevated rounded-2xl border border-border p-6 scroll-mt-6"
+            className="bg-bg-elevated rounded-2xl border border-white/[0.08] p-6 scroll-mt-6"
           >
-            <h2 className="text-base font-bold text-fg mb-4">{s.title}</h2>
-            <div className="text-sm leading-relaxed text-fg">{s.content}</div>
+            <h2 className="text-base font-bold text-white mb-4">{s.title}</h2>
+            <div className="text-sm leading-relaxed text-white/75">{s.content}</div>
           </article>
         ))}
 
-        {/* Footer legal */}
         <div className="text-center pt-4">
-          <p className="text-xs text-fg-subtle">
-            Orvexia · orvexia.es ·{" "}
-            <a href="mailto:orvexiaesp@gmail.com" className="hover:text-[#4F46E5] transition-colors">
+          <p className="font-mono-ui text-[10px] uppercase tracking-wider text-white/40">
+            orvexia · orvexia.es ·{" "}
+            <a href="mailto:orvexiaesp@gmail.com" className="hover:text-cyan-300 transition-colors">
               orvexiaesp@gmail.com
             </a>
           </p>
-          <p className="text-xs text-fg-subtle mt-1">
-            Versión 1.0 — Última revisión: 18 de abril de 2026
+          <p className="font-mono-ui text-[10px] uppercase tracking-wider text-white/40 mt-1">
+            v1.0 · last_rev=2026-04-18
           </p>
         </div>
       </div>

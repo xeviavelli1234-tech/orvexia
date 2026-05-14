@@ -60,8 +60,8 @@ export function CategoryTabs({ categories }: { categories: string[] }) {
             disabled={pending}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap border transition-all duration-150 shrink-0 ${
               isActive
-                ? "bg-[#7C3AED] border-[#7C3AED] text-white shadow-sm"
-                : "bg-bg-elevated border-border text-fg-muted hover:border-[#7C3AED]/50 hover:text-[#7C3AED]"
+                ? "bg-fuchsia-400/15 border-fuchsia-400/50 text-fuchsia-200 shadow-[0_0_14px_-4px_rgba(240,171,252,0.5)]"
+                : "bg-white/[0.025] border-white/[0.10] text-white/65 hover:border-white/30 hover:text-white"
             } disabled:opacity-60`}
           >
             <span>{tab.emoji}</span>
