@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { BuySignalPanel } from "./BuySignalBadge";
 import { SaveButton } from "./SaveButton";
 import { StockBadge } from "./StockBadge";
@@ -160,14 +160,43 @@ export default function ProductModal({ product, onClose }: Props) {
 
   // Construir array de imágenes de forma segura
   const rawImages = Array.isArray(product.images) ? product.images : [];
-  const all = rawImages.length > 0 ? rawImages : product.image ? [product.image] : [];
+  const candidates = rawImages.length > 0 ? rawImages : product.image ? [product.image] : [];
+
+  // URLs que han fallado al cargar — se filtran de la galería (no se muestran ni en
+  // carrusel ni en miniaturas, evitando huecos vacíos).
+  const [failedSrcs, setFailedSrcs] = useState<Set<string>>(() => new Set());
+  const all = useMemo(
+    () => candidates.filter((src) => src && !failedSrcs.has(src)),
+    [candidates, failedSrcs],
+  );
+
+  const markFailed = useCallback((src: string) => {
+    setFailedSrcs((prev) => {
+      if (prev.has(src)) return prev;
+      const next = new Set(prev);
+      next.add(src);
+      return next;
+    });
+  }, []);
 
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
   const thumbsRef = useRef<HTMLDivElement>(null);
 
-  const prev = useCallback(() => setActive((i) => (i - 1 + all.length) % all.length), [all.length]);
-  const next = useCallback(() => setActive((i) => (i + 1) % all.length), [all.length]);
+  // Si el índice activo queda fuera de rango (porque la imagen activa falló),
+  // saltamos a la primera viva.
+  useEffect(() => {
+    if (active >= all.length && all.length > 0) setActive(0);
+  }, [active, all.length]);
+
+  const prev = useCallback(
+    () => setActive((i) => (all.length === 0 ? 0 : (i - 1 + all.length) % all.length)),
+    [all.length],
+  );
+  const next = useCallback(
+    () => setActive((i) => (all.length === 0 ? 0 : (i + 1) % all.length)),
+    [all.length],
+  );
 
   // Auto-slide
   useEffect(() => {
@@ -259,10 +288,7 @@ export default function ProductModal({ product, onClose }: Props) {
                       className="absolute inset-0 w-full h-full object-contain p-6"
                       loading={i === 0 ? "eager" : "lazy"}
                       referrerPolicy="no-referrer"
-                      onError={(e) => {
-                        const el = e.currentTarget;
-                        el.style.opacity = "0";
-                      }}
+                      onError={() => markFailed(src)}
                     />
                   </div>
                 ))}
@@ -318,10 +344,7 @@ export default function ProductModal({ product, onClose }: Props) {
                     className="object-contain w-full h-full p-1"
                     loading="lazy"
                     referrerPolicy="no-referrer"
-                    onError={(e) => {
-                      const el = e.currentTarget;
-                      el.style.opacity = "0.2";
-                    }}
+                    onError={() => markFailed(src)}
                   />
                 </button>
               ))}
