@@ -34,13 +34,15 @@ function validatePassword(v: string): string {
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="w-full bg-brand-600 hover:bg-brand-700 active:scale-[0.98] text-white font-bold h-11 rounded-xl shadow-md shadow-brand-600/25 hover:shadow-lg hover:shadow-brand-600/35 transition-all disabled:opacity-50 disabled:pointer-events-none"
-    >
-      {pending ? "Creando cuenta…" : "Crear cuenta"}
-    </button>
+    <span className="aura-cta block rounded-xl">
+      <button
+        type="submit"
+        disabled={pending}
+        className="w-full bg-brand-600 hover:bg-brand-700 active:scale-[0.98] text-white font-bold h-11 rounded-xl transition-all disabled:opacity-50 disabled:pointer-events-none"
+      >
+        {pending ? "Creando cuenta…" : "Crear cuenta"}
+      </button>
+    </span>
   );
 }
 

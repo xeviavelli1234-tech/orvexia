@@ -18,13 +18,13 @@ export default async function LoginPage({
   return (
     <AuthShell accent="blue">
       <div className={`space-y-1 text-center mb-7 ${inter.className}`}>
-        <p className="text-[10px] font-bold text-brand-600 uppercase tracking-[0.2em] mb-2.5">
-          Bienvenido de vuelta
+        <p className="font-mono-ui text-[10px] font-bold text-cyan-300 uppercase tracking-[0.2em] mb-3">
+          ▸ /auth · login
         </p>
-        <h1 className="text-2xl font-extrabold text-fg tracking-tight">
+        <h1 className="text-2xl font-extrabold text-white tracking-tight">
           Inicia sesión
         </h1>
-        <p className="text-sm text-fg-muted mt-1.5">
+        <p className="text-sm text-white/55 mt-1.5">
           Accede para ver tus alertas y favoritos
         </p>
       </div>

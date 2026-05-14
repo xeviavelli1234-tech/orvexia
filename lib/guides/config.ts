@@ -17,6 +17,21 @@ export type Faq = { q: string; a: string };
 
 export type ParaQuien = { icon: string; title: string; desc: string; pickHint: "best" | "value" | "cheap" | "premium" };
 
+/** Errores comunes que cometen los compradores al elegir este electrodoméstico. */
+export type Error = { icon: string; title: string; desc: string };
+
+/** Mejor momento del año para comprar barato, con descuento típico esperado. */
+export type Periodo = { mes: string; descuento: string; nota: string };
+
+/** Marca con su punto fuerte, débil e ideal de uso. */
+export type Marca = { name: string; strong: string; weak: string; ideal: string };
+
+/** Término técnico explicado en una línea. */
+export type Termino = { term: string; def: string };
+
+/** Rango de presupuesto: qué encontrar y qué esperar. */
+export type Presupuesto = { rango: string; etiqueta: string; desc: string; ejemplo: string };
+
 export type GuideConfig = {
   category: Category;
   slug: string;                 // "frigorifico" → URL /guias/mejor-frigorifico
@@ -50,6 +65,16 @@ export type GuideConfig = {
   faqs: Faq[];
   /** Long-tail keywords para metadata */
   keywords: string[];
+  /** Errores comunes al elegir */
+  errores?: Error[];
+  /** Calendario de mejores momentos para comprar */
+  cuandoComprar?: Periodo[];
+  /** Marcas recomendadas con fortalezas/debilidades */
+  marcas?: Marca[];
+  /** Glosario técnico */
+  glosario?: Termino[];
+  /** Rangos de presupuesto */
+  presupuestos?: Presupuesto[];
 };
 
 // ── Configuración por categoría ─────────────────────────────────────────────
@@ -99,6 +124,41 @@ export const GUIDES: GuideConfig[] = [
       { q: "¿Qué marcas son más fiables en 2026?", a: "Bosch, Siemens y Balay (grupo BSH) lideran fiabilidad. LG destaca por Linear Cooling. Samsung tiene buenos modelos premium. Liebherr es referente alto-gama." },
     ],
     keywords: ["mejor frigorífico 2026", "comparativa frigoríficos", "frigorífico no frost", "mejor frigorífico calidad precio", "frigorífico americano comparativa"],
+    errores: [
+      { icon: "📏", title: "No medir el hueco antes", desc: "El error #1: el frigorífico llega y no entra por la puerta o sobresale 10 cm. Mide ancho, alto, fondo Y el camino hasta la cocina." },
+      { icon: "🏷️", title: "Mirar solo capacidad total", desc: "300 L de capacidad útil pesan más que 380 L con paredes gruesas. Compara siempre la cifra útil." },
+      { icon: "💸", title: "Ignorar el coste energético", desc: "Un clase F consume 200€+/año, un clase A menos de 90€. En 10 años son 1.000€ de diferencia, más que el extra de precio inicial." },
+      { icon: "🔊", title: "No comprobar los decibelios", desc: "Cocina abierta al salón y compras un equipo de 42 dB: lo oirás de fondo todas las noches. Para piso cerrado, <38 dB." },
+      { icon: "🚪", title: "Olvidar la apertura de puerta", desc: "Hay modelos que solo abren a un lado. Si la pared lateral te obliga al otro sentido, se queda inservible." },
+    ],
+    cuandoComprar: [
+      { mes: "Black Friday (último viernes nov.)", descuento: "20-35%", nota: "El mejor momento del año para frigoríficos premium. Stock alto, descuentos reales contra PVP." },
+      { mes: "Rebajas de enero", descuento: "15-25%", nota: "Liquidan stock 2025 para meter modelos 2026. Buen momento si no te importa el modelo del año anterior." },
+      { mes: "Rebajas de verano (julio)", descuento: "10-20%", nota: "Menos agresivas que las de invierno. Algunos modelos de cocina suben antes de septiembre." },
+      { mes: "Cyber Monday + semana siguiente", descuento: "15-25%", nota: "Continuación del Black Friday. A veces los modelos top vuelven a bajar si no se vendieron." },
+    ],
+    marcas: [
+      { name: "Bosch / Siemens / Balay", strong: "Fiabilidad y vida útil. 12+ años funcionando sin problemas.", weak: "Diseño conservador, precio premium en gama alta.", ideal: "Quien quiere comprar una sola vez en 15 años." },
+      { name: "LG", strong: "Linear Cooling, control de humedad y diseño interior cuidado.", weak: "Reparaciones más caras que BSH.", ideal: "Si valoras conservación de fruta y verdura a tope." },
+      { name: "Samsung", strong: "Estética premium y funciones inteligentes (cámara interior, Family Hub).", weak: "Algunos modelos sufren ruidos del compresor con el tiempo.", ideal: "Cocinas modernas, presupuesto holgado." },
+      { name: "Liebherr", strong: "Referente absoluto en gama alta: BioFresh y conservación de élite.", weak: "Precio muy alto y catálogo limitado en España.", ideal: "Quien cocina mucho y quiere lo mejor en conservación." },
+      { name: "Beko / Hisense", strong: "Relación calidad-precio imbatible en gama media-baja.", weak: "Acabados algo más justos, vida útil 8-10 años (no 15).", ideal: "Presupuesto ajustado, segunda vivienda." },
+    ],
+    glosario: [
+      { term: "No Frost", def: "Sistema que ventila aire frío seco para evitar escarcha. Imprescindible." },
+      { term: "Clase energética", def: "Etiqueta de A (mejor) a G (peor) según consumo anual normalizado." },
+      { term: "Zona 0°C / BioFresh", def: "Compartimento entre 0-2°C que conserva carne y pescado 3× más tiempo." },
+      { term: "Linear Cooling", def: "Tecnología LG que mantiene temperatura estable ±0.5°C en toda la nevera." },
+      { term: "Inverter", def: "Compresor que modula su velocidad en vez de encenderse/apagarse. Más eficiente y silencioso." },
+      { term: "Profundidad encimera", def: "Modelos de 60-66 cm de fondo que quedan alineados con muebles estándar." },
+      { term: "Dual cooling", def: "Dos circuitos de frío independientes para nevera y congelador, sin mezcla de aire/olores." },
+    ],
+    presupuestos: [
+      { rango: "300-450€", etiqueta: "Básico", desc: "Combi 1 puerta, capacidad 250-300 L, clase D o E. Sin no frost en muchos casos.", ejemplo: "2ª vivienda o estudios" },
+      { rango: "450-700€", etiqueta: "Equilibrado", desc: "Combi No Frost de marca conocida, clase A o B, 300-350 L. La compra inteligente.", ejemplo: "Pareja o familia pequeña" },
+      { rango: "700-1100€", etiqueta: "Familia", desc: "Combi grande (380-450 L), zona 0°C, dual cooling, clase A. Bosch/LG gama media-alta.", ejemplo: "Familia de 4-5" },
+      { rango: "1100€+", etiqueta: "Premium", desc: "Americano o French Door 500 L+, dispensador agua/hielo, WiFi, acabado inox premium.", ejemplo: "Cocinas grandes" },
+    ],
   },
   {
     category: "LAVADORAS",
@@ -144,6 +204,41 @@ export const GUIDES: GuideConfig[] = [
       { q: "¿Qué marcas son más fiables?", a: "Bosch, Siemens y Balay (BSH) lideran fiabilidad. AEG y Miele son las premium. LG destaca por su motor con garantía de 10 años." },
     ],
     keywords: ["mejor lavadora 2026", "comparativa lavadoras", "mejor lavadora calidad precio", "lavadora 9 kg comparativa", "lavadora inverter"],
+    errores: [
+      { icon: "⚖️", title: "Comprarla pequeña", desc: "Te ahorras 50€ en 7 kg y haces dos coladas a la semana en vez de una. La lavadora más grande no es ineficiente: la electrónica detecta carga." },
+      { icon: "🌀", title: "Obsesionarse con las RPM", desc: "1600 RPM solo merece la pena para prendas voluminosas. 1400 RPM es el dulce spot. 1200 RPM ya es suficiente para uso normal." },
+      { icon: "🚿", title: "Ignorar el motor inverter", desc: "Sin inverter pierdes 5+ años de vida útil y multiplicas el ruido. Casi todas las gamas medias y altas lo llevan." },
+      { icon: "📱", title: "Pagar por WiFi que no usarás", desc: "El 80% de la gente nunca enciende la lavadora desde el móvil. No pagues 100€ extra por una función que no aprovecharás." },
+      { icon: "🚿", title: "No verificar el tipo de instalación", desc: "Algunos modelos necesitan toma de agua específica o tienen poca tolerancia de altura. Mide y revisa antes." },
+    ],
+    cuandoComprar: [
+      { mes: "Black Friday (último viernes nov.)", descuento: "20-30%", nota: "Mejor momento absoluto. Especialmente para gama media-alta Bosch/AEG/LG." },
+      { mes: "Rebajas de enero", descuento: "15-25%", nota: "Liquidan stock anterior. Si te conviene un modelo 2025 es el momento." },
+      { mes: "Mid-season Spring (marzo-abril)", descuento: "10-15%", nota: "Reactivan ventas con descuentos en gama básica y media tras pico navideño." },
+      { mes: "Rebajas de verano", descuento: "10-20%", nota: "Buen momento para Beko, Indesit y marcas de relación calidad-precio." },
+    ],
+    marcas: [
+      { name: "Bosch / Siemens / Balay", strong: "Motor EcoSilence con 10 años de garantía. Lavado impecable a 1.400 RPM.", weak: "Premium en precio, especialmente Siemens.", ideal: "Quien busca una compra para 12-15 años." },
+      { name: "LG", strong: "Motor Direct Drive (sin correa) con 10 años de garantía. AI DD reconoce tejidos.", weak: "Servicio técnico más lento que BSH.", ideal: "Tecnología punta y silencio extremo." },
+      { name: "AEG", strong: "Tecnología SoftWater suaviza el agua y reduce detergente. Programas premium.", weak: "Más cara que Bosch a igualdad de prestaciones.", ideal: "Quien cuida ropa delicada y quiere lo mejor." },
+      { name: "Samsung", strong: "EcoBubble disuelve detergente en agua fría (ahorra luz). AddWash añade ropa a media colada.", weak: "Algunos modelos tienen problemas con el sello de la puerta a los 5-6 años.", ideal: "Familias con muchas coladas variadas." },
+      { name: "Beko", strong: "Relación calidad-precio top en gama 8 kg de uso normal.", weak: "Vida útil 8-10 años, no 15.", ideal: "Presupuesto ajustado, primer hogar." },
+    ],
+    glosario: [
+      { term: "RPM", def: "Revoluciones por minuto del centrifugado. Más RPM = ropa más seca al salir." },
+      { term: "Inverter", def: "Motor sin escobillas, regula velocidad. Más silencioso, eficiente y duradero." },
+      { term: "Direct Drive", def: "Motor LG conectado directamente al tambor (sin correa). Menos averías." },
+      { term: "EcoBubble", def: "Sistema Samsung que disuelve detergente con espuma en agua fría." },
+      { term: "AutoDosis", def: "Dosificador que añade el detergente exacto según carga. Útil para uso intensivo." },
+      { term: "Clase A", def: "Más eficiente. Diferencia con C son ~40€/año en luz+agua." },
+      { term: "Función Vapor", def: "Trata ropa con vapor para reducir bacterias, alérgenos y arrugas." },
+    ],
+    presupuestos: [
+      { rango: "250-400€", etiqueta: "Básico", desc: "7 kg, 1200 RPM, sin inverter o inverter básico. Marcas como Indesit, Candy.", ejemplo: "Estudio o primera vivienda" },
+      { rango: "400-600€", etiqueta: "Equilibrado", desc: "8-9 kg, 1400 RPM, motor inverter con garantía 10 años, clase A o B.", ejemplo: "Pareja o familia pequeña" },
+      { rango: "600-900€", etiqueta: "Familia", desc: "9-10 kg, 1400 RPM, programas inteligentes, eco40-60, clase A. BSH gama media.", ejemplo: "Familia de 4+, uso intensivo" },
+      { rango: "900€+", etiqueta: "Premium", desc: "10-12 kg, 1600 RPM, vapor, autodosis, WiFi real. AEG/Miele/LG top.", ejemplo: "Quien lava mucho y quiere lo mejor" },
+    ],
   },
   {
     category: "TELEVISORES",
@@ -189,6 +284,42 @@ export const GUIDES: GuideConfig[] = [
       { q: "¿Qué marcas recomiendas en 2026?", a: "Sony y LG en imagen pura. Samsung en QLED grande. Hisense y TCL en relación calidad-precio (sus modelos top están al nivel de los premium a la mitad de precio)." },
     ],
     keywords: ["mejor televisor 2026", "comparativa televisores", "OLED vs QLED 2026", "mejor televisor calidad precio", "mejor TV 55 pulgadas"],
+    errores: [
+      { icon: "📏", title: "Comprar pantalla pequeña", desc: "El error universal: te quedarás corto en 6 meses. Para sofá a 3 m, 65\" no es grande, es el mínimo razonable." },
+      { icon: "✨", title: "Confiar en el HDR sin brillo", desc: "Una TV con HDR10 que solo alcanza 300 nits es marketing. Para que el HDR se note, mínimo 600-800 nits de pico." },
+      { icon: "🎮", title: "Olvidar HDMI 2.1 en gaming", desc: "Si tienes PS5/Xbox Series X y quieres 4K@120Hz, necesitas HDMI 2.1 con ALLM y VRR. No vale con 2.0b." },
+      { icon: "📡", title: "Smart TV con sistema raro", desc: "Sistemas propietarios desactualizan apps en 2-3 años. Google TV, webOS y Tizen son seguros." },
+      { icon: "🔊", title: "Esperar buen sonido del altavoz", desc: "TVs delgadas tienen altavoces minúsculos. Reserva 200-400€ para barra de sonido o no oirás los diálogos." },
+    ],
+    cuandoComprar: [
+      { mes: "Black Friday + Cyber Monday", descuento: "25-40%", nota: "El mejor mes del año para TVs. OLED y QLED premium con descuentos brutales." },
+      { mes: "Mundial / Eurocopa (junio)", descuento: "15-25%", nota: "Las marcas lanzan promociones agresivas en TVs grandes durante grandes eventos deportivos." },
+      { mes: "Lanzamiento modelos nuevos (abril-mayo)", descuento: "20-30%", nota: "Los modelos del año anterior se liquidan. Son los mismos paneles que el modelo nuevo." },
+      { mes: "Rebajas verano", descuento: "10-20%", nota: "Menos agresivas pero útil para gama media. Hisense y TCL bajan mucho." },
+    ],
+    marcas: [
+      { name: "LG", strong: "Líder absoluto en OLED. webOS es el smart TV más fluido. Diseño premium.", weak: "Brillo máximo limitado vs QLED en habitaciones muy iluminadas.", ideal: "Cinéfilos y gamers exigentes (HDMI 2.1 en toda la gama)." },
+      { name: "Sony", strong: "Procesador de imagen Bravia Cognitive: mejor escalado del mercado. Google TV.", weak: "Precios más altos a igualdad de panel.", ideal: "Quien valora calidad de imagen pura y no rinde tributo al marketing." },
+      { name: "Samsung", strong: "QLED y Neo QLED dominan brillo y color. Game Hub para cloud gaming sin consola.", weak: "Tizen no soporta Dolby Vision (solo HDR10+).", ideal: "Salones luminosos, gamers que valoran cloud gaming." },
+      { name: "TCL / Hisense", strong: "QLED Mini-LED a mitad de precio que Samsung/Sony. Google TV integrado.", weak: "Procesado y software algo más lentos que premium.", ideal: "Quien quiere mejor calidad-precio absoluta en 2026." },
+      { name: "Philips", strong: "Ambilight: iluminación trasera que extiende imagen. Único en el mercado.", weak: "Sistema operativo Google TV con bugs ocasionales.", ideal: "Quien quiere experiencia inmersiva diferente al resto." },
+    ],
+    glosario: [
+      { term: "OLED", def: "Cada píxel emite su propia luz. Negros perfectos, contraste infinito." },
+      { term: "QLED", def: "LCD con capa de puntos cuánticos: más brillo y mejor color, pero negros menos puros." },
+      { term: "Mini-LED", def: "QLED con miles de zonas de retroiluminación. Casi alcanza OLED en contraste, supera en brillo." },
+      { term: "HDR10 / HDR10+ / Dolby Vision", def: "Estándares de alto rango dinámico. Dolby Vision es el más completo (metadatos dinámicos)." },
+      { term: "120 Hz", def: "Tasa de refresco. Imprescindible para gaming en consolas de nueva generación." },
+      { term: "HDMI 2.1", def: "Versión que soporta 4K@120Hz, ALLM y VRR. Necesario para PS5/Xbox Series." },
+      { term: "ALLM / VRR", def: "Auto Low Latency Mode + Variable Refresh Rate. Eliminan stuttering y tearing en juegos." },
+      { term: "Nits", def: "Unidad de brillo. 600+ nits es HDR decente, 1000+ nits es excelente." },
+    ],
+    presupuestos: [
+      { rango: "300-500€", etiqueta: "Básico", desc: "TV 50-55\" LED 4K, 60 Hz, smart TV básico. Hisense, TCL básicos.", ejemplo: "Segunda TV, dormitorio" },
+      { rango: "500-900€", etiqueta: "Equilibrado", desc: "55-65\" QLED o LED premium, 120 Hz, HDR real, Google TV. Hisense/TCL gama media-alta.", ejemplo: "Salón estándar" },
+      { rango: "900-1500€", etiqueta: "Recomendado", desc: "65\" OLED de gama media o 75\" QLED top, HDMI 2.1, Dolby Vision. LG C-series, Samsung Q70.", ejemplo: "Salón principal, gaming" },
+      { rango: "1500€+", etiqueta: "Premium", desc: "65-77\" OLED top o Mini-LED 85\". Sony Bravia 9, LG G-series, Samsung S95.", ejemplo: "Cine en casa, exigencia máxima" },
+    ],
   },
   {
     category: "LAVAVAJILLAS",
@@ -234,6 +365,41 @@ export const GUIDES: GuideConfig[] = [
       { q: "¿Qué marcas recomiendas?", a: "Bosch, Siemens y Balay (BSH) lideran fiabilidad. Beko y Hisense ofrecen muy buena relación calidad-precio. Miele y AEG son la gama premium." },
     ],
     keywords: ["mejor lavavajillas 2026", "comparativa lavavajillas", "lavavajillas silencioso", "lavavajillas 14 cubiertos", "mejor lavavajillas calidad precio"],
+    errores: [
+      { icon: "🍽️", title: "Quedarse corto en cubiertos", desc: "Familia de 4 con lavavajillas de 9 cubiertos = pones el lavavajillas a diario. Mínimo 12 para una familia." },
+      { icon: "🔇", title: "Ignorar los decibelios", desc: "48 dB se oye desde el salón y arruina las pelis. Para cocina abierta, máximo 44 dB. 42 dB es el oro." },
+      { icon: "💧", title: "Comprar uno que no seque plástico", desc: "Tupper que sale chorreando = arrepentimiento cada lavado. Busca aire caliente o ventilador, no solo condensación." },
+      { icon: "📦", title: "Olvidar el tercer nivel", desc: "Bandeja superior para cubiertos largos y utensilios planos. Una vez la tienes, no quieres lavavajillas sin ella." },
+      { icon: "🧂", title: "No verificar dureza del agua", desc: "Si tu agua es muy dura (Madrid, Mediterráneo), necesitas modelo con descalcificador o el lavado fracasará en 6 meses." },
+    ],
+    cuandoComprar: [
+      { mes: "Black Friday", descuento: "20-35%", nota: "Mejor momento para gama media-alta Bosch y AEG. Stock alto." },
+      { mes: "Rebajas de enero", descuento: "15-25%", nota: "Liquidaciones agresivas en gama básica y media." },
+      { mes: "Eurocopa / Mundial (junio)", descuento: "10-20%", nota: "Promociones de paquetes 'cocina completa' para reformas." },
+      { mes: "Cyber Monday", descuento: "15-30%", nota: "Suele repetir descuentos del Black Friday con algún modelo extra rebajado." },
+    ],
+    marcas: [
+      { name: "Bosch / Siemens / Balay", strong: "Lavado y secado top, motor EcoSilence, 41-42 dB en gama media.", weak: "Premium en precio, especialmente Siemens.", ideal: "Quien busca el lavado perfecto con vida útil de 15+ años." },
+      { name: "AEG", strong: "AirDry: puerta se abre sola al final del ciclo para secar mejor.", weak: "Stock limitado en España.", ideal: "Quien valora el secado perfecto del plástico." },
+      { name: "Miele", strong: "Referente absoluto: lavado, silencio (38 dB) y durabilidad (20+ años).", weak: "Precios desde 1.000€, fuera de presupuesto medio.", ideal: "Quien compra una sola vez y quiere lo mejor." },
+      { name: "Beko / Hisense", strong: "Calidad-precio imbatible. 12 cubiertos por 350-450€.", weak: "Vida útil 8-10 años, secado plástico mejorable.", ideal: "Presupuesto ajustado, segunda vivienda." },
+      { name: "Whirlpool", strong: "6th Sense que ajusta agua y temperatura según suciedad.", weak: "Acabados algo justos en gama media.", ideal: "Familias con uso intensivo a precio medio." },
+    ],
+    glosario: [
+      { term: "Cubiertos", def: "Unidad estándar (1 plato + 1 vaso + cubierto). Familia 4 = 12-13 cubiertos." },
+      { term: "Eco40-60", def: "Programa estándar regulado por UE. Lava a 40-60°C con consumo bajísimo (2-3h)." },
+      { term: "Tercer nivel", def: "Bandeja superior plana para cubiertos largos y utensilios. Útil." },
+      { term: "AirDry / AutoOpen", def: "La puerta se abre al final del ciclo para secar plástico mejor." },
+      { term: "ZeoLite", def: "Mineral que absorbe humedad y la convierte en calor. Bosch/Siemens." },
+      { term: "Descalcificador", def: "Sistema que neutraliza la dureza del agua con sal. Imprescindible en agua dura." },
+      { term: "Apertura tercer brazo", def: "Brazo aspersor extra que mejora el lavado en la bandeja superior." },
+    ],
+    presupuestos: [
+      { rango: "300-450€", etiqueta: "Básico", desc: "9-12 cubiertos, 46-48 dB, secado condensación. Beko, Indesit, Whirlpool básico.", ejemplo: "Pareja, presupuesto ajustado" },
+      { rango: "450-700€", etiqueta: "Equilibrado", desc: "12-13 cubiertos, 42-44 dB, tercer nivel, clase A o B. Balay, Bosch gama media.", ejemplo: "Familia 3-4" },
+      { rango: "700-1100€", etiqueta: "Familia", desc: "14-15 cubiertos, 41-42 dB, AutoOpen, brazo aspersor superior. Bosch/AEG.", ejemplo: "Familia grande, uso intensivo" },
+      { rango: "1100€+", etiqueta: "Premium", desc: "Miele/Siemens top: 38 dB, sensores avanzados, cesta variable, WiFi real.", ejemplo: "Cocina premium, exigencia total" },
+    ],
   },
   {
     category: "SECADORAS",
@@ -279,6 +445,41 @@ export const GUIDES: GuideConfig[] = [
       { q: "¿Qué marcas recomiendas?", a: "Bosch, Siemens, Balay (BSH) y AEG en gama media-alta. LG y Samsung con buena tecnología inverter. Beko en relación calidad-precio." },
     ],
     keywords: ["mejor secadora 2026", "secadora bomba de calor", "comparativa secadoras", "mejor secadora calidad precio", "secadora 9kg comparativa"],
+    errores: [
+      { icon: "🔥", title: "Comprar condensación clásica", desc: "Te ahorras 100€ y pagas 50€/año más en luz para siempre. La bomba de calor se amortiza en 2-3 años." },
+      { icon: "⚖️", title: "Menor capacidad que la lavadora", desc: "Lavadora 9 kg + secadora 7 kg = secas en dos cargas o la dañas. Mismo o mayor que la lavadora." },
+      { icon: "💧", title: "No conectar al desagüe", desc: "Vaciar depósito cada 3 cargas es coñazo. Si puedes, conéctala a desagüe directo desde el primer día." },
+      { icon: "📱", title: "Pagar por programas que no usarás", desc: "20 programas específicos para 'jeans dark blue' son marketing. 5-6 programas reales cubren todo." },
+      { icon: "🌡️", title: "Olvidar el sensor de humedad", desc: "Una secadora sin sensor mete temperatura fija = ropa quemada o aún húmeda. Sensor es estándar moderno." },
+    ],
+    cuandoComprar: [
+      { mes: "Black Friday", descuento: "25-35%", nota: "Mejor mes absoluto. Las bomba de calor de marca caen 200-300€." },
+      { mes: "Otoño (sept-oct)", descuento: "10-20%", nota: "Buen momento porque hay stock, antes del frenesí navideño." },
+      { mes: "Rebajas de invierno (enero)", descuento: "15-25%", nota: "Demanda alta por lluvia + necesidad real. Marcas premium con descuento agresivo." },
+      { mes: "Cyber Monday", descuento: "20-30%", nota: "Repesca del Black Friday. Algunas marcas guardan modelos para esta semana." },
+    ],
+    marcas: [
+      { name: "Bosch / Siemens / Balay", strong: "Vida útil 12+ años. SelfCleaning Condenser elimina pelusa automáticamente.", weak: "Premium en precio.", ideal: "Quien usa secadora varias veces por semana." },
+      { name: "AEG", strong: "AbsoluteCare: secado especial para lana y delicado a baja temperatura.", weak: "Catálogo más reducido en España.", ideal: "Hogares con ropa delicada o lana." },
+      { name: "LG", strong: "Inverter Direct Drive con 10 años de garantía. Más silencioso del mercado.", weak: "Apps con bugs ocasionales.", ideal: "Pisos con cocina cerca del salón." },
+      { name: "Samsung", strong: "AI EcoDry detecta humedad real y ajusta tiempo. AddDry para añadir ropa." },
+      { name: "Beko", strong: "Calidad-precio decente en bomba de calor desde 450€.", weak: "Acabados ajustados, vida útil 8-10 años.", ideal: "Primera secadora, presupuesto ajustado." },
+    ],
+    glosario: [
+      { term: "Bomba de calor", def: "Sistema que reutiliza el calor del propio aire. Consume la mitad que condensación." },
+      { term: "Condensación", def: "Sistema antiguo que calienta aire y condensa la humedad. Consume el doble." },
+      { term: "Sensor de humedad", def: "Detecta cuándo la ropa está seca y apaga automáticamente. Estándar moderno." },
+      { term: "Clase A+++", def: "Máxima eficiencia, gasta ~50€/año en uso familiar." },
+      { term: "Tambor de acero", def: "Resiste mejor el desgaste que el tambor plástico. Suele en gama media-alta." },
+      { term: "Iluminación interior", def: "LED dentro del tambor. Útil para verificar ropa pequeña que cae." },
+      { term: "Filtro de pelusa", def: "Hay que limpiarlo en cada uso. Bosch tiene autolimpieza opcional." },
+    ],
+    presupuestos: [
+      { rango: "350-500€", etiqueta: "Básico", desc: "7-8 kg, bomba de calor entrada, clase A o A+. Beko, Indesit, Candy.", ejemplo: "Primera secadora, uso esporádico" },
+      { rango: "500-750€", etiqueta: "Equilibrado", desc: "8-9 kg, bomba de calor con sensor humedad, A++. Balay, Bosch básica.", ejemplo: "Familia, uso semanal" },
+      { rango: "750-1100€", etiqueta: "Familia", desc: "9-10 kg, A+++, programas inteligentes, autolimpieza. Bosch/Siemens gama media.", ejemplo: "Familia grande, uso frecuente" },
+      { rango: "1100€+", etiqueta: "Premium", desc: "10+ kg, vapor, conectividad, sensores avanzados. AEG, Miele, LG top.", ejemplo: "Quien quiere lo mejor sin compromisos" },
+    ],
   },
   {
     category: "HORNOS",
@@ -324,6 +525,41 @@ export const GUIDES: GuideConfig[] = [
       { q: "¿Qué marcas recomiendas?", a: "Bosch, Siemens, Balay (BSH) e AEG dominan la gama media-alta. Whirlpool y Beko ofrecen buena relación calidad-precio. Miele es premium." },
     ],
     keywords: ["mejor horno 2026", "horno pirolítico comparativa", "horno con vapor", "mejor horno calidad precio", "horno multifunción 2026"],
+    errores: [
+      { icon: "📐", title: "No medir el hueco con margen", desc: "Hornos integrables miden 60 cm pero algunos necesitan +1 cm de ventilación. Mide y consulta ficha técnica." },
+      { icon: "🌀", title: "Comprar uno sin convección", desc: "Sin aire forzado cocina de manera desigual: arriba quemado, abajo crudo. Cualquier moderno la trae." },
+      { icon: "🧹", title: "Pirolítico para alguien que no limpiará", desc: "Sí, autolimpia. Pero cada ciclo gasta 3 kWh y dura 2 horas. Si lo limpias en cada uso, no compensa el extra de 200€." },
+      { icon: "📦", title: "Subestimar la capacidad", desc: "60 L es lo justo para una bandeja de pollo. Si haces canelones o pizzas familiares, 71 L+ sin dudar." },
+      { icon: "🔌", title: "Olvidar la potencia eléctrica", desc: "Algunos hornos top piden 3.5 kW y tu casa solo tiene 3.3 kW contratados. Salta el térmico siempre." },
+    ],
+    cuandoComprar: [
+      { mes: "Black Friday", descuento: "20-35%", nota: "El mejor mes para hornos pirolíticos premium. Cuidado con stock limitado." },
+      { mes: "Reforma de cocina (paquete)", descuento: "10-25%", nota: "Si compras horno + placa + campana de la misma marca, descuento adicional típico." },
+      { mes: "Rebajas de enero", descuento: "15-25%", nota: "Liquidación stock 2025. Modelos del año anterior son idénticos al nuevo." },
+      { mes: "Cyber Monday", descuento: "15-25%", nota: "Segunda oportunidad si te perdiste el Black Friday." },
+    ],
+    marcas: [
+      { name: "Bosch / Siemens / Balay", strong: "Calentamiento rápido, pirolítico fiable, sondas precisas. 12+ años de vida útil.", weak: "Premium en precio.", ideal: "Quien cocina mucho y quiere acertar." },
+      { name: "AEG", strong: "SteamBake (vapor para pan/repostería), múltiples niveles de cocción.", weak: "Catálogo más limitado.", ideal: "Repostería y panadería casera." },
+      { name: "Miele", strong: "Referente absoluto. Vapor, sondas, sistema MultiSteam.", weak: "Precio desde 1.500€.", ideal: "Cocina como hobby serio." },
+      { name: "Whirlpool / Hotpoint", strong: "Tecnología 6th Sense que ajusta tiempo y temperatura.", weak: "Materiales algo más justos en gama media.", ideal: "Familias con uso frecuente, presupuesto medio." },
+      { name: "Cecotec / Teka", strong: "Pirolítico desde 250-300€. Buena relación calidad-precio.", weak: "Vida útil 7-10 años (no 15).", ideal: "Primera reforma, presupuesto ajustado." },
+    ],
+    glosario: [
+      { term: "Convección", def: "Aire forzado con ventilador. Cocina uniforme y reduce tiempos. Estándar moderno." },
+      { term: "Pirolítico", def: "Sistema de autolimpieza que quema restos a 500°C. Deja interior impecable." },
+      { term: "Catalítico", def: "Paredes con esmalte que absorbe grasa. Más barato que pirolítico pero menos eficaz." },
+      { term: "Hidrolítico", def: "Autolimpieza con agua y vapor a 80°C. Eficaz para suciedad ligera." },
+      { term: "Función vapor", def: "Inyecta humedad durante cocción. Pan, pescado y carnes con más jugosidad." },
+      { term: "Sonda de carne", def: "Termómetro que se clava en la pieza. El horno se apaga al alcanzar temperatura." },
+      { term: "Multifunción", def: "Programas combinados (grill+aire, vapor+aire) que automatizan recetas." },
+    ],
+    presupuestos: [
+      { rango: "180-350€", etiqueta: "Básico", desc: "Multifunción con convección, limpieza catalítica, 60 L. Cecotec, Teka básico.", ejemplo: "Primera vivienda, uso ocasional" },
+      { rango: "350-550€", etiqueta: "Equilibrado", desc: "Multifunción + pirolítico, 65-71 L, clase A. Balay, Bosch gama media.", ejemplo: "Familia, uso semanal" },
+      { rango: "550-900€", etiqueta: "Familia", desc: "Pirolítico + vapor opcional, sonda, 71+ L, clase A+. Bosch/Siemens.", ejemplo: "Cocina principal, uso frecuente" },
+      { rango: "900€+", etiqueta: "Premium", desc: "Vapor + pirolítico + WiFi + sondas. AEG, Miele, NEFF SlideHide.", ejemplo: "Cocina como hobby, panadería" },
+    ],
   },
   {
     category: "MICROONDAS",
@@ -369,6 +605,41 @@ export const GUIDES: GuideConfig[] = [
       { q: "¿Qué marcas recomiendas?", a: "Panasonic lidera en tecnología inverter. Samsung y LG en gama media-alta. Cecotec y Balay para relación calidad-precio." },
     ],
     keywords: ["mejor microondas 2026", "microondas con grill", "microondas convección", "comparativa microondas", "microondas calidad precio"],
+    errores: [
+      { icon: "🔢", title: "Comprar 600 W como uso diario", desc: "600 W tarda el doble en calentar. Para uso real, mínimo 700 W. Para cocinar, 900 W+." },
+      { icon: "🔥", title: "Grill decorativo (<800 W reales)", desc: "Algunos modelos baratos publicitan grill pero solo dan 600 W de potencia real. No dora." },
+      { icon: "📐", title: "Pensar que cabe el plato", desc: "Algunos microondas tienen plato giratorio de 24 cm. Tu plato familiar de 27 cm no entra. Mide siempre." },
+      { icon: "⚙️", title: "No verificar inverter", desc: "Sin inverter, recalentar comida grande sale por fuera caliente y centro frío. Con inverter calienta uniformemente." },
+      { icon: "🔇", title: "Olvidar que pitan al terminar", desc: "Algunos modelos pitan a volumen alto sin opción a silenciar. Verifica que sea ajustable o desactivable." },
+    ],
+    cuandoComprar: [
+      { mes: "Black Friday", descuento: "20-40%", nota: "Mejor mes. Microondas Panasonic inverter y combinados con descuentos brutales." },
+      { mes: "Rebajas de enero", descuento: "15-25%", nota: "Buen momento para gama básica y media." },
+      { mes: "Vuelta al cole (sept)", descuento: "10-20%", nota: "Carrefour, MediaMarkt y otros sacan promos de electrodomésticos pequeños." },
+      { mes: "Cyber Monday", descuento: "15-25%", nota: "Continuación del Black Friday con repesca de modelos populares." },
+    ],
+    marcas: [
+      { name: "Panasonic", strong: "Inverter pionero. Calentamiento uniforme y vida útil 10+ años.", weak: "Diseño algo conservador.", ideal: "Quien usa microondas a diario." },
+      { name: "Samsung", strong: "Convección + grill en combinado. Diseño premium.", weak: "Reparaciones algo caras.", ideal: "Cocinas sin horno separado." },
+      { name: "LG", strong: "NeoChef sin plato, inverter, fácil limpieza.", weak: "Menos modelos básicos.", ideal: "Quien valora diseño y facilidad de limpieza." },
+      { name: "Cecotec", strong: "Precio bajísimo y muchas funciones para el precio.", weak: "Vida útil 4-6 años, plásticos justos.", ideal: "Primera vivienda, uso ocasional." },
+      { name: "Balay / Bosch", strong: "Integrables de gama media-alta para cocina premium.", weak: "Precio alto para libre instalación.", ideal: "Cocinas integradas en muebles." },
+    ],
+    glosario: [
+      { term: "Inverter", def: "Tecnología que modula potencia en lugar de encender/apagar. Calentamiento uniforme." },
+      { term: "Grill", def: "Resistencia superior que tuesta y dora. Útil para gratinar." },
+      { term: "Convección", def: "Aire caliente forzado. Permite hornear como un horno pequeño." },
+      { term: "Combinado", def: "Microondas + grill + convección. Sustituye al horno en porciones pequeñas." },
+      { term: "Plato giratorio", def: "Tradicional. Necesita rotación para uniformidad. Los modernos sin plato distribuyen ondas mejor." },
+      { term: "Sensor de humedad", def: "Detecta cuándo la comida está hecha y se apaga automáticamente." },
+      { term: "Capacidad (L)", def: "Litros del interior. 20 L cabe 1 plato, 28+ L para platos familiares." },
+    ],
+    presupuestos: [
+      { rango: "50-120€", etiqueta: "Básico", desc: "Solo microondas, 700 W, 17-20 L. Cecotec, Severin básicos.", ejemplo: "Recalentar, descongelar simple" },
+      { rango: "120-250€", etiqueta: "Equilibrado", desc: "Con grill, 800-900 W, 23-25 L, inverter en algunos. Panasonic, Cecotec.", ejemplo: "Uso diario familiar" },
+      { rango: "250-450€", etiqueta: "Combinado", desc: "Grill + convección, 28-32 L, programas inteligentes. Samsung, LG.", ejemplo: "Sin horno separado, uso variado" },
+      { rango: "450€+", etiqueta: "Premium", desc: "Integrable, vapor, automático, acabados premium. Bosch, Siemens.", ejemplo: "Cocinas integradas exigentes" },
+    ],
   },
   {
     category: "ASPIRADORAS",
@@ -414,6 +685,41 @@ export const GUIDES: GuideConfig[] = [
       { q: "¿Qué marcas recomiendas?", a: "En robots: Roborock, ECOVACS y iRobot. En escobas: Dyson lidera, Tineco e Xiaomi son buena alternativa más barata. En trineo: Bosch y Miele." },
     ],
     keywords: ["mejor aspiradora 2026", "robot aspirador comparativa", "aspiradora sin cable", "mejor aspiradora calidad precio", "aspiradora HEPA"],
+    errores: [
+      { icon: "📢", title: "Confundir vatios con succión", desc: "El motor en W no es succión real. Mira Pa (Pascales) en robots y AW (AirWatts) en escobas." },
+      { icon: "🐾", title: "Sin filtro HEPA con mascotas", desc: "El polvo y pelos de mascota recirculan por la casa. HEPA atrapa partículas de 0,3 micras." },
+      { icon: "🔋", title: "Batería 30 min en piso grande", desc: "Casa de 100 m² + autonomía de 30 min = aspirar a medias. Mínimo 40-60 min para uso real." },
+      { icon: "🤖", title: "Robot sin LiDAR en piso grande", desc: "Robot con sensor giroscópico se pierde y deja zonas sin aspirar. LiDAR mapea de verdad." },
+      { icon: "🪣", title: "Depósito ridículo", desc: "Robot con 0,2 L necesita vaciado cada 2 días. Mínimo 0,4 L o estación de autovaciado." },
+    ],
+    cuandoComprar: [
+      { mes: "Amazon Prime Day (julio)", descuento: "25-45%", nota: "Mejor mes absoluto para robots Roborock, iRobot y Dyson." },
+      { mes: "Black Friday", descuento: "30-50%", nota: "Especialmente brutal en gama premium. Robots top a mitad de precio." },
+      { mes: "Cyber Monday", descuento: "25-40%", nota: "Continuación con repesca de modelos." },
+      { mes: "Rebajas enero", descuento: "15-30%", nota: "Liquidación stock. Buen momento para escobas Dyson." },
+    ],
+    marcas: [
+      { name: "Roborock", strong: "Mejor relación calidad-precio en robots con LiDAR. Mopa vibratoria.", weak: "App con traducción de español justa.", ideal: "Quien quiere lo último en robots sin pagar iRobot." },
+      { name: "iRobot Roomba", strong: "Pioneros, navegación fiable, ecosistema con autovaciado.", weak: "Premium en precio. Algunos modelos sin LiDAR.", ideal: "Quien quiere la marca conocida y soporte." },
+      { name: "Dyson", strong: "Líder absoluto en escobas sin cable. Succión profesional.", weak: "Precios desde 500€. Batería se degrada en 3-4 años.", ideal: "Limpieza intensiva con presupuesto." },
+      { name: "Tineco / Xiaomi", strong: "Escobas potentes a precio razonable. Algunas con autolimpieza.", weak: "Servicio postventa más lento.", ideal: "Quien quiere Dyson sin pagar Dyson." },
+      { name: "Bosch / Miele", strong: "Trineos con cable de fiabilidad legendaria. Filtración HEPA top.", weak: "Cable molesto, ya en declive.", ideal: "Casas grandes con presupuesto, alergias serias." },
+    ],
+    glosario: [
+      { term: "Pa (Pascales)", def: "Unidad de succión en robots. >2500 Pa para alfombras y pelo." },
+      { term: "AW (AirWatts)", def: "Unidad de succión real en escobas. >150 AW es potencia profesional." },
+      { term: "LiDAR", def: "Láser que mapea la casa con precisión. La mejor navegación para robots." },
+      { term: "HEPA", def: "Filtro de alta eficiencia. Atrapa 99,97% de partículas a 0,3 micras." },
+      { term: "Autovaciado", def: "Estación que succiona el depósito del robot. Vacías la base cada 1-2 meses." },
+      { term: "Mopa vibratoria", def: "Mopa que vibra a alta frecuencia para fregar mejor que solo arrastre." },
+      { term: "Cepillo anti-enredo", def: "Diseño que evita que pelos se enrollen. Imprescindible con mascotas." },
+    ],
+    presupuestos: [
+      { rango: "80-200€", etiqueta: "Básico", desc: "Escoba sin cable básica o robot sin mapeo. Xiaomi, Cecotec.", ejemplo: "Piso pequeño, uso ocasional" },
+      { rango: "200-400€", etiqueta: "Equilibrado", desc: "Escoba con HEPA y >40 min o robot con giroscopio. Tineco, Roborock básico.", ejemplo: "Piso medio, uso semanal" },
+      { rango: "400-700€", etiqueta: "Recomendado", desc: "Escoba Dyson V11/V12 o robot con LiDAR y mopa. Roborock S7/S8.", ejemplo: "Casa grande o mascotas" },
+      { rango: "700€+", etiqueta: "Premium", desc: "Robot con autovaciado + autolavado de mopa, escoba Dyson V15. Roborock S8 Pro+.", ejemplo: "Quien quiere olvidarse de limpiar" },
+    ],
   },
   {
     category: "CAFETERAS",
@@ -459,6 +765,41 @@ export const GUIDES: GuideConfig[] = [
       { q: "¿Qué marcas recomiendas?", a: "DeLonghi y Krups en superautomáticas. Cecotec y DeLonghi en espresso manual. Nespresso y Dolce Gusto lideran en cápsulas. Sage y Breville son la gama premium absoluta." },
     ],
     keywords: ["mejor cafetera 2026", "cafetera espresso comparativa", "cafetera superautomática", "mejor cafetera calidad precio", "cafetera cápsulas"],
+    errores: [
+      { icon: "💪", title: "Creer en los 19 bar", desc: "Marketing: la presión real de extracción correcta son 9 bar. Si la cafetera anuncia 19 bar es solo presión de bomba, no de extracción." },
+      { icon: "☕", title: "Cápsulas siendo cafetero diario", desc: "0,30€/cápsula × 2/día × 365 días = 219€/año en cápsulas. Una espresso buena se amortiza en menos de 1 año." },
+      { icon: "🌡️", title: "Comprar sin termoblock decente", desc: "Modelos baratos calientan mal: el café sale tibio o quemado. Termoblock o caldera son cruciales." },
+      { icon: "🧹", title: "Olvidar el mantenimiento", desc: "Una cafetera sin limpiar/descalcificar deja de extraer crema en 6 meses. Verifica que tenga descalcificación automática." },
+      { icon: "🥛", title: "Vaporizador débil para cappuccino", desc: "Si haces flat white o cappuccino, necesitas lanza de vapor potente. Vaporizador automático de marca low-cost no espuma bien." },
+    ],
+    cuandoComprar: [
+      { mes: "Black Friday", descuento: "25-40%", nota: "Las superautomáticas DeLonghi y Krups caen hasta 300€. Mejor mes." },
+      { mes: "Navidad (diciembre)", descuento: "15-30%", nota: "Lanzan paquetes 'café molido + cafetera' o cápsulas regalo." },
+      { mes: "Día del Padre (marzo)", descuento: "10-20%", nota: "Promociones específicas en cafeteras espresso y superautomáticas." },
+      { mes: "Rebajas verano", descuento: "10-25%", nota: "Buen momento para Nespresso/Dolce Gusto en cápsulas." },
+    ],
+    marcas: [
+      { name: "DeLonghi", strong: "Líder en superautomáticas. Molinillo cerámico y vaporizador potente.", weak: "Precios premium en gama alta.", ideal: "Quien quiere café como en cafetería sin esfuerzo." },
+      { name: "Sage / Breville", strong: "La gama premium absoluta. Espresso manual para baristas.", weak: "Precios desde 700€. Curva de aprendizaje.", ideal: "Apasionados del café que buscan perfección." },
+      { name: "Krups", strong: "Buena relación calidad-precio en superautomáticas. Fácil mantenimiento.", weak: "Vaporizador algo menos potente que DeLonghi.", ideal: "Familia que quiere superautomática sin gastar 1.000€." },
+      { name: "Nespresso / Dolce Gusto", strong: "Comodidad extrema. Variedad de sabores enorme.", weak: "Coste/taza alto, generación de residuos.", ideal: "Quien valora rapidez sobre coste." },
+      { name: "Cecotec", strong: "Espresso manual desde 80€. Sirve para empezar.", weak: "Vida útil 3-5 años. Presión real cuestionable.", ideal: "Iniciarse en espresso sin gastar." },
+    ],
+    glosario: [
+      { term: "Bar (presión)", def: "Presión de extracción. 9 bar es lo correcto, 19 bar es de bomba (marketing)." },
+      { term: "Espresso", def: "Café extraído a 90-95°C con presión. Crema en superficie." },
+      { term: "Termoblock", def: "Sistema de calentamiento rápido. Buenos calientan en <30 segundos." },
+      { term: "Caldera", def: "Depósito de agua a temperatura constante. Más estable que termoblock pero más lento." },
+      { term: "Vaporizador / Steam wand", def: "Lanza para espumar leche. Manual da más control, automático más comodidad." },
+      { term: "Molinillo cónico", def: "Muele café de manera uniforme sin sobrecalentar grano. Estándar en superautomáticas." },
+      { term: "Tamper / Tampado", def: "Herramienta para compactar café molido antes de extraer." },
+    ],
+    presupuestos: [
+      { rango: "30-100€", etiqueta: "Básico", desc: "Cafetera de cápsulas (Dolce Gusto, Nespresso entrada) o espresso muy básico.", ejemplo: "Café ocasional o de oficina" },
+      { rango: "100-250€", etiqueta: "Equilibrado", desc: "Espresso manual con vaporizador (DeLonghi Dedica, Krups XP).", ejemplo: "Cafetero diario sin perfeccionar" },
+      { rango: "250-600€", etiqueta: "Superautomática", desc: "Superautomática DeLonghi Magnifica, Krups EA. Café decente sin esfuerzo.", ejemplo: "Familia cafetera, comodidad" },
+      { rango: "600€+", etiqueta: "Premium", desc: "Superautomáticas top con vaporizador automático o Sage Barista manual.", ejemplo: "Café como hobby serio" },
+    ],
   },
   {
     category: "AIRES_ACONDICIONADOS",
@@ -504,6 +845,41 @@ export const GUIDES: GuideConfig[] = [
       { q: "¿Qué marcas recomiendas?", a: "Daikin y Mitsubishi lideran calidad y eficiencia. LG y Panasonic en gama media-alta. Hisense, Hitachi y Cecotec en relación calidad-precio." },
     ],
     keywords: ["mejor aire acondicionado 2026", "split inverter comparativa", "aire acondicionado bomba calor", "mejor aire acondicionado calidad precio", "split 3000 frigorías"],
+    errores: [
+      { icon: "📐", title: "Mal dimensionado de frigorías", desc: "Te quedas corto = trabaja al máximo siempre = factura disparada y vida útil de 5 años en lugar de 12. Calcula bien." },
+      { icon: "💨", title: "Comprar portátil para uso fijo", desc: "Portátil consume 50% más que un split y mete ruido. Solo merece la pena para alquilado o uso puntual." },
+      { icon: "🚿", title: "Olvidar la instalación profesional", desc: "Una mala instalación = fugas de gas en 1-2 años. Pide certificado de instalación con garantía mínima de 2 años." },
+      { icon: "❄️", title: "Sin bomba de calor en zona fría", desc: "Si vives donde hay invierno real, una bomba de calor calienta gastando 3-5× menos que radiador eléctrico. Pagas el extra de entrada y ahorras todo el invierno." },
+      { icon: "📡", title: "Pagar WiFi que no usarás", desc: "Si no piensas encenderlo desde el móvil al volver del trabajo, no pagues el extra de WiFi. Ahorras 100-200€." },
+    ],
+    cuandoComprar: [
+      { mes: "Invierno (enero-febrero)", descuento: "20-35%", nota: "El MEJOR mes para aire acondicionado. Nadie compra en invierno: stock alto y precios mínimos." },
+      { mes: "Black Friday", descuento: "15-25%", nota: "Buen momento pero no el mejor para A/C. La gente piensa en otros electrodomésticos." },
+      { mes: "Primavera tardía (marzo-abril)", descuento: "10-20%", nota: "Última oportunidad antes de la subida de mayo. Stocks aún disponibles." },
+      { mes: "NUNCA en junio-agosto", descuento: "0%", nota: "Demanda altísima. Precios suben hasta 30%. Instaladores con lista de espera de meses." },
+    ],
+    marcas: [
+      { name: "Daikin", strong: "Líder absoluto en eficiencia y silencio. Vida útil 15+ años.", weak: "Premium en precio.", ideal: "Quien quiere acertar y olvidar 15 años." },
+      { name: "Mitsubishi Electric", strong: "Sensor de presencia, modo silencio extremo (19 dB).", weak: "Precios altos. Menos modelos en España.", ideal: "Dormitorios donde el silencio es crítico." },
+      { name: "LG", strong: "Dual Inverter con 10 años de garantía. Buena relación calidad-precio.", weak: "Reparaciones algo caras en gama alta.", ideal: "Equilibrio calidad-precio para vivienda principal." },
+      { name: "Panasonic", strong: "Filtros premium (NanoeX). Calidad de aire mejorada.", weak: "Precios algo altos para sus prestaciones.", ideal: "Alérgicos o casas con polución exterior alta." },
+      { name: "Hisense / Cecotec / Hitachi", strong: "Inverter desde 350-500€. Funcional sin pagar premium.", weak: "Vida útil 8-10 años (no 15).", ideal: "Segunda vivienda, presupuesto ajustado." },
+    ],
+    glosario: [
+      { term: "Frigorías", def: "Capacidad de refrigeración. m² × 100 = frigorías mínimas necesarias." },
+      { term: "Inverter", def: "Modula velocidad del compresor. Hasta 35% menos consumo que on/off." },
+      { term: "Bomba de calor", def: "Sistema reversible que también calienta. 3-5× más eficiente que radiador eléctrico." },
+      { term: "SEER / SCOP", def: "Eficiencia estacional. SEER >7 (frío) y SCOP >4 (calor) son excelentes." },
+      { term: "BTU", def: "Unidad inglesa de potencia térmica. 1 frigoría ≈ 3,97 BTU/h." },
+      { term: "Caudal de aire (m³/h)", def: "Volumen de aire movido. Mayor = enfría/calienta más rápido." },
+      { term: "Refrigerante R32", def: "Gas actual, ecológico y eficiente. R410A es la generación anterior." },
+    ],
+    presupuestos: [
+      { rango: "300-550€", etiqueta: "Básico", desc: "Split 1×1 inverter de marca low-cost, 2.000-3.000 fr, A++. Hisense, Cecotec, Hitachi básico.", ejemplo: "Dormitorio o salón pequeño (15-20 m²)" },
+      { rango: "550-900€", etiqueta: "Equilibrado", desc: "Split de marca conocida con bomba de calor real, 3.000-4.000 fr, A+++. LG, Panasonic.", ejemplo: "Salón estándar (20-30 m²)" },
+      { rango: "900-1500€", etiqueta: "Premium", desc: "Daikin/Mitsubishi de gama media con silencio <22 dB, filtros premium, WiFi. 4.500+ fr.", ejemplo: "Casa amplia o exigencia de silencio" },
+      { rango: "1500€+", etiqueta: "Multisplit", desc: "Una exterior con 2-4 interiores. Daikin/Mitsubishi top. Más instalación.", ejemplo: "Climatizar casa completa con estética uniforme" },
+    ],
   },
 ];
 

@@ -45,21 +45,21 @@ const sections = [
 
 export default function CookiePolicyPage() {
   return (
-    <main className="bg-bg-subtle">
-      <div className="mx-auto max-w-4xl px-6 py-12 sm:py-16">
-        <h1 className="text-3xl font-black tracking-tight text-fg sm:text-4xl">
-          Politica de cookies
+    <main>
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 py-12 sm:py-16">
+        <p className="font-mono-ui text-[10px] uppercase tracking-wider text-cyan-300 mb-2">▸ /legal · cookies</p>
+        <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+          Política de <span className="text-gradient-neon">cookies</span>
         </h1>
-        <p className="mt-4 text-sm leading-relaxed text-fg">
-          Esta politica explica como usamos cookies en Orvexia y como puedes gestionar tu
-          consentimiento.
+        <p className="mt-4 text-sm leading-relaxed text-white/65">
+          Esta política explica cómo usamos cookies en Orvexia y cómo puedes gestionar tu consentimiento.
         </p>
 
-        <section className="mt-8 space-y-4">
+        <section className="mt-8 space-y-3">
           {sections.map((item) => (
-            <article key={item.title} className="rounded-2xl border border-border bg-bg-elevated p-5">
-              <h2 className="text-base font-bold text-fg">{item.title}</h2>
-              <p className="mt-2 text-sm leading-relaxed text-fg">{item.content}</p>
+            <article key={item.title} className="rounded-2xl border border-white/[0.08] bg-bg-elevated p-5">
+              <h2 className="text-base font-bold text-white">{item.title}</h2>
+              <p className="mt-2 text-sm leading-relaxed text-white/65">{item.content}</p>
             </article>
           ))}
         </section>

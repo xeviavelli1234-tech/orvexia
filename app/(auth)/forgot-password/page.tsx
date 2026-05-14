@@ -79,13 +79,13 @@ export default function ForgotPasswordPage() {
   return (
     <AuthShell accent="blue">
       <div className={`space-y-1 text-center mb-6 ${inter.className}`}>
-        <p className="text-xs font-semibold text-brand-600 uppercase tracking-widest mb-2">
-          Recuperar acceso
+        <p className="font-mono-ui text-[10px] font-bold text-cyan-300 uppercase tracking-[0.2em] mb-3">
+          ▸ /auth · recovery
         </p>
-        <h1 className="text-2xl font-extrabold text-fg tracking-tight">
+        <h1 className="text-2xl font-extrabold text-white tracking-tight">
           ¿Olvidaste tu contraseña?
         </h1>
-        <p className="text-sm text-fg-muted">
+        <p className="text-sm text-white/55">
           Te enviaremos un enlace para crear una nueva.
         </p>
       </div>

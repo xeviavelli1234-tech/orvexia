@@ -68,9 +68,10 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
     <>
       <div
         onClick={() => setOpen(true)}
-        className="group bg-bg-elevated rounded-2xl border border-border hover:border-brand-600/40
-                   hover:shadow-[0_8px_32px_-8px_rgba(79,70,229,0.18)] transition-all duration-200
+        className="group shine-on-hover bg-bg-elevated rounded-2xl border border-white/[0.08] hover:border-cyan-400/35
+                   hover:shadow-[0_0_24px_-6px_rgba(94,234,212,0.35)] hover:-translate-y-0.5 transition-all duration-200
                    overflow-hidden flex cursor-pointer"
+        style={{ ['--cat' as string]: catColor }}
       >
         {/* Imagen */}
         <div className="relative w-24 sm:w-28 flex-shrink-0 bg-white">
@@ -97,7 +98,15 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
             </div>
           )}
           {realDiscount > 0 && (
-            <span className="absolute top-2 left-2 bg-danger-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md">
+            <span
+              className="absolute top-2 left-2 font-mono-ui text-[10px] font-bold px-1.5 py-0.5 rounded-md backdrop-blur-sm"
+              style={{
+                background: "rgba(5,6,15,0.92)",
+                color: "#A3E635",
+                border: "1px solid rgba(163,230,53,0.4)",
+                boxShadow: "0 0 12px -2px rgba(163,230,53,0.4)",
+              }}
+            >
               -{realDiscount}%
             </span>
           )}
@@ -109,7 +118,7 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
             {product.brand}
           </p>
           <h3 className="text-sm font-semibold text-fg leading-snug line-clamp-2
-                         group-hover:text-brand-600 transition-colors mb-auto">
+                         group-hover:text-cyan-300 transition-colors mb-auto">
             {product.name}
           </h3>
           {oferta ? (
@@ -149,8 +158,8 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
                       key={o.store}
                       className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${
                         o.store === oferta.store
-                          ? "bg-brand-50 border-brand-200 text-brand-700"
-                          : "bg-bg-subtle border-border text-fg-muted"
+                          ? "border-cyan-400/45 bg-cyan-400/10 text-cyan-200"
+                          : "border-white/10 bg-white/[0.025] text-white/55"
                       }`}
                     >
                       {o.store} {formatPrice(o.priceCurrent)}

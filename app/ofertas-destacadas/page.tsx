@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
 import ProductCard from "@/components/ProductCard";
 import { SortBar } from "./SortBar";
+import { FuturisticFX } from "@/components/FuturisticFX";
 import type { Product, Offer } from "@/app/generated/prisma/client";
 
 type ProductWithOffers = Product & { offers: Offer[] };
@@ -108,78 +109,84 @@ export default async function OfertasDestacadasPage({
     : 0;
 
   return (
-    <main className="min-h-screen bg-bg-subtle">
+    <main className="min-h-screen">
 
       {/* Hero */}
-      <section className="relative overflow-hidden pt-20 pb-24 px-6 text-center"
-        style={{ background: "linear-gradient(150deg,#0F172A 0%,#1E3A8A 55%,#2563EB 100%)" }}>
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-20 -left-20 w-80 h-80 rounded-full bg-blue-400 opacity-10 blur-3xl" />
-          <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-cyan-300 opacity-10 blur-3xl" />
-          <div className="absolute -bottom-16 left-0 right-0 h-24 bg-bg-subtle rounded-t-[32px]" />
+      <section className="relative overflow-hidden border-b border-white/[0.06]">
+        <div className="absolute inset-0 bg-grid-cyber opacity-50 pointer-events-none" />
+        <div className="absolute inset-0 pointer-events-none">
+          <FuturisticFX particleCount={6} streamCount={2} beam seed={5} />
         </div>
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[1200px] h-[600px] rounded-full halo-breathe pointer-events-none"
+             style={{ background: "radial-gradient(ellipse at center, rgba(240,171,252,0.20), transparent 65%)" }} />
+        <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-50 pointer-events-none"
+             style={{ background: "radial-gradient(circle, rgba(94,234,212,0.18), transparent 65%)" }} />
 
-        <div className="relative max-w-4xl mx-auto">
-          <div className="inline-flex items-center gap-2 mb-5 px-4 py-1.5 rounded-full border border-white/20 bg-white/10 text-xs font-semibold text-white/90">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#22C55E] animate-pulse" />
-            Selección curada con descuentos reales
+        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 pt-16 sm:pt-24 pb-16 sm:pb-24 text-center">
+          <div className="inline-flex items-center gap-2 mb-6 px-3 h-7 rounded-full bg-white/[0.04] border border-white/[0.10] font-mono-ui">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-fuchsia-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-fuchsia-400" />
+            </span>
+            <span className="text-[10px] uppercase tracking-wider text-white/65">
+              ▸ /live · selección curada
+            </span>
           </div>
 
-          <h1 className="text-4xl sm:text-5xl font-extrabold text-white mb-4 tracking-tight">
-            Ofertas destacadas
+          <h1 className="font-extrabold tracking-tight text-white mb-5"
+              style={{ fontSize: "clamp(2.4rem, 6vw, 4.5rem)", lineHeight: 1, letterSpacing: "-0.045em" }}>
+            Ofertas <span className="text-gradient-neon">destacadas</span>
           </h1>
-          <p className="text-blue-200 text-lg max-w-xl mx-auto mb-8 leading-relaxed">
-            Los mejores descuentos de electrodomésticos en un solo lugar.
-            Verificamos precios en tiempo real para que compres con confianza.
+          <p className="text-white/55 text-base max-w-xl mx-auto mb-9 leading-relaxed">
+            Los mejores descuentos de electrodomésticos. Verificamos precios contra el histórico de 90 días para que compres con confianza.
           </p>
 
-          <div className="flex flex-wrap justify-center gap-3 text-sm text-white/80">
-            {bestDiscount > 0 && (
-              <span className="px-3 py-2 rounded-full bg-white/10 border border-white/15">
-                Hasta -{bestDiscount}% hoy
-              </span>
-            )}
-            {avgDiscount > 0 && (
-              <span className="px-3 py-2 rounded-full bg-white/10 border border-white/15">
-                Descuento medio {avgDiscount}%
-              </span>
-            )}
-            <span className="px-3 py-2 rounded-full bg-white/10 border border-white/15">
-              {stats.offerCount} ofertas · {stats.productCount} productos
-            </span>
+          <div className="grid grid-cols-3 gap-2 sm:gap-3 max-w-2xl mx-auto">
+            <div className="rounded-xl bg-white/[0.025] border border-white/[0.10] p-3 sm:p-4 backdrop-blur-sm">
+              <p className="font-mono-ui text-[9px] uppercase text-lime-300 mb-1">▸ max.discount</p>
+              <p className="tabular font-extrabold text-xl sm:text-2xl text-white">-{bestDiscount}%</p>
+              <p className="text-[10px] sm:text-xs text-white/45 mt-0.5">descuento top</p>
+            </div>
+            <div className="rounded-xl bg-white/[0.025] border border-white/[0.10] p-3 sm:p-4 backdrop-blur-sm">
+              <p className="font-mono-ui text-[9px] uppercase text-cyan-300 mb-1">▸ avg.discount</p>
+              <p className="tabular font-extrabold text-xl sm:text-2xl text-white">{avgDiscount}%</p>
+              <p className="text-[10px] sm:text-xs text-white/45 mt-0.5">media</p>
+            </div>
+            <div className="rounded-xl bg-white/[0.025] border border-white/[0.10] p-3 sm:p-4 backdrop-blur-sm">
+              <p className="font-mono-ui text-[9px] uppercase text-fuchsia-300 mb-1">▸ db.offers</p>
+              <p className="tabular font-extrabold text-xl sm:text-2xl text-white">{stats.offerCount}</p>
+              <p className="text-[10px] sm:text-xs text-white/45 mt-0.5">ofertas activas</p>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Sort bar + grid */}
-      <div className="max-w-6xl mx-auto px-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
 
-        {/* Sort bar - overlapping card, same pattern that popularidad uses */}
-        <div className="relative z-10 -mt-12 mb-8 bg-bg-elevated rounded-2xl border border-border
-                        shadow-[0_18px_48px_-24px_rgba(15,23,42,0.2)] p-4">
+        <div className="relative z-10 -mt-8 mb-8 bg-bg-elevated rounded-2xl border border-white/[0.10]
+                        shadow-[0_24px_60px_-24px_rgba(0,0,0,0.5)] p-4">
           <Suspense>
             <SortBar />
           </Suspense>
         </div>
 
-        {/* Section header */}
         <div className="flex items-end justify-between mb-6">
           <div>
-            <p className="text-xs font-bold text-brand-600 uppercase tracking-widest mb-1">
-              Selección premium
+            <p className="font-mono-ui text-[10px] uppercase tracking-wider text-fuchsia-300 mb-1">
+              ▸ /deals/verified
             </p>
-            <h2 className="text-2xl font-bold text-fg">Ofertas verificadas</h2>
+            <h2 className="text-2xl font-bold text-white">Ofertas verificadas</h2>
           </div>
-          <span className="text-sm text-fg-subtle hidden sm:block">
-            Mostrando {deals.length} oferta{deals.length !== 1 ? "s" : ""} con {SORT_LABEL[orden] ?? "mayor descuento"}
+          <span className="font-mono-ui text-[11px] uppercase tracking-wider text-white/45 hidden sm:block">
+            {deals.length.toString().padStart(2, "0")} ofertas · {SORT_LABEL[orden] ?? "mayor descuento"}
           </span>
         </div>
 
-        {/* Grid */}
         {deals.length === 0 ? (
-          <div className="text-center py-24 bg-bg-elevated rounded-3xl border border-border">
+          <div className="text-center py-24 bg-bg-elevated rounded-3xl border border-white/[0.08]">
             <p className="text-5xl mb-4">⌛</p>
-            <p className="text-fg-subtle text-sm font-medium">No hay ofertas disponibles ahora mismo.</p>
+            <p className="font-mono-ui text-[11px] uppercase tracking-wider text-white/45">no_deals · stand_by</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 pb-16">

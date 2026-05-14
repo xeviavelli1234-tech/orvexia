@@ -40,12 +40,15 @@ export default async function RootLayout({
   const cookieStore = await cookies();
   const initialConsent = parseCookieConsent(cookieStore.get(COOKIE_CONSENT_COOKIE)?.value);
   const theme = parseTheme(cookieStore.get(THEME_COOKIE)?.value);
+  // Diseño futurista: dark por defecto. Cookie "light" lo cambia a claro.
+  const isLight = theme === "light";
 
   return (
     <html
       lang="es"
       className={geist.variable}
-      {...(theme === "dark" ? { "data-theme": "dark" } : {})}
+      style={{ colorScheme: isLight ? "light" : "dark" }}
+      {...(isLight ? {} : { "data-theme": "dark" })}
     >
       <body className="font-sans antialiased bg-bg text-fg">
         <a

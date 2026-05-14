@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
 import Link from "next/link";
+import { FuturisticFX } from "@/components/FuturisticFX";
 
 export const metadata: Metadata = {
   title: "Guías de Compra de Electrodomésticos 2026 | Orvexia",
@@ -134,31 +135,38 @@ const GUIAS = [
 
 export default function GuiasPage() {
   return (
-    <main className="min-h-screen bg-bg-subtle">
+    <main className="min-h-screen">
 
       {/* HERO */}
-      <section className="bg-gradient-to-br from-[#0F172A] via-[#1E1B4B] to-[#312E81] pt-16 pb-24 px-6 relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full bg-[#4F46E5] opacity-10 blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-80 h-80 rounded-full bg-[#7C3AED] opacity-10 blur-3xl" />
+      <section className="relative overflow-hidden border-b border-white/[0.06]">
+        <div className="absolute inset-0 bg-grid-cyber opacity-50 pointer-events-none" />
+        <div className="absolute inset-0 pointer-events-none">
+          <FuturisticFX particleCount={6} streamCount={2} beam seed={19} />
         </div>
-        <div className="relative max-w-5xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 text-xs text-white/70 font-medium mb-6">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#34D399] inline-block" />
-            Actualizado abril 2026
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[1200px] h-[700px] rounded-full halo-breathe pointer-events-none"
+             style={{ background: "radial-gradient(ellipse at center, rgba(129,140,248,0.22), transparent 65%)" }} />
+        <div className="absolute top-0 right-0 w-96 h-96 rounded-full pointer-events-none opacity-60"
+             style={{ background: "radial-gradient(circle, rgba(240,171,252,0.16), transparent 65%)" }} />
+
+        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 pt-16 sm:pt-24 pb-16 sm:pb-24 text-center">
+          <div className="inline-flex items-center gap-2 mb-6 px-3 h-7 rounded-full bg-white/[0.04] border border-white/[0.10] font-mono-ui">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-dot" />
+            <span className="text-[10px] uppercase tracking-wider text-white/65">
+              ▸ /guides · updated 2026
+            </span>
           </div>
-          <h1 className="text-5xl sm:text-6xl font-extrabold text-white mb-5 tracking-tight leading-tight">
-            Guías de{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#A78BFA] to-[#60A5FA]">Compra</span>
+          <h1 className="font-extrabold text-white mb-5 tracking-tight"
+              style={{ fontSize: "clamp(2.6rem, 6vw, 5rem)", lineHeight: 0.98, letterSpacing: "-0.045em" }}>
+            Guías de <span className="text-gradient-neon">Compra</span>
           </h1>
-          <p className="text-white/60 text-lg max-w-xl mx-auto leading-relaxed">
+          <p className="text-white/55 text-lg max-w-xl mx-auto leading-relaxed">
             Análisis honestos, sin publicidad. Te ayudamos a elegir el electrodoméstico perfecto con precios en tiempo real.
           </p>
         </div>
       </section>
 
-      <div className="max-w-5xl mx-auto px-6 -mt-6 pb-16">
-        <p className="text-xs font-bold text-fg-subtle uppercase tracking-widest mb-5">{GUIAS.length} guías disponibles</p>
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-10 pb-16">
+        <p className="font-mono-ui text-[10px] font-bold text-cyan-300 uppercase tracking-[0.2em] mb-5">▸ {GUIAS.length.toString().padStart(2, "0")} guías disponibles</p>
 
         {/* GRID: 2 col en tablet, 3 col en desktop */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -166,37 +174,41 @@ export default function GuiasPage() {
             <Link
               key={g.slug}
               href={`/guias/${g.slug}`}
-              className={`group flex flex-col bg-bg-elevated rounded-2xl border border-border overflow-hidden hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200${i === GUIAS.length - 1 && GUIAS.length % 3 === 1 ? " lg:col-start-2" : ""}`}
+              className={`group flex flex-col bg-bg-elevated rounded-2xl border border-white/[0.08] overflow-hidden hover:border-white/25 hover:shadow-[0_0_28px_-6px_rgba(94,234,212,0.25)] hover:-translate-y-0.5 transition-all duration-200${i === GUIAS.length - 1 && GUIAS.length % 3 === 1 ? " lg:col-start-2" : ""}`}
             >
               {/* Header con color */}
               <div
                 className="h-32 flex items-center justify-center relative overflow-hidden flex-shrink-0"
-                style={{ background: `linear-gradient(135deg, ${g.color}ee, ${g.color}99)` }}
+                style={{
+                  background: `linear-gradient(135deg, ${g.color}33, ${g.color}11)`,
+                  borderBottom: `1px solid ${g.color}40`,
+                }}
               >
-                <div className="absolute inset-0 opacity-15">
-                  <div className="absolute top-3 left-3 w-14 h-14 rounded-full border-2 border-white/40" />
-                  <div className="absolute bottom-3 right-3 w-20 h-20 rounded-full border-2 border-white/20" />
+                <div className="absolute inset-0 opacity-20">
+                  <div className="absolute top-3 left-3 w-14 h-14 rounded-full border border-white/40" />
+                  <div className="absolute bottom-3 right-3 w-20 h-20 rounded-full border border-white/20" />
                 </div>
-                <span className="text-6xl relative z-10 drop-shadow-lg">{g.icon}</span>
+                <span className="text-6xl relative z-10" style={{ filter: `drop-shadow(0 0 18px ${g.color}AA)` }}>{g.icon}</span>
               </div>
 
               {/* Contenido */}
               <div className="flex flex-col flex-1 p-5">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-[10px] font-bold px-2.5 py-1 rounded-full text-white" style={{ backgroundColor: g.color }}>
+                  <span className="font-mono-ui text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider"
+                        style={{ color: g.color, background: `${g.color}1A`, border: `1px solid ${g.color}40` }}>
                     {g.tag}
                   </span>
-                  <span className="text-[11px] text-fg-subtle flex items-center gap-1">
+                  <span className="font-mono-ui text-[10px] text-white/40 flex items-center gap-1 uppercase">
                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     {g.time}
                   </span>
                 </div>
-                <h2 className="font-extrabold text-fg text-base mb-1.5 leading-snug">{g.title}</h2>
-                <p className="text-xs text-fg-muted leading-relaxed flex-1">{g.desc}</p>
-                <div className="mt-4 flex items-center gap-1.5 text-xs font-bold transition-transform group-hover:translate-x-0.5" style={{ color: g.color }}>
-                  Leer la guía
+                <h2 className="font-extrabold text-white text-base mb-1.5 leading-snug">{g.title}</h2>
+                <p className="text-xs text-white/55 leading-relaxed flex-1">{g.desc}</p>
+                <div className="mt-4 flex items-center gap-1.5 font-mono-ui text-[11px] uppercase tracking-wider font-bold transition-transform group-hover:translate-x-0.5" style={{ color: g.color }}>
+                  leer guía
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                   </svg>

@@ -45,30 +45,30 @@
   /* Warn */
   --warn-500: #F59E0B;
 
-  /* Neutrals — light mode */
-  --bg:           #FAFAFB;       /* page background */
-  --bg-elevated: #FFFFFF;        /* cards, dialogs */
-  --bg-subtle:   #F4F4F6;        /* hover, chips */
-  --bg-muted:    #EEEEF1;        /* dividers regions */
+  /* Neutrals — futuristic dark (default) */
+  --bg:           #04050B;       /* page background */
+  --bg-elevated:  #0A0D1A;       /* cards, dialogs */
+  --bg-subtle:    #10131F;       /* hover, chips */
+  --bg-muted:     #161A28;       /* dividers regions */
 
-  --fg:          #0B0D12;        /* primary text */
-  --fg-strong:   #050709;        /* hardest text */
-  --fg-muted:    #4B5161;        /* secondary text */
-  --fg-subtle:   #7A8194;        /* tertiary text */
-  --fg-faint:    #B1B7C5;        /* placeholder */
+  --fg:          #F2F3F7;        /* primary text */
+  --fg-strong:   #FFFFFF;        /* hardest text */
+  --fg-muted:    #B5B9C7;        /* secondary text */
+  --fg-subtle:   #7B8194;        /* tertiary text */
+  --fg-faint:    #4E5465;        /* placeholder */
 
-  --border:        #E6E7EC;      /* default */
-  --border-strong: #D5D7DF;
-  --border-subtle: #EFF0F4;
+  --border:        #1E2230;      /* default */
+  --border-strong: #2A2E3D;
+  --border-subtle: #14171F;
 
-  --ring:        #6366F1;        /* focus */
+  --ring:        #5EEAD4;        /* focus — cyan neon */
 
-  /* Shadows — soft, layered */
-  --shadow-xs: 0 1px 2px rgba(11, 13, 18, 0.04);
-  --shadow-sm: 0 2px 4px rgba(11, 13, 18, 0.05), 0 1px 2px rgba(11, 13, 18, 0.04);
-  --shadow-md: 0 8px 24px -8px rgba(11, 13, 18, 0.08), 0 2px 6px rgba(11, 13, 18, 0.04);
-  --shadow-lg: 0 20px 40px -12px rgba(11, 13, 18, 0.12), 0 4px 12px rgba(11, 13, 18, 0.06);
-  --shadow-xl: 0 28px 60px -16px rgba(11, 13, 18, 0.18), 0 8px 20px rgba(11, 13, 18, 0.08);
+  /* Shadows — deep & atmospheric for the dark theme */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 24px -8px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 20px 40px -12px rgba(0, 0, 0, 0.6), 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 28px 60px -16px rgba(0, 0, 0, 0.7), 0 8px 20px rgba(0, 0, 0, 0.5);
 
   /* Glow — used in dark hero */
   --glow-brand: 0 0 60px -10px rgba(99, 102, 241, 0.4);
@@ -92,28 +92,9 @@
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 }
 
-[data-theme="dark"] {
-  --bg:          #0A0B10;
-  --bg-elevated: #11131A;
-  --bg-subtle:   #181A23;
-  --bg-muted:    #1F2230;
-
-  --fg:          #F2F3F7;
-  --fg-strong:   #FFFFFF;
-  --fg-muted:    #B5B9C7;
-  --fg-subtle:   #7B8194;
-  --fg-faint:    #4E5465;
-
-  --border:        #23262F;
-  --border-strong: #2E323C;
-  --border-subtle: #1A1C24;
-
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 8px 24px -8px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 20px 40px -12px rgba(0, 0, 0, 0.6), 0 4px 12px rgba(0, 0, 0, 0.4);
-  --shadow-xl: 0 28px 60px -16px rgba(0, 0, 0, 0.7), 0 8px 20px rgba(0, 0, 0, 0.5);
-}
+/* Theme is dark-only futuristic — keep selector as a no-op alias */
+[data-theme="dark"] { color-scheme: dark; }
+[data-theme="light"] { color-scheme: dark; }
 
 /* ============================================================
    Tailwind v4 theme bridge
@@ -198,16 +179,21 @@ body {
   font-family: var(--font-sans);
   font-feature-settings: "rlig" 1, "calt" 1, "cv11", "ss01";
   letter-spacing: -0.011em;
+  color-scheme: dark;
+  /* Subtle global grid + atmospheric halos behind every page */
+  background-image:
+    radial-gradient(ellipse 1100px 700px at 50% -10%, rgba(99,102,241,0.10), transparent 60%),
+    radial-gradient(ellipse 900px 600px at 100% 30%, rgba(34,211,238,0.06), transparent 60%),
+    radial-gradient(ellipse 800px 500px at -10% 70%, rgba(16,185,129,0.06), transparent 60%),
+    linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 64px 64px, 64px 64px;
+  background-attachment: fixed, fixed, fixed, fixed, fixed;
 }
 
 ::selection {
-  background: var(--brand-200);
-  color: var(--brand-900);
-}
-
-[data-theme="dark"] ::selection {
-  background: var(--brand-700);
-  color: var(--brand-50);
+  background: rgba(94,234,212,0.35);
+  color: #ECFEFF;
 }
 
 :focus-visible {
@@ -330,6 +316,305 @@ body {
 .filters-scroll::-webkit-scrollbar-thumb:hover {
   background: var(--fg-faint);
 }
+
+/* ============================================================
+   Futuristic / HUD utilities (home page)
+   ============================================================ */
+
+/* Void backgrounds */
+.bg-void        { background: #04050b; }
+.bg-void-deep   { background: #02030a; }
+.bg-void-soft   { background: #07091a; }
+
+/* Mono / techie type for labels */
+.font-mono-ui {
+  font-family: "JetBrains Mono", "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  letter-spacing: 0.04em;
+}
+
+/* Neon gradient text */
+.text-gradient-neon {
+  background: linear-gradient(110deg, #5eead4 0%, #818cf8 35%, #f0abfc 70%, #a3e635 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: neon-shift 8s ease-in-out infinite;
+}
+@keyframes neon-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+
+.text-glow-brand { text-shadow: 0 0 24px rgba(129,140,248,0.45), 0 0 60px rgba(99,102,241,0.20); }
+.text-glow-cyan  { text-shadow: 0 0 24px rgba(94,234,212,0.55), 0 0 60px rgba(34,211,238,0.25); }
+
+/* HUD frame with 4 corner brackets — drop inside any positioned container */
+.hud-corners > .hud-tl,
+.hud-corners > .hud-tr,
+.hud-corners > .hud-bl,
+.hud-corners > .hud-br {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+  border-color: currentColor;
+  opacity: 0.7;
+}
+.hud-corners > .hud-tl { top: -1px; left: -1px;  border-top: 1px solid; border-left: 1px solid;  }
+.hud-corners > .hud-tr { top: -1px; right: -1px; border-top: 1px solid; border-right: 1px solid; }
+.hud-corners > .hud-bl { bottom: -1px; left: -1px;  border-bottom: 1px solid; border-left: 1px solid;  }
+.hud-corners > .hud-br { bottom: -1px; right: -1px; border-bottom: 1px solid; border-right: 1px solid; }
+
+/* Animated neon gradient border (uses two-layer background trick) */
+.neon-border {
+  position: relative;
+  background:
+    linear-gradient(#0a0c18, #0a0c18) padding-box,
+    linear-gradient(135deg, #6366f1, #06b6d4, #10b981, #a855f7, #6366f1) border-box;
+  background-size: 100% 100%, 300% 300%;
+  border: 1px solid transparent;
+  animation: neon-border-shift 12s linear infinite;
+}
+@keyframes neon-border-shift {
+  0%   { background-position: 0% 0%, 0% 0%; }
+  100% { background-position: 0% 0%, 300% 300%; }
+}
+
+/* Futuristic grid backdrop */
+.bg-grid-cyber {
+  background-image:
+    linear-gradient(rgba(129,140,248,0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(129,140,248,0.07) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+.bg-grid-cyber-fine {
+  background-image:
+    linear-gradient(rgba(94,234,212,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(94,234,212,0.06) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.bg-dots-soft {
+  background-image: radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+/* Slow drifting scan line overlay */
+@keyframes scanline-drift {
+  0%   { transform: translateY(-20%); opacity: 0; }
+  20%  { opacity: 0.7; }
+  80%  { opacity: 0.7; }
+  100% { transform: translateY(120%); opacity: 0; }
+}
+.scanline-drift {
+  position: absolute; left: 0; right: 0; height: 140px;
+  background: linear-gradient(180deg, transparent, rgba(94,234,212,0.08), transparent);
+  pointer-events: none;
+  animation: scanline-drift 7s linear infinite;
+}
+
+/* Soft pulsating glow halos behind things */
+@keyframes halo-breathe {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50%      { opacity: 0.9;  transform: scale(1.08); }
+}
+.halo-breathe { animation: halo-breathe 6s var(--ease-in-out) infinite; }
+
+/* Horizontal ticker */
+@keyframes ticker-x {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.ticker-track { animation: ticker-x 60s linear infinite; }
+.ticker-track:hover { animation-play-state: paused; }
+
+/* Spin slow */
+@keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.spin-slow { animation: spin-slow 32s linear infinite; }
+
+/* Glitch flicker for accents */
+@keyframes flicker {
+  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
+  20%, 24%, 55% { opacity: 0.4; }
+}
+.flicker { animation: flicker 6s linear infinite; }
+
+/* ============================================================
+   Extra futuristic FX — auras, orbits, particles, sweep beams
+   ============================================================ */
+
+/* Rotating conic-gradient aura around CTAs.
+   Sits behind the element with a small inset for an "energy field" feel. */
+.aura-cta {
+  position: relative;
+  isolation: isolate;
+}
+.aura-cta::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(
+    from 0deg,
+    rgba(94,234,212,0.0) 0deg,
+    rgba(94,234,212,0.85) 40deg,
+    rgba(129,140,248,0.85) 120deg,
+    rgba(240,171,252,0.85) 200deg,
+    rgba(163,230,53,0.85) 280deg,
+    rgba(94,234,212,0.0) 360deg
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  opacity: 0.55;
+  animation: aura-spin 6s linear infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+.aura-cta::after {
+  content: "";
+  position: absolute;
+  inset: -10px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from 90deg,
+    transparent 0deg,
+    rgba(94,234,212,0.20) 60deg,
+    transparent 120deg,
+    rgba(168,85,247,0.18) 180deg,
+    transparent 240deg,
+    rgba(163,230,53,0.18) 300deg,
+    transparent 360deg
+  );
+  filter: blur(10px);
+  opacity: 0.7;
+  animation: aura-spin 8s linear infinite reverse;
+  pointer-events: none;
+  z-index: -2;
+}
+@keyframes aura-spin {
+  to { transform: rotate(360deg); }
+}
+.aura-cta:hover::before,
+.aura-cta:hover::after { opacity: 1; }
+
+/* Subtle orbit ring — small dot that orbits around an element.
+   Apply to a relatively-positioned wrapper. */
+.orbit-ring {
+  position: relative;
+}
+.orbit-ring::after {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #5EEAD4;
+  box-shadow: 0 0 10px 2px rgba(94,234,212,0.6);
+  transform-origin: 0 calc(50% + 6px);
+  animation: orbit 5s linear infinite;
+  pointer-events: none;
+}
+@keyframes orbit {
+  from { transform: translateX(-50%) rotate(0deg) translateY(-50%); }
+  to   { transform: translateX(-50%) rotate(360deg) translateY(-50%); }
+}
+
+/* Floating particles container — drops drifting dots inside a positioned parent.
+   Add <span class="particle" /> with a random --x,--y,--d,--delay if you want. */
+@keyframes drift-up {
+  0%   { transform: translate3d(0, 20px, 0); opacity: 0; }
+  10%  { opacity: 0.7; }
+  90%  { opacity: 0.7; }
+  100% { transform: translate3d(var(--x, 0px), -120px, 0); opacity: 0; }
+}
+.particle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--c, #5EEAD4);
+  box-shadow: 0 0 8px 1px var(--c, #5EEAD4);
+  opacity: 0;
+  animation: drift-up var(--d, 9s) linear infinite;
+  animation-delay: var(--delay, 0s);
+  pointer-events: none;
+}
+
+/* Diagonal scan-beam that sweeps once every few seconds */
+@keyframes beam-sweep {
+  0%   { transform: translateX(-120%) skewX(-18deg); opacity: 0; }
+  20%  { opacity: 0.6; }
+  80%  { opacity: 0.6; }
+  100% { transform: translateX(220%) skewX(-18deg); opacity: 0; }
+}
+.beam-sweep {
+  position: absolute; top: 0; bottom: 0; width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(94,234,212,0.14), rgba(129,140,248,0.10), transparent);
+  filter: blur(4px);
+  pointer-events: none;
+  animation: beam-sweep 9s ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+
+/* Pulsing glowing ring — for "active node" indicators */
+@keyframes node-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(94,234,212,0.6), 0 0 0 0 rgba(94,234,212,0.4); }
+  70%  { box-shadow: 0 0 0 14px rgba(94,234,212,0), 0 0 0 28px rgba(94,234,212,0); }
+  100% { box-shadow: 0 0 0 0 rgba(94,234,212,0), 0 0 0 0 rgba(94,234,212,0); }
+}
+.node-pulse { animation: node-pulse 2.5s var(--ease-out) infinite; }
+
+/* Soft inner glow on hover for cards / chips */
+.glow-on-hover {
+  position: relative;
+  transition: box-shadow 0.4s var(--ease-out);
+}
+.glow-on-hover:hover {
+  box-shadow:
+    0 0 24px -6px rgba(94,234,212,0.45),
+    0 0 60px -10px rgba(129,140,248,0.35);
+}
+
+/* Subtle data-stream lines drifting at the edges (decorative).
+   Use as `<div class="data-stream"></div>` inside a positioned parent. */
+@keyframes data-stream {
+  0%   { transform: translateY(-100%); opacity: 0; }
+  10%  { opacity: 0.8; }
+  90%  { opacity: 0.8; }
+  100% { transform: translateY(120vh); opacity: 0; }
+}
+.data-stream {
+  position: absolute;
+  width: 1px;
+  height: 80px;
+  background: linear-gradient(180deg, transparent, var(--c, #5EEAD4), transparent);
+  box-shadow: 0 0 8px var(--c, #5EEAD4);
+  pointer-events: none;
+  animation: data-stream var(--d, 7s) linear infinite;
+  animation-delay: var(--delay, 0s);
+}
+
+/* Reveal sweep — a single shimmer across an element when first visible */
+@keyframes shine-sweep {
+  0%   { transform: translateX(-150%) skewX(-22deg); }
+  100% { transform: translateX(250%) skewX(-22deg); }
+}
+.shine-on-hover { position: relative; overflow: hidden; }
+.shine-on-hover::after {
+  content: "";
+  position: absolute; top: 0; bottom: 0; width: 60%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  pointer-events: none;
+  transform: translateX(-150%) skewX(-22deg);
+}
+.shine-on-hover:hover::after { animation: shine-sweep 0.9s var(--ease-out); }
 
 /* ============================================================
    Reduced motion
