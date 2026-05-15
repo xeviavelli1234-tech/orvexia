@@ -2,15 +2,10 @@ import Link from "next/link";
 import { getSellerAccountByUserId } from "@/lib/db/sellerAccount";
 import { getBillingState, type SellerPlan } from "@/lib/billing";
 import { prisma } from "@/lib/prisma";
-import { RunNowButton } from "@/app/(sellers)/sellers/dashboard/RunNowButton";
-import { DisconnectButton } from "@/app/(sellers)/sellers/dashboard/DisconnectButton";
 
 const STATUS_MESSAGES: Record<string, { kind: "ok" | "err" | "info"; text: string }> = {
   connected: { kind: "ok", text: "Cuenta de Amazon conectada correctamente." },
-  demo_connected: {
-    kind: "ok",
-    text: "Modo demo activado. Todo funciona con datos de prueba (sin tocar Amazon real).",
-  },
+  demo_connected: { kind: "ok", text: "Modo demo activado. Todo funciona con datos de prueba." },
   disconnected: { kind: "info", text: "Cuenta de Amazon desconectada." },
   error_state_mismatch: { kind: "err", text: "La verificación CSRF falló. Reintenta la conexión." },
   error_token_exchange: { kind: "err", text: "No pudimos canjear el código con Amazon." },
@@ -25,17 +20,15 @@ export async function RepricerSection({
   status?: string;
 }) {
   const account = await getSellerAccountByUserId(userId);
-  const isConnected = !!account?.active;
-  const isDemo = account?.spApiEnv !== "production";
+  const connected = !!account?.active;
   const billing = account
     ? getBillingState(account.plan as SellerPlan, account.trialEndsAt)
     : null;
-  const lastRun = account
-    ? await prisma.repricingRun.findFirst({
-        where: { sellerAccountId: account.id },
-        orderBy: { startedAt: "desc" },
+  const repricedCount = account
+    ? await prisma.sellerListing.count({
+        where: { sellerAccountId: account.id, repricingEnabled: true },
       })
-    : null;
+    : 0;
 
   const statusCfg = status
     ? STATUS_MESSAGES[status] ??
@@ -45,155 +38,78 @@ export async function RepricerSection({
     : null;
 
   return (
-    <section className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
-      <div className="rounded-2xl border border-white/[0.08] bg-bg-elevated/60 overflow-hidden">
-        {/* header */}
-        <div className="px-6 py-4 border-b border-white/[0.08] flex items-center gap-3 flex-wrap">
-          <span className="w-1 h-7 rounded-full bg-[var(--brand-600)]" />
-          <h2 className="text-lg font-bold">Orvexia Repricer</h2>
-          <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-100 dark:bg-amber-500/15 dark:text-amber-400 px-2 py-0.5 rounded-full">
-            Beta
-          </span>
-          {isConnected && isDemo && (
-            <span className="text-[10px] font-bold uppercase tracking-wider text-fg/50 bg-fg/5 px-2 py-0.5 rounded-full">
-              Modo demo
-            </span>
-          )}
+    <section className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+      {statusCfg && (
+        <div
+          className={`mb-4 rounded-lg border px-4 py-2.5 text-sm ${
+            statusCfg.kind === "ok"
+              ? "bg-[var(--accent-50)] text-[var(--accent-700)] border-[var(--accent-300)]"
+              : statusCfg.kind === "err"
+                ? "bg-red-50 text-red-700 border-red-200"
+                : "bg-[var(--brand-50)] text-[var(--brand-700)] border-[var(--brand-200)]"
+          }`}
+        >
+          {statusCfg.text}
         </div>
+      )}
 
-        <div className="p-6">
-          {statusCfg && (
-            <div
-              className={`mb-5 rounded-lg border px-4 py-2.5 text-sm ${
-                statusCfg.kind === "ok"
-                  ? "bg-[var(--accent-50)] text-[var(--accent-700)] border-[var(--accent-300)]"
-                  : statusCfg.kind === "err"
-                    ? "bg-red-50 text-red-700 border-red-200"
-                    : "bg-[var(--brand-50)] text-[var(--brand-700)] border-[var(--brand-200)]"
-              }`}
-            >
-              {statusCfg.text}
-            </div>
-          )}
+      <Link
+        href="/dashboard/repricer"
+        className="group block neon-border rounded-3xl overflow-hidden"
+      >
+        <div
+          className="relative bg-grid-cyber rounded-[calc(1.5rem-1px)] p-6 sm:p-7"
+          style={{ background: "linear-gradient(150deg,#0b0d1c,#08091a 55%,#050913)" }}
+        >
+          <div className="absolute inset-0 bg-grid-cyber-fine opacity-30 pointer-events-none" />
+          <div
+            className="absolute -top-16 -right-12 w-56 h-56 rounded-full halo-breathe pointer-events-none"
+            style={{ background: "radial-gradient(circle,rgba(129,140,248,0.20),transparent 65%)" }}
+          />
 
-          {!isConnected ? (
-            <>
-              <p className="text-fg/70 text-sm leading-relaxed max-w-xl">
-                ¿Vendes en Amazon? Reprecia tus productos automáticamente dentro de un
-                rango min/máx que tú defines. Pruébalo en modo demo (datos de prueba,
-                sin conectar nada) o conecta tu cuenta real.
-              </p>
-              <div className="mt-5 flex flex-wrap gap-3">
-                <form action="/api/sellers/demo/connect" method="post">
-                  <button
-                    type="submit"
-                    className="rounded-lg bg-[var(--brand-600)] text-white px-5 py-2.5 text-sm font-semibold hover:bg-[var(--brand-700)] transition-colors"
-                  >
-                    Probar en modo demo
-                  </button>
-                </form>
-                <a
-                  href="/api/sellers/amazon/oauth/start"
-                  className="inline-flex items-center gap-2 rounded-lg border border-fg/20 px-5 py-2.5 text-sm font-semibold hover:bg-fg/5 transition-colors"
-                >
-                  Conectar Amazon
-                  <span className="text-[10px] font-bold uppercase bg-fg/10 px-1.5 py-0.5 rounded">
-                    Beta
+          <div className="relative flex items-center justify-between gap-5 flex-wrap">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <span className="font-mono-ui text-[10px] uppercase tracking-wider text-cyan-300/80">
+                  ▸ módulo b2b
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-500/15 px-2 py-0.5 rounded-full">
+                  Beta
+                </span>
+                {connected && account!.spApiEnv !== "production" && (
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-white/50 bg-white/[0.06] px-2 py-0.5 rounded-full">
+                    Modo demo
                   </span>
-                </a>
-                <Link
-                  href="/sellers"
-                  className="inline-flex items-center text-sm font-semibold text-[var(--brand-600)] hover:underline px-2 py-2.5"
-                >
-                  ¿Qué es esto? →
-                </Link>
+                )}
               </div>
-            </>
-          ) : (
-            <>
-              {billing?.plan === "TRIAL" && (
-                <div
-                  className={`mb-5 rounded-lg border px-4 py-2.5 text-sm flex items-center justify-between gap-3 flex-wrap ${
-                    billing.trialExpired
-                      ? "bg-red-50 text-red-700 border-red-200"
-                      : "bg-[var(--brand-50)] text-[var(--brand-700)] border-[var(--brand-200)]"
-                  }`}
-                >
-                  <span>
-                    {billing.trialExpired ? (
-                      <>
-                        <strong>Prueba terminada.</strong> Reprecio pausado hasta pasar a
-                        Pro.
-                      </>
-                    ) : (
-                      <>
-                        Prueba gratuita: <strong>{billing.trialDaysLeft} días</strong>{" "}
-                        restantes.
-                      </>
-                    )}
-                  </span>
-                  <Link
-                    href="/sellers/facturacion"
-                    className="rounded-md bg-[var(--brand-600)] text-white px-3 py-1.5 text-xs font-semibold hover:bg-[var(--brand-700)] whitespace-nowrap"
-                  >
-                    Pasar a Pro →
-                  </Link>
-                </div>
-              )}
-
-              <dl className="grid sm:grid-cols-2 gap-x-8 gap-y-2 text-sm">
-                <Row label="Seller ID" value={account!.amazonSellerId} mono />
-                <Row label="Plan" value={billing!.label} />
-                <Row label="Entorno" value={account!.spApiEnv} />
-                <Row label="Intervalo" value={`${billing!.intervalMinutes} min`} />
-                {lastRun && (
+              <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-white">
+                Orvexia <span className="text-gradient-neon">Repricer</span>
+              </h2>
+              <p className="mt-1.5 text-sm text-white/55 max-w-md">
+                {connected ? (
                   <>
-                    <Row
-                      label="Última ejecución"
-                      value={new Intl.DateTimeFormat("es-ES", {
-                        dateStyle: "short",
-                        timeStyle: "short",
-                      }).format(lastRun.startedAt)}
-                    />
-                    <Row
-                      label="Último ciclo"
-                      value={`${lastRun.listingsRepriced} reprecciados / ${lastRun.listingsProcessed}`}
-                    />
+                    Plan <strong className="text-white/80">{billing!.label}</strong> ·{" "}
+                    {repricedCount} producto{repricedCount === 1 ? "" : "s"} con reprecio
+                    activo · ciclo {billing!.intervalMinutes} min
+                  </>
+                ) : (
+                  <>
+                    Reprecia tus productos de Amazon automáticamente. Pruébalo en modo
+                    demo sin conectar nada.
                   </>
                 )}
-              </dl>
+              </p>
+            </div>
 
-              <div className="mt-6 pt-5 border-t border-white/[0.08] flex items-center justify-between gap-4 flex-wrap">
-                <div className="flex gap-3 flex-wrap">
-                  <Link
-                    href="/sellers/productos"
-                    className="rounded-lg bg-[var(--brand-600)] text-white px-5 py-2.5 text-sm font-semibold hover:bg-[var(--brand-700)] transition-colors"
-                  >
-                    Mis productos →
-                  </Link>
-                  <Link
-                    href="/sellers/facturacion"
-                    className="rounded-lg border border-fg/20 px-5 py-2.5 text-sm font-semibold hover:bg-fg/5 transition-colors"
-                  >
-                    Facturación
-                  </Link>
-                  <RunNowButton />
-                </div>
-                <DisconnectButton />
-              </div>
-            </>
-          )}
+            <div className="flex items-center gap-2 text-white font-semibold text-sm whitespace-nowrap">
+              {connected ? "Abrir panel" : "Descubrir"}
+              <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-white/10 group-hover:bg-white/20 transition-colors text-lg">
+                →
+              </span>
+            </div>
+          </div>
         </div>
-      </div>
+      </Link>
     </section>
-  );
-}
-
-function Row({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
-  return (
-    <div className="flex items-baseline gap-3 py-0.5">
-      <dt className="w-32 text-fg/50 shrink-0">{label}</dt>
-      <dd className={mono ? "font-mono text-xs break-all" : ""}>{value}</dd>
-    </div>
   );
 }

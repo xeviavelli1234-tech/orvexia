@@ -27,5 +27,5 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "demo_connect_failed" }, { status: 500 });
   }
 
-  return NextResponse.redirect(new URL("/dashboard?status=demo_connected", req.url));
+  return NextResponse.redirect(new URL("/dashboard/repricer?status=demo_connected", req.url));
 }
