@@ -36,6 +36,7 @@ export async function POST() {
       client,
       amazonSellerId: account.amazonSellerId,
       marketplaceId: account.marketplaceId,
+      spApiEnv: account.spApiEnv,
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);

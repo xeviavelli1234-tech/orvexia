@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/check-discounts",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/sellers/reprice/run",
+      "schedule": "*/5 * * * *"
     }
   ]
 }

@@ -2,12 +2,18 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSession } from "@/lib/session";
 import { getSellerAccountByUserId } from "@/lib/db/sellerAccount";
+import { prisma } from "@/lib/prisma";
 import { DisconnectButton } from "./DisconnectButton";
+import { RunNowButton } from "./RunNowButton";
 
 export const metadata = { title: "Tu panel · Orvexia Repricer" };
 
 const STATUS_MESSAGES: Record<string, { kind: "success" | "error" | "info"; text: string }> = {
   connected: { kind: "success", text: "Cuenta de Amazon conectada correctamente." },
+  demo_connected: {
+    kind: "success",
+    text: "Modo demo activado. Todo el flujo funciona con datos de prueba (sin tocar Amazon real).",
+  },
   disconnected: { kind: "info", text: "Cuenta de Amazon desconectada." },
   error_state_mismatch: {
     kind: "error",
@@ -56,6 +62,14 @@ export default async function SellerDashboardPage({
   const { status } = await searchParams;
   const account = await getSellerAccountByUserId(session.userId);
   const isConnected = !!account?.active;
+  const isDemo = account?.spApiEnv !== "production";
+
+  const lastRun = account
+    ? await prisma.repricingRun.findFirst({
+        where: { sellerAccountId: account.id },
+        orderBy: { startedAt: "desc" },
+      })
+    : null;
 
   return (
     <div className="max-w-3xl mx-auto px-5 py-12">
@@ -84,25 +98,44 @@ export default async function SellerDashboardPage({
               Te llevaremos a Amazon para que autorices Orvexia Repricer. Es un flujo OAuth oficial:
               nunca vemos tu contraseña, solo recibimos un token revocable.
             </p>
-            <a
-              href="/api/sellers/amazon/oauth/start"
-              className="mt-6 inline-flex items-center gap-2 rounded-lg bg-[var(--brand-600)] text-white px-6 py-3 font-semibold hover:bg-[var(--brand-700)] transition-colors"
-            >
-              Conectar mi cuenta de Amazon
-              <span className="text-[10px] font-bold uppercase tracking-wider bg-white/20 px-1.5 py-0.5 rounded">
-                Beta
-              </span>
-            </a>
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <a
+                href="/api/sellers/amazon/oauth/start"
+                className="inline-flex items-center gap-2 rounded-lg bg-[var(--brand-600)] text-white px-6 py-3 font-semibold hover:bg-[var(--brand-700)] transition-colors"
+              >
+                Conectar mi cuenta de Amazon
+                <span className="text-[10px] font-bold uppercase tracking-wider bg-white/20 px-1.5 py-0.5 rounded">
+                  Beta
+                </span>
+              </a>
+              <form action="/api/sellers/demo/connect" method="post">
+                <button
+                  type="submit"
+                  className="rounded-lg border border-fg/20 px-6 py-3 font-semibold hover:bg-fg/5 transition-colors"
+                >
+                  Probar en modo demo →
+                </button>
+              </form>
+            </div>
             <p className="mt-4 text-xs text-fg/50">
-              Necesitas plan Profesional de Amazon (39 €/mes pagados a Amazon) y la app SP-API
-              aprobada con el rol Pricing.
+              <strong>Modo demo:</strong> prueba todo el flujo (sincronizar productos,
+              definir min/max, motor de reprecio) con datos de prueba, sin tocar Amazon
+              real ni necesitar plan Profesional. Para producción real necesitas plan
+              Profesional + app SP-API aprobada con rol Pricing.
             </p>
           </>
         ) : (
           <>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <span className="inline-flex h-2.5 w-2.5 rounded-full bg-[var(--accent-500)]" />
-              <h2 className="text-xl font-semibold">Cuenta conectada</h2>
+              <h2 className="text-xl font-semibold">
+                {isDemo ? "Modo demo activo" : "Cuenta conectada"}
+              </h2>
+              {isDemo && (
+                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-100 dark:bg-amber-500/15 dark:text-amber-400 px-2 py-0.5 rounded-full">
+                  Datos de prueba
+                </span>
+              )}
             </div>
             <dl className="mt-6 space-y-3 text-sm">
               <Row label="Seller ID" value={account!.amazonSellerId} mono />
@@ -122,13 +155,43 @@ export default async function SellerDashboardPage({
                 value={`${Math.round(account!.intervalSeconds / 60)} min`}
               />
             </dl>
+
+            <div className="mt-8 pt-6 border-t border-fg/10">
+              <h3 className="text-sm font-semibold text-fg/70 uppercase tracking-wide">
+                Última ejecución del motor
+              </h3>
+              {lastRun ? (
+                <dl className="mt-3 space-y-2 text-sm">
+                  <Row
+                    label="Cuándo"
+                    value={new Intl.DateTimeFormat("es-ES", {
+                      dateStyle: "short",
+                      timeStyle: "short",
+                    }).format(lastRun.startedAt)}
+                  />
+                  <Row label="Procesados" value={String(lastRun.listingsProcessed)} />
+                  <Row label="Reprecciados" value={String(lastRun.listingsRepriced)} />
+                  <Row label="Errores" value={String(lastRun.errors)} />
+                </dl>
+              ) : (
+                <p className="mt-2 text-sm text-fg/50">
+                  Aún no se ha ejecutado ningún ciclo. Pulsa &ldquo;Ejecutar reprecio
+                  ahora&rdquo; o espera al cron ({Math.round(account!.intervalSeconds / 60)}{" "}
+                  min).
+                </p>
+              )}
+            </div>
+
             <div className="mt-8 pt-6 border-t border-fg/10 flex items-center justify-between gap-4 flex-wrap">
-              <Link
-                href="/sellers/productos"
-                className="rounded-lg bg-[var(--brand-600)] text-white px-5 py-2.5 font-semibold hover:bg-[var(--brand-700)] transition-colors text-sm"
-              >
-                Ver mis productos →
-              </Link>
+              <div className="flex gap-3 flex-wrap">
+                <Link
+                  href="/sellers/productos"
+                  className="rounded-lg bg-[var(--brand-600)] text-white px-5 py-2.5 font-semibold hover:bg-[var(--brand-700)] transition-colors text-sm"
+                >
+                  Ver mis productos →
+                </Link>
+                <RunNowButton />
+              </div>
               <DisconnectButton />
             </div>
           </>

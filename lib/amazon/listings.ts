@@ -1,6 +1,7 @@
 import "server-only";
 import { SpApiClient } from "./client";
 import { MARKETPLACE_IDS } from "./endpoints";
+import { FIXTURE_LISTINGS, isFixtureMode } from "./fixtures";
 
 export interface NormalizedListing {
   asin: string;
@@ -47,7 +48,13 @@ export async function fetchAllListings(params: {
   client: SpApiClient;
   amazonSellerId: string;
   marketplaceId?: string;
+  spApiEnv?: string;
 }): Promise<NormalizedListing[]> {
+  // Modo fixtures: devuelve set mock realista sin tocar Amazon.
+  if (params.spApiEnv && isFixtureMode(params.spApiEnv)) {
+    return FIXTURE_LISTINGS.map((l) => ({ ...l }));
+  }
+
   const marketplaceId = params.marketplaceId ?? MARKETPLACE_IDS.ES;
   const out: NormalizedListing[] = [];
   let pageToken: string | undefined;

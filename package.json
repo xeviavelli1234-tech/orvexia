@@ -16,7 +16,8 @@
     "db:scrape-images-lg": "tsx scripts/scrape-images-lg.ts",
     "build": "prisma generate && node --max-old-space-size=12288 node_modules/next/dist/bin/next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "tsx --test \"lib/**/*.test.ts\""
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.6.0",
