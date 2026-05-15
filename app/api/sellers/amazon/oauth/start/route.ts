@@ -11,7 +11,7 @@ const STATE_TTL_SECONDS = 600; // 10 min
 export async function GET(req: Request) {
   const session = await getSession();
   if (!session) {
-    const target = encodeURIComponent("/sellers/dashboard");
+    const target = encodeURIComponent("/dashboard");
     return NextResponse.redirect(new URL(`/login?next=${target}`, req.url));
   }
 

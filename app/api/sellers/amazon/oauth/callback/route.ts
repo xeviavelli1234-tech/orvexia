@@ -9,7 +9,7 @@ import { OAUTH_STATE_COOKIE } from "../start/route";
 type SpApiEnv = "sandbox" | "production";
 
 function dashboardUrl(req: Request, status: string) {
-  return new URL(`/sellers/dashboard?status=${status}`, req.url);
+  return new URL(`/dashboard?status=${status}`, req.url);
 }
 
 export async function GET(req: Request) {
@@ -37,7 +37,7 @@ export async function GET(req: Request) {
   // Auth check — the seller must still be logged in
   const session = await getSession();
   if (!session) {
-    const target = encodeURIComponent("/sellers/dashboard");
+    const target = encodeURIComponent("/dashboard");
     return NextResponse.redirect(new URL(`/login?next=${target}`, req.url));
   }
 

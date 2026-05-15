@@ -19,7 +19,7 @@ export default function SellersLandingPage() {
         </p>
         <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
           <Link
-            href="/login?next=/sellers/dashboard"
+            href="/login?next=/dashboard"
             className="rounded-lg bg-[var(--brand-600)] text-white px-7 py-3.5 font-semibold hover:bg-[var(--brand-700)] transition-colors shadow-sm"
           >
             Empezar 14 días gratis
@@ -107,7 +107,7 @@ export default function SellersLandingPage() {
             <Check>Soporte por email</Check>
           </ul>
           <Link
-            href="/login?next=/sellers/dashboard"
+            href="/login?next=/dashboard"
             className="mt-8 block text-center rounded-lg bg-[var(--brand-600)] text-white px-6 py-3 font-semibold hover:bg-[var(--brand-700)] transition-colors"
           >
             Empezar 14 días gratis
@@ -157,7 +157,7 @@ export default function SellersLandingPage() {
           14 días gratis. Sin tarjeta. Configuración en 2 minutos.
         </p>
         <Link
-          href="/login?next=/sellers/dashboard"
+          href="/login?next=/dashboard"
           className="mt-8 inline-block rounded-lg bg-[var(--brand-600)] text-white px-8 py-4 font-semibold hover:bg-[var(--brand-700)] transition-colors shadow-sm"
         >
           Empezar gratis

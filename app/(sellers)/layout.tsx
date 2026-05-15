@@ -31,7 +31,7 @@ export default function SellersLayout({ children }: { children: React.ReactNode 
               Facturación
             </Link>
             <Link
-              href="/login?next=/sellers/dashboard"
+              href="/login?next=/dashboard"
               className="rounded-lg bg-[var(--brand-600)] text-white px-4 py-2 font-semibold hover:bg-[var(--brand-700)] transition-colors"
             >
               Empezar gratis

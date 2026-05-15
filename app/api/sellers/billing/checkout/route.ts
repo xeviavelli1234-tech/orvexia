@@ -18,7 +18,7 @@ export async function POST(req: Request) {
 
   const account = await getSellerAccountByUserId(session.userId);
   if (!account) {
-    return NextResponse.redirect(new URL("/sellers/dashboard?status=connect_first", req.url));
+    return NextResponse.redirect(new URL("/dashboard?status=connect_first", req.url));
   }
 
   try {

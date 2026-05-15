@@ -859,7 +859,7 @@ export default async function HomePage() {
                       <span aria-hidden>→</span>
                     </Link>
                     <Link
-                      href="/sellers/dashboard"
+                      href="/dashboard"
                       className="inline-flex items-center gap-2 rounded-xl border border-white/20 text-white px-6 py-3 text-sm font-semibold hover:bg-white/[0.06] transition-colors"
                     >
                       Probar modo demo

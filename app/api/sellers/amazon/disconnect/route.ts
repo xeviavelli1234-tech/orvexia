@@ -10,9 +10,9 @@ export async function POST(req: Request) {
 
   const account = await getSellerAccountByUserId(session.userId);
   if (!account) {
-    return NextResponse.redirect(new URL("/sellers/dashboard", req.url));
+    return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
   await deactivateSellerAccount(session.userId);
-  return NextResponse.redirect(new URL("/sellers/dashboard?status=disconnected", req.url));
+  return NextResponse.redirect(new URL("/dashboard?status=disconnected", req.url));
 }

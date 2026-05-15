@@ -51,7 +51,17 @@ export async function proxy(request: NextRequest) {
   }
 
   if (isAuthRoute && authenticated) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    // Respeta ?next= (relativo y seguro) para no perder el destino
+    // (p.ej. venir de la landing del repricer). Evita open-redirect.
+    const nextParam = request.nextUrl.searchParams.get("next");
+    const safeNext =
+      nextParam &&
+      nextParam.startsWith("/") &&
+      !nextParam.startsWith("//") &&
+      !nextParam.startsWith("/\\")
+        ? nextParam
+        : "/dashboard";
+    return NextResponse.redirect(new URL(safeNext, request.url));
   }
 
   return NextResponse.next();

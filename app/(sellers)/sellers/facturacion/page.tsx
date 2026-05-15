@@ -35,7 +35,7 @@ export default async function FacturacionPage({
         <h1 className="text-3xl font-bold tracking-tight">Facturación</h1>
         <p className="mt-4 text-fg/70">
           Primero activa tu cuenta en el{" "}
-          <Link href="/sellers/dashboard" className="text-[var(--brand-600)] underline">
+          <Link href="/dashboard" className="text-[var(--brand-600)] underline">
             panel
           </Link>
           .

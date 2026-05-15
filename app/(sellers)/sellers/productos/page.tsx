@@ -20,7 +20,7 @@ export default async function ProductosPage() {
         <div className="mt-8 rounded-2xl border border-fg/10 bg-bg p-8 text-center">
           <p className="text-fg/70">Primero conecta tu cuenta de Amazon.</p>
           <Link
-            href="/sellers/dashboard"
+            href="/dashboard"
             className="mt-6 inline-block rounded-lg bg-[var(--brand-600)] text-white px-6 py-3 font-semibold hover:bg-[var(--brand-700)] transition-colors"
           >
             Ir al panel
