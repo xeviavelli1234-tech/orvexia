@@ -179,6 +179,24 @@ export default function ProductModal({ product, onClose }: Props) {
     });
   }, []);
 
+  // Detecta imágenes que cargan OK pero son placeholders/proxies basura:
+  // p.ej. productserve.com devuelve "No image available" en 200x200 con 200 OK.
+  // Las fotos reales de producto siempre son >= 300px. Umbral conservador 250.
+  const MIN_REAL_IMAGE_PX = 250;
+  const handleImgLoad = useCallback(
+    (src: string, e: React.SyntheticEvent<HTMLImageElement>) => {
+      const img = e.currentTarget;
+      if (
+        img.naturalWidth > 0 &&
+        img.naturalWidth < MIN_REAL_IMAGE_PX &&
+        img.naturalHeight < MIN_REAL_IMAGE_PX
+      ) {
+        markFailed(src);
+      }
+    },
+    [markFailed],
+  );
+
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
   const thumbsRef = useRef<HTMLDivElement>(null);
@@ -289,6 +307,7 @@ export default function ProductModal({ product, onClose }: Props) {
                       loading={i === 0 ? "eager" : "lazy"}
                       referrerPolicy="no-referrer"
                       onError={() => markFailed(src)}
+                      onLoad={(e) => handleImgLoad(src, e)}
                     />
                   </div>
                 ))}
@@ -345,6 +364,7 @@ export default function ProductModal({ product, onClose }: Props) {
                     loading="lazy"
                     referrerPolicy="no-referrer"
                     onError={() => markFailed(src)}
+                    onLoad={(e) => handleImgLoad(src, e)}
                   />
                 </button>
               ))}
