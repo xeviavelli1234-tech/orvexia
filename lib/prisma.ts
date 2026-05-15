@@ -1,7 +1,7 @@
 import { PrismaClient } from "@/app/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
-const SCHEMA_VERSION = "v6-listing-product-type";
+const SCHEMA_VERSION = "v7-stripe-fields";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { decryptToken } from "@/lib/crypto";
 import { SpApiClient } from "@/lib/amazon/client";
 import { getCompetitivePrice, patchListingPrice } from "@/lib/amazon/pricing";
+import { isRepricingAllowed, type SellerPlan } from "@/lib/billing";
 import { computeNewPrice } from "./engine";
 
 type SpApiEnv = "sandbox" | "production";
@@ -35,6 +36,11 @@ export async function runRepricer(now: Date = new Date()): Promise<RunSummary> {
   });
 
   for (const account of accounts) {
+    // Trial expirado y sin pasar a PRO → no reprecia (gating de plan).
+    if (!isRepricingAllowed(account.plan as SellerPlan, account.trialEndsAt, now)) {
+      continue;
+    }
+
     // ¿Toca ya según su intervalo?
     if (account.lastRunAt) {
       const nextDue = account.lastRunAt.getTime() + account.intervalSeconds * 1000;

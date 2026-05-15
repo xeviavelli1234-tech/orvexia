@@ -289,9 +289,11 @@ model SellerAccount {
   refreshToken    String     @db.Text
   spApiEnv        String     @default("sandbox")
 
-  plan            SellerPlan @default(TRIAL)
-  trialEndsAt     DateTime?
-  intervalSeconds Int        @default(900)
+  plan                 SellerPlan @default(TRIAL)
+  trialEndsAt          DateTime?
+  intervalSeconds      Int        @default(900)
+  stripeCustomerId     String?    @unique
+  stripeSubscriptionId String?    @unique
 
   active          Boolean    @default(true)
   lastSyncAt      DateTime?

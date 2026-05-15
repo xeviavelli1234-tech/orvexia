@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getSession } from "@/lib/session";
 import { getSellerAccountByUserId } from "@/lib/db/sellerAccount";
 import { prisma } from "@/lib/prisma";
+import { getBillingState, type SellerPlan } from "@/lib/billing";
 import { DisconnectButton } from "./DisconnectButton";
 import { RunNowButton } from "./RunNowButton";
 
@@ -71,12 +72,45 @@ export default async function SellerDashboardPage({
       })
     : null;
 
+  const billing = account
+    ? getBillingState(account.plan as SellerPlan, account.trialEndsAt)
+    : null;
+
   return (
     <div className="max-w-3xl mx-auto px-5 py-12">
       <h1 className="text-3xl font-bold tracking-tight">Tu panel</h1>
       <p className="mt-2 text-fg/60">Hola {session.name}, gestiona aquí tu conexión con Amazon.</p>
 
       {status && <div className="mt-8"><Banner status={status} /></div>}
+
+      {billing && billing.plan === "TRIAL" && (
+        <div
+          className={`mt-8 rounded-lg border px-4 py-3 text-sm flex items-center justify-between gap-4 flex-wrap ${
+            billing.trialExpired
+              ? "bg-red-50 text-red-700 border-red-200"
+              : "bg-[var(--brand-50)] text-[var(--brand-700)] border-[var(--brand-200)]"
+          }`}
+        >
+          <span>
+            {billing.trialExpired ? (
+              <>
+                <strong>Tu prueba ha terminado.</strong> El reprecio está pausado hasta
+                que pases a Pro.
+              </>
+            ) : (
+              <>
+                Prueba gratuita: te quedan <strong>{billing.trialDaysLeft} días</strong>.
+              </>
+            )}
+          </span>
+          <Link
+            href="/sellers/facturacion"
+            className="rounded-md bg-[var(--brand-600)] text-white px-3 py-1.5 text-xs font-semibold hover:bg-[var(--brand-700)] whitespace-nowrap"
+          >
+            Pasar a Pro →
+          </Link>
+        </div>
+      )}
 
       <div className="mt-8 rounded-2xl border border-fg/10 bg-bg p-8">
         {!isConnected ? (
