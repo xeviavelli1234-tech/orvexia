@@ -813,6 +813,85 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* ── FOR SELLERS — REPRICER CROSS-SELL ───────────────────────────── */}
+      <section className="relative px-4 sm:px-6 pb-24 overflow-hidden">
+        <div className="relative max-w-7xl mx-auto">
+          <div className="neon-border rounded-3xl overflow-hidden">
+            <div
+              className="relative bg-grid-cyber overflow-hidden rounded-[calc(1.5rem-1px)] p-8 sm:p-12 lg:p-16"
+              style={{ background: "linear-gradient(150deg, #0b0d1c 0%, #08091a 50%, #050913 100%)" }}
+            >
+              <div className="absolute inset-0 bg-grid-cyber-fine opacity-40 pointer-events-none" />
+              <div
+                className="absolute -top-32 -left-32 w-80 h-80 rounded-full halo-breathe pointer-events-none"
+                style={{ background: "radial-gradient(circle, rgba(94,234,212,0.20), transparent 65%)" }}
+              />
+              <div
+                className="absolute -bottom-24 -right-24 w-72 h-72 rounded-full halo-breathe pointer-events-none"
+                style={{ background: "radial-gradient(circle, rgba(129,140,248,0.22), transparent 65%)", animationDelay: "2s" }}
+              />
+
+              <div className="relative flex flex-col lg:flex-row items-start lg:items-center justify-between gap-10">
+                <div className="max-w-xl">
+                  <span className="inline-flex items-center gap-2 font-mono-ui text-[10px] uppercase mb-6 px-3 h-7 rounded-full bg-white/[0.06] border border-white/[0.12] text-white/70">
+                    <span className="w-1 h-1 rounded-full bg-cyan-300" />
+                    ▸ /sellers · b2b
+                    <span className="ml-1 text-amber-300/90">· beta</span>
+                  </span>
+                  <h2
+                    className="font-extrabold leading-[1.05] mb-4 tracking-tight text-white"
+                    style={{ fontSize: "clamp(1.9rem, 3.4vw, 2.8rem)" }}
+                  >
+                    ¿Vendes en Amazon?<br />
+                    <span className="text-gradient-neon">Reprecia en automático.</span>
+                  </h2>
+                  <p className="text-sm sm:text-base leading-relaxed text-white/55 mb-7">
+                    Define un precio mínimo y máximo por producto. Nuestro motor ajusta
+                    tus precios cada 5 minutos para que ganes la Buy Box sin regalar
+                    margen. Pruébalo en modo demo, sin conectar nada.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Link
+                      href="/sellers"
+                      className="inline-flex items-center gap-2 rounded-xl bg-white text-[#0b0d1c] px-6 py-3 text-sm font-bold hover:bg-white/90 transition-colors"
+                    >
+                      Descubrir Orvexia Repricer
+                      <span aria-hidden>→</span>
+                    </Link>
+                    <Link
+                      href="/sellers/dashboard"
+                      className="inline-flex items-center gap-2 rounded-xl border border-white/20 text-white px-6 py-3 text-sm font-semibold hover:bg-white/[0.06] transition-colors"
+                    >
+                      Probar modo demo
+                    </Link>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3 sm:gap-4 w-full lg:w-auto lg:min-w-[320px]">
+                  {[
+                    { v: "5 min", l: "ciclo reprecio" },
+                    { v: "min/máx", l: "bajo tu control" },
+                    { v: "2 min", l: "setup demo" },
+                  ].map((s) => (
+                    <div
+                      key={s.l}
+                      className="rounded-xl bg-white/[0.025] border border-white/[0.08] backdrop-blur-sm p-3 sm:p-4 text-center"
+                    >
+                      <div className="font-extrabold text-base sm:text-xl tracking-tight text-white leading-none">
+                        {s.v}
+                      </div>
+                      <div className="mt-1.5 text-[10px] sm:text-[11px] text-white/45 leading-tight">
+                        {s.l}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
     </main>
   );
 }
