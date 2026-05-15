@@ -17,7 +17,12 @@ export async function GET(req: Request) {
 
   const state = randomBytes(32).toString("hex");
   const redirectUri = getOauthRedirectUri(req);
-  const url = buildAuthUrl({ state, redirectUri });
+  // version=beta = self-authorization para apps Sandbox / draft.
+  // El developer autoriza la app contra su propio seller account sin pasar por
+  // el listado público de marketplace (que es donde MD1000 falla porque las
+  // apps Sandbox no están publicadas).
+  const isDraft = process.env.SP_API_ENV !== "production";
+  const url = buildAuthUrl({ state, redirectUri, version: isDraft ? "beta" : "stable" });
 
   const cookieStore = await cookies();
   cookieStore.set(OAUTH_STATE_COOKIE, state, {

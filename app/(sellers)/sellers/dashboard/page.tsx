@@ -67,6 +67,18 @@ export default async function SellerDashboardPage({
       <div className="mt-8 rounded-2xl border border-fg/10 bg-bg p-8">
         {!isConnected ? (
           <>
+            <div className="mb-6 rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30 px-4 py-3">
+              <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">
+                🚧 Integración con Amazon en desarrollo
+              </p>
+              <p className="mt-1 text-xs text-amber-700/80 dark:text-amber-400/80 leading-relaxed">
+                La conexión OAuth con Amazon SP-API está pendiente de aprobación de
+                Amazon (verificación de identidad de desarrollador). El botón de abajo
+                ya está implementado y funcionará automáticamente en cuanto Amazon
+                habilite el acceso. El resto del producto (rangos de precio, motor de
+                reprecio) está operativo.
+              </p>
+            </div>
             <h2 className="text-xl font-semibold">Conecta tu cuenta de Amazon Seller</h2>
             <p className="mt-2 text-fg/70 text-sm leading-relaxed">
               Te llevaremos a Amazon para que autorices Orvexia Repricer. Es un flujo OAuth oficial:
@@ -74,9 +86,12 @@ export default async function SellerDashboardPage({
             </p>
             <a
               href="/api/sellers/amazon/oauth/start"
-              className="mt-6 inline-block rounded-lg bg-[var(--brand-600)] text-white px-6 py-3 font-semibold hover:bg-[var(--brand-700)] transition-colors"
+              className="mt-6 inline-flex items-center gap-2 rounded-lg bg-[var(--brand-600)] text-white px-6 py-3 font-semibold hover:bg-[var(--brand-700)] transition-colors"
             >
               Conectar mi cuenta de Amazon
+              <span className="text-[10px] font-bold uppercase tracking-wider bg-white/20 px-1.5 py-0.5 rounded">
+                Beta
+              </span>
             </a>
             <p className="mt-4 text-xs text-fg/50">
               Necesitas plan Profesional de Amazon (39 €/mes pagados a Amazon) y la app SP-API
