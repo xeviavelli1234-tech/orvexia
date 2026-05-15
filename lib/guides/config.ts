@@ -462,7 +462,7 @@ export const GUIDES: GuideConfig[] = [
       { name: "Bosch / Siemens / Balay", strong: "Vida útil 12+ años. SelfCleaning Condenser elimina pelusa automáticamente.", weak: "Premium en precio.", ideal: "Quien usa secadora varias veces por semana." },
       { name: "AEG", strong: "AbsoluteCare: secado especial para lana y delicado a baja temperatura.", weak: "Catálogo más reducido en España.", ideal: "Hogares con ropa delicada o lana." },
       { name: "LG", strong: "Inverter Direct Drive con 10 años de garantía. Más silencioso del mercado.", weak: "Apps con bugs ocasionales.", ideal: "Pisos con cocina cerca del salón." },
-      { name: "Samsung", strong: "AI EcoDry detecta humedad real y ajusta tiempo. AddDry para añadir ropa." },
+      { name: "Samsung", strong: "AI EcoDry detecta humedad real y ajusta tiempo. AddDry para añadir ropa.", weak: "Bomba de calor más cara que la competencia directa.", ideal: "Quien quiere añadir ropa a mitad de ciclo." },
       { name: "Beko", strong: "Calidad-precio decente en bomba de calor desde 450€.", weak: "Acabados ajustados, vida útil 8-10 años.", ideal: "Primera secadora, presupuesto ajustado." },
     ],
     glosario: [
