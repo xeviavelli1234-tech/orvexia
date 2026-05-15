@@ -16,7 +16,14 @@ export async function upsertSellerAccount(params: {
   refreshToken: string; // plaintext, will be encrypted before persist
   spApiEnv: "sandbox" | "production";
 }) {
-  const encrypted = encryptToken(params.refreshToken);
+  // El placeholder de modo demo NO es un secreto → se guarda tal cual,
+  // sin requerir ENCRYPTION_KEY (así el demo funciona aunque la var no
+  // esté configurada en producción). Los refresh tokens REALES sí se
+  // cifran (y exigen ENCRYPTION_KEY, como debe ser).
+  const encrypted =
+    params.refreshToken === "FIXTURE_NO_TOKEN"
+      ? "FIXTURE_NO_TOKEN"
+      : encryptToken(params.refreshToken);
   const now = new Date();
   const trialEndsAt = new Date(now.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
 
