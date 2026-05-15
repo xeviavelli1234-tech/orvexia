@@ -316,7 +316,7 @@ export default async function HomePage() {
             </p>
 
             {/* Search with HUD frame */}
-            <div className="relative max-w-2xl mx-auto mb-12">
+            <div className="relative z-40 max-w-2xl mx-auto mb-12">
               <HudFrame className="relative text-cyan-400/70">
                 <div className="rounded-2xl p-px"
                      style={{ background: "linear-gradient(135deg, rgba(94,234,212,0.35), rgba(129,140,248,0.35), rgba(240,171,252,0.35))" }}>
