@@ -43,6 +43,8 @@ const ECI_SOLD_OUT_MODELS = [
   "6B2S3PSX",
   "SPS4EMW61E",
   "4A4M3PB",
+  // Microondas ECI agotado (captura 2026-05-16)
+  "MWE FS20 G WH",
 ];
 
 // Misma lógica para Amazon: marcamos modelos sin stock vistos en captura.

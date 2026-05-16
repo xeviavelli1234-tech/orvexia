@@ -52,15 +52,45 @@ export default function ProductCard({ product, priority = false }: Props) {
   const [modalRating, setModalRating] = useState<number | null>(product.rating);
   const [modalReviews, setModalReviews] = useState<number | null>(product.reviewCount);
 
-  const cardImages =
+  const [failedCardImages, setFailedCardImages] = useState<Set<string>>(new Set());
+  const rawCardImages =
     Array.isArray(product.images) && product.images.length > 0
       ? product.images
       : product.image
       ? [product.image]
       : [];
-  const activeCardImage = cardImages[active];
-  const [failedCardImages, setFailedCardImages] = useState<Set<string>>(new Set());
-  const cardImageErrored = !!activeCardImage && failedCardImages.has(activeCardImage);
+  // Igual que ProductModal: descarta URLs muertas (onError) y placeholders
+  // proxy diminutos (onLoad) para no quedarse clavado en un images[0] roto.
+  const cardImages = rawCardImages.filter((s) => s && !failedCardImages.has(s));
+  const safeActive = active < cardImages.length ? active : 0;
+  const activeCardImage = cardImages[safeActive];
+
+  const markCardImageFailed = useCallback((src: string) => {
+    setFailedCardImages((prev) => {
+      if (prev.has(src)) return prev;
+      const nextSet = new Set(prev);
+      nextSet.add(src);
+      return nextSet;
+    });
+  }, []);
+
+  // Evalúa la <img> también vía ref: si está cacheada/precargada, onLoad y
+  // onError no disparan tras la hidratación (a diferencia del modal, que
+  // monta tras el click). Cubre 404 cacheado (naturalWidth 0) y placeholder
+  // proxy "No image available" de productserve (<250px), igual que el modal.
+  const evaluateCardImg = useCallback(
+    (img: HTMLImageElement | null, src: string | undefined) => {
+      if (!img || !src || !img.complete) return;
+      if (img.naturalWidth === 0) {
+        markCardImageFailed(src);
+        return;
+      }
+      if (img.naturalWidth < 250 && img.naturalHeight < 250) {
+        markCardImageFailed(src);
+      }
+    },
+    [markCardImageFailed],
+  );
 
   const mejorOferta = product.offers[0];
   const ctaStoreName =
@@ -125,23 +155,17 @@ export default function ProductCard({ product, priority = false }: Props) {
       >
         {/* Image area */}
         <div className="relative aspect-[4/3] bg-white">
-          {cardImages.length > 0 && !cardImageErrored ? (
+          {cardImages.length > 0 ? (
             <img
-              key={cardImages[active]}
+              key={activeCardImage}
+              ref={(node) => evaluateCardImg(node, activeCardImage)}
               src={activeCardImage}
               alt={product.name}
               loading={priority ? "eager" : "lazy"}
               className="absolute inset-0 w-full h-full object-contain p-5 transition-all duration-300 group-hover:scale-[1.04]"
               referrerPolicy="no-referrer"
-              onError={() => {
-                if (!activeCardImage) return;
-                setFailedCardImages((prev) => {
-                  if (prev.has(activeCardImage)) return prev;
-                  const nextSet = new Set(prev);
-                  nextSet.add(activeCardImage);
-                  return nextSet;
-                });
-              }}
+              onError={() => activeCardImage && markCardImageFailed(activeCardImage)}
+              onLoad={(e) => evaluateCardImg(e.currentTarget, activeCardImage)}
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center text-3xl text-fg-faint">📦</div>
@@ -202,7 +226,7 @@ export default function ProductCard({ product, priority = false }: Props) {
                   }}
                   aria-label={`Imagen ${i + 1}`}
                   className={`rounded-full transition-all duration-300 ${
-                    active === i ? "bg-fg-strong w-4 h-1.5" : "bg-fg-strong/30 hover:bg-fg-strong/50 w-1.5 h-1.5"
+                    safeActive === i ? "bg-fg-strong w-4 h-1.5" : "bg-fg-strong/30 hover:bg-fg-strong/50 w-1.5 h-1.5"
                   }`}
                 />
               ))}

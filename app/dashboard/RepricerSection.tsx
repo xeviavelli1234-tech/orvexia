@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getSellerAccountByUserId } from "@/lib/db/sellerAccount";
 import { getBillingState, type SellerPlan } from "@/lib/billing";
 import { prisma } from "@/lib/prisma";
+import { REPRICER_ENABLED } from "@/lib/featureFlags";
 
 const STATUS_MESSAGES: Record<string, { kind: "ok" | "err" | "info"; text: string }> = {
   connected: { kind: "ok", text: "Cuenta de Amazon conectada correctamente." },
@@ -19,6 +20,46 @@ export async function RepricerSection({
   userId: string;
   status?: string;
 }) {
+  if (!REPRICER_ENABLED) {
+    return (
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+        <div className="neon-border rounded-3xl overflow-hidden">
+          <div
+            className="relative bg-grid-cyber rounded-[calc(1.5rem-1px)] p-6 sm:p-7"
+            style={{ background: "linear-gradient(150deg,#0b0d1c,#08091a 55%,#050913)" }}
+          >
+            <div className="absolute inset-0 bg-grid-cyber-fine opacity-30 pointer-events-none" />
+            <div className="relative flex items-center justify-between gap-5 flex-wrap">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <span className="font-mono-ui text-[10px] uppercase tracking-wider text-cyan-300/80">
+                    ▸ módulo b2b
+                  </span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-500/15 px-2 py-0.5 rounded-full">
+                    En desarrollo
+                  </span>
+                </div>
+                <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-white">
+                  Orvexia <span className="text-gradient-neon">Repricer</span>
+                </h2>
+                <p className="mt-1.5 text-sm text-white/55 max-w-md">
+                  Módulo de reprecio para vendedores de Amazon en desarrollo.
+                  Disponible próximamente.
+                </p>
+              </div>
+              <span className="flex items-center gap-2 text-white/40 font-semibold text-sm whitespace-nowrap">
+                Próximamente
+                <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-white/[0.06] text-lg">
+                  ⏳
+                </span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   const account = await getSellerAccountByUserId(userId);
   const connected = !!account?.active;
   const billing = account
