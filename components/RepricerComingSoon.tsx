@@ -21,11 +21,12 @@ export default function RepricerComingSoon() {
               Orvexia <span className="text-gradient-neon">Repricer</span>
             </h1>
             <span className="mt-4 inline-block text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-500/15 px-2.5 py-1 rounded-full">
-              En desarrollo
+              En mantenimiento
             </span>
             <p className="mt-5 text-white/55 text-sm max-w-md mx-auto leading-relaxed">
-              Estamos puliendo el módulo de reprecio para vendedores de Amazon.
-              Estará disponible próximamente.
+              El módulo de reprecio para vendedores de Amazon está
+              temporalmente en mantenimiento. Volverá a estar disponible
+              en breve.
             </p>
             <Link
               href="/"
