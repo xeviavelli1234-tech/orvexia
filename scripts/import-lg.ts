@@ -159,6 +159,51 @@ function extractImages(row: Record<string, string>): string[] {
   return out.slice(0, 8);
 }
 
+// ── Verificación de imágenes (HEAD) ─────────────────────────────────────────
+// Mismo criterio que scripts/scrape-images-lg.ts: una URL solo entra al
+// catálogo si responde 200. Evita importar outlets de LG cuya imagen LG ya
+// retiró de su CDN (la card acabaría mostrando el placeholder 📦).
+const FETCH_HEADERS: Record<string, string> = {
+  "User-Agent":
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+  "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
+  Accept: "image/avif,image/webp,*/*;q=0.8",
+};
+const HEAD_TIMEOUT_MS = 8000;
+const aliveCache = new Map<string, boolean>();
+
+async function isImageAlive(url: string): Promise<boolean> {
+  const cached = aliveCache.get(url);
+  if (cached !== undefined) return cached;
+  // Las URLs de Awin (productserve) son proxies de thumbnail: bloquean HEAD
+  // pero sirven GET. El navegador hace GET, así que las damos por válidas.
+  if (url.includes("productserve.com")) {
+    aliveCache.set(url, true);
+    return true;
+  }
+  let ok = false;
+  try {
+    const res = await fetch(url, {
+      method: "HEAD",
+      headers: FETCH_HEADERS,
+      signal: AbortSignal.timeout(HEAD_TIMEOUT_MS),
+    });
+    ok = res.ok;
+  } catch {
+    ok = false;
+  }
+  aliveCache.set(url, ok);
+  return ok;
+}
+
+/** Devuelve solo las URLs que responden 200, conservando el orden. */
+async function verifyImages(urls: string[]): Promise<string[]> {
+  const results = await Promise.all(
+    urls.map(async (u) => ((await isImageAlive(u)) ? u : null)),
+  );
+  return results.filter((u): u is string => u !== null);
+}
+
 async function main() {
   console.log(`📂 Categoría: ${CFG.category} · objetivo: ${TARGET} productos\n`);
 
@@ -170,7 +215,7 @@ async function main() {
     columns: true, skip_empty_lines: true, relax_quotes: true, relax_column_count: true, trim: true,
   }));
 
-  type Cand = { row: Record<string, string>; price: number; priceOld: number | null; discount: number };
+  type Cand = { row: Record<string, string>; price: number; priceOld: number | null; discount: number; images: string[] };
   const candidates: Cand[] = [];
   let total = 0;
   for await (const rowRaw of stream) {
@@ -187,7 +232,7 @@ async function main() {
     const priceOld = parsePrice(row.rrp_price) ?? parsePrice(row.product_price_old) ?? parsePrice(row.was_price);
     const discount = priceOld && priceOld > price ? Math.round((1 - price / priceOld) * 100) : 0;
 
-    candidates.push({ row, price, priceOld: priceOld && priceOld > price ? priceOld : null, discount });
+    candidates.push({ row, price, priceOld: priceOld && priceOld > price ? priceOld : null, discount, images: [] });
   }
 
   console.log(`📊 ${total} filas leídas · ${candidates.length} candidatos\n`);
@@ -199,15 +244,28 @@ async function main() {
 
   const seenNames = new Set<string>();
   const picked: Cand[] = [];
+  let skippedNoImage = 0;
   for (const c of candidates) {
     const key = `lg::${normalize(c.row.product_name ?? "")}`;
     if (seenNames.has(key) || existingNames.has(key)) continue;
+
+    const liveImages = await verifyImages(extractImages(c.row));
+    if (liveImages.length === 0) {
+      skippedNoImage++;
+      continue;
+    }
+
     seenNames.add(key);
+    c.images = liveImages;
     picked.push(c);
     if (picked.length >= TARGET) break;
   }
 
-  console.log(`🆕 ${picked.length} ${CFG.category} seleccionados:\n`);
+  console.log(
+    `🆕 ${picked.length} ${CFG.category} seleccionados` +
+      (skippedNoImage > 0 ? ` · ${skippedNoImage} descartados sin imagen viva` : "") +
+      ":\n",
+  );
   for (const p of picked) {
     const tag = p.discount > 0 ? `-${p.discount}% · ${p.price}€ (era ${p.priceOld}€)` : `${p.price}€`;
     console.log(`  ${tag.padEnd(35)} ${(p.row.product_name ?? "").slice(0, 80)}`);
@@ -225,7 +283,7 @@ async function main() {
     const baseSlug = `lg-${awId}-${slugify(r.product_name ?? "lg-producto")}`;
     if (existingSlugs.has(baseSlug)) continue;
 
-    const imgs = extractImages(r);
+    const imgs = p.images;
     const rating = 4.0 + Math.random() * 0.6;
 
     try {
