@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import MysteryDealCard from "@/components/MysteryDealCard";
+import DealsCountdown from "@/components/DealsCountdown";
 import { HeroSearch } from "@/components/HeroSearch";
 
 // Semilla diaria estable (fecha peninsular). El set de ofertas es el mismo
@@ -512,6 +513,7 @@ export default async function HomePage() {
               <p className="mt-2 text-sm text-white/45 max-w-md">
                 Top descuentos verificados contra el histórico de 90 días. Cero precios inflados.
               </p>
+              <DealsCountdown dayKey={dayKey} />
             </div>
             <Link
               href="/ofertas-destacadas"
