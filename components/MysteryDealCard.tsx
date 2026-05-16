@@ -1,8 +1,12 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useSyncExternalStore } from "react";
 import type React from "react";
 import ProductCard from "./ProductCard";
+
+const STORAGE_KEY = "mdeal:v1";
+const SYNC_EVENT = "mdeal:sync";
+const REVEAL_MS = 520;
 
 type ProductCardProduct = React.ComponentProps<typeof ProductCard>["product"];
 
@@ -13,17 +17,66 @@ const CATEGORY_LABELS: Record<string, string> = {
   AIRES_ACONDICIONADOS: "Aire acondicionado", OTROS: "Otros",
 };
 
-const REVEAL_MS = 520;
+// Estado persistido: { k: clave del día, ids: ofertas ya abiertas ese día }.
+// Cuando la clave del día cambia (nuevas ofertas) el registro queda obsoleto
+// y las cajas vuelven a salir cerradas.
+function readOpened(): { k: string; ids: string[] } {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return { k: "", ids: [] };
+    const v = JSON.parse(raw);
+    if (v && typeof v.k === "string" && Array.isArray(v.ids)) return v;
+  } catch {
+    /* localStorage no disponible / JSON inválido */
+  }
+  return { k: "", ids: [] };
+}
+
+function persistOpened(revealKey: string, id: string): void {
+  try {
+    const cur = readOpened();
+    const next =
+      cur.k === revealKey
+        ? { k: revealKey, ids: cur.ids.includes(id) ? cur.ids : [...cur.ids, id] }
+        : { k: revealKey, ids: [id] };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    window.dispatchEvent(new Event(SYNC_EVENT));
+  } catch {
+    /* localStorage no disponible */
+  }
+}
+
+// localStorage es estado externo: useSyncExternalStore evita el desajuste de
+// hidratación (server siempre "cerrada") y sincroniza otras tarjetas/pestañas.
+function subscribe(cb: () => void): () => void {
+  if (typeof window === "undefined") return () => {};
+  window.addEventListener("storage", cb);
+  window.addEventListener(SYNC_EVENT, cb);
+  return () => {
+    window.removeEventListener("storage", cb);
+    window.removeEventListener(SYNC_EVENT, cb);
+  };
+}
 
 export default function MysteryDealCard({
   product,
   priority = false,
+  revealKey,
 }: {
   product: ProductCardProduct;
   priority?: boolean;
+  revealKey: string;
 }) {
+  const getSnapshot = useCallback(() => {
+    const s = readOpened();
+    return s.k === revealKey && s.ids.includes(product.id);
+  }, [revealKey, product.id]);
+
+  const persistedOpen = useSyncExternalStore(subscribe, getSnapshot, () => false);
+
   const [opening, setOpening] = useState(false);
-  const [revealed, setRevealed] = useState(false);
+  const [locallyRevealed, setLocallyRevealed] = useState(false);
+  const revealed = persistedOpen || locallyRevealed;
 
   const open = useCallback(() => {
     if (opening || revealed) return;
@@ -31,12 +84,16 @@ export default function MysteryDealCard({
       typeof window !== "undefined" &&
       window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     if (reduce) {
-      setRevealed(true);
+      persistOpened(revealKey, product.id);
+      setLocallyRevealed(true);
       return;
     }
     setOpening(true);
-    window.setTimeout(() => setRevealed(true), REVEAL_MS);
-  }, [opening, revealed]);
+    window.setTimeout(() => {
+      persistOpened(revealKey, product.id);
+      setLocallyRevealed(true);
+    }, REVEAL_MS);
+  }, [opening, revealed, revealKey, product.id]);
 
   const o = product.offers[0];
   const trusted = o

@@ -8,13 +8,17 @@ import { HeroSearch } from "@/components/HeroSearch";
 
 // Semilla diaria estable (fecha peninsular). El set de ofertas es el mismo
 // para todos durante el día y cambia a medianoche Europe/Madrid.
-function dailySeed(): number {
-  const key = new Intl.DateTimeFormat("en-CA", {
+function dailyKey(): string {
+  return new Intl.DateTimeFormat("en-CA", {
     timeZone: "Europe/Madrid",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
   }).format(new Date()); // YYYY-MM-DD
+}
+
+function dailySeed(): number {
+  const key = dailyKey();
   let h = 2166136261;
   for (let i = 0; i < key.length; i++) {
     h ^= key.charCodeAt(i);
@@ -257,6 +261,7 @@ function HudFrame({ className = "", children }: { className?: string; children: 
 
 export default async function HomePage() {
   const [productos, stats] = await Promise.all([getTopDeals(), getStats()]);
+  const dayKey = dailyKey();
 
   const now = new Date();
   const buildId = now.toISOString().slice(2, 16).replace(/[-:T]/g, "").slice(0, 10);
@@ -534,7 +539,7 @@ export default async function HomePage() {
                     {String(i + 1).padStart(2, "0")}
                   </div>
                   <div className="rounded-2xl overflow-hidden ring-1 ring-white/[0.06] group-hover:ring-cyan-400/30 transition-all duration-300 shadow-lg shadow-black/30">
-                    <MysteryDealCard product={producto} priority={i === 0} />
+                    <MysteryDealCard product={producto} priority={i === 0} revealKey={dayKey} />
                   </div>
                 </div>
               ))}
