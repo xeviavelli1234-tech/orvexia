@@ -836,7 +836,6 @@ export default async function HomePage() {
                   <span className="inline-flex items-center gap-2 font-mono-ui text-[10px] uppercase mb-6 px-3 h-7 rounded-full bg-white/[0.06] border border-white/[0.12] text-white/70">
                     <span className="w-1 h-1 rounded-full bg-cyan-300" />
                     ▸ /sellers · b2b
-                    <span className="ml-1 text-amber-300/90">· beta</span>
                   </span>
                   <h2
                     className="font-extrabold leading-[1.05] mb-4 tracking-tight text-white"

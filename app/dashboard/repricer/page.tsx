@@ -326,9 +326,6 @@ function Header({ demo, live }: { demo: boolean; live: boolean }) {
         <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white">
           Orvexia <span className="text-gradient-neon">Repricer</span>
         </h1>
-        <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-500/15 px-2 py-0.5 rounded-full">
-          Beta
-        </span>
         {demo && (
           <span className="text-[10px] font-bold uppercase tracking-wider text-white/50 bg-white/[0.06] px-2 py-0.5 rounded-full">
             Modo demo

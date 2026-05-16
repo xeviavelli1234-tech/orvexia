@@ -73,9 +73,6 @@ export async function RepricerSection({
                 <span className="font-mono-ui text-[10px] uppercase tracking-wider text-cyan-300/80">
                   ▸ módulo b2b
                 </span>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-500/15 px-2 py-0.5 rounded-full">
-                  Beta
-                </span>
                 {connected && account!.spApiEnv !== "production" && (
                   <span className="text-[10px] font-bold uppercase tracking-wider text-white/50 bg-white/[0.06] px-2 py-0.5 rounded-full">
                     Modo demo

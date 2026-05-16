@@ -13,9 +13,6 @@ export default function SellersLayout({ children }: { children: React.ReactNode 
         <div className="max-w-6xl mx-auto flex items-center justify-between px-5 py-4">
           <Link href="/sellers" className="font-bold text-lg tracking-tight">
             Orvexia <span className="text-[var(--brand-600)]">Repricer</span>
-            <span className="ml-2 align-middle text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-100 dark:bg-amber-500/15 dark:text-amber-400 px-2 py-0.5 rounded-full">
-              Beta · En desarrollo
-            </span>
           </Link>
           <nav className="flex items-center gap-6 text-sm">
             <Link href="/sellers#como-funciona" className="hover:text-[var(--brand-600)]">
