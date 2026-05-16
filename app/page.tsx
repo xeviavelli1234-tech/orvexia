@@ -3,8 +3,45 @@ export const dynamic = "force-dynamic";
 import React from "react";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import ProductCard from "@/components/ProductCard";
+import MysteryDealCard from "@/components/MysteryDealCard";
 import { HeroSearch } from "@/components/HeroSearch";
+
+// Semilla diaria estable (fecha peninsular). El set de ofertas es el mismo
+// para todos durante el día y cambia a medianoche Europe/Madrid.
+function dailySeed(): number {
+  const key = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Madrid",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date()); // YYYY-MM-DD
+  let h = 2166136261;
+  for (let i = 0; i < key.length; i++) {
+    h ^= key.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+function mulberry32(seed: number): () => number {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function seededShuffle<T>(arr: readonly T[], seed: number): T[] {
+  const rng = mulberry32(seed);
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 async function getTopDeals() {
   const products = await prisma.product.findMany({
@@ -12,50 +49,48 @@ async function getTopDeals() {
     include: { offers: { orderBy: { priceCurrent: "asc" } } },
   });
 
-  const sorted = products
-    .filter((p) => {
-      const o = p.offers[0];
-      if (!o?.priceOld || !o.inStock) return false;
-      const savings = o.priceOld - o.priceCurrent;
-      const ratio = o.priceOld / o.priceCurrent;
-      return (
-        o.priceCurrent < o.priceOld &&
-        ratio <= 2.5 &&
-        savings >= 3 &&
-        savings / o.priceOld >= 0.03
-      );
-    })
-    .sort((a, b) => {
-      const savA = (a.offers[0].priceOld ?? 0) - a.offers[0].priceCurrent;
-      const savB = (b.offers[0].priceOld ?? 0) - b.offers[0].priceCurrent;
-      return savB - savA;
-    });
+  const valid = products.filter((p) => {
+    const o = p.offers[0];
+    if (!o?.priceOld || !o.inStock) return false;
+    const savings = o.priceOld - o.priceCurrent;
+    const ratio = o.priceOld / o.priceCurrent;
+    return (
+      o.priceCurrent < o.priceOld &&
+      ratio <= 2.5 &&
+      savings >= 3 &&
+      savings / o.priceOld >= 0.03
+    );
+  });
 
-  // Diversificar por categoría: máximo 2 por categoría en el top 8.
-  // Sin esto el grid lo monopolizan TVs OLED premium porque su ahorro
-  // absoluto en € siempre vence al de electrodomésticos pequeños.
+  // Rotación diaria: barajado determinista por fecha sobre TODO el pool de
+  // ofertas válidas, así cada día se ven 8 distintas (no siempre las de
+  // mayor ahorro absoluto).
+  const pool = seededShuffle(valid, dailySeed());
+
+  // Diversificar por categoría: máximo 2 por categoría en el grid de 8.
+  // Sin esto el grid lo monopolizan TVs OLED premium.
   const MAX_PER_CATEGORY = 2;
   const counts: Record<string, number> = {};
-  const diversified: typeof sorted = [];
-  for (const p of sorted) {
+  const picked: typeof pool = [];
+  for (const p of pool) {
     if ((counts[p.category] ?? 0) >= MAX_PER_CATEGORY) continue;
     counts[p.category] = (counts[p.category] ?? 0) + 1;
-    diversified.push(p);
-    if (diversified.length >= 8) break;
+    picked.push(p);
+    if (picked.length >= 8) break;
   }
 
-  // Si por la diversificación no se llenan los 8 huecos (poca oferta),
-  // rellenar con el resto sorted respetando el orden por ahorro.
-  if (diversified.length < 8) {
-    const seen = new Set(diversified.map((p) => p.id));
-    for (const p of sorted) {
+  // Si la diversificación no llena los 8 huecos (poca oferta), rellenar con
+  // el resto del pool barajado.
+  if (picked.length < 8) {
+    const seen = new Set(picked.map((p) => p.id));
+    for (const p of pool) {
       if (seen.has(p.id)) continue;
-      diversified.push(p);
-      if (diversified.length >= 8) break;
+      picked.push(p);
+      if (picked.length >= 8) break;
     }
   }
 
-  return diversified;
+  return picked;
 }
 
 async function getStats() {
@@ -499,7 +534,7 @@ export default async function HomePage() {
                     {String(i + 1).padStart(2, "0")}
                   </div>
                   <div className="rounded-2xl overflow-hidden ring-1 ring-white/[0.06] group-hover:ring-cyan-400/30 transition-all duration-300 shadow-lg shadow-black/30">
-                    <ProductCard product={producto} priority={i === 0} />
+                    <MysteryDealCard product={producto} priority={i === 0} />
                   </div>
                 </div>
               ))}
