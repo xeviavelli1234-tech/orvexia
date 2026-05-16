@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { REPRICER_ENABLED } from "@/lib/featureFlags";
+import RepricerComingSoon from "@/components/RepricerComingSoon";
 
 export const metadata = {
   title: "Orvexia Repricer · Reprecio automático para Amazon ES",
@@ -7,6 +9,8 @@ export const metadata = {
 };
 
 export default function SellersLayout({ children }: { children: React.ReactNode }) {
+  if (!REPRICER_ENABLED) return <RepricerComingSoon />;
+
   return (
     <div className="min-h-screen flex flex-col bg-bg text-fg">
       <header className="border-b border-black/5 dark:border-white/10 bg-bg/80 backdrop-blur sticky top-0 z-40">

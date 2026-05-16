@@ -5,6 +5,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import MysteryDealCard from "@/components/MysteryDealCard";
 import DealsCountdown from "@/components/DealsCountdown";
+import { REPRICER_ENABLED } from "@/lib/featureFlags";
 import { HeroSearch } from "@/components/HeroSearch";
 
 // Semilla diaria estable (fecha peninsular). El set de ofertas es el mismo
@@ -856,6 +857,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── FOR SELLERS — REPRICER CROSS-SELL ───────────────────────────── */}
+      {REPRICER_ENABLED && (
       <section className="relative px-4 sm:px-6 pb-24 overflow-hidden">
         <div className="relative max-w-7xl mx-auto">
           <div className="neon-border rounded-3xl overflow-hidden">
@@ -933,6 +935,7 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+      )}
 
     </main>
   );

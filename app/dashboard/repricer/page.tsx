@@ -6,6 +6,8 @@ import { getBillingState, TRIAL_DAYS, type SellerPlan } from "@/lib/billing";
 import { prisma } from "@/lib/prisma";
 import { RunNowButton } from "@/app/(sellers)/sellers/dashboard/RunNowButton";
 import { DisconnectButton } from "@/app/(sellers)/sellers/dashboard/DisconnectButton";
+import { REPRICER_ENABLED } from "@/lib/featureFlags";
+import RepricerComingSoon from "@/components/RepricerComingSoon";
 
 export const metadata = { title: "Repricer · Orvexia" };
 export const dynamic = "force-dynamic";
@@ -44,6 +46,8 @@ export default async function RepricerPage({
 }: {
   searchParams: Promise<{ status?: string }>;
 }) {
+  if (!REPRICER_ENABLED) return <RepricerComingSoon />;
+
   const session = await getSession();
   if (!session) redirect("/login?next=/dashboard/repricer");
   const { status } = await searchParams;
