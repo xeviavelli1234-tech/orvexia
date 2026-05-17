@@ -19,6 +19,14 @@ const STATUS_MSG: Record<string, { kind: "ok" | "err" | "info"; text: string }> 
   error_state_mismatch: { kind: "err", text: "Verificación CSRF fallida. Reintenta la conexión." },
   error_token_exchange: { kind: "err", text: "No pudimos canjear el código con Amazon." },
   error_persist: { kind: "err", text: "No pudimos guardar la conexión. Reintenta." },
+  error_selfconnect_env: {
+    kind: "err",
+    text: "Faltan SP_API_REFRESH_TOKEN o SP_API_SELLER_ID en las variables de entorno.",
+  },
+  error_not_production: {
+    kind: "err",
+    text: "SP_API_ENV no está en 'production'. Revisa las variables de entorno.",
+  },
 };
 
 const REASON: Record<string, { label: string; cls: string }> = {
@@ -90,20 +98,31 @@ export default async function RepricerPage({
                   Amazon Seller real.
                 </p>
                 <div className="mt-7 flex flex-wrap gap-3 justify-center">
+                  {process.env.SP_API_ENV === "production" ? (
+                    <form action="/api/sellers/amazon/self-connect" method="post">
+                      <button
+                        type="submit"
+                        className="rounded-xl bg-white text-[#0b0d1c] px-6 py-3 text-sm font-bold hover:bg-white/90 transition-colors"
+                      >
+                        Conectar mi cuenta de Amazon (real)
+                      </button>
+                    </form>
+                  ) : (
+                    <a
+                      href="/api/sellers/amazon/oauth/start"
+                      className="rounded-xl border border-white/20 text-white px-6 py-3 text-sm font-semibold hover:bg-white/[0.06] transition-colors"
+                    >
+                      Conectar Amazon
+                    </a>
+                  )}
                   <form action="/api/sellers/demo/connect" method="post">
                     <button
                       type="submit"
-                      className="rounded-xl bg-white text-[#0b0d1c] px-6 py-3 text-sm font-bold hover:bg-white/90 transition-colors"
+                      className="rounded-xl border border-white/20 text-white px-6 py-3 text-sm font-semibold hover:bg-white/[0.06] transition-colors"
                     >
                       Probar en modo demo
                     </button>
                   </form>
-                  <a
-                    href="/api/sellers/amazon/oauth/start"
-                    className="rounded-xl border border-white/20 text-white px-6 py-3 text-sm font-semibold hover:bg-white/[0.06] transition-colors"
-                  >
-                    Conectar Amazon
-                  </a>
                 </div>
               </div>
             </div>
