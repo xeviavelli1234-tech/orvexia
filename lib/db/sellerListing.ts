@@ -18,7 +18,7 @@ export async function getListingForUser(params: { listingId: string; userId: str
 export async function upsertListingsBatch(params: {
   sellerAccountId: string;
   items: NormalizedListing[];
-}): Promise<{ inserted: number; updated: number }> {
+}): Promise<{ inserted: number; updated: number; deleted: number }> {
   let inserted = 0;
   let updated = 0;
   for (const item of params.items) {
@@ -53,7 +53,19 @@ export async function upsertListingsBatch(params: {
     if (result.createdAt.getTime() === result.updatedAt.getTime()) inserted += 1;
     else updated += 1;
   }
-  return { inserted, updated };
+
+  // Amazon es la fuente de verdad: borra listings que ya no están en el
+  // catálogo del seller (p.ej. restos del modo demo al pasar a producción,
+  // o productos retirados de Amazon). Si el fetch vino vacío, limpia todo.
+  const keepSkus = params.items.map((i) => i.sku);
+  const deleted = await prisma.sellerListing.deleteMany({
+    where: {
+      sellerAccountId: params.sellerAccountId,
+      sku: { notIn: keepSkus.length > 0 ? keepSkus : ["__none__"] },
+    },
+  });
+
+  return { inserted, updated, deleted: deleted.count };
 }
 
 export async function setListingRange(params: {

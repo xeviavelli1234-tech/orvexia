@@ -67,6 +67,7 @@ export async function POST() {
     count: items.length,
     inserted: result.inserted,
     updated: result.updated,
+    deleted: result.deleted,
     syncedAt: new Date().toISOString(),
   });
 }

@@ -20,7 +20,7 @@ export function SyncButton({ lastSyncAt }: { lastSyncAt: Date | null }) {
         return;
       }
       setLastResult(
-        `Sincronización OK · ${data.count} productos (${data.inserted} nuevos, ${data.updated} actualizados)`,
+        `Sincronización OK · ${data.count} productos (${data.inserted} nuevos, ${data.updated} actualizados${data.deleted ? `, ${data.deleted} eliminados` : ""})`,
       );
       startTransition(() => router.refresh());
     } catch (e) {
