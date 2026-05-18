@@ -54,21 +54,9 @@ export default function WaveField() {
     const ro = new ResizeObserver(resize);
     if (canvas.parentElement) ro.observe(canvas.parentElement);
 
-    function onMove(e: PointerEvent) {
-      px.current = (e.clientX / window.innerWidth) * 2 - 1;
-      py.current = (e.clientY / window.innerHeight) * 2 - 1;
-      const r = canvas.getBoundingClientRect();
-      mx.current = e.clientX - r.left;
-      my.current = e.clientY - r.top;
-    }
-    function onLeave() {
-      mx.current = -9999;
-      my.current = -9999;
-    }
-    if (!reduce) {
-      window.addEventListener("pointermove", onMove, { passive: true });
-      canvas.addEventListener("pointerleave", onLeave, { passive: true });
-    }
+    // Interacción con el ratón DESACTIVADA: el fondo es solo ambiente,
+    // no escucha el puntero (sin parallax ni repulsión). Así no hay
+    // ninguna posibilidad de interferir con los clics de los nodos.
 
     // Orbes bokeh deterministas
     let s = 1337;
@@ -323,8 +311,6 @@ export default function WaveField() {
     return () => {
       cancelAnimationFrame(raf);
       ro.disconnect();
-      window.removeEventListener("pointermove", onMove);
-      canvas.removeEventListener("pointerleave", onLeave);
     };
   }, []);
 
