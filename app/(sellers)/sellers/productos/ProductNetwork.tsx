@@ -250,39 +250,28 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
 
   const layout = useMemo(() => {
     const n = nodes.length;
-    const cx = VB_W / 2;
-    const cy = VB_H / 2;
-    const maxR = Math.min(380, 150 + n * 20);
-    const minX = VB_W * 0.16,
-      maxX = VB_W * 0.84,
-      minY = VB_H * 0.16,
-      maxY = VB_H * 0.82;
+    const hx = VB_W / 2;
+    const hy = VB_H / 2;
+    const HUB_GAP = 165; // espacio libre alrededor del icono de Amazon
+    const maxR = Math.min(330, 110 + n * 16);
+    const minX = VB_W * 0.13,
+      maxX = VB_W * 0.87,
+      minY = VB_H * 0.15,
+      maxY = VB_H * 0.85;
 
     const pos = nodes.map((node, i) => {
-      const g = i * 2.39996323;
-      const rr = maxR * Math.sqrt((i + 0.55) / Math.max(n, 1));
-      const jx = (hash(node.id + "x") - 0.5) * 90;
-      const jy = (hash(node.id + "y") - 0.5) * 78;
-      let x = cx + Math.cos(g) * rr * 1.5 + jx;
-      let y = cy + Math.sin(g) * rr + jy;
+      const g = i * 2.39996323; // ángulo áureo → ramas repartidas
+      const rr = HUB_GAP + maxR * Math.sqrt((i + 0.4) / Math.max(n, 1));
+      const jx = (hash(node.id + "x") - 0.5) * 44;
+      const jy = (hash(node.id + "y") - 0.5) * 40;
+      let x = hx + Math.cos(g) * rr * 1.5 + jx;
+      let y = hy + Math.sin(g) * rr + jy;
       x = Math.max(minX, Math.min(maxX, x));
       y = Math.max(minY, Math.min(maxY, y));
       return { ...node, x, y };
     });
 
-    const edges: Array<{ a: number; b: number }> = [];
-    const seen = new Set<string>();
-    const add = (a: number, b: number) => {
-      if (a === b || a < 0 || b < 0 || a >= n || b >= n) return;
-      const k = a < b ? `${a}-${b}` : `${b}-${a}`;
-      if (seen.has(k)) return;
-      seen.add(k);
-      edges.push({ a, b });
-    };
-    for (let i = 1; i < n; i++) add(i, i - 1);
-    if (n > 3) for (let i = 0; i < n; i++) add(i, (i + 3) % n);
-    if (n > 5) for (let i = 0; i < n; i += 2) add(i, Math.floor(n / 2));
-    return { pos, edges };
+    return { hub: { x: hx, y: hy }, pos };
   }, [nodes]);
 
   const sel = nodes.find((x) => x.id === selId) ?? null;
@@ -399,30 +388,103 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
         </defs>
 
         <g transform={`translate(${view.x} ${view.y}) scale(${view.k})`}>
-          {/* Aristas */}
-          <g stroke="rgba(180,190,255,0.16)" strokeWidth="1.1" fill="none">
-            {layout.edges.map(({ a, b }, i) => {
-              const pa = layout.pos[a], pb = layout.pos[b];
-              const mx = (pa.x + pb.x) / 2, my = (pa.y + pb.y) / 2;
-              const dx = pb.x - pa.x, dy = pb.y - pa.y;
-              return (
-                <path key={i} vectorEffect="non-scaling-stroke"
-                  d={`M${pa.x},${pa.y} Q${mx - dy * 0.12},${my + dx * 0.12} ${pb.x},${pb.y}`} />
-              );
-            })}
-          </g>
-          <g stroke="rgba(190,210,255,0.6)" strokeWidth="1.4" fill="none" strokeLinecap="round">
-            {layout.edges.map(({ a, b }, i) => {
-              const pa = layout.pos[a], pb = layout.pos[b];
-              const mx = (pa.x + pb.x) / 2, my = (pa.y + pb.y) / 2;
-              const dx = pb.x - pa.x, dy = pb.y - pa.y;
-              return (
-                <path key={i} className="net-flow" vectorEffect="non-scaling-stroke"
-                  style={{ animationDelay: `${(i % 7) * 0.18}s` }}
-                  d={`M${pa.x},${pa.y} Q${mx - dy * 0.12},${my + dx * 0.12} ${pb.x},${pb.y}`} />
-              );
-            })}
-          </g>
+          {/* Ramas: del icono de Amazon a cada producto */}
+          {(() => {
+            const h = layout.hub;
+            const spoke = (p: { x: number; y: number }) => {
+              const mx = (h.x + p.x) / 2,
+                my = (h.y + p.y) / 2;
+              const dx = p.x - h.x,
+                dy = p.y - h.y;
+              return `M${h.x},${h.y} Q${mx - dy * 0.08},${my + dx * 0.08} ${p.x},${p.y}`;
+            };
+            return (
+              <>
+                <g stroke="rgba(255,153,0,0.18)" strokeWidth="1.2" fill="none">
+                  {layout.pos.map((p) => (
+                    <path key={p.id} vectorEffect="non-scaling-stroke" d={spoke(p)} />
+                  ))}
+                </g>
+                <g
+                  stroke="rgba(255,178,71,0.6)"
+                  strokeWidth="1.5"
+                  fill="none"
+                  strokeLinecap="round"
+                >
+                  {layout.pos.map((p, i) => (
+                    <path
+                      key={p.id}
+                      className="net-flow"
+                      vectorEffect="non-scaling-stroke"
+                      style={{ animationDelay: `${(i % 7) * 0.18}s` }}
+                      d={spoke(p)}
+                    />
+                  ))}
+                </g>
+              </>
+            );
+          })()}
+
+          {/* Nodo central: icono de Amazon */}
+          {(() => {
+            const h = layout.hub;
+            const HR = 54;
+            const w = HR * 1.15;
+            return (
+              <g>
+                <circle
+                  cx={h.x}
+                  cy={h.y}
+                  r={HR + 8}
+                  fill="none"
+                  stroke="rgba(255,153,0,0.5)"
+                  strokeWidth="1.4"
+                  filter="url(#glow)"
+                />
+                <circle
+                  cx={h.x}
+                  cy={h.y}
+                  r={HR}
+                  fill="rgba(10,9,16,0.92)"
+                  stroke="#FF9900"
+                  strokeWidth="1.8"
+                />
+                {/* wordmark + sonrisa de Amazon */}
+                <text
+                  x={h.x}
+                  y={h.y - 4}
+                  textAnchor="middle"
+                  fontSize="20"
+                  fontWeight={800}
+                  fill="#ffffff"
+                  style={{ letterSpacing: "0.5px" }}
+                >
+                  amazon
+                </text>
+                <path
+                  d={`M${h.x - w / 2},${h.y + 10} Q${h.x},${h.y + 26} ${h.x + w / 2},${h.y + 9}`}
+                  fill="none"
+                  stroke="#FF9900"
+                  strokeWidth="3.2"
+                  strokeLinecap="round"
+                />
+                <path
+                  d={`M${h.x + w / 2 - 9},${h.y + 4} L${h.x + w / 2 + 1},${h.y + 9} L${h.x + w / 2 - 6},${h.y + 16} Z`}
+                  fill="#FF9900"
+                />
+                <text
+                  x={h.x}
+                  y={h.y + HR + 20}
+                  textAnchor="middle"
+                  fontSize="12"
+                  fontWeight={700}
+                  fill="rgba(255,170,80,0.85)"
+                >
+                  Tu cuenta · {layout.pos.length} productos
+                </text>
+              </g>
+            );
+          })()}
 
           {/* Nodos */}
           {layout.pos.map((p) => {
