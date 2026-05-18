@@ -8,6 +8,9 @@ import ProductNetwork, { type NetNode } from "./ProductNetwork";
 import AssistantWidget from "./AssistantWidget";
 import { RunNowButton } from "@/app/(sellers)/sellers/dashboard/RunNowButton";
 import { DisconnectButton } from "@/app/(sellers)/sellers/dashboard/DisconnectButton";
+import { prisma } from "@/lib/prisma";
+import { getBillingState, TRIAL_DAYS, type SellerPlan } from "@/lib/billing";
+import ActivityPanel, { type EventDTO } from "./ActivityPanel";
 
 export const metadata = { title: "Centro de control · Orvexia Repricer" };
 export const dynamic = "force-dynamic";
@@ -66,6 +69,32 @@ export default async function ProductosPage() {
     noCompetition: l.noCompetition,
   }));
 
+  const billing = getBillingState(account.plan as SellerPlan, account.trialEndsAt);
+  const [lastRun, rawEvents] = await Promise.all([
+    prisma.repricingRun.findFirst({
+      where: { sellerAccountId: account.id },
+      orderBy: { startedAt: "desc" },
+      select: { startedAt: true },
+    }),
+    prisma.repricingEvent.findMany({
+      where: { listing: { sellerAccountId: account.id } },
+      orderBy: { createdAt: "desc" },
+      take: 30,
+      include: { listing: { select: { title: true } } },
+    }),
+  ]);
+  const events: EventDTO[] = rawEvents.map((e) => ({
+    id: e.id,
+    title: e.listing?.title ?? "Producto",
+    reason: e.reason,
+    priceBefore: e.priceBefore,
+    priceAfter: e.priceAfter,
+    competitorPrice: e.competitorPrice,
+    success: e.success,
+    errorMessage: e.errorMessage,
+    createdAt: e.createdAt.toISOString(),
+  }));
+
   return (
     <div className="fixed inset-0 z-50 flex bg-[#020207] text-white">
       {/* ── Zona de herramientas (izquierda) ─────────────────────── */}
@@ -109,13 +138,20 @@ export default async function ProductosPage() {
         </div>
 
         <div className="px-5 py-5 flex flex-col gap-3 border-b border-white/10">
-          <Eyebrow>Cuenta</Eyebrow>
-          <Link
-            href="/dashboard/repricer"
-            className="text-sm text-white/55 hover:text-white underline underline-offset-4 transition-colors"
-          >
-            Facturación y plan
-          </Link>
+          <Eyebrow>Plan y actividad</Eyebrow>
+          <ActivityPanel
+            events={events}
+            plan={{
+              label: billing.label,
+              isTrial: billing.plan === "TRIAL",
+              trialDaysLeft: billing.trialDaysLeft,
+              trialTotal: TRIAL_DAYS,
+              intervalMinutes: billing.intervalMinutes,
+              trialExpired: billing.trialExpired,
+            }}
+            lastRunAt={lastRun?.startedAt.toISOString() ?? null}
+            proHref="/sellers/facturacion"
+          />
           <DisconnectButton />
         </div>
 
