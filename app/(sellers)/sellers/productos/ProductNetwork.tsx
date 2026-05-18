@@ -15,6 +15,7 @@ import {
   toggleListingAction,
   updateListingStrategyAction,
   updateListingCompetitionAction,
+  pauseAllAction,
 } from "./actions";
 
 type Strategy = "BUYBOX" | "MATCH" | "FIXED" | "MARGIN";
@@ -582,12 +583,13 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
               key: string;
               label: string;
               rgb: string;
-              icon: "list" | "shield" | "bars";
+              icon: "list" | "shield" | "pause";
               ev: string;
+              panic?: boolean;
             }> = [
               { key: "cat", label: "Catálogo", rgb: "125,211,252", icon: "list", ev: "orvexia:open-catalog" },
               { key: "set", label: "Cuenta", rgb: "165,180,252", icon: "shield", ev: "orvexia:open-settings" },
-              { key: "ana", label: "Analítica", rgb: "94,234,212", icon: "bars", ev: "orvexia:open-analytics" },
+              { key: "panic", label: "Pausar todo", rgb: "248,113,113", icon: "pause", ev: "", panic: true },
             ];
             const n = tools.length;
             return (
@@ -621,6 +623,19 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
                         onClick={() => {
                           if (suppressClick.current) {
                             suppressClick.current = false;
+                            return;
+                          }
+                          if (t.panic) {
+                            if (
+                              window.confirm(
+                                "¿Pausar el reprecio de TODOS los productos?",
+                              )
+                            ) {
+                              startTransition(async () => {
+                                await pauseAllAction();
+                                router.refresh();
+                              });
+                            }
                             return;
                           }
                           window.dispatchEvent(new CustomEvent(t.ev));
@@ -663,15 +678,10 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
                             />
                           </>
                         )}
-                        {t.icon === "bars" && (
-                          <g
-                            stroke={`rgb(${t.rgb})`}
-                            strokeWidth="2.6"
-                            strokeLinecap="round"
-                          >
-                            <line x1={SX - 8} y1={SY + 7} x2={SX - 8} y2={SY + 1} />
-                            <line x1={SX} y1={SY + 7} x2={SX} y2={SY - 5} />
-                            <line x1={SX + 8} y1={SY + 7} x2={SX + 8} y2={SY - 2} />
+                        {t.icon === "pause" && (
+                          <g fill={`rgb(${t.rgb})`}>
+                            <rect x={SX - 7} y={SY - 8} width="4.5" height="16" rx="1.2" />
+                            <rect x={SX + 2.5} y={SY - 8} width="4.5" height="16" rx="1.2" />
                           </g>
                         )}
                         {t.icon === "list" && (
