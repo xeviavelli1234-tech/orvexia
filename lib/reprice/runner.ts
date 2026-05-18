@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { decryptToken } from "@/lib/crypto";
 import { SpApiClient } from "@/lib/amazon/client";
 import { getCompetition, patchListingPrice } from "@/lib/amazon/pricing";
+import { fetchAllListings } from "@/lib/amazon/listings";
+import { upsertListingsBatch } from "@/lib/db/sellerListing";
 import { isFixtureMode } from "@/lib/amazon/fixtures";
 import { isRepricingAllowed, type SellerPlan } from "@/lib/billing";
 import { isScheduleAllowed } from "./schedule";
@@ -98,6 +100,33 @@ export async function runRepricer(now: Date = new Date()): Promise<RunSummary> {
       }
       const client = new SpApiClient(refreshToken, account.spApiEnv as SpApiEnv);
       const ctx = { client, spApiEnv: account.spApiEnv, marketplaceId: account.marketplaceId };
+
+      // Sincronización automática programada del catálogo.
+      if (account.autoSyncHours > 0) {
+        const dueMs = account.autoSyncHours * 3600_000;
+        const last = account.lastSyncAt ? account.lastSyncAt.getTime() : 0;
+        if (now.getTime() - last >= dueMs) {
+          try {
+            const items = await fetchAllListings({
+              client,
+              amazonSellerId: account.amazonSellerId,
+              marketplaceId: account.marketplaceId,
+              spApiEnv: account.spApiEnv,
+            });
+            await upsertListingsBatch({ sellerAccountId: account.id, items });
+            await prisma.sellerAccount.update({
+              where: { id: account.id },
+              data: { lastSyncAt: now },
+            });
+          } catch (e) {
+            errors += 1;
+            runError =
+              (runError ? runError + " | " : "") +
+              "autosync: " +
+              (e instanceof Error ? e.message.slice(0, 200) : String(e));
+          }
+        }
+      }
 
       const listings = await prisma.sellerListing.findMany({
         where: {

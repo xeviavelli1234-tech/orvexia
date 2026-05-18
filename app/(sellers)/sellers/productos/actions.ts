@@ -8,6 +8,11 @@ import {
   setListingRange,
   setListingStrategy,
   setListingCompetition,
+  pauseAllForUser,
+  bulkSetEnabled,
+  bulkSetUseDefaults,
+  importListingConfig,
+  type ImportRow,
 } from "@/lib/db/sellerListing";
 import { setAccountSettings } from "@/lib/db/sellerAccount";
 
@@ -191,6 +196,7 @@ const settingsSchema = z.object({
   scheduleEndHour: z.number().int().min(1).max(24),
   dryRun: z.boolean(),
   patchDelayMs: z.number().int().min(0).max(10000),
+  autoSyncHours: z.number().int().min(0).max(168),
   defaultStrategy: z.enum(["BUYBOX", "MATCH", "FIXED", "MARGIN"]),
   defaultUndercutType: z.enum(["AMOUNT", "PERCENT"]),
   defaultUndercutValue: z.number().min(0).max(99999),
@@ -220,6 +226,7 @@ export async function updateAccountSettingsAction(
     scheduleEndHour: numI("scheduleEndHour", 24),
     dryRun: formData.get("dryRun") === "true",
     patchDelayMs: numI("patchDelayMs", 0),
+    autoSyncHours: numI("autoSyncHours", 0),
     defaultStrategy: String(formData.get("defaultStrategy") ?? "BUYBOX"),
     defaultUndercutType: String(formData.get("defaultUndercutType") ?? "AMOUNT"),
     defaultUndercutValue: numF("defaultUndercutValue", 0.01),
@@ -236,4 +243,129 @@ export async function updateAccountSettingsAction(
   }
   revalidatePath("/sellers/productos");
   return { ok: true };
+}
+
+export async function pauseAllAction(): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+  try {
+    await pauseAllForUser(session.userId);
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "db_failed" };
+  }
+  revalidatePath("/sellers/productos");
+  return { ok: true };
+}
+
+const bulkSchema = z.object({
+  ids: z.array(z.string().min(1)).min(1).max(2000),
+  action: z.enum(["enable", "disable", "defaultsOn", "defaultsOff"]),
+});
+
+export async function bulkListingsAction(
+  ids: string[],
+  action: string,
+): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+  const parsed = bulkSchema.safeParse({ ids, action });
+  if (!parsed.success) return { ok: false, error: "validation_failed" };
+  try {
+    if (parsed.data.action === "enable")
+      await bulkSetEnabled(session.userId, parsed.data.ids, true);
+    else if (parsed.data.action === "disable")
+      await bulkSetEnabled(session.userId, parsed.data.ids, false);
+    else if (parsed.data.action === "defaultsOn")
+      await bulkSetUseDefaults(session.userId, parsed.data.ids, true);
+    else await bulkSetUseDefaults(session.userId, parsed.data.ids, false);
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "db_failed" };
+  }
+  revalidatePath("/sellers/productos");
+  return { ok: true };
+}
+
+/** Importa configuración desde el texto de un CSV (cabecera + filas). */
+export async function importConfigAction(
+  csv: string,
+): Promise<ActionResult & { updated?: number; skipped?: number }> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+
+  const lines = csv.split(/\r?\n/).filter((l) => l.trim() !== "");
+  if (lines.length < 2) return { ok: false, error: "csv_vacio" };
+
+  const parseLine = (l: string): string[] => {
+    const out: string[] = [];
+    let cur = "";
+    let q = false;
+    for (let i = 0; i < l.length; i++) {
+      const c = l[i];
+      if (q) {
+        if (c === '"' && l[i + 1] === '"') {
+          cur += '"';
+          i++;
+        } else if (c === '"') q = false;
+        else cur += c;
+      } else if (c === '"') q = true;
+      else if (c === ",") {
+        out.push(cur);
+        cur = "";
+      } else cur += c;
+    }
+    out.push(cur);
+    return out.map((s) => s.trim());
+  };
+
+  const header = parseLine(lines[0]).map((h) => h.toLowerCase());
+  const idx = (name: string) => header.indexOf(name);
+  const skuI = idx("sku");
+  if (skuI < 0) return { ok: false, error: "falta_columna_sku" };
+
+  const num = (s: string | undefined): number | null | undefined => {
+    if (s === undefined) return undefined;
+    if (s === "") return null;
+    const n = Number.parseFloat(s.replace(",", "."));
+    return Number.isFinite(n) ? n : undefined;
+  };
+  const bool = (s: string | undefined): boolean | undefined => {
+    if (s === undefined || s === "") return undefined;
+    return s === "1" || s.toLowerCase() === "true" || s.toLowerCase() === "sí";
+  };
+  const enumOf = <T extends string>(s: string | undefined, allowed: T[]): T | undefined =>
+    s && (allowed as string[]).includes(s) ? (s as T) : undefined;
+
+  const rows: ImportRow[] = [];
+  for (let i = 1; i < lines.length; i++) {
+    const c = parseLine(lines[i]);
+    const sku = c[skuI];
+    if (!sku) continue;
+    const get = (n: string) => (idx(n) >= 0 ? c[idx(n)] : undefined);
+    rows.push({
+      sku,
+      priceMin: num(get("pricemin")),
+      priceMax: num(get("pricemax")),
+      strategy: enumOf(get("strategy"), ["BUYBOX", "MATCH", "FIXED", "MARGIN"]),
+      undercutType: enumOf(get("undercuttype"), ["AMOUNT", "PERCENT"]),
+      undercutValue: num(get("undercutvalue")) ?? undefined,
+      fixedPrice: num(get("fixedprice")),
+      cost: num(get("cost")),
+      feePercent: num(get("feepercent")),
+      targetMargin: num(get("targetmargin")),
+      noCompetition: enumOf(get("nocompetition"), ["MAX", "HOLD"]),
+      ignoreAmazon: bool(get("ignoreamazon")),
+      fulfillmentFilter: enumOf(get("fulfillmentfilter"), ["ANY", "FBA", "FBM"]),
+      minSellerRating: num(get("minsellerrating")),
+      useAccountDefaults: bool(get("useaccountdefaults")),
+    });
+  }
+  if (rows.length === 0) return { ok: false, error: "sin_filas" };
+
+  try {
+    const r = await importListingConfig(session.userId, rows);
+    revalidatePath("/sellers/productos");
+    return { ok: true, updated: r.updated, skipped: r.skipped };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "db_failed" };
+  }
 }

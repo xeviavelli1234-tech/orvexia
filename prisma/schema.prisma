@@ -341,6 +341,7 @@ model SellerAccount {
   scheduleEndHour   Int    @default(24)  // exclusivo (24 = fin de día)
   dryRun           Boolean @default(false) // calcula pero NO aplica en Amazon
   patchDelayMs     Int     @default(0)     // retardo entre PATCHes (anti QuotaExceeded)
+  autoSyncHours    Int     @default(0)     // sincroniza catálogo cada N h (0 = manual)
 
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt

@@ -63,6 +63,7 @@ export async function setAccountSettings(params: {
   scheduleEndHour: number;
   dryRun: boolean;
   patchDelayMs: number;
+  autoSyncHours: number;
   defaultStrategy: "BUYBOX" | "MATCH" | "FIXED" | "MARGIN";
   defaultUndercutType: "AMOUNT" | "PERCENT";
   defaultUndercutValue: number;
@@ -85,6 +86,7 @@ export async function setAccountSettings(params: {
       scheduleEndHour: clampH(params.scheduleEndHour, 24),
       dryRun: params.dryRun,
       patchDelayMs: Math.max(0, Math.min(10000, Math.round(params.patchDelayMs))),
+      autoSyncHours: Math.max(0, Math.min(168, Math.round(params.autoSyncHours))),
       defaultStrategy: params.defaultStrategy,
       defaultUndercutType: params.defaultUndercutType,
       defaultUndercutValue: Math.max(0, params.defaultUndercutValue),

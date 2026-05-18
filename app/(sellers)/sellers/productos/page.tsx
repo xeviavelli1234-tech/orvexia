@@ -11,6 +11,10 @@ import AccountSettings, {
   SettingsButton,
   type AccountSettingsData,
 } from "./AccountSettings";
+import CatalogOverlay, {
+  CatalogButton,
+  PanicButton,
+} from "./CatalogOverlay";
 import { RunNowButton } from "@/app/(sellers)/sellers/dashboard/RunNowButton";
 import { DisconnectButton } from "@/app/(sellers)/sellers/dashboard/DisconnectButton";
 import { prisma } from "@/lib/prisma";
@@ -135,6 +139,7 @@ export default async function ProductosPage() {
     scheduleEndHour: account.scheduleEndHour,
     dryRun: account.dryRun,
     patchDelayMs: account.patchDelayMs,
+    autoSyncHours: account.autoSyncHours,
     defaultStrategy: account.defaultStrategy,
     defaultUndercutType: account.defaultUndercutType,
     defaultUndercutValue: account.defaultUndercutValue,
@@ -198,7 +203,9 @@ export default async function ProductosPage() {
             lastRunAt={lastRun?.startedAt.toISOString() ?? null}
             proHref="/sellers/facturacion"
           />
+          <CatalogButton />
           <SettingsButton />
+          <PanicButton />
           <DisconnectButton />
         </div>
 
@@ -246,6 +253,7 @@ export default async function ProductosPage() {
       />
 
       <AccountSettings initial={accountSettings} />
+      <CatalogOverlay items={nodes} />
     </div>
   );
 }

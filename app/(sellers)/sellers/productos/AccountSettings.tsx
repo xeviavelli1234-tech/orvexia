@@ -10,6 +10,7 @@ export interface AccountSettingsData {
   scheduleEndHour: number;
   dryRun: boolean;
   patchDelayMs: number;
+  autoSyncHours: number;
   defaultStrategy: "BUYBOX" | "MATCH" | "FIXED" | "MARGIN";
   defaultUndercutType: "AMOUNT" | "PERCENT";
   defaultUndercutValue: number;
@@ -94,6 +95,7 @@ export default function AccountSettings({ initial }: { initial: AccountSettingsD
     fd.set("scheduleEndHour", String(s.scheduleEndHour));
     fd.set("dryRun", String(s.dryRun));
     fd.set("patchDelayMs", String(s.patchDelayMs));
+    fd.set("autoSyncHours", String(s.autoSyncHours));
     fd.set("defaultStrategy", s.defaultStrategy);
     fd.set("defaultUndercutType", s.defaultUndercutType);
     fd.set("defaultUndercutValue", String(s.defaultUndercutValue));
@@ -196,18 +198,37 @@ export default function AccountSettings({ initial }: { initial: AccountSettingsD
                 onClick={() => setS((v) => ({ ...v, dryRun: !v.dryRun }))}
               />
             </div>
-            <label className="block">
-              <span className={lbl}>Retardo entre PATCHes (ms) — anti QuotaExceeded</span>
-              <input
-                type="number"
-                min={0}
-                max={10000}
-                step={100}
-                value={s.patchDelayMs}
-                onChange={(e) => setS((v) => ({ ...v, patchDelayMs: Number(e.target.value) }))}
-                className={inp}
-              />
-            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block">
+                <span className={lbl}>Retardo PATCH (ms)</span>
+                <input
+                  type="number"
+                  min={0}
+                  max={10000}
+                  step={100}
+                  value={s.patchDelayMs}
+                  onChange={(e) => setS((v) => ({ ...v, patchDelayMs: Number(e.target.value) }))}
+                  className={inp}
+                />
+              </label>
+              <label className="block">
+                <span className={lbl}>Auto-sync (h, 0=off)</span>
+                <input
+                  type="number"
+                  min={0}
+                  max={168}
+                  value={s.autoSyncHours}
+                  onChange={(e) =>
+                    setS((v) => ({ ...v, autoSyncHours: Number(e.target.value) }))
+                  }
+                  className={inp}
+                />
+              </label>
+            </div>
+            <p className="text-[10px] text-white/35">
+              Auto-sync: el motor re-sincroniza tu catálogo de Amazon cada N horas
+              automáticamente (además del botón manual).
+            </p>
           </section>
 
           {/* Estrategia por defecto de la cuenta */}

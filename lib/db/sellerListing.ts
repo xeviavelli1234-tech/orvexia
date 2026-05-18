@@ -192,3 +192,110 @@ export async function setListingEnabled(params: {
     data: { repricingEnabled: params.enabled },
   });
 }
+
+// ── Operativa de catálogo (acciones masivas / import) ──
+
+export async function pauseAllForUser(userId: string) {
+  return prisma.sellerListing.updateMany({
+    where: { sellerAccount: { userId }, repricingEnabled: true },
+    data: { repricingEnabled: false },
+  });
+}
+
+export async function bulkSetEnabled(
+  userId: string,
+  ids: string[],
+  enabled: boolean,
+) {
+  if (ids.length === 0) return { count: 0 };
+  if (!enabled) {
+    return prisma.sellerListing.updateMany({
+      where: { id: { in: ids }, sellerAccount: { userId } },
+      data: { repricingEnabled: false },
+    });
+  }
+  // Solo se activan los que tienen rango, precio y ASIN válidos.
+  return prisma.sellerListing.updateMany({
+    where: {
+      id: { in: ids },
+      sellerAccount: { userId },
+      priceMin: { not: null },
+      priceMax: { not: null },
+      priceCurrent: { gt: 0 },
+      asin: { not: "" },
+    },
+    data: { repricingEnabled: true },
+  });
+}
+
+export async function bulkSetUseDefaults(
+  userId: string,
+  ids: string[],
+  value: boolean,
+) {
+  if (ids.length === 0) return { count: 0 };
+  return prisma.sellerListing.updateMany({
+    where: { id: { in: ids }, sellerAccount: { userId } },
+    data: { useAccountDefaults: value },
+  });
+}
+
+export interface ImportRow {
+  sku: string;
+  priceMin?: number | null;
+  priceMax?: number | null;
+  strategy?: "BUYBOX" | "MATCH" | "FIXED" | "MARGIN";
+  undercutType?: "AMOUNT" | "PERCENT";
+  undercutValue?: number;
+  fixedPrice?: number | null;
+  cost?: number | null;
+  feePercent?: number | null;
+  targetMargin?: number | null;
+  noCompetition?: "MAX" | "HOLD";
+  ignoreAmazon?: boolean;
+  fulfillmentFilter?: "ANY" | "FBA" | "FBM";
+  minSellerRating?: number | null;
+  useAccountDefaults?: boolean;
+}
+
+/** Actualiza configuración por SKU (solo del propio usuario). Tolerante. */
+export async function importListingConfig(
+  userId: string,
+  rows: ImportRow[],
+): Promise<{ updated: number; skipped: number }> {
+  let updated = 0;
+  let skipped = 0;
+  for (const row of rows) {
+    if (!row.sku) {
+      skipped += 1;
+      continue;
+    }
+    const data: Record<string, unknown> = {};
+    if (row.priceMin !== undefined) data.priceMin = row.priceMin;
+    if (row.priceMax !== undefined) data.priceMax = row.priceMax;
+    if (row.strategy) data.strategy = row.strategy;
+    if (row.undercutType) data.undercutType = row.undercutType;
+    if (row.undercutValue !== undefined) data.undercutValue = row.undercutValue;
+    if (row.fixedPrice !== undefined) data.fixedPrice = row.fixedPrice;
+    if (row.cost !== undefined) data.cost = row.cost;
+    if (row.feePercent !== undefined) data.feePercent = row.feePercent;
+    if (row.targetMargin !== undefined) data.targetMargin = row.targetMargin;
+    if (row.noCompetition) data.noCompetition = row.noCompetition;
+    if (row.ignoreAmazon !== undefined) data.ignoreAmazon = row.ignoreAmazon;
+    if (row.fulfillmentFilter) data.fulfillmentFilter = row.fulfillmentFilter;
+    if (row.minSellerRating !== undefined) data.minSellerRating = row.minSellerRating;
+    if (row.useAccountDefaults !== undefined)
+      data.useAccountDefaults = row.useAccountDefaults;
+    if (Object.keys(data).length === 0) {
+      skipped += 1;
+      continue;
+    }
+    const res = await prisma.sellerListing.updateMany({
+      where: { sku: row.sku, sellerAccount: { userId } },
+      data,
+    });
+    if (res.count > 0) updated += 1;
+    else skipped += 1;
+  }
+  return { updated, skipped };
+}
