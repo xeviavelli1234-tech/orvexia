@@ -196,6 +196,7 @@ export default function ProductNetwork({
 }) {
   const router = useRouter();
   const [selId, setSelId] = useState<string | null>(null);
+  const [analyticsId, setAnalyticsId] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [err, setErr] = useState<string | null>(null);
   const [min, setMin] = useState("");
@@ -318,6 +319,7 @@ export default function ProductNetwork({
   }, [nodes]);
 
   const sel = nodes.find((x) => x.id === selId) ?? null;
+  const analyticsNode = nodes.find((x) => x.id === analyticsId) ?? null;
 
   function open(n: NetNode) {
     if (suppressClick.current) {
@@ -325,6 +327,7 @@ export default function ProductNetwork({
       return;
     }
     setSelId(n.id);
+    setAnalyticsId(null);
     setErr(null);
     setMin(n.priceMin != null ? String(n.priceMin) : "");
     setMax(n.priceMax != null ? String(n.priceMax) : "");
@@ -603,6 +606,90 @@ export default function ProductNetwork({
               </g>
             );
           })}
+
+          {/* Rama del producto seleccionado → icono de analítica */}
+          {(() => {
+            if (!selId) return null;
+            const p = layout.pos.find((q) => q.id === selId);
+            if (!p) return null;
+            const h = layout.hub;
+            const dx = p.x - h.x;
+            const dy = p.y - h.y;
+            const len = Math.hypot(dx, dy) || 1;
+            const ux = dx / len;
+            const uy = dy / len;
+            const SX = p.x + ux * 132 - uy * 34;
+            const SY = p.y + uy * 132 + ux * 34;
+            const SR = 24;
+            const isOpen = analyticsId === selId;
+            const branch = `M${p.x},${p.y} Q${(p.x + SX) / 2 - uy * 14},${
+              (p.y + SY) / 2 + ux * 14
+            } ${SX},${SY}`;
+            return (
+              <g>
+                <path
+                  d={branch}
+                  fill="none"
+                  stroke="rgba(125,211,252,0.28)"
+                  strokeWidth="1.2"
+                  vectorEffect="non-scaling-stroke"
+                />
+                <path
+                  className="net-flow"
+                  d={branch}
+                  fill="none"
+                  stroke="rgba(125,211,252,0.7)"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  vectorEffect="non-scaling-stroke"
+                />
+                <g
+                  className="hex-node"
+                  onClick={() => {
+                    if (suppressClick.current) {
+                      suppressClick.current = false;
+                      return;
+                    }
+                    setAnalyticsId((v) => (v === selId ? null : selId));
+                  }}
+                >
+                  <circle cx={SX} cy={SY} r={SR + 16} fill="transparent" />
+                  <circle
+                    cx={SX}
+                    cy={SY}
+                    r={SR + 5}
+                    fill="none"
+                    stroke={isOpen ? "rgba(125,211,252,0.95)" : "rgba(125,211,252,0.4)"}
+                    strokeWidth={isOpen ? 2 : 1.2}
+                    filter="url(#glow)"
+                  />
+                  <circle
+                    cx={SX}
+                    cy={SY}
+                    r={SR}
+                    fill="rgba(8,10,22,0.92)"
+                    stroke="rgba(125,211,252,0.7)"
+                    strokeWidth="1.3"
+                  />
+                  <g stroke="#7dd3fc" strokeWidth="2.6" strokeLinecap="round">
+                    <line x1={SX - 9} y1={SY + 7} x2={SX - 9} y2={SY + 1} />
+                    <line x1={SX} y1={SY + 7} x2={SX} y2={SY - 5} />
+                    <line x1={SX + 9} y1={SY + 7} x2={SX + 9} y2={SY - 2} />
+                  </g>
+                  <text
+                    x={SX}
+                    y={SY + SR + 15}
+                    textAnchor="middle"
+                    fontSize="11"
+                    fontWeight={700}
+                    fill="rgba(125,211,252,0.85)"
+                  >
+                    Analítica
+                  </text>
+                </g>
+              </g>
+            );
+          })()}
         </g>
       </svg>
 
@@ -615,8 +702,43 @@ export default function ProductNetwork({
         </ZoomBtn>
       </div>
 
+      {/* Analítica del producto (abierta desde la rama del icono) */}
+      {analyticsNode && (
+        <div className="absolute inset-y-0 right-0 w-full sm:w-[380px] bg-[rgba(7,7,18,0.96)] backdrop-blur-2xl border-l border-cyan-400/15 shadow-[-30px_0_60px_-30px_rgba(34,211,238,0.35)] overflow-y-auto fade-in">
+          <div className="sticky top-0 z-10 flex items-start gap-3 px-5 py-4 bg-[rgba(7,7,18,0.96)] backdrop-blur-2xl border-b border-white/10">
+            <div className="min-w-0 flex-1">
+              <div className="text-[10px] uppercase tracking-[0.16em] text-cyan-300/70">
+                Analítica del producto
+              </div>
+              <h3 className="text-sm font-bold text-white/90 leading-snug line-clamp-2">
+                {analyticsNode.title}
+              </h3>
+            </div>
+            <button
+              onClick={() => setAnalyticsId(null)}
+              aria-label="Cerrar"
+              className="shrink-0 h-7 w-7 grid place-items-center rounded-md text-white/40 hover:text-white hover:bg-white/10 transition-colors text-lg leading-none"
+            >
+              ×
+            </button>
+          </div>
+          <div className="p-5">
+            <MiniActivity
+              events={activity[analyticsNode.id] ?? []}
+              currency={analyticsNode.currency}
+            />
+            <button
+              onClick={() => setAnalyticsId(null)}
+              className="mt-4 w-full rounded-lg border border-white/15 text-white/70 py-2 text-sm font-semibold hover:bg-white/[0.06] transition-colors"
+            >
+              ← Volver a configuración
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Inspector / administración del nodo */}
-      {sel && (
+      {sel && !analyticsNode && (
         <div className="absolute inset-y-0 right-0 w-full sm:w-[380px] bg-[rgba(7,7,18,0.96)] backdrop-blur-2xl border-l border-cyan-400/15 shadow-[-30px_0_60px_-30px_rgba(34,211,238,0.35)] overflow-y-auto fade-in">
           {/* Cabecera */}
           <div className="sticky top-0 z-10 flex items-start gap-3 px-5 py-4 bg-[rgba(7,7,18,0.96)] backdrop-blur-2xl border-b border-white/10">
@@ -824,8 +946,6 @@ export default function ProductNetwork({
               </div>
             </>
           )}
-
-            <MiniActivity events={activity[sel.id] ?? []} currency={sel.currency} />
 
             {err && (
               <p className="mt-4 text-xs text-red-300 rounded-lg border border-red-400/25 bg-red-500/10 p-2.5">
