@@ -71,20 +71,23 @@ export default function WaveField() {
       hue: rnd(),
     }));
 
-    // cian → azul → violeta, con brillo b (0..1 hacia blanco)
+    // Paleta: turquesa → cian → índigo → violeta. Brillo b (0..1 → blanco).
+    const PAL = [
+      [45, 212, 191],
+      [34, 211, 238],
+      [99, 102, 241],
+      [168, 85, 247],
+    ];
     function tint(t: number, a: number, b: number): string {
-      let r: number, g: number, bl: number;
-      if (t < 0.5) {
-        const k = t / 0.5;
-        r = 34 + k * 65;
-        g = 211 - k * 109;
-        bl = 238 + k * 3;
-      } else {
-        const k = (t - 0.5) / 0.5;
-        r = 99 + k * 69;
-        g = 102 - k * 17;
-        bl = 241 + k * 6;
-      }
+      t = ((t % 1) + 1) % 1; // envoltura suave
+      const seg = t * 3;
+      const i = Math.min(2, Math.floor(seg));
+      const k = seg - i;
+      const c0 = PAL[i];
+      const c1 = PAL[i + 1];
+      let r = c0[0] + (c1[0] - c0[0]) * k;
+      let g = c0[1] + (c1[1] - c0[1]) * k;
+      let bl = c0[2] + (c1[2] - c0[2]) * k;
       r += (255 - r) * b;
       g += (255 - g) * b;
       bl += (255 - bl) * b;
@@ -144,9 +147,10 @@ export default function WaveField() {
       ctx.globalCompositeOperation = "source-over";
 
       // ── Rejilla de partículas ────────────────────────────────
-      const cx = w / 2 + offX;
-      const horizon = -h * 0.06 + offY;
+      const cx = w / 2;
+      const horizon = -h * 0.06;
       const spanX = w * 1.78;
+      const hueDrift = tm * 0.025 + Math.sin(tm * 0.09) * 0.04;
 
       let prevX: number[] = [];
       let prevY: number[] = [];
@@ -156,6 +160,9 @@ export default function WaveField() {
         const persp = Math.pow(jn, 1.26);
         const scale = 0.42 + persp * 0.98;
         const rowY = horizon + persp * (h * 1.12);
+        // parallax por profundidad (las filas cercanas se mueven más)
+        const pxo = offX * (0.3 + persp * 1.1);
+        const pyo = offY * (0.3 + persp * 1.0);
 
         const curX: number[] = [];
         const curY: number[] = [];
@@ -163,23 +170,27 @@ export default function WaveField() {
         for (let i = 0; i < COLS; i++) {
           const inx = i / (COLS - 1);
 
-          const wave =
-            Math.sin(i * 0.32 + tm * 1.2 + j * 0.15) * 22 +
-            Math.sin(j * 0.4 + tm * 0.95) * 16 +
-            Math.sin((i + j) * 0.2 - tm * 0.75) * 9;
+          // domain-warp: terreno más orgánico
+          const di = i + Math.sin(j * 0.3 + tm * 0.4) * 1.5;
+          const dj = j + Math.sin(i * 0.25 - tm * 0.35) * 1.2;
 
-          const x = cx + (inx - 0.5) * spanX * scale;
-          const y = rowY - wave * scale;
+          const wave =
+            Math.sin(di * 0.32 + tm * 1.2 + j * 0.15) * 22 +
+            Math.sin(dj * 0.4 + tm * 0.95) * 16 +
+            Math.sin((di + dj) * 0.2 - tm * 0.75) * 9 +
+            Math.sin(i * 0.05 + j * 0.04 + tm * 0.5) * 11; // oleaje lento
+
+          const x = cx + (inx - 0.5) * spanX * scale + pxo;
+          const y = rowY - wave * scale + pyo;
           curX.push(x);
           curY.push(y);
 
           if (y < -28 || y > h + 28) continue;
 
-          // cresta: cuanto más alto el punto en su entorno, más brillante
-          const crest = Math.max(0, wave / 47); // 0..~1
+          const crest = Math.max(0, wave / 58); // 0..~1
           const radius = (0.85 + persp * 2.0) * scale + 0.3;
           const depthA = 0.3 + persp * 0.62;
-          const hueT = Math.min(1, Math.max(0, inx * 0.7 + (wave + 47) / 140));
+          const hueT = inx * 0.5 + (wave + 58) / 170 + hueDrift;
           const bright = crest * 0.55;
 
           // glow suave en puntos cercanos / crestas
@@ -194,6 +205,19 @@ export default function WaveField() {
           ctx.fillStyle = tint(hueT, Math.min(1, depthA + crest * 0.3), bright);
           ctx.arc(x, y, radius, 0, Math.PI * 2);
           ctx.fill();
+
+          // destello ocasional en crestas cercanas
+          if (persp > 0.5 && crest > 0.5) {
+            const tw = Math.sin(tm * 3.2 + i * 1.7 + j * 2.3);
+            if (tw > 0.86) {
+              ctx.globalCompositeOperation = "lighter";
+              ctx.beginPath();
+              ctx.fillStyle = `rgba(255,255,255,${(tw - 0.86) * 2.4})`;
+              ctx.arc(x, y, radius * 1.5, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.globalCompositeOperation = "source-over";
+            }
+          }
         }
 
         // líneas de relieve entre filas cercanas
@@ -203,13 +227,34 @@ export default function WaveField() {
             ctx.moveTo(prevX[i], prevY[i]);
             ctx.lineTo(curX[i], curY[i]);
           }
-          ctx.strokeStyle = `rgba(120,160,255,${0.04 + persp * 0.07})`;
+          ctx.strokeStyle = `rgba(130,170,255,${0.035 + persp * 0.07})`;
           ctx.lineWidth = 1;
           ctx.stroke();
         }
         prevX = curX;
         prevY = curY;
       }
+
+      // ── Fundidos de borde (el campo emerge de la oscuridad) ──
+      const topF = ctx.createLinearGradient(0, 0, 0, h * 0.34);
+      topF.addColorStop(0, "rgba(5,6,16,0.92)");
+      topF.addColorStop(1, "rgba(5,6,16,0)");
+      ctx.fillStyle = topF;
+      ctx.fillRect(0, 0, w, h * 0.34);
+
+      const botF = ctx.createLinearGradient(0, h * 0.88, 0, h);
+      botF.addColorStop(0, "rgba(4,5,14,0)");
+      botF.addColorStop(1, "rgba(4,5,14,0.55)");
+      ctx.fillStyle = botF;
+      ctx.fillRect(0, h * 0.88, w, h * 0.12);
+
+      const sideF = ctx.createLinearGradient(0, 0, w, 0);
+      sideF.addColorStop(0, "rgba(4,5,14,0.5)");
+      sideF.addColorStop(0.12, "rgba(4,5,14,0)");
+      sideF.addColorStop(0.88, "rgba(4,5,14,0)");
+      sideF.addColorStop(1, "rgba(4,5,14,0.5)");
+      ctx.fillStyle = sideF;
+      ctx.fillRect(0, 0, w, h);
     }
 
     let raf = 0;
