@@ -20,6 +20,16 @@ type Strategy = "BUYBOX" | "MATCH" | "FIXED" | "MARGIN";
 type UndercutType = "AMOUNT" | "PERCENT";
 type NoComp = "MAX" | "HOLD";
 
+export interface ActivityEvt {
+  reason: string;
+  priceBefore: number;
+  priceAfter: number;
+  competitorPrice: number | null;
+  success: boolean;
+  errorMessage: string | null;
+  createdAt: string; // ISO
+}
+
 export interface NetNode {
   id: string;
   title: string;
@@ -157,7 +167,33 @@ function errMsg(code: string): string {
   return m[code] ?? code;
 }
 
-export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
+const REASON_LABEL: Record<string, string> = {
+  competitor_undercut: "Bajo competidor",
+  competitor_match: "Igualado",
+  fixed_price: "Precio fijo",
+  margin_floor: "Suelo margen",
+  no_competition: "Sin competencia",
+  min_floor: "Suelo (mín)",
+  max_ceiling: "Techo (máx)",
+  hold: "Mantener",
+  no_change: "Sin cambio",
+};
+function relTime(iso: string): string {
+  const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+  if (m < 1) return "ahora";
+  if (m < 60) return `hace ${m} min`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `hace ${h} h`;
+  return `hace ${Math.round(h / 24)} d`;
+}
+
+export default function ProductNetwork({
+  nodes,
+  activity = {},
+}: {
+  nodes: NetNode[];
+  activity?: Record<string, ActivityEvt[]>;
+}) {
   const router = useRouter();
   const [selId, setSelId] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -789,6 +825,8 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
             </>
           )}
 
+            <MiniActivity events={activity[sel.id] ?? []} currency={sel.currency} />
+
             {err && (
               <p className="mt-4 text-xs text-red-300 rounded-lg border border-red-400/25 bg-red-500/10 p-2.5">
                 {err}
@@ -797,6 +835,104 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function MiniActivity({
+  events,
+  currency,
+}: {
+  events: ActivityEvt[];
+  currency: string;
+}) {
+  if (events.length === 0) {
+    return (
+      <div className="mt-5 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+        <div className="text-[10px] uppercase tracking-wider text-white/40">
+          Actividad del producto
+        </div>
+        <p className="mt-2 text-xs text-white/40">Aún sin reprecios. Espera a un ciclo.</p>
+      </div>
+    );
+  }
+
+  // events vienen recientes→antiguos; para la curva los ordeno antiguo→reciente
+  const asc = [...events].sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+  );
+  const pts = asc.map((e) => e.priceAfter);
+  let lo = Math.min(...pts);
+  let hi = Math.max(...pts);
+  if (hi <= lo) {
+    lo -= 1;
+    hi += 1;
+  } else {
+    const pad = (hi - lo) * 0.15;
+    lo -= pad;
+    hi += pad;
+  }
+  const W = 320;
+  const H = 64;
+  const n = asc.length;
+  const xx = (i: number) => (n <= 1 ? W / 2 : (i / (n - 1)) * (W - 8) + 4);
+  const yy = (p: number) => 6 + (1 - (p - lo) / (hi - lo)) * (H - 12);
+  const d = asc
+    .map((e, i) => `${i === 0 ? "M" : "L"}${xx(i).toFixed(1)},${yy(e.priceAfter).toFixed(1)}`)
+    .join(" ");
+  const errs = events.filter((e) => !e.success).length;
+
+  return (
+    <div className="mt-5 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] uppercase tracking-wider text-white/40">
+          Actividad del producto
+        </span>
+        <span className="text-[10px] text-white/35">
+          {events.length} eventos
+          {errs > 0 && <span className="text-red-400"> · {errs} err</span>}
+        </span>
+      </div>
+
+      <svg viewBox={`0 0 ${W} ${H}`} className="mt-2 w-full" preserveAspectRatio="none" height={64}>
+        {n > 1 && (
+          <path d={d} fill="none" stroke="#7dd3fc" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+        )}
+        {asc.map((e, i) => (
+          <circle key={i} cx={xx(i)} cy={yy(e.priceAfter)} r="2.4" fill="#7dd3fc" />
+        ))}
+      </svg>
+
+      <ul className="mt-2 space-y-1.5">
+        {events.slice(0, 6).map((e, i) => {
+          const delta = e.priceAfter - e.priceBefore;
+          const down = delta < -0.0001;
+          const up = delta > 0.0001;
+          return (
+            <li key={i} className="text-[11px] text-white/55">
+              <div className="flex items-center justify-between gap-2">
+                <span className="truncate">
+                  <span className="text-white/40">{REASON_LABEL[e.reason] ?? e.reason}</span>
+                  {e.competitorPrice != null && (
+                    <span className="text-white/30"> · comp. {fmt(e.competitorPrice)} {sym(currency)}</span>
+                  )}
+                  <span className="text-white/30"> · {relTime(e.createdAt)}</span>
+                </span>
+                <span className="font-mono whitespace-nowrap">
+                  {fmt(e.priceBefore)}
+                  <span className="mx-1 text-white/25">→</span>
+                  <span className={down ? "text-emerald-300" : up ? "text-cyan-300" : "text-white/50"}>
+                    {fmt(e.priceAfter)}
+                  </span>
+                </span>
+              </div>
+              {!e.success && e.errorMessage && (
+                <div className="text-[10px] text-red-400/80 truncate">{e.errorMessage}</div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }
