@@ -659,6 +659,10 @@ body {
   animation: node-float var(--d, 4s) ease-in-out infinite;
   animation-delay: var(--dl, 0s);
 }
+/* Al pasar el ratón se detiene para poder hacer clic con precisión */
+.node-float:hover {
+  animation-play-state: paused;
+}
 
 /* Anillo girando alrededor del icono de Amazon */
 @keyframes hub-spin {

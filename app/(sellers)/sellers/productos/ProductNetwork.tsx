@@ -247,7 +247,7 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
     if (!d.active) return;
     const a = toVB(e.clientX, e.clientY);
     const b = toVB(d.sx, d.sy);
-    if (Math.abs(e.clientX - d.sx) + Math.abs(e.clientY - d.sy) > 4) d.moved = true;
+    if (Math.abs(e.clientX - d.sx) + Math.abs(e.clientY - d.sy) > 8) d.moved = true;
     setView((v) => clampView({ k: v.k, x: d.ox + (a.x - b.x), y: d.oy + (a.y - b.y) }));
   }
   function onPointerUp() {
@@ -538,6 +538,8 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
                 }
               >
                 <g className="hex-node" onClick={() => open(p)}>
+                {/* Área de clic generosa (transparente, sí captura el ratón) */}
+                <circle cx={p.x} cy={p.y} r={R + 22} fill="transparent" />
                 <polygon points={hexPoints(p.x, p.y, R + 7)} fill="none"
                   stroke={active ? "#fff" : col.halo}
                   strokeWidth={active ? 2 : 1.1} filter="url(#glow)" />
