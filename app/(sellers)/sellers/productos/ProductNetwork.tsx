@@ -616,10 +616,10 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
                       suppressClick.current = false;
                       return;
                     }
-                    window.open(
-                      `/sellers/analiticas?p=${encodeURIComponent(selId)}`,
-                      "_blank",
-                      "noopener,noreferrer",
+                    window.dispatchEvent(
+                      new CustomEvent("orvexia:open-analytics", {
+                        detail: { productId: selId },
+                      }),
                     );
                   }}
                 >

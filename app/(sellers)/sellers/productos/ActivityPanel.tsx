@@ -1,4 +1,4 @@
-import Link from "next/link";
+import AnalyticsTrigger from "./AnalyticsTrigger";
 
 export interface EventDTO {
   id: string;
@@ -77,23 +77,8 @@ export default function ActivityPanel({
         </div>
       </div>
 
-      {/* Enlace a la página de analíticas */}
-      <Link
-        href="/sellers/analiticas"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex items-center justify-between rounded-xl border border-cyan-400/20 bg-cyan-400/[0.05] px-3 py-2.5 text-sm text-white/85 hover:bg-cyan-400/10 transition-colors"
-      >
-        <span className="flex items-center gap-2">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-          Analíticas y actividad
-        </span>
-        <span className="text-[11px] text-white/40">
-          {events.length}
-          {errors > 0 && <span className="text-red-400"> · {errors} err</span>}
-          <span className="ml-1 text-white/50">→</span>
-        </span>
-      </Link>
+      {/* Disparador del overlay de analíticas (global) */}
+      <AnalyticsTrigger count={events.length} errors={errors} />
     </>
   );
 }

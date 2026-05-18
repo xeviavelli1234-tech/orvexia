@@ -6,6 +6,7 @@ import { listListingsByAccount } from "@/lib/db/sellerListing";
 import { SyncButton } from "./SyncButton";
 import ProductNetwork, { type NetNode } from "./ProductNetwork";
 import AssistantWidget from "./AssistantWidget";
+import AnalyticsOverlay, { type OvEvent, type OvProduct } from "./AnalyticsOverlay";
 import { RunNowButton } from "@/app/(sellers)/sellers/dashboard/RunNowButton";
 import { DisconnectButton } from "@/app/(sellers)/sellers/dashboard/DisconnectButton";
 import { prisma } from "@/lib/prisma";
@@ -70,16 +71,17 @@ export default async function ProductosPage() {
   }));
 
   const billing = getBillingState(account.plan as SellerPlan, account.trialEndsAt);
-  const [lastRun, rawEvents] = await Promise.all([
+  const [lastRun, runCount, rawEvents] = await Promise.all([
     prisma.repricingRun.findFirst({
       where: { sellerAccountId: account.id },
       orderBy: { startedAt: "desc" },
       select: { startedAt: true },
     }),
+    prisma.repricingRun.count({ where: { sellerAccountId: account.id } }),
     prisma.repricingEvent.findMany({
       where: { listing: { sellerAccountId: account.id } },
       orderBy: { createdAt: "desc" },
-      take: 150,
+      take: 300,
       include: { listing: { select: { title: true } } },
     }),
   ]);
@@ -93,6 +95,28 @@ export default async function ProductosPage() {
     success: e.success,
     errorMessage: e.errorMessage,
     createdAt: e.createdAt.toISOString(),
+  }));
+
+  const ovEvents: OvEvent[] = rawEvents.map((e) => ({
+    listingId: e.listingId,
+    title: e.listing?.title ?? "Producto",
+    reason: e.reason,
+    priceBefore: e.priceBefore,
+    priceAfter: e.priceAfter,
+    competitorPrice: e.competitorPrice,
+    success: e.success,
+    errorMessage: e.errorMessage,
+    createdAt: e.createdAt.toISOString(),
+  }));
+  const ovProducts: OvProduct[] = listings.map((l) => ({
+    id: l.id,
+    title: l.title,
+    currency: l.currency,
+    asin: l.asin,
+    sku: l.sku,
+    strategy: l.strategy,
+    repricingEnabled: l.repricingEnabled,
+    priceCurrent: l.priceCurrent,
   }));
 
 
@@ -190,6 +214,14 @@ export default async function ProductosPage() {
       </section>
 
       <AssistantWidget />
+
+      <AnalyticsOverlay
+        products={ovProducts}
+        events={ovEvents}
+        plan={{ label: billing.label, intervalMinutes: billing.intervalMinutes }}
+        runCount={runCount}
+        lastRunAt={lastRun?.startedAt.toISOString() ?? null}
+      />
     </div>
   );
 }
