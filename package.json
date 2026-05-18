@@ -14,7 +14,7 @@
     "db:sync-eci-lavavajillas-prices": "tsx scripts/sync-eci-lavavajillas-prices.ts",
     "db:import-awin-feed": "tsx scripts/import-awin-feed.ts",
     "db:scrape-images-lg": "tsx scripts/scrape-images-lg.ts",
-    "build": "prisma generate && prisma migrate deploy && node --max-old-space-size=12288 node_modules/next/dist/bin/next build",
+    "build": "prisma generate && PRISMA_SCHEMA_DISABLE_ADVISORY_LOCK=1 prisma migrate deploy && node --max-old-space-size=12288 node_modules/next/dist/bin/next build",
     "start": "next start",
     "lint": "eslint",
     "test": "tsx --test \"lib/**/*.test.ts\""
