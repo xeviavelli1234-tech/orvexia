@@ -33,12 +33,14 @@ function clampView(v: { k: number; x: number; y: number }) {
     by0 = VB_H * 0.1,
     by1 = VB_H * 0.9;
 
-  let xMin = mx - v.k * bx1;
-  let xMax = VB_W - mx - v.k * bx0;
+  // El borde derecho del contenido no puede entrar más allá de (VB_W-mx)
+  // ni el izquierdo dejar hueco más allá de mx. Si cabe entero → centrado.
+  let xMin = VB_W - mx - v.k * bx1;
+  let xMax = mx - v.k * bx0;
   if (xMin > xMax) xMin = xMax = (xMin + xMax) / 2;
 
-  let yMin = my - v.k * by1;
-  let yMax = VB_H - my - v.k * by0;
+  let yMin = VB_H - my - v.k * by1;
+  let yMax = my - v.k * by0;
   if (yMin > yMax) yMin = yMax = (yMin + yMax) / 2;
 
   return {
