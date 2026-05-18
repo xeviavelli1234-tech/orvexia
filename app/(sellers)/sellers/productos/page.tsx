@@ -5,8 +5,10 @@ import { getSellerAccountByUserId } from "@/lib/db/sellerAccount";
 import { listListingsByAccount } from "@/lib/db/sellerListing";
 import { SyncButton } from "./SyncButton";
 import ProductNetwork, { type NetNode } from "./ProductNetwork";
+import { RunNowButton } from "@/app/(sellers)/sellers/dashboard/RunNowButton";
+import { DisconnectButton } from "@/app/(sellers)/sellers/dashboard/DisconnectButton";
 
-export const metadata = { title: "Mis productos · Orvexia Repricer" };
+export const metadata = { title: "Centro de control · Orvexia Repricer" };
 export const dynamic = "force-dynamic";
 
 export default async function ProductosPage() {
@@ -20,7 +22,7 @@ export default async function ProductosPage() {
         <Backdrop />
         <div className="relative max-w-2xl mx-auto text-center">
           <h1 className="text-3xl font-extrabold tracking-tight text-gradient-neon">
-            Mis productos
+            Centro de control
           </h1>
           <div className="mt-8 neon-border rounded-3xl p-10 glass">
             <p className="text-white/70">Primero conecta tu cuenta de Amazon.</p>
@@ -39,6 +41,7 @@ export default async function ProductosPage() {
   const listings = await listListingsByAccount(account.id);
   const hasListings = listings.length > 0;
   const withPrice = listings.filter((l) => l.priceCurrent > 0).length;
+  const active = listings.filter((l) => l.repricingEnabled).length;
   const catalogValue = listings.reduce((s, l) => s + (l.priceCurrent || 0), 0);
 
   const nodes: NetNode[] = listings.map((l) => ({
@@ -49,89 +52,97 @@ export default async function ProductosPage() {
     imageUrl: l.imageUrl,
     priceCurrent: l.priceCurrent,
     currency: l.currency,
+    priceMin: l.priceMin,
+    priceMax: l.priceMax,
+    repricingEnabled: l.repricingEnabled,
   }));
 
   return (
-    <main className="relative min-h-screen overflow-hidden px-4 sm:px-6 py-10">
+    <main className="relative min-h-screen overflow-hidden px-3 sm:px-5 py-6">
       <Backdrop />
 
-      <div className="relative max-w-7xl mx-auto">
-        {/* ── Barra HUD ───────────────────────────────────────────── */}
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Link href="/dashboard/repricer" className="text-xs text-white/45 hover:text-white/80">
-              ← Panel
-            </Link>
-            <span className="text-white/20">/</span>
-            <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-white">
-              Red de <span className="text-gradient-neon">productos</span>
-            </h1>
-          </div>
-          <SyncButton lastSyncAt={account.lastSyncAt} />
+      <div className="relative max-w-[1500px] mx-auto">
+        <div className="flex items-center gap-3 mb-4">
+          <Link href="/dashboard/repricer" className="text-xs text-white/45 hover:text-white/80">
+            ← Panel
+          </Link>
+          <span className="text-white/20">/</span>
+          <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-white">
+            Centro de <span className="text-gradient-neon">control</span>
+          </h1>
         </div>
 
-        <div className="mt-5 neon-border rounded-2xl">
-          <div className="grid grid-cols-3 divide-x divide-white/10 rounded-2xl bg-[rgba(10,7,4,0.6)]">
-            <HudStat label="Productos" value={String(listings.length)} />
-            <HudStat label="Con precio" value={`${withPrice}/${listings.length}`} />
-            <HudStat
+        {/* ── PANEL ÚNICO ─────────────────────────────────────────── */}
+        <div className="neon-border rounded-3xl overflow-hidden shadow-[0_0_90px_-20px_rgba(99,102,241,0.5)]">
+          {/* Barra de administración */}
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3 px-5 py-4 bg-[rgba(8,6,18,0.7)] border-b border-white/10">
+            <Stat label="Productos" value={String(listings.length)} />
+            <Stat label="Con precio" value={`${withPrice}/${listings.length}`} />
+            <Stat label="Reprecio activo" value={`${active}/${listings.length}`} />
+            <Stat
               label="Valor catálogo"
-              value={
-                catalogValue > 0
-                  ? catalogValue.toLocaleString("es-ES", { maximumFractionDigits: 0 }) + " €"
-                  : "—"
-              }
+              value={catalogValue > 0 ? Math.round(catalogValue).toLocaleString("es-ES") + " €" : "—"}
             />
-          </div>
-        </div>
-
-        {/* ── Grafo ───────────────────────────────────────────────── */}
-        {!hasListings ? (
-          <div className="mt-8 neon-border rounded-3xl p-12 text-center glass">
-            <p className="text-white/70">
-              Aún no hay productos en la red. Pulsa{" "}
-              <strong className="text-white">&ldquo;Sincronizar con Amazon&rdquo;</strong> arriba.
-            </p>
-            <p className="mt-3 text-xs text-white/40">
-              Se mostrarán todos los listings publicados en tu cuenta de Seller Central.
-            </p>
-          </div>
-        ) : (
-          <div className="mt-6 rounded-3xl border border-indigo-400/15 bg-black/40 p-1.5 sm:p-2 shadow-[0_0_80px_-20px_rgba(99,102,241,0.45)] overflow-hidden">
-            <div className="rounded-[20px] overflow-hidden">
-              <ProductNetwork nodes={nodes} />
+            <div className="ml-auto flex flex-wrap items-center gap-3">
+              <SyncButton lastSyncAt={account.lastSyncAt} />
+              <RunNowButton />
+              <Link
+                href="/dashboard/repricer"
+                className="text-sm text-white/55 hover:text-white underline underline-offset-4"
+              >
+                Facturación
+              </Link>
+              <DisconnectButton />
             </div>
           </div>
-        )}
 
-        <p className="mt-6 text-center text-xs text-white/35">
-          Pasa el ratón por un nodo para ver el detalle. Solo visualización — la
-          configuración de reprecio se añadirá más adelante.
+          {/* Lienzo espacial */}
+          <div className="relative w-full h-[74vh] min-h-[560px] bg-[#020207]">
+            {hasListings ? (
+              <ProductNetwork nodes={nodes} />
+            ) : (
+              <div className="absolute inset-0 grid place-items-center text-center px-6">
+                <div>
+                  <p className="text-white/70">
+                    No hay productos en la red. Pulsa{" "}
+                    <strong className="text-white">&ldquo;Sincronizar con Amazon&rdquo;</strong> arriba.
+                  </p>
+                  <p className="mt-3 text-xs text-white/40">
+                    Se traerán todos los listings publicados en tu cuenta de Seller Central.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <p className="mt-4 text-center text-xs text-white/35">
+          Haz clic en un nodo para definir mín/máx y activar el reprecio. Verde = repreciando ·
+          Ámbar = configurable · Gris = sin oferta en Amazon.
         </p>
       </div>
     </main>
   );
 }
 
-function HudStat({ label, value }: { label: string; value: string }) {
+function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="px-4 py-4 text-center">
-      <div className="text-[10px] uppercase tracking-[0.18em] text-white/40">{label}</div>
-      <div className="mt-1 font-mono text-2xl sm:text-3xl font-extrabold text-amber-300 amber-glow tabular-nums">
+    <div className="text-center sm:text-left">
+      <div className="text-[10px] uppercase tracking-[0.16em] text-white/40">{label}</div>
+      <div className="font-mono text-xl sm:text-2xl font-extrabold text-amber-300 amber-glow tabular-nums">
         {value}
       </div>
     </div>
   );
 }
 
-/** Fondo espacial profundo (nebulosas). */
+/** Fondo espacial profundo (nebulosas) — el lienzo tiene el detalle animado. */
 function Backdrop() {
   return (
-    <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden bg-[#030308]">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_-5%,rgba(99,102,241,0.18),transparent_60%)]" />
-      <div className="absolute top-[20%] left-[-10%] h-[600px] w-[760px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(34,211,238,0.12),transparent_62%)]" />
-      <div className="absolute bottom-[-12%] right-[-8%] h-[620px] w-[820px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(217,70,239,0.12),transparent_62%)]" />
-      <div className="absolute bottom-[10%] left-[15%] h-[420px] w-[560px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(129,140,248,0.10),transparent_60%)]" />
+    <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden bg-[#020207]">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_-5%,rgba(99,102,241,0.16),transparent_60%)]" />
+      <div className="absolute top-[18%] left-[-10%] h-[620px] w-[780px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(34,211,238,0.10),transparent_62%)]" />
+      <div className="absolute bottom-[-12%] right-[-8%] h-[640px] w-[840px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(217,70,239,0.10),transparent_62%)]" />
     </div>
   );
 }

@@ -655,6 +655,32 @@ body {
 }
 .star-tw { animation: twinkle var(--t, 4s) ease-in-out infinite; }
 
+/* Parallax: capas de estrellas a la deriva (lenta) */
+@keyframes drift-a { from { transform: translate3d(0,0,0); } to { transform: translate3d(-46px, 26px, 0); } }
+@keyframes drift-b { from { transform: translate3d(0,0,0); } to { transform: translate3d(34px, -30px, 0); } }
+@keyframes drift-c { from { transform: translate3d(0,0,0); } to { transform: translate3d(-22px, -14px, 0); } }
+.star-layer-a { animation: drift-a 90s ease-in-out infinite alternate; }
+.star-layer-b { animation: drift-b 130s ease-in-out infinite alternate; }
+.star-layer-c { animation: drift-c 180s ease-in-out infinite alternate; }
+
+/* Nebulosas que flotan / respiran */
+@keyframes neb-float {
+  0%   { transform: translate3d(0,0,0) scale(1);    opacity: 0.85; }
+  50%  { transform: translate3d(2.5%, -2%, 0) scale(1.12); opacity: 1; }
+  100% { transform: translate3d(0,0,0) scale(1);    opacity: 0.85; }
+}
+.neb-float { transform-box: view-box; transform-origin: center; animation: neb-float var(--nd, 26s) var(--ease-in-out) infinite; }
+
+/* Estrella fugaz */
+@keyframes shoot {
+  0%      { opacity: 0; transform: translate3d(0,0,0); }
+  4%      { opacity: 1; }
+  16%     { opacity: 1; }
+  22%     { opacity: 0; transform: translate3d(420px, 240px, 0); }
+  100%    { opacity: 0; transform: translate3d(420px, 240px, 0); }
+}
+.shoot { animation: shoot var(--sd, 9s) linear infinite; animation-delay: var(--sdelay, 0s); }
+
 /* ============================================================
    Reduced motion
    ============================================================ */
