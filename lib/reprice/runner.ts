@@ -198,6 +198,7 @@ export async function runRepricer(now: Date = new Date()): Promise<RunSummary> {
                 competitorPrice,
                 reason: "no_change",
                 success: true,
+                buyBox: comp.buyBox,
               },
             });
             continue;
@@ -215,6 +216,7 @@ export async function runRepricer(now: Date = new Date()): Promise<RunSummary> {
                 reason: result.reason,
                 success: true,
                 simulated: true,
+                buyBox: comp.buyBox,
               },
             });
             repriced += 1;
@@ -241,6 +243,7 @@ export async function runRepricer(now: Date = new Date()): Promise<RunSummary> {
                   competitorPrice,
                   reason: result.reason,
                   success: true,
+                  buyBox: comp.buyBox,
                 },
               }),
             ]);

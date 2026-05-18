@@ -429,6 +429,7 @@ model RepricingEvent {
   reason          String
   success         Boolean  @default(true)
   simulated       Boolean  @default(false) // dry-run: calculado pero no aplicado
+  buyBox          BuyBoxStatus @default(UNKNOWN) // estado Buy Box en ese ciclo
   errorMessage    String?  @db.Text
 
   createdAt       DateTime @default(now())

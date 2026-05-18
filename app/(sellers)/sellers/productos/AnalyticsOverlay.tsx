@@ -10,6 +10,7 @@ export interface OvEvent {
   priceAfter: number;
   competitorPrice: number | null;
   success: boolean;
+  buyBox: "WON" | "LOST" | "UNKNOWN";
   errorMessage: string | null;
   createdAt: string;
 }
@@ -121,11 +122,17 @@ export default function AnalyticsOverlay({
       const c = errorCode(e.errorMessage);
       byErr.set(c, (byErr.get(c) ?? 0) + 1);
     }
+    const bbWon = evs.filter((e) => e.buyBox === "WON").length;
+    const bbLost = evs.filter((e) => e.buyBox === "LOST").length;
+    const bbTotal = bbWon + bbLost;
     return {
       changed: changed.length,
       errs: errs.length,
       down,
       up,
+      bbWon,
+      bbLost,
+      bbPct: bbTotal > 0 ? Math.round((bbWon / bbTotal) * 100) : null,
       reasons: [...byReason.entries()].sort((a, b) => b[1] - a[1]),
       errors: [...byErr.entries()].sort((a, b) => b[1] - a[1]),
     };
@@ -145,6 +152,78 @@ export default function AnalyticsOverlay({
     }
     return [...m.entries()].map(([title, pts]) => ({ title, pts: pts.slice(-80) })).slice(0, 6);
   }, [evs]);
+
+  // Tendencias: ahorro y margen ACUMULADOS en el tiempo
+  const trends = useMemo(() => {
+    const asc = [...evs]
+      .filter((e) => e.success)
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    const save: Array<{ t: number; p: number }> = [];
+    const marg: Array<{ t: number; p: number }> = [];
+    let cs = 0;
+    let cm = 0;
+    for (const e of asc) {
+      const d = e.priceAfter - e.priceBefore;
+      const t = new Date(e.createdAt).getTime();
+      if (d < -0.0001) cs += e.priceBefore - e.priceAfter;
+      if (d > 0.0001) cm += e.priceAfter - e.priceBefore;
+      save.push({ t, p: Math.round(cs * 100) / 100 });
+      marg.push({ t, p: Math.round(cm * 100) / 100 });
+    }
+    const out: Array<{ title: string; pts: { t: number; p: number }[] }> = [];
+    if (save.length) out.push({ title: "Ahorro acumulado", pts: save.slice(-120) });
+    if (marg.length) out.push({ title: "Margen acumulado", pts: marg.slice(-120) });
+    return out;
+  }, [evs]);
+
+  // Comparativa entre productos (vista global)
+  const compareRows = useMemo(() => {
+    const m = new Map<
+      string,
+      { title: string; events: number; saved: number; margin: number; bb: number; bbTot: number }
+    >();
+    for (const e of evs) {
+      const row =
+        m.get(e.listingId) ??
+        { title: e.title, events: 0, saved: 0, margin: 0, bb: 0, bbTot: 0 };
+      row.events += 1;
+      const d = e.priceAfter - e.priceBefore;
+      if (e.success && d < -0.0001) row.saved += e.priceBefore - e.priceAfter;
+      if (e.success && d > 0.0001) row.margin += e.priceAfter - e.priceBefore;
+      if (e.buyBox === "WON") {
+        row.bb += 1;
+        row.bbTot += 1;
+      } else if (e.buyBox === "LOST") row.bbTot += 1;
+      m.set(e.listingId, row);
+    }
+    return [...m.values()].sort((a, b) => b.events - a.events);
+  }, [evs]);
+  const maxCmp = Math.max(1, ...compareRows.map((r) => r.events));
+
+  function exportCsv() {
+    const rows = [
+      ["fecha", "producto", "motivo", "precio_antes", "precio_despues", "competidor", "buybox", "ok", "error"],
+      ...evs.map((e) => [
+        new Date(e.createdAt).toISOString(),
+        e.title.replace(/"/g, "'"),
+        e.reason,
+        String(e.priceBefore),
+        String(e.priceAfter),
+        e.competitorPrice != null ? String(e.competitorPrice) : "",
+        e.buyBox,
+        e.success ? "1" : "0",
+        (e.errorMessage ?? "").replace(/[\r\n",]/g, " "),
+      ]),
+    ];
+    const csv = rows.map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `orvexia-analitica-${focus ? focus.sku : "todos"}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   const listView = focus ? [focus] : products;
 
@@ -184,6 +263,20 @@ export default function AnalyticsOverlay({
               ))}
             </select>
             <button
+              onClick={exportCsv}
+              className="rounded-lg border border-white/15 px-2.5 py-1.5 text-[11px] text-white/70 hover:bg-white/10 transition-colors"
+              title="Exportar CSV"
+            >
+              CSV
+            </button>
+            <button
+              onClick={() => window.print()}
+              className="rounded-lg border border-white/15 px-2.5 py-1.5 text-[11px] text-white/70 hover:bg-white/10 transition-colors"
+              title="Imprimir / Guardar como PDF"
+            >
+              PDF
+            </button>
+            <button
               onClick={() => setOpen(false)}
               aria-label="Cerrar"
               className="h-8 w-8 grid place-items-center rounded-md text-white/40 hover:text-white hover:bg-white/10 transition-colors text-lg leading-none"
@@ -200,12 +293,17 @@ export default function AnalyticsOverlay({
 
         <div className="p-5 space-y-5">
           {/* KPIs */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
             <Kpi label="Eventos" value={String(evs.length)} />
             <Kpi label="Cambios" value={String(stats.changed)} c="cyan" />
             <Kpi label="Errores" value={String(stats.errs)} c={stats.errs ? "red" : undefined} />
             <Kpi label="Ahorro" value={eur(stats.down)} c="emerald" />
             <Kpi label="Margen" value={eur(stats.up)} c="cyan" />
+            <Kpi
+              label="% Buy Box"
+              value={stats.bbPct != null ? `${stats.bbPct}%` : "—"}
+              c={stats.bbPct != null && stats.bbPct >= 50 ? "emerald" : "red"}
+            />
             <Kpi label="Productos" value={String(listView.length)} />
           </div>
 
@@ -217,6 +315,49 @@ export default function AnalyticsOverlay({
               <LineChart series={series} />
             )}
           </Panel>
+
+          {/* Tendencias acumuladas */}
+          <Panel title="Tendencias (ahorro y margen acumulados)">
+            {trends.length === 0 ? (
+              <Empty />
+            ) : (
+              <LineChart series={trends} />
+            )}
+          </Panel>
+
+          {/* Comparativa entre productos (vista global) */}
+          {!focus && (
+            <Panel title="Comparativa entre productos">
+              {compareRows.length === 0 ? (
+                <Empty />
+              ) : (
+                <ul className="space-y-3">
+                  {compareRows.slice(0, 12).map((r) => (
+                    <li key={r.title}>
+                      <div className="flex items-center justify-between text-xs mb-1">
+                        <span className="truncate max-w-[60%] text-white/80">{r.title}</span>
+                        <span className="text-white/45 font-mono">
+                          {r.events} ev · ahorro {eur(r.saved)}
+                          {r.bbTot > 0 && (
+                            <span className="text-emerald-300">
+                              {" "}
+                              · BB {Math.round((r.bb / r.bbTot) * 100)}%
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                      <div className="h-2 rounded-full bg-white/[0.06] overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-cyan-400/60"
+                          style={{ width: `${(r.events / maxCmp) * 100}%` }}
+                        />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Panel>
+          )}
 
           <div className="grid lg:grid-cols-2 gap-5">
             <Panel title="Por motivo">

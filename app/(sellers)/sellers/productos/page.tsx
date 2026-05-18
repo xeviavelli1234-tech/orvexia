@@ -114,6 +114,7 @@ export default async function ProductosPage() {
     priceAfter: e.priceAfter,
     competitorPrice: e.competitorPrice,
     success: e.success,
+    buyBox: e.buyBox,
     errorMessage: e.errorMessage,
     createdAt: e.createdAt.toISOString(),
   }));
