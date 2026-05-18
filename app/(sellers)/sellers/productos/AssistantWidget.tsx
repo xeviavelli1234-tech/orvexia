@@ -10,14 +10,14 @@ interface Msg {
 const GREETING: Msg = {
   role: "assistant",
   content:
-    "¡Hola! Soy el **Asistente Orvexia**. Conozco tu catálogo y el motor de reprecio, y además puedo **actuar**: configurar productos, activar/pausar el reprecio o lanzar un ciclo.\n\nPrueba: *“pon el Sapiens a igualar el mercado con mín 12 y máx 35”*.",
+    "¡Hola! Soy el **Asistente Orvexia**. Pregúntame de **toda la web**: comparar precios, mejores ofertas, guías de compra, categorías… o del **repricer** (configurar productos, activar reprecio, lanzar ciclos).\n\nPrueba: *“¿cuál es la lavadora más barata?”* o *“pon el Sapiens a igualar el mercado con mín 12 y máx 35”*.",
 };
 
 const START_SUGGESTIONS = [
-  "¿Qué productos tengo sin configurar?",
+  "¿Cuál es la lavadora más barata?",
+  "Mejores ofertas en televisores",
+  "¿Qué guías de compra tenéis?",
   "¿Cómo igualo el precio de mercado?",
-  "¿Por qué un producto sale en gris?",
-  "Lanza un ciclo de reprecio ahora",
 ];
 
 const STORE_KEY = "orvexia_assistant_v1";

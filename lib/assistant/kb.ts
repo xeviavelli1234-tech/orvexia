@@ -7,7 +7,21 @@ import "server-only";
  *  - followUps(): preguntas de seguimiento sugeridas.
  */
 
-export const SYSTEM_PROMPT = `Eres "Asistente Orvexia", el ayudante experto del módulo Orvexia Repricer (repricer automático para Amazon España).
+export const SYSTEM_PROMPT = `Eres "Asistente Orvexia", el ayudante experto de TODA la web Orvexia. Orvexia es:
+1) Un COMPARADOR de precios de electrodomésticos (lavadoras, televisores, frigoríficos, lavavajillas, secadoras, hornos, microondas, aspiradoras, cafeteras, aires acondicionados). Compara precios entre tiendas (Amazon, MediaMarkt, PcComponentes, El Corte Inglés, Fnac…), con historial de precios, mínimo histórico, bajadas recientes, ofertas destacadas, guías de compra, opiniones/reseñas, fotos, comunidad y recomendaciones. Los usuarios pueden registrarse, guardar productos y crear alertas de precio.
+2) "Orvexia Repricer": un módulo B2B para vendedores de Amazon España que reprecian sus productos automáticamente.
+
+Respondes CUALQUIER pregunta sobre la web: comparador, productos, precios, mejores ofertas, guías, categorías, comunidad, cuenta/registro, alertas, y también el repricer. Si te preguntan por un producto, precio, oferta, categoría o guía concreta, USA las herramientas de catálogo (search_products, product_detail, best_deals, list_categories, list_guides) para dar datos reales y enlaces; no inventes precios.
+
+SECCIONES DE LA WEB (rutas):
+- "/" inicio y buscador. "/buscar" búsqueda. "/categorias" categorías. "/productos/{slug}" ficha con comparativa de tiendas e historial.
+- "/ofertas-destacadas" mejores ofertas. "/bajadas-recientes" bajadas de precio. "/recomendados" recomendados. "/popularidad" populares.
+- "/guias" guías de compra (mejor lavadora, televisor, frigorífico, lavavajillas, secadora, horno, microondas, aspiradora, cafetera, aire acondicionado).
+- "/opiniones" reseñas. "/fotos" fotos. "/comunidad" comunidad (preguntas/discusiones). "/sobre-nosotros". Legales: "/aviso-legal", "/politica-privacidad", "/politica-cookies".
+- Cuenta: "/login", "/register", "/perfil" (productos guardados y alertas). "/dashboard".
+- Repricer: "/dashboard/repricer" y el Centro de control "/sellers/productos". "/sellers" landing, "/sellers/facturacion".
+
+(Lo que sigue es el detalle del módulo Repricer.)
 
 ESTILO:
 - Español, cercano y profesional. Claro y conciso (máx ~130 palabras salvo que pidan detalle).
@@ -127,6 +141,54 @@ const TOPICS: Topic[] = [
       "El **modo demo** te deja probar todo el flujo (sincronizar, configurar, repreciar) con datos de prueba **sin tocar tu cuenta real de Amazon**. Ideal para aprender antes de conectar la cuenta de verdad.",
   },
   {
+    keys: ["comparador", "comparar", "qué es orvexia", "que es orvexia", "para qué sirve", "para que sirve", "la web"],
+    answer:
+      "Orvexia es un **comparador de precios de electrodomésticos**: ves el mismo producto en varias tiendas (Amazon, MediaMarkt, PcComponentes, El Corte Inglés, Fnac…), su **historial de precios** y el **mínimo histórico**, además de **ofertas destacadas**, **bajadas recientes**, **guías de compra**, **opiniones** y **comunidad**. Puedes registrarte para **guardar productos** y crear **alertas de precio**. También tiene el módulo B2B **Orvexia Repricer**.",
+    follow: ["¿Qué ofertas hay ahora?", "¿Qué guías de compra tenéis?"],
+  },
+  {
+    keys: ["oferta", "ofertas", "barato", "barata", "más barato", "mas barato", "descuento", "bajada", "chollo", "precio de", "cuánto cuesta", "cuanto cuesta"],
+    answer:
+      "Puedo buscarte productos y precios reales. Dime el producto o la categoría (p.ej. *“lavadora más barata”* o *“precio del Samsung QLED 55”*) y te traigo las mejores ofertas con tienda y enlace. También tienes **/ofertas-destacadas** y **/bajadas-recientes**.",
+    follow: ["Lavadora más barata", "Mejores ofertas en televisores"],
+  },
+  {
+    keys: ["guía", "guia", "guías", "guias", "mejor lavadora", "mejor televisor", "qué comprar", "que comprar", "recomiendas", "recomienda"],
+    answer:
+      "Tenemos **guías de compra** por categoría: mejor lavadora, televisor, frigorífico, lavavajillas, secadora, horno, microondas, aspiradora, cafetera y aire acondicionado (en **/guias**). Dime la categoría y te oriento con productos y precios reales.",
+    follow: ["¿Qué guías de compra tenéis?", "Mejor frigorífico calidad-precio"],
+  },
+  {
+    keys: ["categoría", "categoria", "categorías", "categorias", "tipos de producto", "qué vendéis", "que vendeis"],
+    answer:
+      "Categorías: televisores, lavadoras, frigoríficos, lavavajillas, secadoras, hornos, microondas, aspiradoras, cafeteras y aires acondicionados. Mira **/categorias** o pídeme productos de una categoría concreta.",
+  },
+  {
+    keys: ["alerta", "avísame", "avisame", "notif", "baje de precio", "cuando baje"],
+    answer:
+      "Regístrate e inicia sesión, abre la ficha del producto y crea una **alerta de precio**: te avisamos cuando baje del precio objetivo. Tus productos guardados y alertas están en **/perfil**.",
+  },
+  {
+    keys: ["guardar", "favorito", "favoritos", "lista", "seguir producto"],
+    answer:
+      "Con sesión iniciada puedes **guardar** productos para seguirlos; los ves en **/perfil**. Útil para vigilar precios y activar alertas.",
+  },
+  {
+    keys: ["registr", "crear cuenta", "iniciar sesión", "iniciar sesion", "login", "cuenta gratis"],
+    answer:
+      "Crea tu cuenta en **/register** e inicia sesión en **/login**. Es gratis y te permite guardar productos, crear alertas de precio y acceder al panel.",
+  },
+  {
+    keys: ["comunidad", "foro", "preguntar a otros", "opiniones de", "reseñas", "resenas", "valoraciones"],
+    answer:
+      "En **/comunidad** puedes leer y publicar preguntas y discusiones. Las **opiniones/reseñas** de productos están en **/opiniones** y en cada ficha de producto.",
+  },
+  {
+    keys: ["historial", "mínimo histórico", "minimo historico", "evolución", "evolucion", "gráfica de precio", "grafica de precio"],
+    answer:
+      "Cada ficha de producto muestra el **historial de precios** por tienda y el **mínimo histórico**, para que sepas si el precio actual es realmente bueno antes de comprar.",
+  },
+  {
     keys: ["desconect", "quitar cuenta", "borrar cuenta amazon"],
     answer:
       "Con **Desconectar mi cuenta de Amazon** (barra izquierda) se detiene el reprecio y se desvincula la cuenta. Tendrás que volver a conectarla para reanudar.",
@@ -180,4 +242,11 @@ export const TOOLS_GUIDE = `PUEDES EJECUTAR ACCIONES con herramientas cuando el 
 - toggle_repricing activa/pausa.
 - run_repricer lanza un ciclo inmediato.
 - Tras actuar, confirma en una frase qué hiciste y el efecto. Si el usuario solo pregunta, NO actúes: explica.
-- Para "igualar el mercado": set_strategy MATCH + noCompetition HOLD y asegúrate de que tenga rango.`;
+- Para "igualar el mercado": set_strategy MATCH + noCompetition HOLD y asegúrate de que tenga rango.
+
+HERRAMIENTAS DE CATÁLOGO (solo lectura, datos públicos del comparador) — úsalas SIEMPRE que pregunten por productos, precios, ofertas, categorías o guías:
+- search_products: busca productos por texto/categoría y los ordena por precio, valoración o descuento. Devuelve mejor precio y tienda.
+- product_detail: ficha de un producto: precios por tienda, valoración y enlace.
+- best_deals: mayores descuentos (opcionalmente por categoría).
+- list_categories / list_guides: categorías y guías de compra disponibles.
+Da siempre precios reales obtenidos de estas herramientas y la ruta del producto (/productos/{slug}); nunca inventes cifras. Si no hay resultados, dilo y sugiere /buscar.`;

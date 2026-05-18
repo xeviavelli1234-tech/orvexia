@@ -1,4 +1,6 @@
 import "server-only";
+import { prisma } from "@/lib/prisma";
+import type { Category } from "@/app/generated/prisma/client";
 import { getSellerAccountByUserId } from "@/lib/db/sellerAccount";
 import {
   listListingsByAccount,
@@ -76,6 +78,85 @@ export const TOOLS = [
     description: "Lanza un ciclo de reprecio inmediato para la cuenta del usuario.",
     input_schema: { type: "object" as const, properties: {} },
   },
+  {
+    name: "search_products",
+    description:
+      "Comparador: busca productos por texto y/o categoría y devuelve el mejor precio y tienda. Para preguntas de precios/ofertas/'el más barato'.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        query: { type: "string", description: "Texto a buscar (nombre, marca, modelo)." },
+        category: {
+          type: "string",
+          description:
+            "Categoría: televisor, lavadora, frigorifico, lavavajillas, secadora, horno, microondas, aspiradora, cafetera, aire acondicionado.",
+        },
+        sort: { type: "string", enum: ["price", "rating", "discount"] },
+        limit: { type: "number" },
+      },
+    },
+  },
+  {
+    name: "product_detail",
+    description: "Comparador: ficha de un producto con precios por tienda y enlace.",
+    input_schema: {
+      type: "object" as const,
+      properties: { query: { type: "string" } },
+      required: ["query"],
+    },
+  },
+  {
+    name: "best_deals",
+    description: "Comparador: mayores descuentos/bajadas de precio (opcional por categoría).",
+    input_schema: {
+      type: "object" as const,
+      properties: { category: { type: "string" } },
+    },
+  },
+  {
+    name: "list_categories",
+    description: "Comparador: categorías disponibles y cuántos productos hay en cada una.",
+    input_schema: { type: "object" as const, properties: {} },
+  },
+  {
+    name: "list_guides",
+    description: "Comparador: guías de compra disponibles y sus enlaces.",
+    input_schema: { type: "object" as const, properties: {} },
+  },
+];
+
+const CAT_MAP: Array<[RegExp, Category]> = [
+  [/televis|tv\b/i, "TELEVISORES"],
+  [/lavadora/i, "LAVADORAS"],
+  [/frigor|nevera|combi/i, "FRIGORIFICOS"],
+  [/lavavaj/i, "LAVAVAJILLAS"],
+  [/secadora/i, "SECADORAS"],
+  [/horno/i, "HORNOS"],
+  [/microond/i, "MICROONDAS"],
+  [/aspirador/i, "ASPIRADORAS"],
+  [/cafeter/i, "CAFETERAS"],
+  [/aire|aacc|acondicion/i, "AIRES_ACONDICIONADOS"],
+];
+function toCategory(s?: string): Category | undefined {
+  if (!s) return undefined;
+  for (const [re, c] of CAT_MAP) if (re.test(s)) return c;
+  return undefined;
+}
+function price(n: number) {
+  return `${n.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
+}
+
+const GUIDES: Array<[string, string]> = [
+  ["mejor-lavadora", "Mejor lavadora"],
+  ["mejor-televisor", "Mejor televisor"],
+  ["mejor-frigorifico", "Mejor frigorífico"],
+  ["mejor-lavavajillas", "Mejor lavavajillas"],
+  ["mejor-secadora", "Mejor secadora"],
+  ["mejor-horno", "Mejor horno"],
+  ["mejor-microondas", "Mejor microondas"],
+  ["mejor-aspiradora", "Mejor aspiradora"],
+  ["mejor-cafetera", "Mejor cafetera"],
+  ["mejor-aire-acondicionado", "Mejor aire acondicionado"],
 ];
 
 function norm(s: string) {
@@ -211,6 +292,144 @@ export async function executeTool(
     if (name === "run_repricer") {
       const s = await runRepricer();
       return `Ciclo ejecutado: ${s.listingsProcessed} procesados, ${s.listingsRepriced} reprecciados, ${s.errors} errores.`;
+    }
+
+    if (name === "search_products") {
+      const cat = toCategory(input.category as string | undefined);
+      const q = (input.query as string | undefined)?.trim();
+      const sort = String(input.sort ?? "price");
+      const limit = Math.min(15, Math.max(1, Number(input.limit ?? 8)));
+      const products = await prisma.product.findMany({
+        where: {
+          ...(cat ? { category: cat } : {}),
+          ...(q
+            ? {
+                OR: [
+                  { name: { contains: q, mode: "insensitive" as const } },
+                  { brand: { contains: q, mode: "insensitive" as const } },
+                  { model: { contains: q, mode: "insensitive" as const } },
+                ],
+              }
+            : {}),
+          offers: { some: { inStock: true } },
+        },
+        include: {
+          offers: { where: { inStock: true }, orderBy: { priceCurrent: "asc" }, take: 1 },
+        },
+        take: 60,
+      });
+      const rows = products
+        .filter((p) => p.offers.length > 0)
+        .map((p) => ({
+          name: p.name,
+          brand: p.brand,
+          slug: p.slug,
+          rating: p.rating ?? 0,
+          best: p.offers[0].priceCurrent,
+          store: p.offers[0].store,
+          disc: p.offers[0].discountPercent ?? 0,
+        }));
+      rows.sort((a, b) =>
+        sort === "rating"
+          ? b.rating - a.rating
+          : sort === "discount"
+            ? b.disc - a.disc
+            : a.best - b.best,
+      );
+      if (rows.length === 0) return "Sin resultados en el comparador. Sugiere usar /buscar.";
+      return rows
+        .slice(0, limit)
+        .map(
+          (r) =>
+            `• ${r.name} (${r.brand}) — ${price(r.best)} en ${r.store}${
+              r.rating ? ` · ⭐${r.rating}` : ""
+            } · /productos/${r.slug}`,
+        )
+        .join("\n");
+    }
+
+    if (name === "product_detail") {
+      const q = String(input.query ?? "").trim();
+      if (!q) return "Indica el producto.";
+      const p = await prisma.product.findFirst({
+        where: {
+          OR: [
+            { slug: q.toLowerCase() },
+            { name: { contains: q, mode: "insensitive" } },
+            { brand: { contains: q, mode: "insensitive" } },
+            { model: { contains: q, mode: "insensitive" } },
+          ],
+        },
+        include: {
+          offers: { where: { inStock: true }, orderBy: { priceCurrent: "asc" } },
+          reviews: { select: { rating: true } },
+        },
+      });
+      if (!p) return `No encontré "${q}" en el comparador.`;
+      const avg =
+        p.reviews.length > 0
+          ? (p.reviews.reduce((s, r) => s + r.rating, 0) / p.reviews.length).toFixed(1)
+          : p.rating
+            ? String(p.rating)
+            : "—";
+      const offers = p.offers
+        .slice(0, 8)
+        .map((o) => `  - ${o.store}: ${price(o.priceCurrent)}${o.discountPercent ? ` (-${o.discountPercent}%)` : ""} → ${o.externalUrl}`)
+        .join("\n");
+      const min = p.offers.length ? price(p.offers[0].priceCurrent) : "sin ofertas";
+      return `${p.name} (${p.brand})\nValoración: ${avg}${p.reviewCount ? ` (${p.reviewCount} reseñas)` : ""}\nMejor precio: ${min}\nOfertas:\n${offers || "  (sin ofertas en stock)"}\nFicha: /productos/${p.slug}`;
+    }
+
+    if (name === "best_deals") {
+      const cat = toCategory(input.category as string | undefined);
+      const offers = await prisma.offer.findMany({
+        where: {
+          inStock: true,
+          discountPercent: { not: null, gt: 0 },
+          ...(cat ? { product: { category: cat } } : {}),
+        },
+        include: { product: { select: { name: true, slug: true } } },
+        orderBy: { discountPercent: "desc" },
+        take: 12,
+      });
+      if (offers.length === 0) return "Ahora mismo no hay descuentos destacados. Ver /ofertas-destacadas.";
+      return offers
+        .map(
+          (o) =>
+            `• ${o.product.name} — -${o.discountPercent}% → ${price(o.priceCurrent)} en ${o.store} · /productos/${o.product.slug}`,
+        )
+        .join("\n");
+    }
+
+    if (name === "list_categories") {
+      const groups = await prisma.product.groupBy({
+        by: ["category"],
+        _count: { _all: true },
+      });
+      const friendly: Record<string, string> = {
+        TELEVISORES: "Televisores",
+        LAVADORAS: "Lavadoras",
+        FRIGORIFICOS: "Frigoríficos",
+        LAVAVAJILLAS: "Lavavajillas",
+        SECADORAS: "Secadoras",
+        HORNOS: "Hornos",
+        MICROONDAS: "Microondas",
+        ASPIRADORAS: "Aspiradoras",
+        CAFETERAS: "Cafeteras",
+        AIRES_ACONDICIONADOS: "Aires acondicionados",
+        OTROS: "Otros",
+      };
+      return groups
+        .sort((a, b) => b._count._all - a._count._all)
+        .map((g) => `• ${friendly[g.category] ?? g.category}: ${g._count._all} productos`)
+        .join("\n") + "\nVer todas en /categorias";
+    }
+
+    if (name === "list_guides") {
+      return (
+        GUIDES.map(([slug, title]) => `• ${title} → /guias/${slug}`).join("\n") +
+        "\nÍndice en /guias"
+      );
     }
 
     return `Herramienta desconocida: ${name}.`;
