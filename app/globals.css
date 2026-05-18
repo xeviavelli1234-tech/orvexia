@@ -617,6 +617,38 @@ body {
 .shine-on-hover:hover::after { animation: shine-sweep 0.9s var(--ease-out); }
 
 /* ============================================================
+   Product network graph (estilo "ops map")
+   ============================================================ */
+/* Flujo de datos a lo largo de las líneas del grafo */
+@keyframes net-dash {
+  to { stroke-dashoffset: -28; }
+}
+.net-flow {
+  stroke-dasharray: 2 12;
+  animation: net-dash 1.6s linear infinite;
+}
+/* Núcleo ámbar de cada nodo: respiración suave */
+@keyframes hex-breathe {
+  0%, 100% { opacity: 0.85; transform: scale(1); }
+  50%      { opacity: 1;    transform: scale(1.06); }
+}
+.hex-core {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: hex-breathe 3.2s var(--ease-in-out) infinite;
+}
+.amber-glow {
+  text-shadow: 0 0 18px rgba(249,115,22,0.55), 0 0 44px rgba(234,88,12,0.30);
+}
+.hex-node {
+  cursor: pointer;
+  transition: transform 0.25s var(--ease-out);
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.hex-node:hover { transform: scale(1.12); }
+
+/* ============================================================
    Reduced motion
    ============================================================ */
 @media (prefers-reduced-motion: reduce) {

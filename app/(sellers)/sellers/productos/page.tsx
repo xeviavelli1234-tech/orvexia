@@ -4,16 +4,10 @@ import { getSession } from "@/lib/session";
 import { getSellerAccountByUserId } from "@/lib/db/sellerAccount";
 import { listListingsByAccount } from "@/lib/db/sellerListing";
 import { SyncButton } from "./SyncButton";
+import ProductNetwork, { type NetNode } from "./ProductNetwork";
 
 export const metadata = { title: "Mis productos · Orvexia Repricer" };
 export const dynamic = "force-dynamic";
-
-function currencySymbol(code: string): string {
-  if (code === "EUR") return "€";
-  if (code === "USD") return "$";
-  if (code === "GBP") return "£";
-  return code;
-}
 
 export default async function ProductosPage() {
   const session = await getSession();
@@ -23,7 +17,7 @@ export default async function ProductosPage() {
   if (!account || !account.active) {
     return (
       <main className="relative min-h-screen overflow-hidden px-4 sm:px-6 py-16">
-        <NetworkBackdrop />
+        <Backdrop />
         <div className="relative max-w-2xl mx-auto text-center">
           <h1 className="text-3xl font-extrabold tracking-tight text-gradient-neon">
             Mis productos
@@ -45,35 +39,57 @@ export default async function ProductosPage() {
   const listings = await listListingsByAccount(account.id);
   const hasListings = listings.length > 0;
   const withPrice = listings.filter((l) => l.priceCurrent > 0).length;
+  const catalogValue = listings.reduce((s, l) => s + (l.priceCurrent || 0), 0);
+
+  const nodes: NetNode[] = listings.map((l) => ({
+    id: l.id,
+    title: l.title,
+    asin: l.asin,
+    sku: l.sku,
+    imageUrl: l.imageUrl,
+    priceCurrent: l.priceCurrent,
+    currency: l.currency,
+  }));
 
   return (
-    <main className="relative min-h-screen overflow-hidden px-4 sm:px-6 py-12">
-      <NetworkBackdrop />
+    <main className="relative min-h-screen overflow-hidden px-4 sm:px-6 py-10">
+      <Backdrop />
 
       <div className="relative max-w-6xl mx-auto">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-gradient-neon">
-              Mis productos
+        {/* ── Barra HUD ───────────────────────────────────────────── */}
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Link href="/dashboard/repricer" className="text-xs text-white/45 hover:text-white/80">
+              ← Panel
+            </Link>
+            <span className="text-white/20">/</span>
+            <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-white">
+              Red de <span className="text-gradient-neon">productos</span>
             </h1>
-            <p className="mt-2 text-sm text-white/55">
-              Todos los productos publicados en tu cuenta de Amazon, sincronizados en tiempo real.
-            </p>
           </div>
           <SyncButton lastSyncAt={account.lastSyncAt} />
         </div>
 
-        {hasListings && (
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Chip label="Productos" value={listings.length} />
-            <Chip label="Con precio" value={`${withPrice} / ${listings.length}`} />
+        <div className="mt-5 neon-border rounded-2xl">
+          <div className="grid grid-cols-3 divide-x divide-white/10 rounded-2xl bg-[rgba(10,7,4,0.6)]">
+            <HudStat label="Productos" value={String(listings.length)} />
+            <HudStat label="Con precio" value={`${withPrice}/${listings.length}`} />
+            <HudStat
+              label="Valor catálogo"
+              value={
+                catalogValue > 0
+                  ? catalogValue.toLocaleString("es-ES", { maximumFractionDigits: 0 }) + " €"
+                  : "—"
+              }
+            />
           </div>
-        )}
+        </div>
 
+        {/* ── Grafo ───────────────────────────────────────────────── */}
         {!hasListings ? (
-          <div className="mt-10 neon-border rounded-3xl p-12 text-center glass">
+          <div className="mt-8 neon-border rounded-3xl p-12 text-center glass">
             <p className="text-white/70">
-              Aún no hay productos importados. Pulsa{" "}
+              Aún no hay productos en la red. Pulsa{" "}
               <strong className="text-white">&ldquo;Sincronizar con Amazon&rdquo;</strong> arriba.
             </p>
             <p className="mt-3 text-xs text-white/40">
@@ -81,111 +97,39 @@ export default async function ProductosPage() {
             </p>
           </div>
         ) : (
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {listings.map((l) => (
-              <article
-                key={l.id}
-                className="glow-on-hover relative rounded-2xl glass p-4 flex gap-4"
-              >
-                <span
-                  className="node-pulse absolute top-3 right-3 h-2 w-2 rounded-full bg-cyan-300"
-                  aria-hidden
-                />
-                <div className="shrink-0">
-                  {l.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={l.imageUrl}
-                      alt={l.title}
-                      className="w-16 h-16 object-contain rounded-lg bg-white/[0.04] border border-white/10"
-                    />
-                  ) : (
-                    <div
-                      className="w-16 h-16 rounded-lg border border-white/10 bg-grid-cyber-fine"
-                      aria-hidden
-                    />
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="text-sm font-semibold leading-tight text-white/90 line-clamp-2">
-                    {l.title}
-                  </h3>
-                  <div className="mt-1 text-[11px] font-mono text-white/35 truncate">
-                    {l.asin || "sin ASIN"} · {l.sku}
-                  </div>
-                  <div className="mt-3">
-                    {l.priceCurrent > 0 ? (
-                      <span className="text-lg font-bold text-cyan-300 text-glow-cyan">
-                        {l.priceCurrent.toLocaleString("es-ES", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}{" "}
-                        {currencySymbol(l.currency)}
-                      </span>
-                    ) : (
-                      <span className="text-sm font-semibold text-amber-300">Sin precio</span>
-                    )}
-                  </div>
-                </div>
-              </article>
-            ))}
+          <div className="mt-6 rounded-3xl border border-white/8 bg-[rgba(8,5,3,0.55)] p-2 sm:p-4">
+            <ProductNetwork nodes={nodes} />
           </div>
         )}
 
-        <p className="mt-8 text-xs text-white/35">
-          Solo visualización. La configuración de reprecio (mín/máx por producto) se añadirá
-          más adelante.
+        <p className="mt-6 text-center text-xs text-white/35">
+          Pasa el ratón por un nodo para ver el detalle. Solo visualización — la
+          configuración de reprecio se añadirá más adelante.
         </p>
       </div>
     </main>
   );
 }
 
-function Chip({ label, value }: { label: string; value: string | number }) {
+function HudStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2">
-      <span className="text-[11px] uppercase tracking-wider text-white/45">{label}</span>
-      <span className="ml-2 text-base font-bold text-white">{value}</span>
+    <div className="px-4 py-4 text-center">
+      <div className="text-[10px] uppercase tracking-[0.18em] text-white/40">{label}</div>
+      <div className="mt-1 font-mono text-2xl sm:text-3xl font-extrabold text-amber-300 amber-glow tabular-nums">
+        {value}
+      </div>
     </div>
   );
 }
 
-/** Fondo decorativo: rejilla + halos + red de nodos SVG (no interactivo). */
-function NetworkBackdrop() {
+/** Fondo: rejilla cíber + halos cálidos (estilo "ops map"). */
+function Backdrop() {
   return (
     <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-      <div className="absolute inset-0 bg-grid-cyber opacity-60" />
-      <div className="absolute -top-32 left-1/2 -translate-x-1/2 h-[480px] w-[820px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(34,211,238,0.10),transparent_60%)]" />
-      <div className="absolute bottom-0 right-0 h-[420px] w-[620px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.10),transparent_60%)]" />
-      <svg
-        className="absolute inset-0 h-full w-full opacity-[0.18]"
-        preserveAspectRatio="xMidYMid slice"
-        viewBox="0 0 800 600"
-        fill="none"
-      >
-        <g stroke="rgba(94,234,212,0.5)" strokeWidth="0.6">
-          <path d="M60 80 L220 180 L160 360 L60 80 Z" />
-          <path d="M220 180 L420 120 L520 300 L160 360 Z" />
-          <path d="M420 120 L640 200 L720 420 L520 300 Z" />
-          <path d="M160 360 L320 520 L520 300" />
-          <path d="M520 300 L640 480 L720 420" />
-        </g>
-        <g fill="rgba(94,234,212,0.85)">
-          {[
-            [60, 80],
-            [220, 180],
-            [420, 120],
-            [640, 200],
-            [160, 360],
-            [520, 300],
-            [720, 420],
-            [320, 520],
-            [640, 480],
-          ].map(([cx, cy], i) => (
-            <circle key={i} cx={cx} cy={cy} r="2.6" />
-          ))}
-        </g>
-      </svg>
+      <div className="absolute inset-0 bg-grid-cyber opacity-50" />
+      <div className="absolute -top-40 left-1/2 -translate-x-1/2 h-[520px] w-[900px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(249,115,22,0.10),transparent_62%)]" />
+      <div className="absolute bottom-[-10%] right-[-5%] h-[460px] w-[680px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(234,88,12,0.08),transparent_60%)]" />
+      <div className="absolute top-[30%] left-[-8%] h-[420px] w-[560px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.07),transparent_60%)]" />
     </div>
   );
 }
