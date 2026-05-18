@@ -400,7 +400,7 @@ export default function ProductNetwork({
 
       <svg
         ref={svgRef}
-        className={`absolute inset-0 h-full w-full ${drag.current.active ? "cursor-grabbing" : "cursor-grab"}`}
+        className={`absolute inset-0 h-full w-full select-none [touch-action:none] ${drag.current.active ? "cursor-grabbing" : "cursor-grab"}`}
         viewBox={`0 0 ${VB_W} ${VB_H}`}
         preserveAspectRatio="xMidYMid slice"
         onPointerDown={onPointerDown}
@@ -577,8 +577,14 @@ export default function ProductNetwork({
                 }
               >
                 <g className="hex-node" onClick={() => open(p)}>
-                {/* Área de clic generosa (transparente, sí captura el ratón) */}
-                <circle cx={p.x} cy={p.y} r={R + 22} fill="transparent" />
+                {/* Área de clic (cubre hexágono + título + precio) */}
+                <rect
+                  x={p.x - 130}
+                  y={p.y - (R + 26)}
+                  width={260}
+                  height={2 * R + 78}
+                  fill="transparent"
+                />
                 <polygon points={hexPoints(p.x, p.y, R + 7)} fill="none"
                   stroke={active ? "#fff" : col.halo}
                   strokeWidth={active ? 2 : 1.1} filter="url(#glow)" />
