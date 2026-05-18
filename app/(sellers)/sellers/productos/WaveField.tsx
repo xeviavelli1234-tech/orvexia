@@ -14,6 +14,10 @@ export default function WaveField() {
   const py = useRef(0);
   const cxr = useRef(0); // parallax suavizado
   const cyr = useRef(0);
+  const mx = useRef(-9999); // ratón en px del canvas (objetivo)
+  const my = useRef(-9999);
+  const cmx = useRef(-9999); // ratón suavizado
+  const cmy = useRef(-9999);
 
   useEffect(() => {
     const cv = ref.current;
@@ -53,8 +57,18 @@ export default function WaveField() {
     function onMove(e: PointerEvent) {
       px.current = (e.clientX / window.innerWidth) * 2 - 1;
       py.current = (e.clientY / window.innerHeight) * 2 - 1;
+      const r = canvas.getBoundingClientRect();
+      mx.current = e.clientX - r.left;
+      my.current = e.clientY - r.top;
     }
-    if (!reduce) window.addEventListener("pointermove", onMove, { passive: true });
+    function onLeave() {
+      mx.current = -9999;
+      my.current = -9999;
+    }
+    if (!reduce) {
+      window.addEventListener("pointermove", onMove, { passive: true });
+      canvas.addEventListener("pointerleave", onLeave, { passive: true });
+    }
 
     // Orbes bokeh deterministas
     let s = 1337;
@@ -103,6 +117,22 @@ export default function WaveField() {
       cyr.current += (py.current - cyr.current) * 0.04;
       const offX = cxr.current * 26;
       const offY = cyr.current * 16;
+
+      // suavizado del ratón (para la perturbación local)
+      if (mx.current < -9000) {
+        cmx.current = mx.current;
+        cmy.current = my.current;
+      } else {
+        if (cmx.current < -9000) {
+          cmx.current = mx.current;
+          cmy.current = my.current;
+        }
+        cmx.current += (mx.current - cmx.current) * 0.18;
+        cmy.current += (my.current - cmy.current) * 0.18;
+      }
+      const hasMouse = cmx.current > -9000;
+      const MR = 150; // radio de influencia
+      const MR2 = MR * MR;
 
       // ── Velos de color animados ──────────────────────────────
       const v1x = w * (0.3 + Math.sin(tm * 0.13) * 0.06) + offX;
@@ -182,28 +212,50 @@ export default function WaveField() {
 
           const x = cx + (inx - 0.5) * spanX * scale + pxo;
           const y = rowY - wave * scale + pyo;
-          curX.push(x);
-          curY.push(y);
 
-          if (y < -28 || y > h + 28) continue;
+          // perturbación local: el cursor empuja y aviva las esferas
+          let px2 = x;
+          let py2 = y;
+          let mInf = 0;
+          if (hasMouse) {
+            const ddx = x - cmx.current;
+            const ddy = y - cmy.current;
+            const d2 = ddx * ddx + ddy * ddy;
+            if (d2 < MR2) {
+              const d = Math.sqrt(d2) || 1;
+              const t = 1 - d / MR;
+              mInf = t * t;
+              const push = mInf * 26;
+              px2 = x + (ddx / d) * push;
+              py2 = y + (ddy / d) * push;
+            }
+          }
+          curX.push(px2);
+          curY.push(py2);
+
+          if (py2 < -28 || py2 > h + 28) continue;
 
           const crest = Math.max(0, wave / 58); // 0..~1
-          const radius = (0.85 + persp * 2.0) * scale + 0.3;
+          const radius = ((0.85 + persp * 2.0) * scale + 0.3) * (1 + mInf * 0.8);
           const depthA = 0.3 + persp * 0.62;
           const hueT = inx * 0.5 + (wave + 58) / 170 + hueDrift;
-          const bright = crest * 0.55;
+          const bright = crest * 0.55 + mInf * 0.5;
 
           // glow suave en puntos cercanos / crestas
-          if (persp > 0.4) {
+          if (persp > 0.4 || mInf > 0) {
             ctx.beginPath();
-            ctx.fillStyle = tint(hueT, depthA * (0.12 + crest * 0.16), bright);
-            ctx.arc(x, y, radius * (2.4 + crest * 1.4), 0, Math.PI * 2);
+            ctx.fillStyle = tint(
+              hueT,
+              depthA * (0.12 + crest * 0.16) + mInf * 0.22,
+              bright,
+            );
+            ctx.arc(px2, py2, radius * (2.4 + crest * 1.4), 0, Math.PI * 2);
             ctx.fill();
           }
 
           ctx.beginPath();
-          ctx.fillStyle = tint(hueT, Math.min(1, depthA + crest * 0.3), bright);
-          ctx.arc(x, y, radius, 0, Math.PI * 2);
+          ctx.fillStyle = tint(hueT, Math.min(1, depthA + crest * 0.3 + mInf * 0.4), bright);
+          ctx.arc(px2, py2, radius, 0, Math.PI * 2);
           ctx.fill();
 
           // destello ocasional en crestas cercanas
@@ -213,7 +265,7 @@ export default function WaveField() {
               ctx.globalCompositeOperation = "lighter";
               ctx.beginPath();
               ctx.fillStyle = `rgba(255,255,255,${(tw - 0.86) * 2.4})`;
-              ctx.arc(x, y, radius * 1.5, 0, Math.PI * 2);
+              ctx.arc(px2, py2, radius * 1.5, 0, Math.PI * 2);
               ctx.fill();
               ctx.globalCompositeOperation = "source-over";
             }
@@ -272,6 +324,7 @@ export default function WaveField() {
       cancelAnimationFrame(raf);
       ro.disconnect();
       window.removeEventListener("pointermove", onMove);
+      canvas.removeEventListener("pointerleave", onLeave);
     };
   }, []);
 
