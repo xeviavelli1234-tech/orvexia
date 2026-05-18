@@ -648,6 +648,37 @@ body {
 }
 .hex-node:hover { transform: scale(1.12); }
 
+/* Flotación suave de cada nodo (independiente por delay) */
+@keyframes node-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-5px); }
+}
+.node-float {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: node-float var(--d, 4s) ease-in-out infinite;
+  animation-delay: var(--dl, 0s);
+}
+
+/* Anillo girando alrededor del icono de Amazon */
+@keyframes hub-spin {
+  to { transform: rotate(360deg); }
+}
+.hub-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: hub-spin 16s linear infinite;
+}
+@keyframes hub-breathe {
+  0%, 100% { opacity: 0.35; }
+  50%      { opacity: 0.85; }
+}
+.hub-breathe {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: hub-breathe 3.4s var(--ease-in-out) infinite;
+}
+
 /* Estrellas del fondo espacial */
 @keyframes twinkle {
   0%, 100% { opacity: var(--o, 0.5); }

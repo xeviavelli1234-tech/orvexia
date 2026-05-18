@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+  type CSSProperties,
+} from "react";
 import { useRouter } from "next/navigation";
 import WaveField from "./WaveField";
 import {
@@ -421,6 +428,22 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
                     />
                   ))}
                 </g>
+                {/* Punto de luz viajando por cada rama */}
+                <g>
+                  {layout.pos.map((p, i) => (
+                    <circle key={p.id} r="3.4" fill="#FFD08A" filter="url(#glow)">
+                      <animateMotion
+                        dur={`${3 + (i % 4) * 0.6}s`}
+                        begin={`${(i % 6) * 0.5}s`}
+                        repeatCount="indefinite"
+                        path={spoke(p)}
+                        keyPoints="1;0"
+                        keyTimes="0;1"
+                        calcMode="linear"
+                      />
+                    </circle>
+                  ))}
+                </g>
               </>
             );
           })()}
@@ -433,11 +456,23 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
             return (
               <g>
                 <circle
+                  className="hub-ring"
                   cx={h.x}
                   cy={h.y}
-                  r={HR + 8}
+                  r={HR + 12}
                   fill="none"
-                  stroke="rgba(255,153,0,0.5)"
+                  stroke="rgba(255,153,0,0.55)"
+                  strokeWidth="1.6"
+                  strokeDasharray="3 10"
+                  strokeLinecap="round"
+                />
+                <circle
+                  className="hub-breathe"
+                  cx={h.x}
+                  cy={h.y}
+                  r={HR + 6}
+                  fill="none"
+                  stroke="rgba(255,153,0,0.45)"
                   strokeWidth="1.4"
                   filter="url(#glow)"
                 />
@@ -487,12 +522,22 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
           })()}
 
           {/* Nodos */}
-          {layout.pos.map((p) => {
+          {layout.pos.map((p, i) => {
             const st = nodeState(p);
             const col = STATE_COLOR[st];
             const active = selId === p.id;
             return (
-              <g key={p.id} className="hex-node" onClick={() => open(p)}>
+              <g
+                key={p.id}
+                className="node-float"
+                style={
+                  {
+                    "--d": `${3.6 + (i % 5) * 0.5}s`,
+                    "--dl": `${(i % 7) * 0.45}s`,
+                  } as CSSProperties
+                }
+              >
+                <g className="hex-node" onClick={() => open(p)}>
                 <polygon points={hexPoints(p.x, p.y, R + 7)} fill="none"
                   stroke={active ? "#fff" : col.halo}
                   strokeWidth={active ? 2 : 1.1} filter="url(#glow)" />
@@ -516,6 +561,7 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
                   className={p.priceCurrent > 0 ? "text-glow-cyan" : undefined}>
                   {p.priceCurrent > 0 ? `${fmt(p.priceCurrent)} ${sym(p.currency)}` : "Sin precio"}
                 </text>
+                </g>
               </g>
             );
           })}
