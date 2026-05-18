@@ -73,6 +73,10 @@ export default async function RepricerPage({
   const account = await getSellerAccountByUserId(session.userId);
   const connected = !!account?.active;
 
+  // Ya conectado → todo vive en el Centro de control. Esta página queda
+  // solo como pantalla de conexión inicial.
+  if (connected) redirect("/sellers/productos");
+
   // ── Estado NO conectado ────────────────────────────────────────────────
   if (!connected) {
     return (
