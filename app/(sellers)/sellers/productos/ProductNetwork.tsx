@@ -33,15 +33,39 @@ function clampView(v: { k: number; x: number; y: number }) {
     by0 = VB_H * 0.1,
     by1 = VB_H * 0.9;
 
-  // El borde derecho del contenido no puede entrar más allá de (VB_W-mx)
-  // ni el izquierdo dejar hueco más allá de mx. Si cabe entero → centrado.
-  let xMin = VB_W - mx - v.k * bx1;
-  let xMax = mx - v.k * bx0;
-  if (xMin > xMax) xMin = xMax = (xMin + xMax) / 2;
+  // Margen libre de paneo (se permite moverse "un poco", no infinito).
+  const freeX = VB_W * 0.16;
+  const freeY = VB_H * 0.16;
 
-  let yMin = VB_H - my - v.k * by1;
-  let yMax = my - v.k * by0;
-  if (yMin > yMax) yMin = yMax = (yMin + yMax) / 2;
+  let xMin: number, xMax: number;
+  {
+    const lo = VB_W - mx - v.k * bx1;
+    const hi = mx - v.k * bx0;
+    if (lo <= hi) {
+      // Contenido mayor que la ventana: paneo dentro + asomo extra.
+      xMin = lo - freeX * 0.4;
+      xMax = hi + freeX * 0.4;
+    } else {
+      // Cabe entero: paneo libre acotado alrededor del centro.
+      const c = (lo + hi) / 2;
+      xMin = c - freeX;
+      xMax = c + freeX;
+    }
+  }
+
+  let yMin: number, yMax: number;
+  {
+    const lo = VB_H - my - v.k * by1;
+    const hi = my - v.k * by0;
+    if (lo <= hi) {
+      yMin = lo - freeY * 0.4;
+      yMax = hi + freeY * 0.4;
+    } else {
+      const c = (lo + hi) / 2;
+      yMin = c - freeY;
+      yMax = c + freeY;
+    }
+  }
 
   return {
     k: v.k,
