@@ -167,8 +167,8 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
     <div className="absolute inset-0">
       {/* Fondo animado: campo de partículas en onda */}
       <WaveField />
-      {/* Viñeta para legibilidad de nodos/etiquetas */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_50%_55%,rgba(2,2,12,0.55),rgba(2,2,12,0.15)_60%,transparent)]" />
+      {/* Viñeta muy suave solo en los bordes (centro despejado) */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_58%,rgba(2,2,12,0.34))]" />
 
       <svg
         className="absolute inset-0 h-full w-full"

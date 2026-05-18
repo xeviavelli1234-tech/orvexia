@@ -24,8 +24,8 @@ export default function WaveField() {
     let h = 0;
     let dpr = 1;
 
-    const COLS = 64;
-    const ROWS = 36;
+    const COLS = 76;
+    const ROWS = 50;
 
     function resize() {
       const parent = canvas.parentElement;
@@ -68,32 +68,50 @@ export default function WaveField() {
       const tm = time * 0.001;
       ctx.clearRect(0, 0, w, h);
 
+      // Velo de color para que el fondo no sea negro puro
+      const g1 = ctx.createRadialGradient(
+        w * 0.32, h * 0.42, 0,
+        w * 0.32, h * 0.42, Math.max(w, h) * 0.75,
+      );
+      g1.addColorStop(0, "rgba(40,70,140,0.30)");
+      g1.addColorStop(1, "rgba(8,10,30,0)");
+      ctx.fillStyle = g1;
+      ctx.fillRect(0, 0, w, h);
+      const g2 = ctx.createRadialGradient(
+        w * 0.74, h * 0.66, 0,
+        w * 0.74, h * 0.66, Math.max(w, h) * 0.7,
+      );
+      g2.addColorStop(0, "rgba(96,40,150,0.24)");
+      g2.addColorStop(1, "rgba(8,10,30,0)");
+      ctx.fillStyle = g2;
+      ctx.fillRect(0, 0, w, h);
+
       const cx = w / 2;
-      const horizon = h * 0.16;
-      const spanX = w * 1.55;
+      const horizon = -h * 0.06;
+      const spanX = w * 1.75;
 
       for (let j = 0; j < ROWS; j++) {
         // jn: 0 (lejos) → 1 (cerca)
         const jn = j / (ROWS - 1);
-        const persp = Math.pow(jn, 1.9); // filas cercanas más separadas
-        const scale = 0.28 + persp * 1.05;
-        const rowY = horizon + persp * (h * 0.96);
+        const persp = Math.pow(jn, 1.28); // reparte por toda la altura
+        const scale = 0.42 + persp * 0.95;
+        const rowY = horizon + persp * (h * 1.12);
 
         for (let i = 0; i < COLS; i++) {
           const inx = i / (COLS - 1);
 
           const wave =
-            Math.sin(i * 0.34 + tm * 1.25 + j * 0.16) * 22 +
-            Math.sin(j * 0.42 + tm * 1.0) * 16 +
-            Math.sin((i + j) * 0.22 - tm * 0.8) * 9;
+            Math.sin(i * 0.32 + tm * 1.2 + j * 0.15) * 22 +
+            Math.sin(j * 0.4 + tm * 0.95) * 16 +
+            Math.sin((i + j) * 0.2 - tm * 0.75) * 9;
 
           const x = cx + (inx - 0.5) * spanX * scale;
           const y = rowY - wave * scale;
 
-          if (y < -20 || y > h + 20) continue;
+          if (y < -24 || y > h + 24) continue;
 
-          const radius = (0.5 + persp * 2.1) * scale + 0.2;
-          const depthA = 0.12 + persp * 0.78;
+          const radius = (0.85 + persp * 2.0) * scale + 0.3;
+          const depthA = 0.32 + persp * 0.6;
           const hueT = Math.min(
             1,
             Math.max(0, inx * 0.7 + (wave + 47) / 140),
