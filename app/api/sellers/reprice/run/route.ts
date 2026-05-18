@@ -1,18 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { runRepricer } from "@/lib/reprice/runner";
+import { getSession } from "@/lib/session";
 
 export const maxDuration = 60;
 
-function isAuthorized(req: NextRequest): boolean {
+async function isAuthorized(req: NextRequest): Promise<boolean> {
   const secret = process.env.CRON_SECRET;
-  if (!secret) return true; // sin secret configurado → permitir (dev)
-  const header = req.headers.get("x-cron-secret");
-  const bearer = req.headers.get("authorization");
-  return header === secret || bearer === `Bearer ${secret}`;
+
+  // 1) Cron de Vercel (sin sesión): exige el secret si está configurado.
+  if (secret) {
+    const header = req.headers.get("x-cron-secret");
+    const bearer = req.headers.get("authorization");
+    if (header === secret || bearer === `Bearer ${secret}`) return true;
+  } else {
+    return true; // dev sin secret → permitir
+  }
+
+  // 2) Disparo manual desde el dashboard: basta con sesión iniciada.
+  const session = await getSession();
+  return !!session;
 }
 
 async function handle(req: NextRequest) {
-  if (!isAuthorized(req)) {
+  if (!(await isAuthorized(req))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
