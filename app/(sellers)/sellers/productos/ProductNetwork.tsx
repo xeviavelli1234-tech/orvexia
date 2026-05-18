@@ -471,22 +471,48 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
 
       {/* Inspector / administración del nodo */}
       {sel && (
-        <div className="absolute inset-y-0 right-0 w-full sm:w-[360px] bg-[rgba(6,6,16,0.93)] backdrop-blur-xl border-l border-indigo-400/20 p-5 overflow-y-auto fade-in">
-          <div className="flex items-start justify-between gap-3">
-            <h3 className="text-sm font-bold text-white/90 leading-tight">{sel.title}</h3>
-            <button onClick={() => setSelId(null)}
-              className="shrink-0 text-white/40 hover:text-white text-lg leading-none">×</button>
-          </div>
-          <div className="mt-1 font-mono text-[10px] text-white/40">
-            {sel.asin || "sin ASIN"} · {sel.sku}
+        <div className="absolute inset-y-0 right-0 w-full sm:w-[380px] bg-[rgba(7,7,18,0.96)] backdrop-blur-2xl border-l border-cyan-400/15 shadow-[-30px_0_60px_-30px_rgba(34,211,238,0.35)] overflow-y-auto fade-in">
+          {/* Cabecera */}
+          <div className="sticky top-0 z-10 flex items-start gap-3 px-5 py-4 bg-[rgba(7,7,18,0.96)] backdrop-blur-2xl border-b border-white/10">
+            <div className="h-11 w-11 shrink-0 rounded-lg border border-white/10 bg-white/[0.04] overflow-hidden grid place-items-center">
+              {sel.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={sel.imageUrl} alt="" className="h-full w-full object-contain" />
+              ) : (
+                <span className="text-white/30 text-xs">—</span>
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-sm font-bold text-white/90 leading-snug line-clamp-2">
+                {sel.title}
+              </h3>
+              <div className="mt-0.5 font-mono text-[10px] text-white/35 truncate">
+                {sel.asin || "sin ASIN"} · {sel.sku}
+              </div>
+            </div>
+            <button
+              onClick={() => setSelId(null)}
+              aria-label="Cerrar"
+              className="shrink-0 h-7 w-7 grid place-items-center rounded-md text-white/40 hover:text-white hover:bg-white/10 transition-colors text-lg leading-none"
+            >
+              ×
+            </button>
           </div>
 
-          <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-3">
-            <div className="text-[10px] uppercase tracking-wider text-white/40">Precio actual</div>
-            <div className="mt-1 text-2xl font-bold text-cyan-300 text-glow-cyan">
-              {sel.priceCurrent > 0 ? `${fmt(sel.priceCurrent)} ${sym(sel.currency)}` : "Sin oferta"}
+          <div className="p-5">
+            <div className="rounded-xl border border-cyan-400/15 bg-[linear-gradient(135deg,rgba(34,211,238,0.10),rgba(99,102,241,0.06))] p-4">
+              <div className="text-[10px] uppercase tracking-[0.16em] text-white/45">
+                Precio actual
+              </div>
+              <div className="mt-1 text-3xl font-extrabold text-cyan-300 text-glow-cyan tabular-nums">
+                {sel.priceCurrent > 0 ? `${fmt(sel.priceCurrent)} ${sym(sel.currency)}` : "Sin oferta"}
+              </div>
+              {sel.priceMin != null && sel.priceMax != null && (
+                <div className="mt-1 text-[11px] text-white/45">
+                  Rango {fmt(sel.priceMin)}–{fmt(sel.priceMax)} {sym(sel.currency)}
+                </div>
+              )}
             </div>
-          </div>
 
           {selState === "noprice" ? (
             <p className="mt-4 text-xs text-amber-300/80 rounded-lg border border-amber-400/20 bg-amber-400/5 p-3">
@@ -514,22 +540,21 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
                 {pending ? "Guardando…" : "Guardar rango"}
               </button>
 
-              <div className="mt-5 flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-3 py-3">
-                <div>
+              <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3.5">
+                <div className="min-w-0">
                   <div className="text-sm font-semibold text-white/90">Reprecio automático</div>
-                  <div className="text-[11px] text-white/45">
-                    {sel.repricingEnabled ? "Activo" : "Pausado"}
+                  <div className="mt-0.5 flex items-center gap-1.5 text-[11px]">
+                    <span
+                      className={`h-1.5 w-1.5 rounded-full ${
+                        sel.repricingEnabled ? "bg-emerald-400" : "bg-white/30"
+                      }`}
+                    />
+                    <span className={sel.repricingEnabled ? "text-emerald-300" : "text-white/45"}>
+                      {sel.repricingEnabled ? "Activo" : "Pausado"}
+                    </span>
                   </div>
                 </div>
-                <button onClick={toggle} disabled={pending} role="switch"
-                  aria-checked={sel.repricingEnabled}
-                  className={`relative h-6 w-11 rounded-full transition-colors disabled:opacity-50 ${
-                    sel.repricingEnabled ? "bg-emerald-500" : "bg-white/20"
-                  }`}>
-                  <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                    sel.repricingEnabled ? "translate-x-[22px]" : "translate-x-0.5"
-                  }`} />
-                </button>
+                <Toggle on={sel.repricingEnabled} disabled={pending} onClick={toggle} />
               </div>
 
               {/* ── Estrategia de reprecio ── */}
@@ -654,10 +679,44 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
             </>
           )}
 
-          {err && <p className="mt-3 text-xs text-red-400">{err}</p>}
+            {err && (
+              <p className="mt-4 text-xs text-red-300 rounded-lg border border-red-400/25 bg-red-500/10 p-2.5">
+                {err}
+              </p>
+            )}
+          </div>
         </div>
       )}
     </div>
+  );
+}
+
+function Toggle({
+  on,
+  disabled,
+  onClick,
+}: {
+  on: boolean;
+  disabled?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      disabled={disabled}
+      onClick={onClick}
+      className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors duration-200 disabled:opacity-50 ${
+        on ? "bg-emerald-500 shadow-[0_0_14px_-2px_rgba(16,185,129,0.7)]" : "bg-white/15"
+      }`}
+    >
+      <span
+        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-200 ease-out ${
+          on ? "translate-x-6" : "translate-x-1"
+        }`}
+      />
+    </button>
   );
 }
 

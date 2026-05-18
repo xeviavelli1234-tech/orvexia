@@ -29,28 +29,26 @@ export function SyncButton({ lastSyncAt }: { lastSyncAt: Date | null }) {
   }
 
   return (
-    <div className="flex flex-col gap-2 items-end">
-      <div className="flex items-center gap-3">
-        {lastSyncAt && (
-          <span className="text-xs text-fg/60">
-            Última sincronización:{" "}
-            {new Intl.DateTimeFormat("es-ES", {
-              dateStyle: "short",
-              timeStyle: "short",
-            }).format(lastSyncAt)}
-          </span>
-        )}
-        <button
-          type="button"
-          onClick={handleSync}
-          disabled={isPending}
-          className="rounded-lg bg-[var(--brand-600)] text-white px-5 py-2 text-sm font-semibold hover:bg-[var(--brand-700)] transition-colors disabled:opacity-50"
-        >
-          {isPending ? "Sincronizando…" : "Sincronizar con Amazon"}
-        </button>
-      </div>
-      {lastResult && <span className="text-xs text-[var(--accent-700)]">{lastResult}</span>}
-      {error && <span className="text-xs text-red-600">Error: {error}</span>}
+    <div className="flex flex-col gap-2">
+      <button
+        type="button"
+        onClick={handleSync}
+        disabled={isPending}
+        className="w-full rounded-xl bg-[var(--brand-600)] text-white px-4 py-2.5 text-sm font-semibold hover:bg-[var(--brand-700)] transition-colors disabled:opacity-50 shadow-[0_0_18px_-6px_rgba(99,102,241,0.7)]"
+      >
+        {isPending ? "Sincronizando…" : "Sincronizar con Amazon"}
+      </button>
+      {lastSyncAt && (
+        <span className="text-[11px] text-white/40">
+          Última sync:{" "}
+          {new Intl.DateTimeFormat("es-ES", {
+            dateStyle: "short",
+            timeStyle: "short",
+          }).format(lastSyncAt)}
+        </span>
+      )}
+      {lastResult && <span className="text-[11px] text-emerald-300">{lastResult}</span>}
+      {error && <span className="text-[11px] text-red-300">Error: {error}</span>}
     </div>
   );
 }

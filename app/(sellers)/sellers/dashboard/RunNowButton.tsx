@@ -34,12 +34,12 @@ export function RunNowButton() {
         type="button"
         onClick={run}
         disabled={isPending}
-        className="rounded-lg border border-[var(--brand-600)] text-[var(--brand-600)] px-5 py-2.5 font-semibold hover:bg-[var(--brand-600)] hover:text-white transition-colors text-sm disabled:opacity-50"
+        className="w-full rounded-xl border border-cyan-400/40 text-cyan-200 px-4 py-2.5 font-semibold hover:bg-cyan-400/10 transition-colors text-sm disabled:opacity-50"
       >
         {isPending ? "Repreciando…" : "Ejecutar reprecio ahora"}
       </button>
-      {msg && <span className="text-xs text-[var(--accent-700)]">{msg}</span>}
-      {err && <span className="text-xs text-red-600">Error: {err}</span>}
+      {msg && <span className="text-[11px] text-emerald-300">{msg}</span>}
+      {err && <span className="text-[11px] text-red-300">Error: {err}</span>}
     </div>
   );
 }

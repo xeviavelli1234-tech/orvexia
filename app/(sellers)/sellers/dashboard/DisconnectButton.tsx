@@ -10,7 +10,7 @@ export function DisconnectButton() {
       <button
         type="button"
         onClick={() => setConfirming(true)}
-        className="text-sm text-fg/60 hover:text-fg underline underline-offset-4"
+        className="text-sm text-white/45 hover:text-white/80 underline underline-offset-4 transition-colors"
       >
         Desconectar mi cuenta de Amazon
       </button>
@@ -19,7 +19,7 @@ export function DisconnectButton() {
 
   return (
     <form action="/api/sellers/amazon/disconnect" method="post" className="inline-flex items-center gap-3">
-      <span className="text-sm text-fg/70">¿Seguro? Pararás el reprecio.</span>
+      <span className="text-sm text-white/60">¿Seguro? Pararás el reprecio.</span>
       <button
         type="submit"
         className="rounded-md bg-red-600 text-white px-3 py-1.5 text-sm font-semibold hover:bg-red-700"
@@ -29,7 +29,7 @@ export function DisconnectButton() {
       <button
         type="button"
         onClick={() => setConfirming(false)}
-        className="text-sm text-fg/60 hover:text-fg"
+        className="text-sm text-white/45 hover:text-white/80"
       >
         Cancelar
       </button>

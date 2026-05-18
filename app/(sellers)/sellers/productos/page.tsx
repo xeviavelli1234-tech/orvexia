@@ -70,46 +70,64 @@ export default async function ProductosPage() {
       {/* ── Zona de herramientas (izquierda) ─────────────────────── */}
       <aside className="flex h-full w-60 sm:w-72 shrink-0 flex-col overflow-y-auto border-r border-white/10 bg-[rgba(6,6,16,0.94)] backdrop-blur-xl">
         <div className="px-5 py-5 border-b border-white/10">
-          <Link href="/dashboard" className="text-[11px] text-white/45 hover:text-white/80">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-1 text-[11px] text-white/45 hover:text-white/80 transition-colors"
+          >
             ← Dashboard
           </Link>
-          <h1 className="mt-2 text-lg font-extrabold tracking-tight">
-            Centro de <span className="text-gradient-neon">control</span>
-          </h1>
+          <div className="mt-2 flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-cyan-400 shadow-[0_0_10px_2px_rgba(34,211,238,0.7)]" />
+            <h1 className="text-lg font-extrabold tracking-tight">
+              Centro de <span className="text-gradient-neon">control</span>
+            </h1>
+          </div>
         </div>
 
-        <div className="px-5 py-5 grid grid-cols-2 gap-x-3 gap-y-4 border-b border-white/10">
-          <Stat label="Productos" value={String(listings.length)} />
-          <Stat label="Con precio" value={`${withPrice}/${listings.length}`} />
-          <Stat label="Reprecio" value={`${active}/${listings.length}`} />
-          <Stat
-            label="Valor"
-            value={catalogValue > 0 ? Math.round(catalogValue).toLocaleString("es-ES") + " €" : "—"}
-          />
+        <div className="px-5 py-5 border-b border-white/10">
+          <Eyebrow>Resumen</Eyebrow>
+          <div className="mt-3 grid grid-cols-2 gap-2.5">
+            <Stat label="Productos" value={String(listings.length)} />
+            <Stat label="Con precio" value={`${withPrice}/${listings.length}`} />
+            <Stat label="Repreciando" value={`${active}/${listings.length}`} accent />
+            <Stat
+              label="Valor catálogo"
+              value={
+                catalogValue > 0
+                  ? Math.round(catalogValue).toLocaleString("es-ES") + " €"
+                  : "—"
+              }
+            />
+          </div>
         </div>
 
-        <div className="px-5 py-5 flex flex-col gap-4 border-b border-white/10">
+        <div className="px-5 py-5 flex flex-col gap-3 border-b border-white/10">
+          <Eyebrow>Acciones</Eyebrow>
           <SyncButton lastSyncAt={account.lastSyncAt} />
           <RunNowButton />
         </div>
 
-        <div className="px-5 py-5 flex flex-col gap-3 text-sm">
+        <div className="px-5 py-5 flex flex-col gap-3 border-b border-white/10">
+          <Eyebrow>Cuenta</Eyebrow>
           <Link
             href="/dashboard/repricer"
-            className="text-white/55 hover:text-white underline underline-offset-4"
+            className="text-sm text-white/55 hover:text-white underline underline-offset-4 transition-colors"
           >
             Facturación y plan
           </Link>
           <DisconnectButton />
         </div>
 
-        <div className="mt-auto px-5 py-5 border-t border-white/10 text-[11px] leading-relaxed text-white/35">
-          Clic en un nodo para definir mín/máx y activar el reprecio.
-          <div className="mt-2 space-y-1">
+        <div className="mt-auto px-5 py-5 text-[11px] leading-relaxed text-white/40">
+          <Eyebrow>Leyenda</Eyebrow>
+          <div className="mt-2.5 space-y-1.5">
             <Legend color="bg-emerald-400" text="Repreciando" />
             <Legend color="bg-blue-400" text="Configurable" />
             <Legend color="bg-slate-500" text="Sin oferta en Amazon" />
           </div>
+          <p className="mt-3 text-white/30">
+            Clic en un nodo para definir mín/máx y la estrategia.
+          </p>
         </div>
       </aside>
 
@@ -136,11 +154,35 @@ export default async function ProductosPage() {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
-    <div>
-      <div className="text-[10px] uppercase tracking-[0.14em] text-white/40">{label}</div>
-      <div className="font-mono text-xl font-extrabold text-cyan-300 text-glow-cyan tabular-nums">
+    <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">
+      {children}
+    </div>
+  );
+}
+
+function Stat({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: string;
+  accent?: boolean;
+}) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5">
+      <div className="text-[9px] uppercase tracking-[0.12em] text-white/40 truncate">
+        {label}
+      </div>
+      <div
+        className={`mt-0.5 font-mono text-lg font-extrabold tabular-nums ${
+          accent
+            ? "text-emerald-300 [text-shadow:0_0_16px_rgba(16,185,129,0.5)]"
+            : "text-cyan-300 text-glow-cyan"
+        }`}
+      >
         {value}
       </div>
     </div>
