@@ -150,12 +150,19 @@ export function followUps(question: string): string[] {
   );
 }
 
+function norm(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, ""); // sin acentos
+}
+
 function bestTopic(question: string): Topic | null {
-  const q = question.toLowerCase();
+  const q = norm(question);
   let best: Topic | null = null;
   let bestScore = 0;
   for (const t of TOPICS) {
-    const score = t.keys.reduce((s, k) => (q.includes(k) ? s + 1 : s), 0);
+    const score = t.keys.reduce((s, k) => (q.includes(norm(k)) ? s + 1 : s), 0);
     if (score > bestScore) {
       bestScore = score;
       best = t;
@@ -163,3 +170,14 @@ function bestTopic(question: string): Topic | null {
   }
   return bestScore > 0 ? best : null;
 }
+
+/** Guía para el modelo sobre cuándo y cómo usar las herramientas. */
+export const TOOLS_GUIDE = `PUEDES EJECUTAR ACCIONES con herramientas cuando el usuario lo pida claramente (configurar, activar, pausar, lanzar ciclo, consultar su catálogo):
+- Resuelve el producto por nombre/SKU/ASIN con find_products antes de modificar; nunca inventes identificadores.
+- Si hay varias coincidencias, pregunta cuál antes de actuar.
+- set_range fija Mín/Máx (al fijar ambos se ACTIVA el reprecio automáticamente).
+- set_strategy fija la estrategia (BUYBOX/MATCH/FIXED/MARGIN) y sus parámetros.
+- toggle_repricing activa/pausa.
+- run_repricer lanza un ciclo inmediato.
+- Tras actuar, confirma en una frase qué hiciste y el efecto. Si el usuario solo pregunta, NO actúes: explica.
+- Para "igualar el mercado": set_strategy MATCH + noCompetition HOLD y asegúrate de que tenga rango.`;
