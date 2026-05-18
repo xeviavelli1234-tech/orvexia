@@ -109,6 +109,13 @@ export async function setListingEnabled(params: {
     throw new Error("missing_price_range");
   }
 
+  // Cannot enable a listing with no current price or no ASIN: el motor no
+  // podría calcular ni pedir precio de competencia. Se ve en la lista pero
+  // no se reprecia hasta que tenga oferta válida en Amazon.
+  if (params.enabled && (existing.priceCurrent <= 0 || !existing.asin)) {
+    throw new Error("listing_not_repriceable");
+  }
+
   return prisma.sellerListing.update({
     where: { id: params.listingId },
     data: { repricingEnabled: params.enabled },

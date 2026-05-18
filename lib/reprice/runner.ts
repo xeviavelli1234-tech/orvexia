@@ -80,6 +80,23 @@ export async function runRepricer(now: Date = new Date()): Promise<RunSummary> {
       for (const listing of listings) {
         processed += 1;
         try {
+          // Sin precio actual o sin ASIN no se puede calcular ni pedir
+          // competencia. Se cuenta como procesado pero no se reprecia.
+          if (listing.priceCurrent <= 0 || !listing.asin) {
+            await prisma.repricingEvent.create({
+              data: {
+                runId: run.id,
+                listingId: listing.id,
+                priceBefore: listing.priceCurrent,
+                priceAfter: listing.priceCurrent,
+                competitorPrice: null,
+                reason: "no_change",
+                success: true,
+              },
+            });
+            continue;
+          }
+
           const competitorPrice = await getCompetitivePrice(
             ctx,
             listing.asin,

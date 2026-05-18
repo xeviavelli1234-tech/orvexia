@@ -89,8 +89,19 @@ export function RangeRow({ listing }: Props) {
           {listing.asin} · {listing.sku}
         </div>
       </td>
-      <td className="py-3 px-2 text-sm text-fg/80 whitespace-nowrap">
-        {listing.priceCurrent.toFixed(2)} {currencySymbol(listing.currency)}
+      <td className="py-3 px-2 text-sm whitespace-nowrap">
+        {listing.priceCurrent > 0 ? (
+          <span className="text-fg/80">
+            {listing.priceCurrent.toFixed(2)} {currencySymbol(listing.currency)}
+          </span>
+        ) : (
+          <span
+            className="text-amber-600"
+            title="Publicado en Amazon pero sin oferta/precio activo. No se repreciará hasta que tenga precio."
+          >
+            Sin precio
+          </span>
+        )}
       </td>
       <td className="py-3 px-2">
         <input
@@ -154,6 +165,7 @@ function translateError(code: string): string {
   const map: Record<string, string> = {
     price_max_must_be_greater_or_equal_to_min: "El máximo debe ser ≥ al mínimo",
     missing_price_range: "Define min y max antes de activar",
+    listing_not_repriceable: "Sin precio/ASIN en Amazon: no se puede repreciar aún",
     listing_not_found_or_not_owned: "Producto no encontrado",
     unauthorized: "Sesión expirada",
     validation_failed: "Datos inválidos",
