@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import WaveField from "./WaveField";
 import { updateListingRangeAction, toggleListingAction } from "./actions";
@@ -21,6 +21,8 @@ export interface NetNode {
 const VB_W = 1400;
 const VB_H = 900;
 const R = 38;
+const K_MIN = 0.35;
+const K_MAX = 4;
 
 function hash(s: string): number {
   let h = 2166136261;
@@ -87,6 +89,88 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
   const [min, setMin] = useState("");
   const [max, setMax] = useState("");
 
+  // ── Viewport (pan / zoom) ──────────────────────────────────
+  const svgRef = useRef<SVGSVGElement | null>(null);
+  const [view, setView] = useState({ k: 1, x: 0, y: 0 });
+  const drag = useRef<{ active: boolean; sx: number; sy: number; ox: number; oy: number; moved: boolean }>(
+    { active: false, sx: 0, sy: 0, ox: 0, oy: 0, moved: false },
+  );
+  const suppressClick = useRef(false);
+
+  /** Punto de cliente → coordenadas del viewBox (respeta slice). */
+  function toVB(clientX: number, clientY: number) {
+    const svg = svgRef.current;
+    if (!svg) return { x: 0, y: 0 };
+    const ctm = svg.getScreenCTM();
+    if (!ctm) return { x: 0, y: 0 };
+    const inv = ctm.inverse();
+    return {
+      x: inv.a * clientX + inv.c * clientY + inv.e,
+      y: inv.b * clientX + inv.d * clientY + inv.f,
+    };
+  }
+
+  function zoomAt(clientX: number, clientY: number, factor: number) {
+    setView((v) => {
+      const k2 = Math.min(K_MAX, Math.max(K_MIN, v.k * factor));
+      const p = toVB(clientX, clientY);
+      const ratio = k2 / v.k;
+      return {
+        k: k2,
+        x: p.x - ratio * (p.x - v.x),
+        y: p.y - ratio * (p.y - v.y),
+      };
+    });
+  }
+
+  function zoomCenter(factor: number) {
+    const svg = svgRef.current;
+    const r = svg?.getBoundingClientRect();
+    zoomAt(
+      r ? r.left + r.width / 2 : window.innerWidth / 2,
+      r ? r.top + r.height / 2 : window.innerHeight / 2,
+      factor,
+    );
+  }
+
+  // wheel no-pasivo para poder preventDefault
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      zoomAt(e.clientX, e.clientY, e.deltaY < 0 ? 1.12 : 1 / 1.12);
+    };
+    svg.addEventListener("wheel", onWheel, { passive: false });
+    return () => svg.removeEventListener("wheel", onWheel);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function onPointerDown(e: React.PointerEvent) {
+    if ((e.target as Element).closest(".hex-node")) return; // dejar el clic al nodo
+    drag.current = {
+      active: true,
+      sx: e.clientX,
+      sy: e.clientY,
+      ox: view.x,
+      oy: view.y,
+      moved: false,
+    };
+    (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
+  }
+  function onPointerMove(e: React.PointerEvent) {
+    const d = drag.current;
+    if (!d.active) return;
+    const a = toVB(e.clientX, e.clientY);
+    const b = toVB(d.sx, d.sy);
+    if (Math.abs(e.clientX - d.sx) + Math.abs(e.clientY - d.sy) > 4) d.moved = true;
+    setView((v) => ({ ...v, x: d.ox + (a.x - b.x), y: d.oy + (a.y - b.y) }));
+  }
+  function onPointerUp() {
+    if (drag.current.moved) suppressClick.current = true;
+    drag.current.active = false;
+  }
+
   const layout = useMemo(() => {
     const n = nodes.length;
     const cx = VB_W / 2;
@@ -127,6 +211,10 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
   const sel = nodes.find((x) => x.id === selId) ?? null;
 
   function open(n: NetNode) {
+    if (suppressClick.current) {
+      suppressClick.current = false;
+      return;
+    }
     setSelId(n.id);
     setErr(null);
     setMin(n.priceMin != null ? String(n.priceMin) : "");
@@ -165,15 +253,20 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
 
   return (
     <div className="absolute inset-0">
-      {/* Fondo animado: campo de partículas en onda */}
+      {/* Fondo animado */}
       <WaveField />
       {/* Viñeta muy suave solo en los bordes (centro despejado) */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_58%,rgba(2,2,12,0.34))]" />
 
       <svg
-        className="absolute inset-0 h-full w-full"
+        ref={svgRef}
+        className={`absolute inset-0 h-full w-full ${drag.current.active ? "cursor-grabbing" : "cursor-grab"}`}
         viewBox={`0 0 ${VB_W} ${VB_H}`}
         preserveAspectRatio="xMidYMid slice"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerLeave={onPointerUp}
       >
         <defs>
           <radialGradient id="coreOn" cx="50%" cy="42%" r="60%">
@@ -200,65 +293,76 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
           ))}
         </defs>
 
-        {/* Aristas */}
-        <g stroke="rgba(180,190,255,0.16)" strokeWidth="1.1" fill="none">
-          {layout.edges.map(({ a, b }, i) => {
-            const pa = layout.pos[a], pb = layout.pos[b];
-            const mx = (pa.x + pb.x) / 2, my = (pa.y + pb.y) / 2;
-            const dx = pb.x - pa.x, dy = pb.y - pa.y;
-            return (
-              <path key={i} vectorEffect="non-scaling-stroke"
-                d={`M${pa.x},${pa.y} Q${mx - dy * 0.12},${my + dx * 0.12} ${pb.x},${pb.y}`} />
-            );
-          })}
-        </g>
-        <g stroke="rgba(190,210,255,0.6)" strokeWidth="1.4" fill="none" strokeLinecap="round">
-          {layout.edges.map(({ a, b }, i) => {
-            const pa = layout.pos[a], pb = layout.pos[b];
-            const mx = (pa.x + pb.x) / 2, my = (pa.y + pb.y) / 2;
-            const dx = pb.x - pa.x, dy = pb.y - pa.y;
-            return (
-              <path key={i} className="net-flow" vectorEffect="non-scaling-stroke"
-                style={{ animationDelay: `${(i % 7) * 0.18}s` }}
-                d={`M${pa.x},${pa.y} Q${mx - dy * 0.12},${my + dx * 0.12} ${pb.x},${pb.y}`} />
-            );
-          })}
-        </g>
+        <g transform={`translate(${view.x} ${view.y}) scale(${view.k})`}>
+          {/* Aristas */}
+          <g stroke="rgba(180,190,255,0.16)" strokeWidth="1.1" fill="none">
+            {layout.edges.map(({ a, b }, i) => {
+              const pa = layout.pos[a], pb = layout.pos[b];
+              const mx = (pa.x + pb.x) / 2, my = (pa.y + pb.y) / 2;
+              const dx = pb.x - pa.x, dy = pb.y - pa.y;
+              return (
+                <path key={i} vectorEffect="non-scaling-stroke"
+                  d={`M${pa.x},${pa.y} Q${mx - dy * 0.12},${my + dx * 0.12} ${pb.x},${pb.y}`} />
+              );
+            })}
+          </g>
+          <g stroke="rgba(190,210,255,0.6)" strokeWidth="1.4" fill="none" strokeLinecap="round">
+            {layout.edges.map(({ a, b }, i) => {
+              const pa = layout.pos[a], pb = layout.pos[b];
+              const mx = (pa.x + pb.x) / 2, my = (pa.y + pb.y) / 2;
+              const dx = pb.x - pa.x, dy = pb.y - pa.y;
+              return (
+                <path key={i} className="net-flow" vectorEffect="non-scaling-stroke"
+                  style={{ animationDelay: `${(i % 7) * 0.18}s` }}
+                  d={`M${pa.x},${pa.y} Q${mx - dy * 0.12},${my + dx * 0.12} ${pb.x},${pb.y}`} />
+              );
+            })}
+          </g>
 
-        {/* Nodos */}
-        {layout.pos.map((p) => {
-          const st = nodeState(p);
-          const col = STATE_COLOR[st];
-          const active = selId === p.id;
-          return (
-            <g key={p.id} className="hex-node" onClick={() => open(p)}>
-              <polygon points={hexPoints(p.x, p.y, R + 7)} fill="none"
-                stroke={active ? "#fff" : col.halo}
-                strokeWidth={active ? 2 : 1.1} filter="url(#glow)" />
-              <polygon points={hexPoints(p.x, p.y, R)} fill="rgba(8,8,20,0.78)"
-                stroke={col.stroke} strokeWidth="1.3" />
-              {p.imageUrl ? (
-                <image href={p.imageUrl} x={p.x - (R - 10)} y={p.y - (R - 10)}
-                  width={(R - 10) * 2} height={(R - 10) * 2}
-                  clipPath={`url(#c-${p.id})`} preserveAspectRatio="xMidYMid slice" opacity={0.92} />
-              ) : (
-                <circle className="hex-core" cx={p.x} cy={p.y} r={R - 13}
-                  fill={st === "on" ? "url(#coreOn)" : "url(#coreAmb)"} />
-              )}
-              {st === "on" && (
-                <circle cx={p.x + R - 6} cy={p.y - R + 6} r="4.5" fill="#34d399" filter="url(#glow)" />
-              )}
-              <text x={p.x} y={p.y + R + 17} textAnchor="middle" fontSize="13" fontWeight={600}
-                fill="rgba(255,255,255,0.85)">{clip(p.title, 22)}</text>
-              <text x={p.x} y={p.y + R + 34} textAnchor="middle" fontSize="12.5" fontWeight={700}
-                fill={p.priceCurrent > 0 ? "#7dd3fc" : "rgba(180,180,200,0.6)"}
-                className={p.priceCurrent > 0 ? "text-glow-cyan" : undefined}>
-                {p.priceCurrent > 0 ? `${fmt(p.priceCurrent)} ${sym(p.currency)}` : "Sin precio"}
-              </text>
-            </g>
-          );
-        })}
+          {/* Nodos */}
+          {layout.pos.map((p) => {
+            const st = nodeState(p);
+            const col = STATE_COLOR[st];
+            const active = selId === p.id;
+            return (
+              <g key={p.id} className="hex-node" onClick={() => open(p)}>
+                <polygon points={hexPoints(p.x, p.y, R + 7)} fill="none"
+                  stroke={active ? "#fff" : col.halo}
+                  strokeWidth={active ? 2 : 1.1} filter="url(#glow)" />
+                <polygon points={hexPoints(p.x, p.y, R)} fill="rgba(8,8,20,0.78)"
+                  stroke={col.stroke} strokeWidth="1.3" />
+                {p.imageUrl ? (
+                  <image href={p.imageUrl} x={p.x - (R - 10)} y={p.y - (R - 10)}
+                    width={(R - 10) * 2} height={(R - 10) * 2}
+                    clipPath={`url(#c-${p.id})`} preserveAspectRatio="xMidYMid slice" opacity={0.92} />
+                ) : (
+                  <circle className="hex-core" cx={p.x} cy={p.y} r={R - 13}
+                    fill={st === "on" ? "url(#coreOn)" : "url(#coreAmb)"} />
+                )}
+                {st === "on" && (
+                  <circle cx={p.x + R - 6} cy={p.y - R + 6} r="4.5" fill="#34d399" filter="url(#glow)" />
+                )}
+                <text x={p.x} y={p.y + R + 17} textAnchor="middle" fontSize="13" fontWeight={600}
+                  fill="rgba(255,255,255,0.85)">{clip(p.title, 22)}</text>
+                <text x={p.x} y={p.y + R + 34} textAnchor="middle" fontSize="12.5" fontWeight={700}
+                  fill={p.priceCurrent > 0 ? "#7dd3fc" : "rgba(180,180,200,0.6)"}
+                  className={p.priceCurrent > 0 ? "text-glow-cyan" : undefined}>
+                  {p.priceCurrent > 0 ? `${fmt(p.priceCurrent)} ${sym(p.currency)}` : "Sin precio"}
+                </text>
+              </g>
+            );
+          })}
+        </g>
       </svg>
+
+      {/* Controles de zoom */}
+      <div className="absolute bottom-5 right-5 flex flex-col gap-2">
+        <ZoomBtn label="Acercar" onClick={() => zoomCenter(1.25)}>+</ZoomBtn>
+        <ZoomBtn label="Alejar" onClick={() => zoomCenter(1 / 1.25)}>−</ZoomBtn>
+        <ZoomBtn label="Restablecer vista" onClick={() => setView({ k: 1, x: 0, y: 0 })}>
+          <span className="text-[11px] leading-none">1:1</span>
+        </ZoomBtn>
+      </div>
 
       {/* Inspector / administración del nodo */}
       {sel && (
@@ -329,5 +433,27 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
         </div>
       )}
     </div>
+  );
+}
+
+function ZoomBtn({
+  children,
+  label,
+  onClick,
+}: {
+  children: React.ReactNode;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      onClick={onClick}
+      className="h-9 w-9 grid place-items-center rounded-lg border border-white/15 bg-[rgba(8,8,20,0.7)] backdrop-blur text-white/80 text-lg leading-none hover:bg-white/10 hover:text-white transition-colors"
+    >
+      {children}
+    </button>
   );
 }
