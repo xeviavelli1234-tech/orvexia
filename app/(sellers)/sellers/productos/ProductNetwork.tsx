@@ -359,6 +359,11 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
 
   return (
     <div className="absolute inset-0">
+      <div
+        className={`absolute inset-y-0 left-0 right-0 transition-[right] duration-300 ${
+          sel ? "sm:right-[380px]" : ""
+        }`}
+      >
       {/* Fondo animado */}
       <WaveField />
       {/* Viñeta muy suave solo en los bordes (centro despejado) */}
@@ -399,9 +404,7 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
           ))}
         </defs>
 
-        <g
-          transform={`translate(${view.x - (sel ? 230 : 0)} ${view.y}) scale(${view.k})`}
-        >
+        <g transform={`translate(${view.x} ${view.y}) scale(${view.k})`}>
           {/* Ramas: del icono de Amazon a cada producto */}
           {(() => {
             const h = layout.hub;
@@ -680,6 +683,7 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
         <ZoomBtn label="Restablecer vista" onClick={() => setView({ k: 1, x: 0, y: 0 })}>
           <span className="text-[11px] leading-none">1:1</span>
         </ZoomBtn>
+      </div>
       </div>
 
       {/* Inspector / administración del nodo */}
