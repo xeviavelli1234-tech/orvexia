@@ -1,0 +1,309 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { updateAccountSettingsAction } from "./actions";
+
+export interface AccountSettingsData {
+  scheduleEnabled: boolean;
+  scheduleStartHour: number;
+  scheduleEndHour: number;
+  dryRun: boolean;
+  patchDelayMs: number;
+  defaultStrategy: "BUYBOX" | "MATCH" | "FIXED" | "MARGIN";
+  defaultUndercutType: "AMOUNT" | "PERCENT";
+  defaultUndercutValue: number;
+  defaultNoCompetition: "MAX" | "HOLD";
+}
+
+export function SettingsButton() {
+  return (
+    <button
+      type="button"
+      onClick={() => window.dispatchEvent(new CustomEvent("orvexia:open-settings"))}
+      className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-sm text-white/80 hover:bg-white/[0.06] transition-colors text-left"
+    >
+      <span className="flex items-center gap-2">
+        <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
+        Ajustes de cuenta
+      </span>
+      <span className="text-[11px] text-white/40">horario · simulación →</span>
+    </button>
+  );
+}
+
+function Toggle({
+  on,
+  onClick,
+  disabled,
+}: {
+  on: boolean;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      disabled={disabled}
+      onClick={onClick}
+      className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors duration-200 disabled:opacity-50 ${
+        on ? "bg-emerald-500 shadow-[0_0_14px_-2px_rgba(16,185,129,0.7)]" : "bg-white/15"
+      }`}
+    >
+      <span
+        className={`inline-block h-5 w-5 rounded-full bg-white shadow-md transition-transform duration-200 ${
+          on ? "translate-x-6" : "translate-x-1"
+        }`}
+      />
+    </button>
+  );
+}
+
+export default function AccountSettings({ initial }: { initial: AccountSettingsData }) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [s, setS] = useState<AccountSettingsData>(initial);
+
+  useEffect(() => {
+    function onOpen() {
+      setS(initial);
+      setErr(null);
+      setOpen(true);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    window.addEventListener("orvexia:open-settings", onOpen);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("orvexia:open-settings", onOpen);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [initial]);
+
+  function save() {
+    setErr(null);
+    setSaving(true);
+    const fd = new FormData();
+    fd.set("scheduleEnabled", String(s.scheduleEnabled));
+    fd.set("scheduleStartHour", String(s.scheduleStartHour));
+    fd.set("scheduleEndHour", String(s.scheduleEndHour));
+    fd.set("dryRun", String(s.dryRun));
+    fd.set("patchDelayMs", String(s.patchDelayMs));
+    fd.set("defaultStrategy", s.defaultStrategy);
+    fd.set("defaultUndercutType", s.defaultUndercutType);
+    fd.set("defaultUndercutValue", String(s.defaultUndercutValue));
+    fd.set("defaultNoCompetition", s.defaultNoCompetition);
+    updateAccountSettingsAction(fd).then((r) => {
+      setSaving(false);
+      if (!r.ok) setErr(r.error);
+      else {
+        setOpen(false);
+        router.refresh();
+      }
+    });
+  }
+
+  if (!open) return null;
+  const lbl = "text-[10px] uppercase tracking-wider text-white/40";
+  const inp =
+    "mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none";
+
+  return (
+    <div
+      className="fixed inset-0 z-[58] bg-black/75 backdrop-blur-sm p-4 overflow-y-auto"
+      onClick={() => setOpen(false)}
+    >
+      <div
+        className="mx-auto max-w-lg rounded-2xl border border-cyan-400/20 bg-[rgba(7,8,18,0.99)] shadow-[0_30px_80px_-20px_rgba(34,211,238,0.4)] fade-in"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+          <h2 className="text-base font-extrabold tracking-tight">
+            Ajustes de <span className="text-gradient-neon">cuenta</span>
+          </h2>
+          <button
+            onClick={() => setOpen(false)}
+            aria-label="Cerrar"
+            className="h-8 w-8 grid place-items-center rounded-md text-white/40 hover:text-white hover:bg-white/10 transition-colors text-lg leading-none"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="p-5 space-y-5">
+          {/* Programación horaria */}
+          <section className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-white/90">Programación horaria</span>
+              <Toggle
+                on={s.scheduleEnabled}
+                disabled={saving}
+                onClick={() => setS((v) => ({ ...v, scheduleEnabled: !v.scheduleEnabled }))}
+              />
+            </div>
+            <p className="mt-1 text-[11px] text-white/40">
+              Solo reprecia dentro de la franja (hora de España).
+            </p>
+            {s.scheduleEnabled && (
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                <label className="block">
+                  <span className={lbl}>Desde (h)</span>
+                  <input
+                    type="number"
+                    min={0}
+                    max={23}
+                    value={s.scheduleStartHour}
+                    onChange={(e) =>
+                      setS((v) => ({ ...v, scheduleStartHour: Number(e.target.value) }))
+                    }
+                    className={inp}
+                  />
+                </label>
+                <label className="block">
+                  <span className={lbl}>Hasta (h, excl.)</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={24}
+                    value={s.scheduleEndHour}
+                    onChange={(e) =>
+                      setS((v) => ({ ...v, scheduleEndHour: Number(e.target.value) }))
+                    }
+                    className={inp}
+                  />
+                </label>
+              </div>
+            )}
+          </section>
+
+          {/* Simulación + throttling */}
+          <section className="rounded-xl border border-white/10 bg-white/[0.03] p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-semibold text-white/90">Modo simulación</div>
+                <div className="text-[11px] text-white/45">
+                  Calcula pero NO aplica el precio en Amazon.
+                </div>
+              </div>
+              <Toggle
+                on={s.dryRun}
+                disabled={saving}
+                onClick={() => setS((v) => ({ ...v, dryRun: !v.dryRun }))}
+              />
+            </div>
+            <label className="block">
+              <span className={lbl}>Retardo entre PATCHes (ms) — anti QuotaExceeded</span>
+              <input
+                type="number"
+                min={0}
+                max={10000}
+                step={100}
+                value={s.patchDelayMs}
+                onChange={(e) => setS((v) => ({ ...v, patchDelayMs: Number(e.target.value) }))}
+                className={inp}
+              />
+            </label>
+          </section>
+
+          {/* Estrategia por defecto de la cuenta */}
+          <section className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+            <div className="text-sm font-semibold text-white/90">
+              Estrategia por defecto
+            </div>
+            <p className="mt-1 text-[11px] text-white/45">
+              Se aplica a productos con “Usar ajustes de la cuenta”.
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <label className="block">
+                <span className={lbl}>Estrategia</span>
+                <select
+                  value={s.defaultStrategy}
+                  onChange={(e) =>
+                    setS((v) => ({
+                      ...v,
+                      defaultStrategy: e.target.value as AccountSettingsData["defaultStrategy"],
+                    }))
+                  }
+                  className={inp}
+                >
+                  <option value="BUYBOX">Ganar Buy Box</option>
+                  <option value="MATCH">Igualar</option>
+                  <option value="FIXED">Precio fijo</option>
+                  <option value="MARGIN">Por margen</option>
+                </select>
+              </label>
+              <label className="block">
+                <span className={lbl}>Sin competencia</span>
+                <select
+                  value={s.defaultNoCompetition}
+                  onChange={(e) =>
+                    setS((v) => ({
+                      ...v,
+                      defaultNoCompetition: e.target
+                        .value as AccountSettingsData["defaultNoCompetition"],
+                    }))
+                  }
+                  className={inp}
+                >
+                  <option value="MAX">Subir al máximo</option>
+                  <option value="HOLD">Mantener</option>
+                </select>
+              </label>
+              <label className="block">
+                <span className={lbl}>Bajar por</span>
+                <select
+                  value={s.defaultUndercutType}
+                  onChange={(e) =>
+                    setS((v) => ({
+                      ...v,
+                      defaultUndercutType: e.target
+                        .value as AccountSettingsData["defaultUndercutType"],
+                    }))
+                  }
+                  className={inp}
+                >
+                  <option value="AMOUNT">Importe €</option>
+                  <option value="PERCENT">Porcentaje %</option>
+                </select>
+              </label>
+              <label className="block">
+                <span className={lbl}>Valor</span>
+                <input
+                  inputMode="decimal"
+                  value={s.defaultUndercutValue}
+                  onChange={(e) =>
+                    setS((v) => ({
+                      ...v,
+                      defaultUndercutValue:
+                        Number.parseFloat(e.target.value.replace(",", ".")) || 0,
+                    }))
+                  }
+                  className={inp}
+                />
+              </label>
+            </div>
+          </section>
+
+          {err && (
+            <p className="text-xs text-red-300 rounded-lg border border-red-400/25 bg-red-500/10 p-2.5">
+              {err}
+            </p>
+          )}
+
+          <button
+            onClick={save}
+            disabled={saving}
+            className="w-full rounded-lg bg-[var(--brand-600)] text-white py-2.5 text-sm font-semibold hover:bg-[var(--brand-700)] transition-colors disabled:opacity-50"
+          >
+            {saving ? "Guardando…" : "Guardar ajustes"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

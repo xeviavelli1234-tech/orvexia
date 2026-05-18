@@ -1,7 +1,13 @@
 import "server-only";
 import { SpApiClient } from "./client";
 import { MARKETPLACE_IDS } from "./endpoints";
-import { getFixtureCompetitivePrice, isFixtureMode } from "./fixtures";
+import { getFixtureCompetitivePrice, getFixtureOffers, isFixtureMode } from "./fixtures";
+import {
+  selectCompetitor,
+  type CompetitionFilters,
+  type CompetitionResult,
+  type CompetitorOffer,
+} from "@/lib/reprice/competition";
 import type { SpApiCompetitivePrice } from "./types";
 
 interface PricingCtx {
@@ -38,6 +44,58 @@ export async function getCompetitivePrice(
 
   if (landed.length === 0) return null;
   return Math.min(...landed);
+}
+
+interface ItemOffersResponse {
+  payload?: {
+    Offers?: Array<{
+      SellerId?: string;
+      ListingPrice?: { Amount?: number };
+      Shipping?: { Amount?: number };
+      IsFulfilledByAmazon?: boolean;
+      IsBuyBoxWinner?: boolean;
+      SellerFeedbackRating?: { SellerPositiveFeedbackRating?: number };
+    }>;
+  };
+}
+
+/**
+ * Competencia + Buy Box para un ASIN, aplicando los filtros del listing.
+ * Fixtures: ofertas mock deterministas. Producción: getItemOffers (v0).
+ */
+export async function getCompetition(
+  ctx: PricingCtx,
+  asin: string,
+  basePrice: number,
+  filters: CompetitionFilters,
+  ourSellerId: string,
+): Promise<CompetitionResult> {
+  if (isFixtureMode(ctx.spApiEnv)) {
+    const offers = getFixtureOffers(asin, basePrice, ourSellerId);
+    return selectCompetitor(offers, filters, ourSellerId);
+  }
+
+  const marketplaceId = ctx.marketplaceId ?? MARKETPLACE_IDS.ES;
+  const res = await ctx.client.get<ItemOffersResponse>(
+    `/products/pricing/v0/items/${encodeURIComponent(asin)}/offers`,
+    { MarketplaceId: marketplaceId, ItemCondition: "New" },
+  );
+
+  const offers: CompetitorOffer[] = (res.payload?.Offers ?? []).map((o) => {
+    const fb = o.SellerFeedbackRating?.SellerPositiveFeedbackRating;
+    return {
+      sellerId: o.SellerId,
+      price: (o.ListingPrice?.Amount ?? 0) + (o.Shipping?.Amount ?? 0),
+      // Amazon retail no es fácil de identificar de forma fiable vía v0;
+      // el filtro "ignorar Amazon" se evalúa igualmente (best-effort false).
+      isAmazon: false,
+      isFba: !!o.IsFulfilledByAmazon,
+      rating: typeof fb === "number" ? Math.round((fb / 20) * 100) / 100 : null,
+      isBuyBoxWinner: !!o.IsBuyBoxWinner,
+    };
+  });
+
+  return selectCompetitor(offers, filters, ourSellerId);
 }
 
 /**

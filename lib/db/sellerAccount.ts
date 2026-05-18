@@ -55,3 +55,40 @@ export async function deactivateSellerAccount(userId: string) {
     data: { active: false },
   });
 }
+
+export async function setAccountSettings(params: {
+  userId: string;
+  scheduleEnabled: boolean;
+  scheduleStartHour: number;
+  scheduleEndHour: number;
+  dryRun: boolean;
+  patchDelayMs: number;
+  defaultStrategy: "BUYBOX" | "MATCH" | "FIXED" | "MARGIN";
+  defaultUndercutType: "AMOUNT" | "PERCENT";
+  defaultUndercutValue: number;
+  defaultNoCompetition: "MAX" | "HOLD";
+}) {
+  const acc = await prisma.sellerAccount.findUnique({
+    where: { userId: params.userId },
+    select: { id: true },
+  });
+  if (!acc) throw new Error("no_account");
+
+  const clampH = (n: number, max: number) =>
+    Math.max(0, Math.min(max, Math.round(n)));
+
+  return prisma.sellerAccount.update({
+    where: { userId: params.userId },
+    data: {
+      scheduleEnabled: params.scheduleEnabled,
+      scheduleStartHour: clampH(params.scheduleStartHour, 23),
+      scheduleEndHour: clampH(params.scheduleEndHour, 24),
+      dryRun: params.dryRun,
+      patchDelayMs: Math.max(0, Math.min(10000, Math.round(params.patchDelayMs))),
+      defaultStrategy: params.defaultStrategy,
+      defaultUndercutType: params.defaultUndercutType,
+      defaultUndercutValue: Math.max(0, params.defaultUndercutValue),
+      defaultNoCompetition: params.defaultNoCompetition,
+    },
+  });
+}

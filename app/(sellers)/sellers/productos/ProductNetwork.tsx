@@ -14,11 +14,14 @@ import {
   updateListingRangeAction,
   toggleListingAction,
   updateListingStrategyAction,
+  updateListingCompetitionAction,
 } from "./actions";
 
 type Strategy = "BUYBOX" | "MATCH" | "FIXED" | "MARGIN";
 type UndercutType = "AMOUNT" | "PERCENT";
 type NoComp = "MAX" | "HOLD";
+type Fulfillment = "ANY" | "FBA" | "FBM";
+type BuyBox = "UNKNOWN" | "WON" | "LOST";
 
 export interface NetNode {
   id: string;
@@ -39,6 +42,11 @@ export interface NetNode {
   feePercent: number | null;
   targetMargin: number | null;
   noCompetition: NoComp;
+  useAccountDefaults: boolean;
+  ignoreAmazon: boolean;
+  fulfillmentFilter: Fulfillment;
+  minSellerRating: number | null;
+  buyBoxStatus: BuyBox;
 }
 
 const VB_W = 1400;
@@ -150,6 +158,7 @@ function errMsg(code: string): string {
     fixed_price_required: "Indica un precio fijo válido",
     cost_required: "Indica el coste del producto",
     invalid_undercut: "Valor de ajuste no válido",
+    invalid_rating: "La valoración mínima debe estar entre 0 y 5",
     listing_not_found_or_not_owned: "Producto no encontrado",
     unauthorized: "Sesión expirada",
     validation_failed: "Datos inválidos",
@@ -172,6 +181,10 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
   const [feeP, setFeeP] = useState("15");
   const [tMargin, setTMargin] = useState("10");
   const [noComp, setNoComp] = useState<NoComp>("MAX");
+  const [useAccDef, setUseAccDef] = useState(false);
+  const [ignoreAmz, setIgnoreAmz] = useState(true);
+  const [fulfil, setFulfil] = useState<Fulfillment>("ANY");
+  const [minRating, setMinRating] = useState("");
 
   // ── Viewport (pan / zoom) ──────────────────────────────────
   const svgRef = useRef<SVGSVGElement | null>(null);
@@ -312,6 +325,26 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
     setFeeP(n.feePercent != null ? String(n.feePercent) : "15");
     setTMargin(n.targetMargin != null ? String(n.targetMargin) : "10");
     setNoComp(n.noCompetition);
+    setUseAccDef(n.useAccountDefaults);
+    setIgnoreAmz(n.ignoreAmazon);
+    setFulfil(n.fulfillmentFilter);
+    setMinRating(n.minSellerRating != null ? String(n.minSellerRating) : "");
+  }
+
+  function saveCompetition() {
+    if (!sel) return;
+    setErr(null);
+    const fd = new FormData();
+    fd.set("listingId", sel.id);
+    fd.set("useAccountDefaults", String(useAccDef));
+    fd.set("ignoreAmazon", String(ignoreAmz));
+    fd.set("fulfillmentFilter", fulfil);
+    fd.set("minSellerRating", minRating.trim());
+    startTransition(async () => {
+      const r = await updateListingCompetitionAction(fd);
+      if (!r.ok) setErr(errMsg(r.error));
+      else router.refresh();
+    });
   }
 
   function saveStrategy() {
@@ -733,11 +766,29 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
               <div className="mt-1 text-3xl font-extrabold text-cyan-300 text-glow-cyan tabular-nums">
                 {sel.priceCurrent > 0 ? `${fmt(sel.priceCurrent)} ${sym(sel.currency)}` : "Sin oferta"}
               </div>
-              {sel.priceMin != null && sel.priceMax != null && (
-                <div className="mt-1 text-[11px] text-white/45">
-                  Rango {fmt(sel.priceMin)}–{fmt(sel.priceMax)} {sym(sel.currency)}
-                </div>
-              )}
+              <div className="mt-2 flex items-center gap-2 flex-wrap">
+                {sel.priceMin != null && sel.priceMax != null && (
+                  <span className="text-[11px] text-white/45">
+                    Rango {fmt(sel.priceMin)}–{fmt(sel.priceMax)} {sym(sel.currency)}
+                  </span>
+                )}
+                <span
+                  className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                    sel.buyBoxStatus === "WON"
+                      ? "text-emerald-300 bg-emerald-400/10 border-emerald-400/25"
+                      : sel.buyBoxStatus === "LOST"
+                        ? "text-red-300 bg-red-500/10 border-red-400/25"
+                        : "text-white/45 bg-white/[0.05] border-white/10"
+                  }`}
+                >
+                  Buy Box:{" "}
+                  {sel.buyBoxStatus === "WON"
+                    ? "ganada"
+                    : sel.buyBoxStatus === "LOST"
+                      ? "perdida"
+                      : "—"}
+                </span>
+              </div>
             </div>
 
           {selState === "noprice" ? (
@@ -900,6 +951,67 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
                   className="mt-3 w-full rounded-lg border border-cyan-400/40 text-cyan-200 py-2 text-sm font-semibold hover:bg-cyan-400/10 transition-colors disabled:opacity-50"
                 >
                   {pending ? "Guardando…" : "Guardar estrategia"}
+                </button>
+              </div>
+
+              {/* ── Competencia ── */}
+              <div className="mt-5 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                <div className="text-[10px] uppercase tracking-wider text-white/40">
+                  Competencia
+                </div>
+
+                <label className="mt-3 flex items-center justify-between gap-3">
+                  <span className="text-sm text-white/85">Usar ajustes de la cuenta</span>
+                  <Toggle on={useAccDef} disabled={pending} onClick={() => setUseAccDef((v) => !v)} />
+                </label>
+                {useAccDef && (
+                  <p className="mt-1 text-[10px] text-white/35">
+                    La estrategia se hereda de los ajustes de cuenta.
+                  </p>
+                )}
+
+                <label className="mt-3 flex items-center justify-between gap-3">
+                  <span className="text-sm text-white/85">Ignorar Amazon (retail)</span>
+                  <Toggle on={ignoreAmz} disabled={pending} onClick={() => setIgnoreAmz((v) => !v)} />
+                </label>
+
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  <label className="block">
+                    <span className="text-[10px] uppercase tracking-wider text-white/40">
+                      Logística
+                    </span>
+                    <select
+                      value={fulfil}
+                      onChange={(e) => setFulfil(e.target.value as Fulfillment)}
+                      disabled={pending}
+                      className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-2 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
+                    >
+                      <option value="ANY">Cualquiera</option>
+                      <option value="FBA">Solo FBA</option>
+                      <option value="FBM">Solo FBM</option>
+                    </select>
+                  </label>
+                  <label className="block">
+                    <span className="text-[10px] uppercase tracking-wider text-white/40">
+                      Valoración mín. (0-5)
+                    </span>
+                    <input
+                      value={minRating}
+                      onChange={(e) => setMinRating(e.target.value)}
+                      inputMode="decimal"
+                      placeholder="sin filtro"
+                      disabled={pending}
+                      className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
+                    />
+                  </label>
+                </div>
+
+                <button
+                  onClick={saveCompetition}
+                  disabled={pending}
+                  className="mt-3 w-full rounded-lg border border-cyan-400/40 text-cyan-200 py-2 text-sm font-semibold hover:bg-cyan-400/10 transition-colors disabled:opacity-50"
+                >
+                  {pending ? "Guardando…" : "Guardar competencia"}
                 </button>
               </div>
             </>

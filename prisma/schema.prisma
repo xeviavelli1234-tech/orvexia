@@ -298,6 +298,18 @@ enum NoCompetitionMode {
   HOLD // sin competencia → mantener precio
 }
 
+enum FulfillmentFilter {
+  ANY // considerar todas las ofertas
+  FBA // solo competidores con Logística de Amazon
+  FBM // solo competidores que envían ellos mismos
+}
+
+enum BuyBoxStatus {
+  UNKNOWN
+  WON // tenemos la Buy Box
+  LOST // la tiene otro vendedor
+}
+
 model SellerAccount {
   id              String     @id @default(cuid())
   userId          String     @unique
@@ -316,6 +328,19 @@ model SellerAccount {
   lastSyncAt      DateTime?
   lastRunAt       DateTime?
   lockedAt        DateTime?                            // lock de ciclo (evita solapamientos)
+
+  // ── Estrategia por defecto de la cuenta (productos con useAccountDefaults) ──
+  defaultStrategy      RepriceStrategy   @default(BUYBOX)
+  defaultUndercutType  UndercutType      @default(AMOUNT)
+  defaultUndercutValue Float             @default(0.01)
+  defaultNoCompetition NoCompetitionMode @default(MAX)
+
+  // ── Programación horaria, simulación y throttling ──
+  scheduleEnabled  Boolean @default(false)
+  scheduleStartHour Int    @default(0)   // hora local Europe/Madrid (0-23)
+  scheduleEndHour   Int    @default(24)  // exclusivo (24 = fin de día)
+  dryRun           Boolean @default(false) // calcula pero NO aplica en Amazon
+  patchDelayMs     Int     @default(0)     // retardo entre PATCHes (anti QuotaExceeded)
 
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
@@ -355,6 +380,17 @@ model SellerListing {
   targetMargin  Float?            @default(10) // % margen objetivo (MARGIN)
   noCompetition NoCompetitionMode @default(MAX)
 
+  // ── Filtros de competencia ──
+  useAccountDefaults Boolean           @default(false) // hereda estrategia de la cuenta
+  ignoreAmazon       Boolean           @default(true)  // ignorar al propio Amazon (retail)
+  fulfillmentFilter  FulfillmentFilter @default(ANY)
+  minSellerRating    Float?            // ignorar vendedores por debajo (0-5)
+
+  // ── Estado Buy Box ──
+  buyBoxStatus  BuyBoxStatus @default(UNKNOWN)
+  buyBoxPrice   Float?
+  buyBoxAt      DateTime?
+
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -392,6 +428,7 @@ model RepricingEvent {
   competitorPrice Float?
   reason          String
   success         Boolean  @default(true)
+  simulated       Boolean  @default(false) // dry-run: calculado pero no aplicado
   errorMessage    String?  @db.Text
 
   createdAt       DateTime @default(now())

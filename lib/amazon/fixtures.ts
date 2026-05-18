@@ -77,3 +77,54 @@ export function getFixtureCompetitivePrice(asin: string, base: number): number |
   const price = base * (1 + pct);
   return Math.round(price * 100) / 100;
 }
+
+export interface FixtureOffer {
+  sellerId: string;
+  price: number;
+  isAmazon: boolean;
+  isFba: boolean;
+  rating: number | null;
+  isBuyBoxWinner: boolean;
+}
+
+/**
+ * Ofertas mock deterministas (varían con el tiempo) para demostrar los
+ * filtros de competencia y el estado de Buy Box sin tocar Amazon.
+ */
+export function getFixtureOffers(asin: string, base: number, ourSellerId: string): FixtureOffer[] {
+  let h = 0;
+  for (let i = 0; i < asin.length; i++) h = (h * 31 + asin.charCodeAt(i)) | 0;
+  h = Math.abs(h);
+  const window = Math.floor(Date.now() / (5 * 60 * 1000));
+  const seed = (h + window) % 100;
+  const r = (n: number) => Math.round(n * 100) / 100;
+
+  // ~1 de cada 6 ventanas: solo nuestra oferta (sin competencia)
+  if (seed % 6 === 0) {
+    return [
+      { sellerId: ourSellerId, price: r(base), isAmazon: false, isFba: false, rating: 4.7, isBuyBoxWinner: true },
+    ];
+  }
+
+  const pct = ((seed % 21) - 12) / 100; // -0.12 .. +0.08
+  const fbm = r(base * (1 + pct)); // competidor FBM
+  const fba = r(base * (1 + pct + 0.03)); // competidor FBA algo más caro
+  const amzn = r(base * 0.94); // Amazon retail (barato)
+  const lowSeller = r(base * (1 + pct - 0.05)); // vendedor barato pero mala fama
+
+  const offers: FixtureOffer[] = [
+    { sellerId: "FBM-22", price: fbm, isAmazon: false, isFba: false, rating: 4.6, isBuyBoxWinner: false },
+    { sellerId: "FBA-31", price: fba, isAmazon: false, isFba: true, rating: 4.9, isBuyBoxWinner: false },
+    { sellerId: "SELL-09", price: lowSeller, isAmazon: false, isFba: false, rating: 3.1, isBuyBoxWinner: false },
+    { sellerId: ourSellerId, price: r(base), isAmazon: false, isFba: false, rating: 4.7, isBuyBoxWinner: false },
+  ];
+  // Amazon retail aparece ~la mitad de las veces
+  if (seed % 2 === 0) {
+    offers.push({ sellerId: "ATVPDKIKX0DER", price: amzn, isAmazon: true, isFba: true, rating: 5, isBuyBoxWinner: false });
+  }
+  // Buy Box: la gana la oferta más barata de la lista (incluida la nuestra)
+  let winner = offers[0];
+  for (const o of offers) if (o.price < winner.price) winner = o;
+  winner.isBuyBoxWinner = true;
+  return offers;
+}

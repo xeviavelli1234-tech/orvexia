@@ -7,6 +7,10 @@ import { SyncButton } from "./SyncButton";
 import ProductNetwork, { type NetNode } from "./ProductNetwork";
 import AssistantWidget from "./AssistantWidget";
 import AnalyticsOverlay, { type OvEvent, type OvProduct } from "./AnalyticsOverlay";
+import AccountSettings, {
+  SettingsButton,
+  type AccountSettingsData,
+} from "./AccountSettings";
 import { RunNowButton } from "@/app/(sellers)/sellers/dashboard/RunNowButton";
 import { DisconnectButton } from "@/app/(sellers)/sellers/dashboard/DisconnectButton";
 import { prisma } from "@/lib/prisma";
@@ -68,6 +72,11 @@ export default async function ProductosPage() {
     feePercent: l.feePercent,
     targetMargin: l.targetMargin,
     noCompetition: l.noCompetition,
+    useAccountDefaults: l.useAccountDefaults,
+    ignoreAmazon: l.ignoreAmazon,
+    fulfillmentFilter: l.fulfillmentFilter,
+    minSellerRating: l.minSellerRating,
+    buyBoxStatus: l.buyBoxStatus,
   }));
 
   const billing = getBillingState(account.plan as SellerPlan, account.trialEndsAt);
@@ -119,6 +128,17 @@ export default async function ProductosPage() {
     priceCurrent: l.priceCurrent,
   }));
 
+  const accountSettings: AccountSettingsData = {
+    scheduleEnabled: account.scheduleEnabled,
+    scheduleStartHour: account.scheduleStartHour,
+    scheduleEndHour: account.scheduleEndHour,
+    dryRun: account.dryRun,
+    patchDelayMs: account.patchDelayMs,
+    defaultStrategy: account.defaultStrategy,
+    defaultUndercutType: account.defaultUndercutType,
+    defaultUndercutValue: account.defaultUndercutValue,
+    defaultNoCompetition: account.defaultNoCompetition,
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex bg-[#020207] text-white">
@@ -177,6 +197,7 @@ export default async function ProductosPage() {
             lastRunAt={lastRun?.startedAt.toISOString() ?? null}
             proHref="/sellers/facturacion"
           />
+          <SettingsButton />
           <DisconnectButton />
         </div>
 
@@ -222,6 +243,8 @@ export default async function ProductosPage() {
         runCount={runCount}
         lastRunAt={lastRun?.startedAt.toISOString() ?? null}
       />
+
+      <AccountSettings initial={accountSettings} />
     </div>
   );
 }

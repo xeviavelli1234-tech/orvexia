@@ -2,9 +2,13 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { decryptToken } from "@/lib/crypto";
 import { SpApiClient } from "@/lib/amazon/client";
-import { getCompetitivePrice, patchListingPrice } from "@/lib/amazon/pricing";
+import { getCompetition, patchListingPrice } from "@/lib/amazon/pricing";
+import { isFixtureMode } from "@/lib/amazon/fixtures";
 import { isRepricingAllowed, type SellerPlan } from "@/lib/billing";
+import { isScheduleAllowed } from "./schedule";
 import { computeNewPrice } from "./engine";
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 type SpApiEnv = "sandbox" | "production";
 
@@ -48,6 +52,18 @@ export async function runRepricer(now: Date = new Date()): Promise<RunSummary> {
     if (account.lastRunAt) {
       const nextDue = account.lastRunAt.getTime() + account.intervalSeconds * 1000;
       if (now.getTime() < nextDue) continue;
+    }
+
+    // Programación horaria: fuera de la franja → no reprecia.
+    if (
+      !isScheduleAllowed(
+        account.scheduleEnabled,
+        account.scheduleStartHour,
+        account.scheduleEndHour,
+        now,
+      )
+    ) {
+      continue;
     }
 
     // Lock de ciclo: claim atómico. Si otra ejecución (cron + manual)
@@ -112,11 +128,43 @@ export async function runRepricer(now: Date = new Date()): Promise<RunSummary> {
             continue;
           }
 
-          const competitorPrice = await getCompetitivePrice(
+          const comp = await getCompetition(
             ctx,
             listing.asin,
             listing.priceCurrent,
+            {
+              ignoreAmazon: listing.ignoreAmazon,
+              fulfillment: listing.fulfillmentFilter,
+              minRating: listing.minSellerRating ?? null,
+            },
+            account.amazonSellerId,
           );
+          const competitorPrice = comp.price;
+
+          // Estado de Buy Box (informativo, cada ciclo).
+          await prisma.sellerListing.update({
+            where: { id: listing.id },
+            data: {
+              buyBoxStatus: comp.buyBox,
+              buyBoxPrice: competitorPrice ?? undefined,
+              buyBoxAt: now,
+            },
+          });
+
+          // Estrategia efectiva: la del producto o la de la cuenta.
+          const eff = listing.useAccountDefaults
+            ? {
+                strategy: account.defaultStrategy,
+                undercutType: account.defaultUndercutType,
+                undercutValue: account.defaultUndercutValue,
+                noCompetition: account.defaultNoCompetition,
+              }
+            : {
+                strategy: listing.strategy,
+                undercutType: listing.undercutType,
+                undercutValue: listing.undercutValue,
+                noCompetition: listing.noCompetition,
+              };
 
           // Suelo de beneficio (estrategia MARGIN): coste / (1 - fee% - margen%)
           let marginFloor: number | null = null;
@@ -132,12 +180,12 @@ export async function runRepricer(now: Date = new Date()): Promise<RunSummary> {
             priceMin: listing.priceMin!,
             priceMax: listing.priceMax!,
             competitorPrice,
-            strategy: listing.strategy,
-            undercutType: listing.undercutType,
-            undercutValue: listing.undercutValue,
+            strategy: eff.strategy,
+            undercutType: eff.undercutType,
+            undercutValue: eff.undercutValue,
             fixedPrice: listing.fixedPrice,
             marginFloor,
-            noCompetition: listing.noCompetition,
+            noCompetition: eff.noCompetition,
           });
 
           if (!result.changed) {
@@ -155,20 +203,9 @@ export async function runRepricer(now: Date = new Date()): Promise<RunSummary> {
             continue;
           }
 
-          await patchListingPrice(ctx, {
-            amazonSellerId: account.amazonSellerId,
-            sku: listing.sku,
-            productType: listing.productType,
-            newPrice: result.newPrice,
-            currency: listing.currency,
-          });
-
-          await prisma.$transaction([
-            prisma.sellerListing.update({
-              where: { id: listing.id },
-              data: { priceCurrent: result.newPrice, lastRepricedAt: now },
-            }),
-            prisma.repricingEvent.create({
+          if (account.dryRun) {
+            // Simulación: calcula pero NO aplica en Amazon ni cambia precio.
+            await prisma.repricingEvent.create({
               data: {
                 runId: run.id,
                 listingId: listing.id,
@@ -177,11 +214,44 @@ export async function runRepricer(now: Date = new Date()): Promise<RunSummary> {
                 competitorPrice,
                 reason: result.reason,
                 success: true,
+                simulated: true,
               },
-            }),
-          ]);
+            });
+            repriced += 1;
+          } else {
+            await patchListingPrice(ctx, {
+              amazonSellerId: account.amazonSellerId,
+              sku: listing.sku,
+              productType: listing.productType,
+              newPrice: result.newPrice,
+              currency: listing.currency,
+            });
 
-          repriced += 1;
+            await prisma.$transaction([
+              prisma.sellerListing.update({
+                where: { id: listing.id },
+                data: { priceCurrent: result.newPrice, lastRepricedAt: now },
+              }),
+              prisma.repricingEvent.create({
+                data: {
+                  runId: run.id,
+                  listingId: listing.id,
+                  priceBefore: listing.priceCurrent,
+                  priceAfter: result.newPrice,
+                  competitorPrice,
+                  reason: result.reason,
+                  success: true,
+                },
+              }),
+            ]);
+
+            repriced += 1;
+          }
+
+          // Throttling: respiro entre PATCHes (anti QuotaExceeded).
+          if (account.patchDelayMs > 0 && !isFixtureMode(account.spApiEnv)) {
+            await sleep(account.patchDelayMs);
+          }
         } catch (e) {
           errors += 1;
           await prisma.repricingEvent.create({

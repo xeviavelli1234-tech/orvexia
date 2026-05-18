@@ -93,6 +93,36 @@ export async function setListingRange(params: {
   });
 }
 
+export async function setListingCompetition(params: {
+  listingId: string;
+  userId: string;
+  useAccountDefaults: boolean;
+  ignoreAmazon: boolean;
+  fulfillmentFilter: "ANY" | "FBA" | "FBM";
+  minSellerRating: number | null;
+}) {
+  const existing = await getListingForUser({
+    listingId: params.listingId,
+    userId: params.userId,
+  });
+  if (!existing) throw new Error("listing_not_found_or_not_owned");
+  if (
+    params.minSellerRating != null &&
+    (params.minSellerRating < 0 || params.minSellerRating > 5)
+  ) {
+    throw new Error("invalid_rating");
+  }
+  return prisma.sellerListing.update({
+    where: { id: params.listingId },
+    data: {
+      useAccountDefaults: params.useAccountDefaults,
+      ignoreAmazon: params.ignoreAmazon,
+      fulfillmentFilter: params.fulfillmentFilter,
+      minSellerRating: params.minSellerRating,
+    },
+  });
+}
+
 export async function setListingStrategy(params: {
   listingId: string;
   userId: string;
