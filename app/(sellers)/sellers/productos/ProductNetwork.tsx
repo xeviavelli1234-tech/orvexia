@@ -573,89 +573,128 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
             );
           })()}
 
-          {/* Rama del hub → icono Cuenta / fiabilidad (ajustes de cuenta) */}
+          {/* Ramas del hub → herramientas de cuenta (organizadas aquí) */}
           {(() => {
             const h = layout.hub;
             const HR = 54;
-            const SR = 24;
-            const SX = h.x;
-            const SY = h.y + HR + 96;
-            const branch = `M${h.x},${h.y + HR} Q${h.x + 26},${
-              (h.y + HR + SY) / 2
-            } ${SX},${SY - SR}`;
+            const SR = 22;
+            const tools: Array<{
+              key: string;
+              label: string;
+              rgb: string;
+              icon: "list" | "shield" | "bars";
+              ev: string;
+            }> = [
+              { key: "cat", label: "Catálogo", rgb: "125,211,252", icon: "list", ev: "orvexia:open-catalog" },
+              { key: "set", label: "Cuenta", rgb: "165,180,252", icon: "shield", ev: "orvexia:open-settings" },
+              { key: "ana", label: "Analítica", rgb: "94,234,212", icon: "bars", ev: "orvexia:open-analytics" },
+            ];
+            const n = tools.length;
             return (
               <g>
-                <path
-                  d={branch}
-                  fill="none"
-                  stroke="rgba(165,180,252,0.28)"
-                  strokeWidth="1.2"
-                  vectorEffect="non-scaling-stroke"
-                />
-                <path
-                  className="net-flow"
-                  d={branch}
-                  fill="none"
-                  stroke="rgba(165,180,252,0.6)"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  vectorEffect="non-scaling-stroke"
-                />
-                <g
-                  className="hex-node"
-                  onClick={() => {
-                    if (suppressClick.current) {
-                      suppressClick.current = false;
-                      return;
-                    }
-                    window.dispatchEvent(new CustomEvent("orvexia:open-settings"));
-                  }}
-                >
-                  <circle cx={SX} cy={SY} r={SR + 14} fill="transparent" />
-                  <circle
-                    cx={SX}
-                    cy={SY}
-                    r={SR + 5}
-                    fill="none"
-                    stroke="rgba(165,180,252,0.45)"
-                    strokeWidth="1.2"
-                    filter="url(#glow)"
-                  />
-                  <circle
-                    cx={SX}
-                    cy={SY}
-                    r={SR}
-                    fill="rgba(10,10,24,0.92)"
-                    stroke="rgba(165,180,252,0.7)"
-                    strokeWidth="1.3"
-                  />
-                  {/* escudo (fiabilidad) + check */}
-                  <path
-                    d={`M${SX},${SY - 13} L${SX + 11},${SY - 8} L${SX + 11},${SY + 2} C${SX + 11},${SY + 9} ${SX + 6},${SY + 13} ${SX},${SY + 15} C${SX - 6},${SY + 13} ${SX - 11},${SY + 9} ${SX - 11},${SY + 2} L${SX - 11},${SY - 8} Z`}
-                    fill="none"
-                    stroke="#a5b4fc"
-                    strokeWidth="1.8"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d={`M${SX - 5},${SY + 1} L${SX - 1},${SY + 5} L${SX + 6},${SY - 4}`}
-                    fill="none"
-                    stroke="#a5b4fc"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <text
-                    x={SX}
-                    y={SY + SR + 15}
-                    textAnchor="middle"
-                    fontSize="11"
-                    fontWeight={700}
-                    fill="rgba(165,180,252,0.85)"
-                  >
-                    Cuenta
-                  </text>
-                </g>
+                {tools.map((t, i) => {
+                  const SX = h.x + (i - (n - 1) / 2) * 132;
+                  const SY = h.y + HR + 104;
+                  const branch = `M${h.x},${h.y + HR} Q${(h.x + SX) / 2},${
+                    h.y + HR + 46
+                  } ${SX},${SY - SR}`;
+                  return (
+                    <g key={t.key}>
+                      <path
+                        d={branch}
+                        fill="none"
+                        stroke={`rgba(${t.rgb},0.26)`}
+                        strokeWidth="1.2"
+                        vectorEffect="non-scaling-stroke"
+                      />
+                      <path
+                        className="net-flow"
+                        d={branch}
+                        fill="none"
+                        stroke={`rgba(${t.rgb},0.6)`}
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        vectorEffect="non-scaling-stroke"
+                      />
+                      <g
+                        className="hex-node"
+                        onClick={() => {
+                          if (suppressClick.current) {
+                            suppressClick.current = false;
+                            return;
+                          }
+                          window.dispatchEvent(new CustomEvent(t.ev));
+                        }}
+                      >
+                        <circle cx={SX} cy={SY} r={SR + 14} fill="transparent" />
+                        <circle
+                          cx={SX}
+                          cy={SY}
+                          r={SR + 5}
+                          fill="none"
+                          stroke={`rgba(${t.rgb},0.45)`}
+                          strokeWidth="1.2"
+                          filter="url(#glow)"
+                        />
+                        <circle
+                          cx={SX}
+                          cy={SY}
+                          r={SR}
+                          fill="rgba(10,10,24,0.92)"
+                          stroke={`rgba(${t.rgb},0.7)`}
+                          strokeWidth="1.3"
+                        />
+                        {t.icon === "shield" && (
+                          <>
+                            <path
+                              d={`M${SX},${SY - 12} L${SX + 10},${SY - 7} L${SX + 10},${SY + 2} C${SX + 10},${SY + 8} ${SX + 5},${SY + 12} ${SX},${SY + 14} C${SX - 5},${SY + 12} ${SX - 10},${SY + 8} ${SX - 10},${SY + 2} L${SX - 10},${SY - 7} Z`}
+                              fill="none"
+                              stroke={`rgb(${t.rgb})`}
+                              strokeWidth="1.8"
+                              strokeLinejoin="round"
+                            />
+                            <path
+                              d={`M${SX - 4},${SY + 1} L${SX - 1},${SY + 4} L${SX + 5},${SY - 4}`}
+                              fill="none"
+                              stroke={`rgb(${t.rgb})`}
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </>
+                        )}
+                        {t.icon === "bars" && (
+                          <g
+                            stroke={`rgb(${t.rgb})`}
+                            strokeWidth="2.6"
+                            strokeLinecap="round"
+                          >
+                            <line x1={SX - 8} y1={SY + 7} x2={SX - 8} y2={SY + 1} />
+                            <line x1={SX} y1={SY + 7} x2={SX} y2={SY - 5} />
+                            <line x1={SX + 8} y1={SY + 7} x2={SX + 8} y2={SY - 2} />
+                          </g>
+                        )}
+                        {t.icon === "list" && (
+                          <g stroke={`rgb(${t.rgb})`} strokeWidth="2" strokeLinecap="round">
+                            <line x1={SX - 8} y1={SY - 6} x2={SX + 8} y2={SY - 6} />
+                            <line x1={SX - 8} y1={SY} x2={SX + 8} y2={SY} />
+                            <line x1={SX - 8} y1={SY + 6} x2={SX + 8} y2={SY + 6} />
+                          </g>
+                        )}
+                        <text
+                          x={SX}
+                          y={SY + SR + 15}
+                          textAnchor="middle"
+                          fontSize="11"
+                          fontWeight={700}
+                          fill={`rgba(${t.rgb},0.9)`}
+                        >
+                          {t.label}
+                        </text>
+                      </g>
+                    </g>
+                  );
+                })}
               </g>
             );
           })()}
