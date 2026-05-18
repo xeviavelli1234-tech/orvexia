@@ -21,8 +21,32 @@ export interface NetNode {
 const VB_W = 1400;
 const VB_H = 900;
 const R = 38;
-const K_MIN = 0.35;
+const K_MIN = 0.75;
 const K_MAX = 4;
+
+/** Limita el paneo: solo se permite asomarse un poco a las esquinas. */
+function clampView(v: { k: number; x: number; y: number }) {
+  const mx = VB_W * 0.07;
+  const my = VB_H * 0.07;
+  const bx0 = VB_W * 0.12,
+    bx1 = VB_W * 0.88,
+    by0 = VB_H * 0.1,
+    by1 = VB_H * 0.9;
+
+  let xMin = mx - v.k * bx1;
+  let xMax = VB_W - mx - v.k * bx0;
+  if (xMin > xMax) xMin = xMax = (xMin + xMax) / 2;
+
+  let yMin = my - v.k * by1;
+  let yMax = VB_H - my - v.k * by0;
+  if (yMin > yMax) yMin = yMax = (yMin + yMax) / 2;
+
+  return {
+    k: v.k,
+    x: Math.min(xMax, Math.max(xMin, v.x)),
+    y: Math.min(yMax, Math.max(yMin, v.y)),
+  };
+}
 
 function hash(s: string): number {
   let h = 2166136261;
@@ -115,11 +139,11 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
       const k2 = Math.min(K_MAX, Math.max(K_MIN, v.k * factor));
       const p = toVB(clientX, clientY);
       const ratio = k2 / v.k;
-      return {
+      return clampView({
         k: k2,
         x: p.x - ratio * (p.x - v.x),
         y: p.y - ratio * (p.y - v.y),
-      };
+      });
     });
   }
 
@@ -164,7 +188,7 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
     const a = toVB(e.clientX, e.clientY);
     const b = toVB(d.sx, d.sy);
     if (Math.abs(e.clientX - d.sx) + Math.abs(e.clientY - d.sy) > 4) d.moved = true;
-    setView((v) => ({ ...v, x: d.ox + (a.x - b.x), y: d.oy + (a.y - b.y) }));
+    setView((v) => clampView({ k: v.k, x: d.ox + (a.x - b.x), y: d.oy + (a.y - b.y) }));
   }
   function onPointerUp() {
     if (drag.current.moved) suppressClick.current = true;
