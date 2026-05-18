@@ -244,6 +244,22 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Red de seguridad: pase lo que pase (soltar fuera, perder foco, abrir
+  // un overlay…) el pan nunca queda atascado bloqueando los clics.
+  useEffect(() => {
+    const reset = () => {
+      drag.current.active = false;
+    };
+    window.addEventListener("pointerup", reset);
+    window.addEventListener("pointercancel", reset);
+    window.addEventListener("blur", reset);
+    return () => {
+      window.removeEventListener("pointerup", reset);
+      window.removeEventListener("pointercancel", reset);
+      window.removeEventListener("blur", reset);
+    };
+  }, []);
+
   function onPointerDown(e: React.PointerEvent) {
     // Solo botón primario. El click derecho/medio abría un "pan" que nunca
     // recibía pointerup (sale el menú contextual) → drag fantasma atascado
@@ -266,7 +282,9 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
       oy: view.y,
       moved: false,
     };
-    (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
+    // NO usamos setPointerCapture: si se pierde el pointerup (abrir overlay,
+    // soltar fuera, etc.) la captura quedaba pegada al SVG y TODOS los
+    // clics dejaban de llegar a los nodos hasta recargar.
   }
   function onPointerMove(e: React.PointerEvent) {
     const d = drag.current;
