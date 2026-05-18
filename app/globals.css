@@ -671,15 +671,20 @@ body {
 }
 .neb-float { transform-box: view-box; transform-origin: center; animation: neb-float var(--nd, 26s) var(--ease-in-out) infinite; }
 
-/* Estrella fugaz */
+/* Estrella fugaz — entra, cruza y se apaga; invisible la mayor parte del ciclo */
 @keyframes shoot {
-  0%      { opacity: 0; transform: translate3d(0,0,0); }
-  4%      { opacity: 1; }
-  16%     { opacity: 1; }
-  22%     { opacity: 0; transform: translate3d(420px, 240px, 0); }
-  100%    { opacity: 0; transform: translate3d(420px, 240px, 0); }
+  0%   { opacity: 0; transform: translate3d(var(--x0,0px), var(--y0,0px), 0); }
+  4%   { opacity: 0; transform: translate3d(var(--x0,0px), var(--y0,0px), 0); }
+  9%   { opacity: 1; }
+  17%  { opacity: 1; }
+  24%  { opacity: 0; transform: translate3d(var(--x1,400px), var(--y1,260px), 0); }
+  100% { opacity: 0; transform: translate3d(var(--x1,400px), var(--y1,260px), 0); }
 }
-.shoot { animation: shoot var(--sd, 9s) linear infinite; animation-delay: var(--sdelay, 0s); }
+.shoot {
+  animation: shoot var(--sd, 16s) cubic-bezier(0.33, 0, 0.2, 1) infinite;
+  animation-delay: var(--sdelay, 0s);
+  will-change: transform, opacity;
+}
 
 /* ============================================================
    Reduced motion

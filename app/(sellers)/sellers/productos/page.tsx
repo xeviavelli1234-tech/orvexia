@@ -63,8 +63,8 @@ export default async function ProductosPage() {
 
       <div className="relative max-w-[1500px] mx-auto">
         <div className="flex items-center gap-3 mb-4">
-          <Link href="/dashboard/repricer" className="text-xs text-white/45 hover:text-white/80">
-            ← Panel
+          <Link href="/dashboard" className="text-xs text-white/45 hover:text-white/80">
+            ← Dashboard
           </Link>
           <span className="text-white/20">/</span>
           <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-white">

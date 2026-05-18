@@ -95,7 +95,7 @@ export async function RepricerSection({
       )}
 
       <Link
-        href="/dashboard/repricer"
+        href={connected ? "/sellers/productos" : "/dashboard/repricer"}
         className="group block neon-border rounded-3xl overflow-hidden"
       >
         <div

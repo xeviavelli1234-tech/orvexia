@@ -246,6 +246,12 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
             <stop offset="45%" stopColor="#F97316" stopOpacity="0.85" />
             <stop offset="100%" stopColor="#7C2D12" stopOpacity="0.05" />
           </radialGradient>
+          <linearGradient id="streak" gradientUnits="userSpaceOnUse"
+            x1="0" y1="0" x2="-150" y2="-80">
+            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95" />
+            <stop offset="35%" stopColor="#cdd6ff" stopOpacity="0.45" />
+            <stop offset="100%" stopColor="#cdd6ff" stopOpacity="0" />
+          </linearGradient>
           <filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
             <feGaussianBlur stdDeviation="6" result="b" />
             <feMerge>
@@ -290,17 +296,40 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
           ))}
         </g>
 
-        {/* Estrellas fugaces */}
-        <g stroke="#ffffff" strokeWidth="2" strokeLinecap="round">
-          {[
-            { x: 120, y: 90, d: 9, delay: 1 },
-            { x: 760, y: 60, d: 13, delay: 6 },
-            { x: 300, y: 200, d: 17, delay: 11 },
-          ].map((sh, i) => (
-            <line key={i} className="shoot" x1={sh.x} y1={sh.y} x2={sh.x + 90} y2={sh.y + 52}
-              style={{ "--sd": `${sh.d}s`, "--sdelay": `${sh.delay}s` } as CSSProperties} />
-          ))}
-        </g>
+        {/* Estrellas fugaces — estela con degradado, raras y elegantes */}
+        {[
+          { x0: 140, y0: -120, x1: 820, y1: 360, sd: 15, dl: 3 },
+          { x0: 820, y0: -130, x1: 1360, y1: 430, sd: 21, dl: 10 },
+          { x0: -130, y0: 170, x1: 620, y1: 760, sd: 27, dl: 18 },
+        ].map((sh, i) => (
+          <g
+            key={i}
+            className="shoot"
+            style={
+              {
+                "--x0": `${sh.x0}px`,
+                "--y0": `${sh.y0}px`,
+                "--x1": `${sh.x1}px`,
+                "--y1": `${sh.y1}px`,
+                "--sd": `${sh.sd}s`,
+                "--sdelay": `${sh.dl}s`,
+              } as CSSProperties
+            }
+          >
+            <line
+              x1="0"
+              y1="0"
+              x2="-150"
+              y2="-80"
+              stroke="url(#streak)"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              vectorEffect="non-scaling-stroke"
+            />
+            <circle cx="0" cy="0" r="6" fill="#ffffff" opacity="0.18" />
+            <circle cx="0" cy="0" r="2.2" fill="#ffffff" />
+          </g>
+        ))}
 
         {/* Aristas */}
         <g stroke="rgba(180,190,255,0.18)" strokeWidth="1.1" fill="none">
@@ -308,7 +337,7 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
             const pa = layout.pos[a], pb = layout.pos[b];
             const mx = (pa.x + pb.x) / 2, my = (pa.y + pb.y) / 2;
             const dx = pb.x - pa.x, dy = pb.y - pa.y;
-            return <path key={i} d={`M${pa.x},${pa.y} Q${mx - dy * 0.12},${my + dx * 0.12} ${pb.x},${pb.y}`} />;
+            return <path key={i} vectorEffect="non-scaling-stroke" d={`M${pa.x},${pa.y} Q${mx - dy * 0.12},${my + dx * 0.12} ${pb.x},${pb.y}`} />;
           })}
         </g>
         <g stroke="rgba(190,210,255,0.65)" strokeWidth="1.4" fill="none" strokeLinecap="round">
@@ -317,7 +346,8 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
             const mx = (pa.x + pb.x) / 2, my = (pa.y + pb.y) / 2;
             const dx = pb.x - pa.x, dy = pb.y - pa.y;
             return (
-              <path key={i} className="net-flow" style={{ animationDelay: `${(i % 7) * 0.18}s` }}
+              <path key={i} className="net-flow" vectorEffect="non-scaling-stroke"
+                style={{ animationDelay: `${(i % 7) * 0.18}s` }}
                 d={`M${pa.x},${pa.y} Q${mx - dy * 0.12},${my + dx * 0.12} ${pb.x},${pb.y}`} />
             );
           })}
