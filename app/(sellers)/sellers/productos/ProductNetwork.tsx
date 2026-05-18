@@ -616,7 +616,11 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
                       suppressClick.current = false;
                       return;
                     }
-                    router.push(`/sellers/analiticas?p=${encodeURIComponent(selId)}`);
+                    window.open(
+                      `/sellers/analiticas?p=${encodeURIComponent(selId)}`,
+                      "_blank",
+                      "noopener,noreferrer",
+                    );
                   }}
                 >
                   <circle cx={SX} cy={SY} r={SR + 16} fill="transparent" />

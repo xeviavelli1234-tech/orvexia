@@ -80,6 +80,8 @@ export default function ActivityPanel({
       {/* Enlace a la página de analíticas */}
       <Link
         href="/sellers/analiticas"
+        target="_blank"
+        rel="noopener noreferrer"
         className="flex items-center justify-between rounded-xl border border-cyan-400/20 bg-cyan-400/[0.05] px-3 py-2.5 text-sm text-white/85 hover:bg-cyan-400/10 transition-colors"
       >
         <span className="flex items-center gap-2">
