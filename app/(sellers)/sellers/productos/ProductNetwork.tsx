@@ -573,6 +573,93 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
             );
           })()}
 
+          {/* Rama del hub → icono Cuenta / fiabilidad (ajustes de cuenta) */}
+          {(() => {
+            const h = layout.hub;
+            const HR = 54;
+            const SR = 24;
+            const SX = h.x;
+            const SY = h.y + HR + 96;
+            const branch = `M${h.x},${h.y + HR} Q${h.x + 26},${
+              (h.y + HR + SY) / 2
+            } ${SX},${SY - SR}`;
+            return (
+              <g>
+                <path
+                  d={branch}
+                  fill="none"
+                  stroke="rgba(165,180,252,0.28)"
+                  strokeWidth="1.2"
+                  vectorEffect="non-scaling-stroke"
+                />
+                <path
+                  className="net-flow"
+                  d={branch}
+                  fill="none"
+                  stroke="rgba(165,180,252,0.6)"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  vectorEffect="non-scaling-stroke"
+                />
+                <g
+                  className="hex-node"
+                  onClick={() => {
+                    if (suppressClick.current) {
+                      suppressClick.current = false;
+                      return;
+                    }
+                    window.dispatchEvent(new CustomEvent("orvexia:open-settings"));
+                  }}
+                >
+                  <circle cx={SX} cy={SY} r={SR + 14} fill="transparent" />
+                  <circle
+                    cx={SX}
+                    cy={SY}
+                    r={SR + 5}
+                    fill="none"
+                    stroke="rgba(165,180,252,0.45)"
+                    strokeWidth="1.2"
+                    filter="url(#glow)"
+                  />
+                  <circle
+                    cx={SX}
+                    cy={SY}
+                    r={SR}
+                    fill="rgba(10,10,24,0.92)"
+                    stroke="rgba(165,180,252,0.7)"
+                    strokeWidth="1.3"
+                  />
+                  {/* escudo (fiabilidad) + check */}
+                  <path
+                    d={`M${SX},${SY - 13} L${SX + 11},${SY - 8} L${SX + 11},${SY + 2} C${SX + 11},${SY + 9} ${SX + 6},${SY + 13} ${SX},${SY + 15} C${SX - 6},${SY + 13} ${SX - 11},${SY + 9} ${SX - 11},${SY + 2} L${SX - 11},${SY - 8} Z`}
+                    fill="none"
+                    stroke="#a5b4fc"
+                    strokeWidth="1.8"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d={`M${SX - 5},${SY + 1} L${SX - 1},${SY + 5} L${SX + 6},${SY - 4}`}
+                    fill="none"
+                    stroke="#a5b4fc"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <text
+                    x={SX}
+                    y={SY + SR + 15}
+                    textAnchor="middle"
+                    fontSize="11"
+                    fontWeight={700}
+                    fill="rgba(165,180,252,0.85)"
+                  >
+                    Cuenta
+                  </text>
+                </g>
+              </g>
+            );
+          })()}
+
           {/* Rama del producto seleccionado → icono de analítica
               (antes de los nodos: así los productos quedan por encima
               y un satélite nunca intercepta el clic de otro producto) */}
