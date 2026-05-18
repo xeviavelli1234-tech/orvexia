@@ -648,6 +648,13 @@ body {
 }
 .hex-node:hover { transform: scale(1.12); }
 
+/* Estrellas del fondo espacial */
+@keyframes twinkle {
+  0%, 100% { opacity: var(--o, 0.5); }
+  50%      { opacity: 0.15; }
+}
+.star-tw { animation: twinkle var(--t, 4s) ease-in-out infinite; }
+
 /* ============================================================
    Reduced motion
    ============================================================ */

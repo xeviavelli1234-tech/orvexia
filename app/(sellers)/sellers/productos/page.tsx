@@ -55,7 +55,7 @@ export default async function ProductosPage() {
     <main className="relative min-h-screen overflow-hidden px-4 sm:px-6 py-10">
       <Backdrop />
 
-      <div className="relative max-w-6xl mx-auto">
+      <div className="relative max-w-7xl mx-auto">
         {/* ── Barra HUD ───────────────────────────────────────────── */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -97,8 +97,10 @@ export default async function ProductosPage() {
             </p>
           </div>
         ) : (
-          <div className="mt-6 rounded-3xl border border-white/8 bg-[rgba(8,5,3,0.55)] p-2 sm:p-4">
-            <ProductNetwork nodes={nodes} />
+          <div className="mt-6 rounded-3xl border border-indigo-400/15 bg-black/40 p-1.5 sm:p-2 shadow-[0_0_80px_-20px_rgba(99,102,241,0.45)] overflow-hidden">
+            <div className="rounded-[20px] overflow-hidden">
+              <ProductNetwork nodes={nodes} />
+            </div>
           </div>
         )}
 
@@ -122,14 +124,14 @@ function HudStat({ label, value }: { label: string; value: string }) {
   );
 }
 
-/** Fondo: rejilla cíber + halos cálidos (estilo "ops map"). */
+/** Fondo espacial profundo (nebulosas). */
 function Backdrop() {
   return (
-    <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-      <div className="absolute inset-0 bg-grid-cyber opacity-50" />
-      <div className="absolute -top-40 left-1/2 -translate-x-1/2 h-[520px] w-[900px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(249,115,22,0.10),transparent_62%)]" />
-      <div className="absolute bottom-[-10%] right-[-5%] h-[460px] w-[680px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(234,88,12,0.08),transparent_60%)]" />
-      <div className="absolute top-[30%] left-[-8%] h-[420px] w-[560px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.07),transparent_60%)]" />
+    <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden bg-[#030308]">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_-5%,rgba(99,102,241,0.18),transparent_60%)]" />
+      <div className="absolute top-[20%] left-[-10%] h-[600px] w-[760px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(34,211,238,0.12),transparent_62%)]" />
+      <div className="absolute bottom-[-12%] right-[-8%] h-[620px] w-[820px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(217,70,239,0.12),transparent_62%)]" />
+      <div className="absolute bottom-[10%] left-[15%] h-[420px] w-[560px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(129,140,248,0.10),transparent_60%)]" />
     </div>
   );
 }

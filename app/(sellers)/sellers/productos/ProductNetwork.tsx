@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 
 export interface NetNode {
   id: string;
@@ -12,9 +12,46 @@ export interface NetNode {
   currency: string;
 }
 
-const VB_W = 1000;
-const VB_H = 620;
-const R = 34; // radio del hexágono
+const VB_W = 1200;
+const VB_H = 780;
+const R = 36; // radio del hexágono
+
+/** PRNG determinista (mismo resultado en server y cliente). */
+function mulberry32(seed: number) {
+  return function () {
+    seed |= 0;
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+interface Star {
+  x: number;
+  y: number;
+  r: number;
+  o: number;
+  tw: boolean;
+  t: number;
+}
+
+function makeStars(count: number): Star[] {
+  const rnd = mulberry32(987654321);
+  const stars: Star[] = [];
+  for (let i = 0; i < count; i++) {
+    const big = rnd() > 0.93;
+    stars.push({
+      x: rnd() * VB_W,
+      y: rnd() * VB_H,
+      r: big ? 1.4 + rnd() * 1.3 : 0.4 + rnd() * 0.9,
+      o: big ? 0.7 + rnd() * 0.3 : 0.2 + rnd() * 0.5,
+      tw: rnd() > 0.6,
+      t: 3 + rnd() * 5,
+    });
+  }
+  return stars;
+}
 
 function hash(s: string): number {
   let h = 2166136261;
@@ -51,18 +88,18 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
   const layout = useMemo(() => {
     const n = nodes.length;
     const cx = VB_W / 2;
-    const cy = VB_H / 2 + 6;
-    const maxR = Math.min(252, 96 + n * 14);
+    const cy = VB_H / 2 + 4;
+    const maxR = Math.min(330, 130 + n * 18);
 
     const pos = nodes.map((node, i) => {
       const golden = i * 2.39996323; // ángulo áureo → constelación
       const rr = maxR * Math.sqrt((i + 0.55) / Math.max(n, 1));
-      const jx = (hash(node.id + "x") - 0.5) * 70;
-      const jy = (hash(node.id + "y") - 0.5) * 60;
-      let x = cx + Math.cos(golden) * rr * 1.62 + jx;
+      const jx = (hash(node.id + "x") - 0.5) * 88;
+      const jy = (hash(node.id + "y") - 0.5) * 76;
+      let x = cx + Math.cos(golden) * rr * 1.55 + jx;
       let y = cy + Math.sin(golden) * rr + jy;
-      x = Math.max(70, Math.min(VB_W - 70, x));
-      y = Math.max(64, Math.min(VB_H - 78, y));
+      x = Math.max(90, Math.min(VB_W - 90, x));
+      y = Math.max(80, Math.min(VB_H - 96, y));
       return { ...node, x, y };
     });
 
@@ -83,6 +120,8 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
     return { pos, edges };
   }, [nodes]);
 
+  const stars = useMemo(() => makeStars(150), []);
+
   if (nodes.length === 0) return null;
 
   const pct = (v: number, max: number) => `${(v / max) * 100}%`;
@@ -102,6 +141,23 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
               <stop offset="42%" stopColor="#F97316" stopOpacity="0.85" />
               <stop offset="100%" stopColor="#7C2D12" stopOpacity="0.05" />
             </radialGradient>
+            <radialGradient id="space" cx="50%" cy="38%" r="85%">
+              <stop offset="0%" stopColor="#15123a" />
+              <stop offset="45%" stopColor="#0a0a23" />
+              <stop offset="100%" stopColor="#030308" />
+            </radialGradient>
+            <radialGradient id="neb1" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="rgba(129,140,248,0.30)" />
+              <stop offset="100%" stopColor="rgba(129,140,248,0)" />
+            </radialGradient>
+            <radialGradient id="neb2" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="rgba(34,211,238,0.22)" />
+              <stop offset="100%" stopColor="rgba(34,211,238,0)" />
+            </radialGradient>
+            <radialGradient id="neb3" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="rgba(217,70,239,0.20)" />
+              <stop offset="100%" stopColor="rgba(217,70,239,0)" />
+            </radialGradient>
             <filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
               <feGaussianBlur stdDeviation="6" result="b" />
               <feMerge>
@@ -115,6 +171,29 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
               </clipPath>
             ))}
           </defs>
+
+          {/* Fondo espacial */}
+          <rect x="0" y="0" width={VB_W} height={VB_H} fill="url(#space)" />
+          <ellipse cx={VB_W * 0.32} cy={VB_H * 0.3} rx="360" ry="280" fill="url(#neb1)" />
+          <ellipse cx={VB_W * 0.74} cy={VB_H * 0.68} rx="380" ry="300" fill="url(#neb2)" />
+          <ellipse cx={VB_W * 0.6} cy={VB_H * 0.22} rx="300" ry="220" fill="url(#neb3)" />
+          <g fill="#ffffff">
+            {stars.map((s, i) => (
+              <circle
+                key={i}
+                cx={s.x}
+                cy={s.y}
+                r={s.r}
+                opacity={s.o}
+                className={s.tw ? "star-tw" : undefined}
+                style={
+                  s.tw
+                    ? ({ "--o": s.o, "--t": `${s.t}s` } as CSSProperties)
+                    : undefined
+                }
+              />
+            ))}
+          </g>
 
           {/* Aristas base */}
           <g stroke="rgba(249,170,90,0.22)" strokeWidth="1.1" fill="none">
