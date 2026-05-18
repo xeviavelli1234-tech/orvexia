@@ -231,10 +231,17 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
   }, []);
 
   function onPointerDown(e: React.PointerEvent) {
+    // Solo botón primario. El click derecho/medio abría un "pan" que nunca
+    // recibía pointerup (sale el menú contextual) → drag fantasma atascado
+    // y a partir de ahí ningún clic en producto funcionaba.
+    if (e.button !== 0) {
+      drag.current.active = false;
+      return;
+    }
     if ((e.target as Element).closest(".hex-node")) {
-      // Clic deliberado sobre un nodo: nuevo gesto limpio. Sin esto, un
-      // pan/zoom previo dejaba suppressClick=true y se comía este clic.
+      // Clic deliberado sobre un nodo: nuevo gesto limpio.
       suppressClick.current = false;
+      drag.current.active = false;
       return;
     }
     drag.current = {
@@ -378,6 +385,8 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerLeave={onPointerUp}
+        onPointerCancel={onPointerUp}
+        onContextMenu={(e) => e.preventDefault()}
       >
         <defs>
           <radialGradient id="coreOn" cx="50%" cy="42%" r="60%">
