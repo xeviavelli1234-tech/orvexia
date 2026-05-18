@@ -461,7 +461,7 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
       </svg>
 
       {/* Controles de zoom */}
-      <div className="absolute bottom-5 right-5 flex flex-col gap-2">
+      <div className="absolute bottom-5 left-5 flex flex-col gap-2">
         <ZoomBtn label="Acercar" onClick={() => zoomCenter(1.25)}>+</ZoomBtn>
         <ZoomBtn label="Alejar" onClick={() => zoomCenter(1 / 1.25)}>−</ZoomBtn>
         <ZoomBtn label="Restablecer vista" onClick={() => setView({ k: 1, x: 0, y: 0 })}>

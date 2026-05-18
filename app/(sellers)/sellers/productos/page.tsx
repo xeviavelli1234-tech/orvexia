@@ -5,6 +5,7 @@ import { getSellerAccountByUserId } from "@/lib/db/sellerAccount";
 import { listListingsByAccount } from "@/lib/db/sellerListing";
 import { SyncButton } from "./SyncButton";
 import ProductNetwork, { type NetNode } from "./ProductNetwork";
+import AssistantWidget from "./AssistantWidget";
 import { RunNowButton } from "@/app/(sellers)/sellers/dashboard/RunNowButton";
 import { DisconnectButton } from "@/app/(sellers)/sellers/dashboard/DisconnectButton";
 
@@ -150,6 +151,8 @@ export default async function ProductosPage() {
           </div>
         )}
       </section>
+
+      <AssistantWidget />
     </div>
   );
 }
