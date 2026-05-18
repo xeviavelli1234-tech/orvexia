@@ -93,6 +93,47 @@ export async function setListingRange(params: {
   });
 }
 
+export async function setListingStrategy(params: {
+  listingId: string;
+  userId: string;
+  strategy: "BUYBOX" | "MATCH" | "FIXED" | "MARGIN";
+  undercutType: "AMOUNT" | "PERCENT";
+  undercutValue: number;
+  fixedPrice: number | null;
+  cost: number | null;
+  feePercent: number | null;
+  targetMargin: number | null;
+  noCompetition: "MAX" | "HOLD";
+}) {
+  const existing = await getListingForUser({
+    listingId: params.listingId,
+    userId: params.userId,
+  });
+  if (!existing) throw new Error("listing_not_found_or_not_owned");
+
+  if (params.strategy === "FIXED" && !(params.fixedPrice && params.fixedPrice > 0)) {
+    throw new Error("fixed_price_required");
+  }
+  if (params.strategy === "MARGIN" && !(params.cost && params.cost > 0)) {
+    throw new Error("cost_required");
+  }
+  if (!(params.undercutValue >= 0)) throw new Error("invalid_undercut");
+
+  return prisma.sellerListing.update({
+    where: { id: params.listingId },
+    data: {
+      strategy: params.strategy,
+      undercutType: params.undercutType,
+      undercutValue: params.undercutValue,
+      fixedPrice: params.fixedPrice,
+      cost: params.cost,
+      feePercent: params.feePercent,
+      targetMargin: params.targetMargin,
+      noCompetition: params.noCompetition,
+    },
+  });
+}
+
 export async function setListingEnabled(params: {
   listingId: string;
   userId: string;

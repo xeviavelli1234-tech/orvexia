@@ -126,3 +126,95 @@ test("competidor exactamente en el mínimo + undercut → cae a min_floor", () =
   assert.equal(r.newPrice, 95);
   assert.equal(r.reason, "min_floor");
 });
+
+// ── Estrategias ──────────────────────────────────────────────
+
+test("MATCH → iguala al competidor", () => {
+  const r = computeNewPrice({
+    priceCurrent: 100,
+    priceMin: 80,
+    priceMax: 120,
+    competitorPrice: 95,
+    strategy: "MATCH",
+  });
+  assert.equal(r.newPrice, 95);
+  assert.equal(r.reason, "competitor_match");
+});
+
+test("undercut PERCENT → 2% por debajo del competidor", () => {
+  const r = computeNewPrice({
+    priceCurrent: 100,
+    priceMin: 50,
+    priceMax: 150,
+    competitorPrice: 100,
+    strategy: "BUYBOX",
+    undercutType: "PERCENT",
+    undercutValue: 2,
+  });
+  assert.equal(r.newPrice, 98);
+  assert.equal(r.reason, "competitor_undercut");
+});
+
+test("FIXED → precio fijo, ignora competencia", () => {
+  const r = computeNewPrice({
+    priceCurrent: 100,
+    priceMin: 50,
+    priceMax: 150,
+    competitorPrice: 70,
+    strategy: "FIXED",
+    fixedPrice: 119.9,
+  });
+  assert.equal(r.newPrice, 119.9);
+  assert.equal(r.reason, "fixed_price");
+});
+
+test("FIXED se acota al techo", () => {
+  const r = computeNewPrice({
+    priceCurrent: 100,
+    priceMin: 50,
+    priceMax: 110,
+    competitorPrice: null,
+    strategy: "FIXED",
+    fixedPrice: 999,
+  });
+  assert.equal(r.newPrice, 110);
+  assert.equal(r.reason, "max_ceiling");
+});
+
+test("MARGIN → no baja por debajo del suelo de beneficio", () => {
+  const r = computeNewPrice({
+    priceCurrent: 100,
+    priceMin: 40,
+    priceMax: 150,
+    competitorPrice: 60, // 59.99 pero marginFloor 75
+    strategy: "MARGIN",
+    marginFloor: 75,
+  });
+  assert.equal(r.newPrice, 75);
+  assert.equal(r.reason, "margin_floor");
+});
+
+test("MARGIN con competidor alto → undercut normal (no toca suelo)", () => {
+  const r = computeNewPrice({
+    priceCurrent: 100,
+    priceMin: 40,
+    priceMax: 150,
+    competitorPrice: 120,
+    strategy: "MARGIN",
+    marginFloor: 75,
+  });
+  assert.equal(r.newPrice, 119.99);
+  assert.equal(r.reason, "competitor_undercut");
+});
+
+test("sin competencia + HOLD → no_change", () => {
+  const r = computeNewPrice({
+    priceCurrent: 100,
+    priceMin: 80,
+    priceMax: 130,
+    competitorPrice: null,
+    noCompetition: "HOLD",
+  });
+  assert.equal(r.changed, false);
+  assert.equal(r.reason, "no_change");
+});

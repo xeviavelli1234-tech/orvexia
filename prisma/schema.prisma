@@ -281,6 +281,23 @@ enum SellerPlan {
   PRO
 }
 
+enum RepriceStrategy {
+  BUYBOX // bajar por debajo del competidor más barato
+  MATCH // igualar al competidor
+  FIXED // precio fijo (ignora competencia)
+  MARGIN // como BUYBOX pero con suelo de beneficio
+}
+
+enum UndercutType {
+  AMOUNT // restar importe fijo (ej. 0,01 €)
+  PERCENT // restar porcentaje (ej. 2 %)
+}
+
+enum NoCompetitionMode {
+  MAX // sin competencia → subir al máximo
+  HOLD // sin competencia → mantener precio
+}
+
 model SellerAccount {
   id              String     @id @default(cuid())
   userId          String     @unique
@@ -326,6 +343,16 @@ model SellerListing {
 
   repricingEnabled Boolean  @default(false)
   lastRepricedAt   DateTime?
+
+  // ── Estrategia de reprecio ──
+  strategy      RepriceStrategy   @default(BUYBOX)
+  undercutType  UndercutType      @default(AMOUNT)
+  undercutValue Float             @default(0.01)
+  fixedPrice    Float?            // estrategia FIXED
+  cost          Float?            // coste del producto (estrategia MARGIN)
+  feePercent    Float?            @default(15) // % comisión Amazon
+  targetMargin  Float?            @default(10) // % margen objetivo (MARGIN)
+  noCompetition NoCompetitionMode @default(MAX)
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt

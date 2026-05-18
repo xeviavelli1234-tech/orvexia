@@ -55,6 +55,14 @@ export default async function ProductosPage() {
     priceMin: l.priceMin,
     priceMax: l.priceMax,
     repricingEnabled: l.repricingEnabled,
+    strategy: l.strategy,
+    undercutType: l.undercutType,
+    undercutValue: l.undercutValue,
+    fixedPrice: l.fixedPrice,
+    cost: l.cost,
+    feePercent: l.feePercent,
+    targetMargin: l.targetMargin,
+    noCompetition: l.noCompetition,
   }));
 
   return (

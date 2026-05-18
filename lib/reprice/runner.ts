@@ -103,11 +103,26 @@ export async function runRepricer(now: Date = new Date()): Promise<RunSummary> {
             listing.priceCurrent,
           );
 
+          // Suelo de beneficio (estrategia MARGIN): coste / (1 - fee% - margen%)
+          let marginFloor: number | null = null;
+          if (listing.cost != null && listing.cost > 0) {
+            const fee = (listing.feePercent ?? 15) / 100;
+            const mgn = (listing.targetMargin ?? 0) / 100;
+            const denom = 1 - fee - mgn;
+            if (denom > 0.05) marginFloor = listing.cost / denom;
+          }
+
           const result = computeNewPrice({
             priceCurrent: listing.priceCurrent,
             priceMin: listing.priceMin!,
             priceMax: listing.priceMax!,
             competitorPrice,
+            strategy: listing.strategy,
+            undercutType: listing.undercutType,
+            undercutValue: listing.undercutValue,
+            fixedPrice: listing.fixedPrice,
+            marginFloor,
+            noCompetition: listing.noCompetition,
           });
 
           if (!result.changed) {

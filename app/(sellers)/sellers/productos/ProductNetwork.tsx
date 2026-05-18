@@ -3,7 +3,15 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import WaveField from "./WaveField";
-import { updateListingRangeAction, toggleListingAction } from "./actions";
+import {
+  updateListingRangeAction,
+  toggleListingAction,
+  updateListingStrategyAction,
+} from "./actions";
+
+type Strategy = "BUYBOX" | "MATCH" | "FIXED" | "MARGIN";
+type UndercutType = "AMOUNT" | "PERCENT";
+type NoComp = "MAX" | "HOLD";
 
 export interface NetNode {
   id: string;
@@ -16,6 +24,14 @@ export interface NetNode {
   priceMin: number | null;
   priceMax: number | null;
   repricingEnabled: boolean;
+  strategy: Strategy;
+  undercutType: UndercutType;
+  undercutValue: number;
+  fixedPrice: number | null;
+  cost: number | null;
+  feePercent: number | null;
+  targetMargin: number | null;
+  noCompetition: NoComp;
 }
 
 const VB_W = 1400;
@@ -124,6 +140,9 @@ function errMsg(code: string): string {
     price_max_must_be_greater_or_equal_to_min: "El máximo debe ser ≥ al mínimo",
     missing_price_range: "Define mín y máx primero",
     listing_not_repriceable: "Sin precio/ASIN en Amazon: no se puede repreciar",
+    fixed_price_required: "Indica un precio fijo válido",
+    cost_required: "Indica el coste del producto",
+    invalid_undercut: "Valor de ajuste no válido",
     listing_not_found_or_not_owned: "Producto no encontrado",
     unauthorized: "Sesión expirada",
     validation_failed: "Datos inválidos",
@@ -138,6 +157,14 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
   const [err, setErr] = useState<string | null>(null);
   const [min, setMin] = useState("");
   const [max, setMax] = useState("");
+  const [strategy, setStrategy] = useState<Strategy>("BUYBOX");
+  const [undType, setUndType] = useState<UndercutType>("AMOUNT");
+  const [undVal, setUndVal] = useState("0.01");
+  const [fixedP, setFixedP] = useState("");
+  const [cost, setCost] = useState("");
+  const [feeP, setFeeP] = useState("15");
+  const [tMargin, setTMargin] = useState("10");
+  const [noComp, setNoComp] = useState<NoComp>("MAX");
 
   // ── Viewport (pan / zoom) ──────────────────────────────────
   const svgRef = useRef<SVGSVGElement | null>(null);
@@ -269,6 +296,34 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
     setErr(null);
     setMin(n.priceMin != null ? String(n.priceMin) : "");
     setMax(n.priceMax != null ? String(n.priceMax) : "");
+    setStrategy(n.strategy);
+    setUndType(n.undercutType);
+    setUndVal(String(n.undercutValue ?? 0.01));
+    setFixedP(n.fixedPrice != null ? String(n.fixedPrice) : "");
+    setCost(n.cost != null ? String(n.cost) : "");
+    setFeeP(n.feePercent != null ? String(n.feePercent) : "15");
+    setTMargin(n.targetMargin != null ? String(n.targetMargin) : "10");
+    setNoComp(n.noCompetition);
+  }
+
+  function saveStrategy() {
+    if (!sel) return;
+    setErr(null);
+    const fd = new FormData();
+    fd.set("listingId", sel.id);
+    fd.set("strategy", strategy);
+    fd.set("undercutType", undType);
+    fd.set("undercutValue", undVal.trim() || "0.01");
+    fd.set("fixedPrice", fixedP.trim());
+    fd.set("cost", cost.trim());
+    fd.set("feePercent", feeP.trim());
+    fd.set("targetMargin", tMargin.trim());
+    fd.set("noCompetition", noComp);
+    startTransition(async () => {
+      const r = await updateListingStrategyAction(fd);
+      if (!r.ok) setErr(errMsg(r.error));
+      else router.refresh();
+    });
   }
 
   function saveRange() {
@@ -474,6 +529,126 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
                   <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
                     sel.repricingEnabled ? "translate-x-[22px]" : "translate-x-0.5"
                   }`} />
+                </button>
+              </div>
+
+              {/* ── Estrategia de reprecio ── */}
+              <div className="mt-5 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                <div className="text-[10px] uppercase tracking-wider text-white/40">
+                  Estrategia
+                </div>
+                <select
+                  value={strategy}
+                  onChange={(e) => setStrategy(e.target.value as Strategy)}
+                  disabled={pending}
+                  className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
+                >
+                  <option value="BUYBOX">Ganar Buy Box (bajar del competidor)</option>
+                  <option value="MATCH">Igualar al competidor</option>
+                  <option value="FIXED">Precio fijo</option>
+                  <option value="MARGIN">Por margen (coste + beneficio)</option>
+                </select>
+
+                {(strategy === "BUYBOX" || strategy === "MARGIN") && (
+                  <div className="mt-3 grid grid-cols-2 gap-3">
+                    <label className="block">
+                      <span className="text-[10px] uppercase tracking-wider text-white/40">
+                        Bajar por
+                      </span>
+                      <select
+                        value={undType}
+                        onChange={(e) => setUndType(e.target.value as UndercutType)}
+                        disabled={pending}
+                        className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-2 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
+                      >
+                        <option value="AMOUNT">Importe €</option>
+                        <option value="PERCENT">Porcentaje %</option>
+                      </select>
+                    </label>
+                    <label className="block">
+                      <span className="text-[10px] uppercase tracking-wider text-white/40">
+                        {undType === "PERCENT" ? "%" : "€"}
+                      </span>
+                      <input
+                        value={undVal}
+                        onChange={(e) => setUndVal(e.target.value)}
+                        inputMode="decimal"
+                        placeholder={undType === "PERCENT" ? "2" : "0,01"}
+                        disabled={pending}
+                        className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
+                      />
+                    </label>
+                  </div>
+                )}
+
+                {strategy === "FIXED" && (
+                  <label className="mt-3 block">
+                    <span className="text-[10px] uppercase tracking-wider text-white/40">
+                      Precio fijo €
+                    </span>
+                    <input
+                      value={fixedP}
+                      onChange={(e) => setFixedP(e.target.value)}
+                      inputMode="decimal"
+                      placeholder="0,00"
+                      disabled={pending}
+                      className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
+                    />
+                  </label>
+                )}
+
+                {strategy === "MARGIN" && (
+                  <div className="mt-3 grid grid-cols-3 gap-2">
+                    <label className="block">
+                      <span className="text-[10px] uppercase tracking-wider text-white/40">
+                        Coste €
+                      </span>
+                      <input value={cost} onChange={(e) => setCost(e.target.value)}
+                        inputMode="decimal" placeholder="0,00" disabled={pending}
+                        className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-2 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none" />
+                    </label>
+                    <label className="block">
+                      <span className="text-[10px] uppercase tracking-wider text-white/40">
+                        Comis. %
+                      </span>
+                      <input value={feeP} onChange={(e) => setFeeP(e.target.value)}
+                        inputMode="decimal" placeholder="15" disabled={pending}
+                        className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-2 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none" />
+                    </label>
+                    <label className="block">
+                      <span className="text-[10px] uppercase tracking-wider text-white/40">
+                        Margen %
+                      </span>
+                      <input value={tMargin} onChange={(e) => setTMargin(e.target.value)}
+                        inputMode="decimal" placeholder="10" disabled={pending}
+                        className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-2 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none" />
+                    </label>
+                  </div>
+                )}
+
+                {strategy !== "FIXED" && (
+                  <label className="mt-3 block">
+                    <span className="text-[10px] uppercase tracking-wider text-white/40">
+                      Sin competencia
+                    </span>
+                    <select
+                      value={noComp}
+                      onChange={(e) => setNoComp(e.target.value as NoComp)}
+                      disabled={pending}
+                      className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
+                    >
+                      <option value="MAX">Subir al máximo</option>
+                      <option value="HOLD">Mantener precio</option>
+                    </select>
+                  </label>
+                )}
+
+                <button
+                  onClick={saveStrategy}
+                  disabled={pending}
+                  className="mt-3 w-full rounded-lg border border-cyan-400/40 text-cyan-200 py-2 text-sm font-semibold hover:bg-cyan-400/10 transition-colors disabled:opacity-50"
+                >
+                  {pending ? "Guardando…" : "Guardar estrategia"}
                 </button>
               </div>
             </>
