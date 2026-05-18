@@ -4,7 +4,7 @@ import { getSession } from "@/lib/session";
 import { getSellerAccountByUserId } from "@/lib/db/sellerAccount";
 import { listListingsByAccount } from "@/lib/db/sellerListing";
 import { SyncButton } from "./SyncButton";
-import ProductNetwork, { type NetNode, type ActivityEvt } from "./ProductNetwork";
+import ProductNetwork, { type NetNode } from "./ProductNetwork";
 import AssistantWidget from "./AssistantWidget";
 import { RunNowButton } from "@/app/(sellers)/sellers/dashboard/RunNowButton";
 import { DisconnectButton } from "@/app/(sellers)/sellers/dashboard/DisconnectButton";
@@ -95,19 +95,6 @@ export default async function ProductosPage() {
     createdAt: e.createdAt.toISOString(),
   }));
 
-  // Actividad por producto (única para cada nodo seleccionado)
-  const activity: Record<string, ActivityEvt[]> = {};
-  for (const e of rawEvents) {
-    (activity[e.listingId] ??= []).push({
-      reason: e.reason,
-      priceBefore: e.priceBefore,
-      priceAfter: e.priceAfter,
-      competitorPrice: e.competitorPrice,
-      success: e.success,
-      errorMessage: e.errorMessage,
-      createdAt: e.createdAt.toISOString(),
-    });
-  }
 
   return (
     <div className="fixed inset-0 z-50 flex bg-[#020207] text-white">
@@ -185,7 +172,7 @@ export default async function ProductosPage() {
       {/* ── Lienzo (resto de la ventana) ─────────────────────────── */}
       <section className="relative flex-1 h-full bg-[radial-gradient(ellipse_at_50%_45%,#10173a_0%,#0a0d24_45%,#05060f_100%)]">
         {hasListings ? (
-          <ProductNetwork nodes={nodes} activity={activity} />
+          <ProductNetwork nodes={nodes} />
         ) : (
           <div className="absolute inset-0 grid place-items-center text-center px-6">
             <div>

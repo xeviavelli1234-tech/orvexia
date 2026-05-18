@@ -49,15 +49,24 @@ const ERROR_HINT: Record<string, string> = {
   InvalidInput: "Amazon rechazó el formato del cambio de precio para ese producto.",
 };
 
-export default async function AnaliticasPage() {
+export default async function AnaliticasPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ p?: string }>;
+}) {
   const session = await getSession();
   if (!session) redirect("/login?next=/sellers/analiticas");
   const account = await getSellerAccountByUserId(session.userId);
   if (!account || !account.active) redirect("/dashboard/repricer");
 
+  const { p } = await searchParams;
+
   const billing = getBillingState(account.plan as SellerPlan, account.trialEndsAt);
-  const [listings, runCount, lastRun, events] = await Promise.all([
-    listListingsByAccount(account.id),
+  const allListings = await listListingsByAccount(account.id);
+  const focus = p ? allListings.find((l) => l.id === p) ?? null : null;
+  const listings = focus ? [focus] : allListings;
+
+  const [runCount, lastRun, events] = await Promise.all([
     prisma.repricingRun.count({ where: { sellerAccountId: account.id } }),
     prisma.repricingRun.findFirst({
       where: { sellerAccountId: account.id },
@@ -65,7 +74,10 @@ export default async function AnaliticasPage() {
       select: { startedAt: true },
     }),
     prisma.repricingEvent.findMany({
-      where: { listing: { sellerAccountId: account.id } },
+      where: {
+        listing: { sellerAccountId: account.id },
+        ...(focus ? { listingId: focus.id } : {}),
+      },
       orderBy: { createdAt: "desc" },
       take: 300,
       include: { listing: { select: { title: true } } },
@@ -128,9 +140,30 @@ export default async function AnaliticasPage() {
           </Link>
           <span className="text-white/20">/</span>
           <h1 className="text-xl font-extrabold tracking-tight">
-            Analíticas del <span className="text-gradient-neon">repricer</span>
+            {focus ? (
+              <>
+                Analítica · <span className="text-gradient-neon">{focus.title}</span>
+              </>
+            ) : (
+              <>
+                Analíticas del <span className="text-gradient-neon">repricer</span>
+              </>
+            )}
           </h1>
+          {focus && (
+            <Link
+              href="/sellers/analiticas"
+              className="ml-auto text-xs text-cyan-300/80 hover:text-white transition-colors"
+            >
+              Ver todas →
+            </Link>
+          )}
         </div>
+        {focus && (
+          <div className="mt-1 font-mono text-[11px] text-white/40">
+            {focus.asin || "sin ASIN"} · {focus.sku}
+          </div>
+        )}
 
         {/* KPIs */}
         <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
