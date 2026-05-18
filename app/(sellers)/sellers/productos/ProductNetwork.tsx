@@ -231,7 +231,12 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
   }, []);
 
   function onPointerDown(e: React.PointerEvent) {
-    if ((e.target as Element).closest(".hex-node")) return; // dejar el clic al nodo
+    if ((e.target as Element).closest(".hex-node")) {
+      // Clic deliberado sobre un nodo: nuevo gesto limpio. Sin esto, un
+      // pan/zoom previo dejaba suppressClick=true y se comía este clic.
+      suppressClick.current = false;
+      return;
+    }
     drag.current = {
       active: true,
       sx: e.clientX,
