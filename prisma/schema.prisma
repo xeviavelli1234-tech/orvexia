@@ -315,6 +315,7 @@ model SellerAccount {
   active          Boolean    @default(true)
   lastSyncAt      DateTime?
   lastRunAt       DateTime?
+  lockedAt        DateTime?                            // lock de ciclo (evita solapamientos)
 
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt

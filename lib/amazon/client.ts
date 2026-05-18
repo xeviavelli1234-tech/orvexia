@@ -32,41 +32,83 @@ export class SpApiClient {
     return fresh.access_token;
   }
 
+  private static readonly MAX_RETRIES = 4;
+  private static readonly RETRYABLE = new Set([429, 500, 502, 503, 504]);
+
+  private static sleep(ms: number) {
+    return new Promise((r) => setTimeout(r, ms));
+  }
+
+  /** Backoff exponencial con jitter; respeta Retry-After si viene. */
+  private static backoffMs(attempt: number, retryAfter: string | null): number {
+    const ra = retryAfter ? Number(retryAfter) : NaN;
+    if (Number.isFinite(ra) && ra > 0) return Math.min(ra * 1000, 15_000);
+    const base = 500 * 2 ** attempt; // 0.5s, 1s, 2s, 4s…
+    return Math.min(base + Math.random() * 400, 12_000);
+  }
+
   private async request<T>(
     method: "GET" | "PATCH" | "PUT" | "POST" | "DELETE",
     path: string,
     options: { query?: Record<string, string>; body?: unknown } = {},
   ): Promise<T> {
-    const accessToken = await this.getAccessToken();
     const url = new URL(path, getSpApiBaseUrl(this.env, this.region));
     if (options.query) {
       for (const [k, v] of Object.entries(options.query)) url.searchParams.set(k, v);
     }
-    const res = await fetch(url.toString(), {
-      method,
-      headers: {
-        "x-amz-access-token": accessToken,
-        "User-Agent": "OrvexiaRepricer/0.1 (Language=TypeScript)",
-        ...(options.body ? { "Content-Type": "application/json" } : {}),
-      },
-      body: options.body ? JSON.stringify(options.body) : undefined,
-    });
 
-    if (!res.ok) {
+    let lastErr: SpApiError | null = null;
+    for (let attempt = 0; attempt <= SpApiClient.MAX_RETRIES; attempt++) {
+      const accessToken = await this.getAccessToken();
+      let res: Response;
+      try {
+        res = await fetch(url.toString(), {
+          method,
+          headers: {
+            "x-amz-access-token": accessToken,
+            "User-Agent": "OrvexiaRepricer/0.1 (Language=TypeScript)",
+            ...(options.body ? { "Content-Type": "application/json" } : {}),
+          },
+          body: options.body ? JSON.stringify(options.body) : undefined,
+        });
+      } catch (e) {
+        // Error de red → reintentar con backoff
+        lastErr = new SpApiError(0, "network_error", String(e));
+        if (attempt < SpApiClient.MAX_RETRIES) {
+          await SpApiClient.sleep(SpApiClient.backoffMs(attempt, null));
+          continue;
+        }
+        throw lastErr;
+      }
+
+      if (res.ok) {
+        if (res.status === 204) return undefined as T;
+        return (await res.json()) as T;
+      }
+
       const requestId = res.headers.get("x-amzn-requestid") ?? undefined;
       const text = await res.text();
       let code = `http_${res.status}`;
       try {
-        const parsed = JSON.parse(text) as { errors?: Array<{ code?: string; message?: string }> };
+        const parsed = JSON.parse(text) as { errors?: Array<{ code?: string }> };
         if (parsed.errors?.[0]?.code) code = parsed.errors[0].code;
       } catch {
         /* not JSON */
       }
-      throw new SpApiError(res.status, code, text, requestId);
-    }
+      lastErr = new SpApiError(res.status, code, text, requestId);
 
-    if (res.status === 204) return undefined as T;
-    return (await res.json()) as T;
+      // 429 / 5xx → throttling: esperar y reintentar
+      if (SpApiClient.RETRYABLE.has(res.status) && attempt < SpApiClient.MAX_RETRIES) {
+        const wait = SpApiClient.backoffMs(
+          attempt,
+          res.headers.get("retry-after") ?? res.headers.get("x-amzn-RateLimit-Limit"),
+        );
+        await SpApiClient.sleep(wait);
+        continue;
+      }
+      throw lastErr;
+    }
+    throw lastErr ?? new SpApiError(0, "unknown", "request failed");
   }
 
   get<T>(path: string, query?: Record<string, string>): Promise<T> {

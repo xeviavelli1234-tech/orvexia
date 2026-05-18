@@ -23,6 +23,9 @@ export interface RunSummary {
  *  4. Si cambia → patchListingPrice (no-op en fixtures) + persiste precio + evento.
  *  5. Registra RepricingRun por cuenta.
  */
+/** TTL del lock de ciclo: si una ejecución muere, el lock caduca solo. */
+const LOCK_TTL_MS = 5 * 60_000;
+
 export async function runRepricer(now: Date = new Date()): Promise<RunSummary> {
   const summary: RunSummary = {
     accountsProcessed: 0,
@@ -46,6 +49,18 @@ export async function runRepricer(now: Date = new Date()): Promise<RunSummary> {
       const nextDue = account.lastRunAt.getTime() + account.intervalSeconds * 1000;
       if (now.getTime() < nextDue) continue;
     }
+
+    // Lock de ciclo: claim atómico. Si otra ejecución (cron + manual)
+    // ya lo tiene y no ha caducado, se salta esta cuenta.
+    const lockStale = new Date(now.getTime() - LOCK_TTL_MS);
+    const claim = await prisma.sellerAccount.updateMany({
+      where: {
+        id: account.id,
+        OR: [{ lockedAt: null }, { lockedAt: { lt: lockStale } }],
+      },
+      data: { lockedAt: now },
+    });
+    if (claim.count === 0) continue;
 
     summary.accountsProcessed += 1;
 
@@ -201,7 +216,7 @@ export async function runRepricer(now: Date = new Date()): Promise<RunSummary> {
       }),
       prisma.sellerAccount.update({
         where: { id: account.id },
-        data: { lastRunAt: now },
+        data: { lastRunAt: now, lockedAt: null }, // libera el lock
       }),
     ]);
 
