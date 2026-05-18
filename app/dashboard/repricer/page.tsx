@@ -31,9 +31,13 @@ const STATUS_MSG: Record<string, { kind: "ok" | "err" | "info"; text: string }> 
 
 const REASON: Record<string, { label: string; cls: string }> = {
   competitor_undercut: { label: "Bajo competidor", cls: "text-cyan-300 bg-cyan-400/10 border-cyan-400/20" },
+  competitor_match: { label: "Igualado", cls: "text-cyan-300 bg-cyan-400/10 border-cyan-400/20" },
+  fixed_price: { label: "Precio fijo", cls: "text-indigo-300 bg-indigo-400/10 border-indigo-400/20" },
+  margin_floor: { label: "Suelo margen", cls: "text-amber-300 bg-amber-400/10 border-amber-400/20" },
   no_competition: { label: "Sin competencia", cls: "text-emerald-300 bg-emerald-400/10 border-emerald-400/20" },
   min_floor: { label: "Suelo (mín)", cls: "text-amber-300 bg-amber-400/10 border-amber-400/20" },
   max_ceiling: { label: "Techo (máx)", cls: "text-amber-300 bg-amber-400/10 border-amber-400/20" },
+  hold: { label: "Mantener", cls: "text-white/50 bg-white/[0.05] border-white/10" },
   no_change: { label: "Sin cambio", cls: "text-white/40 bg-white/[0.04] border-white/10" },
 };
 
@@ -279,6 +283,14 @@ export default async function RepricerPage({
                         <span>· {rel(e.createdAt)}</span>
                         {!e.success && <span className="text-red-400">· error</span>}
                       </div>
+                      {!e.success && e.errorMessage && (
+                        <div
+                          className="mt-1 text-[10px] text-red-400/80 truncate"
+                          title={e.errorMessage}
+                        >
+                          {e.errorMessage}
+                        </div>
+                      )}
                     </div>
                     <div className="text-right whitespace-nowrap">
                       <div className="text-sm font-mono-ui text-white/55">
