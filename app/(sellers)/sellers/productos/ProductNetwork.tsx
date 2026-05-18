@@ -399,7 +399,9 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
           ))}
         </defs>
 
-        <g transform={`translate(${view.x} ${view.y}) scale(${view.k})`}>
+        <g
+          transform={`translate(${view.x - (sel ? 230 : 0)} ${view.y}) scale(${view.k})`}
+        >
           {/* Ramas: del icono de Amazon a cada producto */}
           {(() => {
             const h = layout.hub;
@@ -526,60 +528,9 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
             );
           })()}
 
-          {/* Nodos */}
-          {layout.pos.map((p, i) => {
-            const st = nodeState(p);
-            const col = STATE_COLOR[st];
-            const active = selId === p.id;
-            return (
-              <g
-                key={p.id}
-                className="node-float"
-                style={
-                  {
-                    "--d": `${3.6 + (i % 5) * 0.5}s`,
-                    "--dl": `${(i % 7) * 0.45}s`,
-                  } as CSSProperties
-                }
-              >
-                <g className="hex-node" onClick={() => open(p)}>
-                {/* Área de clic (cubre hexágono + título + precio) */}
-                <rect
-                  x={p.x - 130}
-                  y={p.y - (R + 26)}
-                  width={260}
-                  height={2 * R + 78}
-                  fill="transparent"
-                />
-                <polygon points={hexPoints(p.x, p.y, R + 7)} fill="none"
-                  stroke={active ? "#fff" : col.halo}
-                  strokeWidth={active ? 2 : 1.1} filter="url(#glow)" />
-                <polygon points={hexPoints(p.x, p.y, R)} fill="rgba(8,8,20,0.78)"
-                  stroke={col.stroke} strokeWidth="1.3" />
-                {p.imageUrl ? (
-                  <image href={p.imageUrl} x={p.x - (R - 10)} y={p.y - (R - 10)}
-                    width={(R - 10) * 2} height={(R - 10) * 2}
-                    clipPath={`url(#c-${p.id})`} preserveAspectRatio="xMidYMid slice" opacity={0.92} />
-                ) : (
-                  <circle className="hex-core" cx={p.x} cy={p.y} r={R - 13}
-                    fill={st === "on" ? "url(#coreOn)" : "url(#coreAmb)"} />
-                )}
-                {st === "on" && (
-                  <circle cx={p.x + R - 6} cy={p.y - R + 6} r="4.5" fill="#34d399" filter="url(#glow)" />
-                )}
-                <text x={p.x} y={p.y + R + 17} textAnchor="middle" fontSize="13" fontWeight={600}
-                  fill="rgba(255,255,255,0.85)">{clip(p.title, 22)}</text>
-                <text x={p.x} y={p.y + R + 34} textAnchor="middle" fontSize="12.5" fontWeight={700}
-                  fill={p.priceCurrent > 0 ? "#7dd3fc" : "rgba(180,180,200,0.6)"}
-                  className={p.priceCurrent > 0 ? "text-glow-cyan" : undefined}>
-                  {p.priceCurrent > 0 ? `${fmt(p.priceCurrent)} ${sym(p.currency)}` : "Sin precio"}
-                </text>
-                </g>
-              </g>
-            );
-          })}
-
-          {/* Rama del producto seleccionado → icono de analítica */}
+          {/* Rama del producto seleccionado → icono de analítica
+              (antes de los nodos: así los productos quedan por encima
+              y un satélite nunca intercepta el clic de otro producto) */}
           {(() => {
             if (!selId) return null;
             const p = layout.pos.find((q) => q.id === selId);
@@ -628,7 +579,7 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
                     );
                   }}
                 >
-                  <circle cx={SX} cy={SY} r={SR + 16} fill="transparent" />
+                  <circle cx={SX} cy={SY} r={SR + 14} fill="transparent" />
                   <circle
                     cx={SX}
                     cy={SY}
@@ -665,6 +616,60 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
               </g>
             );
           })()}
+
+          {/* Nodos */}
+          {layout.pos.map((p, i) => {
+            const st = nodeState(p);
+            const col = STATE_COLOR[st];
+            const active = selId === p.id;
+            return (
+              <g
+                key={p.id}
+                className="node-float"
+                style={
+                  {
+                    "--d": `${3.6 + (i % 5) * 0.5}s`,
+                    "--dl": `${(i % 7) * 0.45}s`,
+                  } as CSSProperties
+                }
+              >
+                <g className="hex-node" onClick={() => open(p)}>
+                {/* Área de clic (ajustada para no invadir nodos vecinos) */}
+                <rect
+                  x={p.x - 78}
+                  y={p.y - (R + 16)}
+                  width={156}
+                  height={2 * R + 64}
+                  fill="transparent"
+                />
+                <polygon points={hexPoints(p.x, p.y, R + 7)} fill="none"
+                  stroke={active ? "#fff" : col.halo}
+                  strokeWidth={active ? 2 : 1.1} filter="url(#glow)" />
+                <polygon points={hexPoints(p.x, p.y, R)} fill="rgba(8,8,20,0.78)"
+                  stroke={col.stroke} strokeWidth="1.3" />
+                {p.imageUrl ? (
+                  <image href={p.imageUrl} x={p.x - (R - 10)} y={p.y - (R - 10)}
+                    width={(R - 10) * 2} height={(R - 10) * 2}
+                    clipPath={`url(#c-${p.id})`} preserveAspectRatio="xMidYMid slice" opacity={0.92} />
+                ) : (
+                  <circle className="hex-core" cx={p.x} cy={p.y} r={R - 13}
+                    fill={st === "on" ? "url(#coreOn)" : "url(#coreAmb)"} />
+                )}
+                {st === "on" && (
+                  <circle cx={p.x + R - 6} cy={p.y - R + 6} r="4.5" fill="#34d399" filter="url(#glow)" />
+                )}
+                <text x={p.x} y={p.y + R + 17} textAnchor="middle" fontSize="13" fontWeight={600}
+                  fill="rgba(255,255,255,0.85)">{clip(p.title, 22)}</text>
+                <text x={p.x} y={p.y + R + 34} textAnchor="middle" fontSize="12.5" fontWeight={700}
+                  fill={p.priceCurrent > 0 ? "#7dd3fc" : "rgba(180,180,200,0.6)"}
+                  className={p.priceCurrent > 0 ? "text-glow-cyan" : undefined}>
+                  {p.priceCurrent > 0 ? `${fmt(p.priceCurrent)} ${sym(p.currency)}` : "Sin precio"}
+                </text>
+                </g>
+              </g>
+            );
+          })}
+
         </g>
       </svg>
 
