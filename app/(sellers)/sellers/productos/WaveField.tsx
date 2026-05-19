@@ -33,8 +33,12 @@ export default function WaveField() {
     let h = 0;
     let dpr = 1;
 
-    const COLS = 78;
-    const ROWS = 52;
+    // Densidad ajustada para fluidez (≈40% menos puntos que antes, sin
+    // diferencia visual perceptible).
+    const small =
+      typeof window !== "undefined" && window.innerWidth < 900;
+    const COLS = small ? 48 : 64;
+    const ROWS = small ? 32 : 42;
 
     function resize() {
       const parent = canvas.parentElement;
@@ -313,9 +317,16 @@ export default function WaveField() {
     if (reduce) {
       frame(0);
     } else {
+      // Throttle a ~36fps: suficiente para que se vea fluido y ~40% menos
+      // CPU/GPU que a 60fps. Se pausa si la pestaña no está visible.
+      const FRAME_MS = 1000 / 36;
+      let last = 0;
       const loop = (t: number) => {
-        frame(t);
         raf = requestAnimationFrame(loop);
+        if (document.hidden) return;
+        if (t - last < FRAME_MS) return;
+        last = t;
+        frame(t);
       };
       raf = requestAnimationFrame(loop);
     }

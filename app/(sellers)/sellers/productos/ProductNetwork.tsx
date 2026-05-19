@@ -194,6 +194,8 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
     { active: false, sx: 0, sy: 0, ox: 0, oy: 0, moved: false },
   );
   const suppressClick = useRef(false);
+  const panRaf = useRef<number | null>(null);
+  const pendingPan = useRef<{ x: number; y: number } | null>(null);
 
   /** Punto de cliente → coordenadas del viewBox (respeta slice). */
   function toVB(clientX: number, clientY: number) {
@@ -292,9 +294,25 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
     const a = toVB(e.clientX, e.clientY);
     const b = toVB(d.sx, d.sy);
     if (Math.abs(e.clientX - d.sx) + Math.abs(e.clientY - d.sy) > 8) d.moved = true;
-    setView((v) => clampView({ k: v.k, x: d.ox + (a.x - b.x), y: d.oy + (a.y - b.y) }));
+    // Coalescer: como máximo un setView por frame (no por evento) → mucho
+    // menos re-render y paneo más fluido.
+    pendingPan.current = { x: d.ox + (a.x - b.x), y: d.oy + (a.y - b.y) };
+    if (panRaf.current == null) {
+      panRaf.current = requestAnimationFrame(() => {
+        panRaf.current = null;
+        const p = pendingPan.current;
+        if (p) setView((v) => clampView({ k: v.k, x: p.x, y: p.y }));
+      });
+    }
   }
   function onPointerUp() {
+    if (panRaf.current != null) {
+      cancelAnimationFrame(panRaf.current);
+      panRaf.current = null;
+    }
+    const p = pendingPan.current;
+    if (drag.current.active && p) setView((v) => clampView({ k: v.k, x: p.x, y: p.y }));
+    pendingPan.current = null;
     if (drag.current.moved) suppressClick.current = true;
     drag.current.active = false;
   }
