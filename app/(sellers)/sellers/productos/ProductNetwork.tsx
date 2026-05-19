@@ -57,6 +57,8 @@ export interface NetNode {
   fulfillmentFilter: Fulfillment;
   minSellerRating: number | null;
   buyBoxStatus: BuyBox;
+  lastReason: string | null;
+  lastSuccess: boolean | null;
 }
 
 const VB_W = 1400;
@@ -146,19 +148,43 @@ function fmt(n: number): string {
   return n.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-type State = "off" | "on" | "ready" | "noprice";
+type State =
+  | "noprice"
+  | "paused"
+  | "error"
+  | "lost"
+  | "floor"
+  | "won"
+  | "active";
+
+/** Estado del nodo por prioridad: error/Buy Box perdida es lo más urgente. */
 function nodeState(n: NetNode): State {
   if (n.priceCurrent <= 0 || !n.asin) return "noprice";
-  if (n.repricingEnabled) return "on";
-  if (n.priceMin != null && n.priceMax != null) return "ready";
-  return "off";
+  if (!n.repricingEnabled) return "paused";
+  if (n.lastSuccess === false) return "error";
+  if (n.buyBoxStatus === "LOST") return "lost";
+  if (
+    n.lastReason === "min_floor" ||
+    n.lastReason === "margin_floor" ||
+    n.lastReason === "max_ceiling"
+  )
+    return "floor";
+  if (n.buyBoxStatus === "WON") return "won";
+  return "active";
 }
-const STATE_COLOR: Record<State, { stroke: string; halo: string }> = {
-  on: { stroke: "rgba(52,211,153,0.9)", halo: "rgba(52,211,153,0.85)" },
-  ready: { stroke: "rgba(96,165,250,0.85)", halo: "rgba(59,130,246,0.6)" },
-  off: { stroke: "rgba(148,163,255,0.6)", halo: "rgba(99,102,241,0.4)" },
+const STATE_COLOR: Record<
+  State,
+  { stroke: string; halo: string; dot?: string }
+> = {
+  won: { stroke: "rgba(52,211,153,0.95)", halo: "rgba(52,211,153,0.85)", dot: "#34d399" },
+  active: { stroke: "rgba(34,211,238,0.9)", halo: "rgba(34,211,238,0.55)", dot: "#22d3ee" },
+  floor: { stroke: "rgba(251,191,36,0.95)", halo: "rgba(251,191,36,0.6)", dot: "#fbbf24" },
+  lost: { stroke: "rgba(248,113,113,0.95)", halo: "rgba(248,113,113,0.6)", dot: "#f87171" },
+  error: { stroke: "rgba(249,115,22,0.95)", halo: "rgba(249,115,22,0.55)", dot: "#fb923c" },
+  paused: { stroke: "rgba(96,165,250,0.7)", halo: "rgba(99,102,241,0.4)" },
   noprice: { stroke: "rgba(160,160,180,0.4)", halo: "rgba(120,120,140,0.25)" },
 };
+const LIVE_CORE: ReadonlySet<State> = new Set<State>(["won", "active", "floor"]);
 
 function pnum(s: string): number {
   const n = Number.parseFloat(s.replace(",", "."));
@@ -610,7 +636,7 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
   }
 
   if (nodes.length === 0) return null;
-  const selState = sel ? nodeState(sel) : "off";
+  const selState = sel ? nodeState(sel) : "paused";
 
   return (
     <div className="absolute inset-0">
@@ -1242,10 +1268,10 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
                     clipPath={`url(#c-${p.id})`} preserveAspectRatio="xMidYMid slice" opacity={0.92} />
                 ) : (
                   <circle className="hex-core" cx={p.x} cy={p.y} r={R - 13}
-                    fill={st === "on" ? "url(#coreOn)" : "url(#coreAmb)"} />
+                    fill={LIVE_CORE.has(st) ? "url(#coreOn)" : "url(#coreAmb)"} />
                 )}
-                {st === "on" && (
-                  <circle cx={p.x + R - 6} cy={p.y - R + 6} r="4.5" fill="#34d399" filter="url(#glow)" />
+                {col.dot && (
+                  <circle cx={p.x + R - 6} cy={p.y - R + 6} r="4.5" fill={col.dot} filter="url(#glow)" />
                 )}
                 <text x={p.x} y={p.y + R + 17} textAnchor="middle" fontSize="13" fontWeight={600}
                   fill="rgba(255,255,255,0.85)">{clip(p.title, 22)}</text>

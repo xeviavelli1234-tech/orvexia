@@ -58,35 +58,6 @@ export default async function ProductosPage() {
   const active = listings.filter((l) => l.repricingEnabled).length;
   const catalogValue = listings.reduce((s, l) => s + (l.priceCurrent || 0), 0);
 
-  const nodes: NetNode[] = listings.map((l) => ({
-    id: l.id,
-    title: l.title,
-    asin: l.asin,
-    sku: l.sku,
-    imageUrl: l.imageUrl,
-    priceCurrent: l.priceCurrent,
-    currency: l.currency,
-    priceMin: l.priceMin,
-    priceMax: l.priceMax,
-    repricingEnabled: l.repricingEnabled,
-    strategy: l.strategy,
-    undercutType: l.undercutType,
-    undercutValue: l.undercutValue,
-    fixedPrice: l.fixedPrice,
-    cost: l.cost,
-    shippingCost: l.shippingCost,
-    fbaFee: l.fbaFee,
-    vatRate: l.vatRate,
-    feePercent: l.feePercent,
-    targetMargin: l.targetMargin,
-    noCompetition: l.noCompetition,
-    useAccountDefaults: l.useAccountDefaults,
-    ignoreAmazon: l.ignoreAmazon,
-    fulfillmentFilter: l.fulfillmentFilter,
-    minSellerRating: l.minSellerRating,
-    buyBoxStatus: l.buyBoxStatus,
-  }));
-
   const billing = getBillingState(account.plan as SellerPlan, account.trialEndsAt);
   const [lastRun, runCount, rawEvents] = await Promise.all([
     prisma.repricingRun.findFirst({
@@ -113,6 +84,47 @@ export default async function ProductosPage() {
     errorMessage: e.errorMessage,
     createdAt: e.createdAt.toISOString(),
   }));
+
+  // Último evento por listing (rawEvents viene ordenado desc) → estado/color.
+  const lastByListing = new Map<string, { reason: string; success: boolean }>();
+  for (const e of rawEvents) {
+    if (!lastByListing.has(e.listingId))
+      lastByListing.set(e.listingId, { reason: e.reason, success: e.success });
+  }
+
+  const nodes: NetNode[] = listings.map((l) => {
+    const le = lastByListing.get(l.id);
+    return {
+      id: l.id,
+      title: l.title,
+      asin: l.asin,
+      sku: l.sku,
+      imageUrl: l.imageUrl,
+      priceCurrent: l.priceCurrent,
+      currency: l.currency,
+      priceMin: l.priceMin,
+      priceMax: l.priceMax,
+      repricingEnabled: l.repricingEnabled,
+      strategy: l.strategy,
+      undercutType: l.undercutType,
+      undercutValue: l.undercutValue,
+      fixedPrice: l.fixedPrice,
+      cost: l.cost,
+      shippingCost: l.shippingCost,
+      fbaFee: l.fbaFee,
+      vatRate: l.vatRate,
+      feePercent: l.feePercent,
+      targetMargin: l.targetMargin,
+      noCompetition: l.noCompetition,
+      useAccountDefaults: l.useAccountDefaults,
+      ignoreAmazon: l.ignoreAmazon,
+      fulfillmentFilter: l.fulfillmentFilter,
+      minSellerRating: l.minSellerRating,
+      buyBoxStatus: l.buyBoxStatus,
+      lastReason: le?.reason ?? null,
+      lastSuccess: le ? le.success : null,
+    };
+  });
 
   const ovEvents: OvEvent[] = rawEvents.map((e) => ({
     listingId: e.listingId,
@@ -222,8 +234,12 @@ export default async function ProductosPage() {
         <div className="mt-auto px-5 py-5 text-[11px] leading-relaxed text-white/40">
           <Eyebrow>Leyenda</Eyebrow>
           <div className="mt-2.5 space-y-1.5">
-            <Legend color="bg-emerald-400" text="Repreciando" />
-            <Legend color="bg-blue-400" text="Configurable" />
+            <Legend color="bg-emerald-400" text="Buy Box ganada" />
+            <Legend color="bg-red-400" text="Buy Box perdida" />
+            <Legend color="bg-amber-400" text="En precio mínimo" />
+            <Legend color="bg-orange-500" text="Error de reprecio" />
+            <Legend color="bg-cyan-400" text="Repreciando (sin datos)" />
+            <Legend color="bg-blue-400" text="Configurable / pausado" />
             <Legend color="bg-slate-500" text="Sin oferta en Amazon" />
           </div>
           <p className="mt-3 text-white/30">
