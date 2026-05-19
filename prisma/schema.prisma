@@ -366,8 +366,21 @@ model SellerAccount {
   user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   listings SellerListing[]
   runs     RepricingRun[]
+  auditLogs AuditLog[]
 
   @@index([active, lastRunAt])
+}
+
+model AuditLog {
+  id              String   @id @default(cuid())
+  sellerAccountId String
+  action          String   // clave: listing.strategy, account.settings…
+  detail          String   @db.Text
+  createdAt       DateTime @default(now())
+
+  sellerAccount SellerAccount @relation(fields: [sellerAccountId], references: [id], onDelete: Cascade)
+
+  @@index([sellerAccountId, createdAt])
 }
 
 model SellerListing {

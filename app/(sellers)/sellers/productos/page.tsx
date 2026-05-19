@@ -18,6 +18,7 @@ import CatalogOverlay, {
 import ProfitOverlay, { ProfitButton } from "./ProfitOverlay";
 import HelpOverlay, { HelpButton } from "./HelpOverlay";
 import Tour from "./Tour";
+import AuditOverlay, { AuditButton } from "./AuditOverlay";
 import { RunNowButton } from "@/app/(sellers)/sellers/dashboard/RunNowButton";
 import { DisconnectButton } from "@/app/(sellers)/sellers/dashboard/DisconnectButton";
 import { prisma } from "@/lib/prisma";
@@ -253,6 +254,7 @@ export default async function ProductosPage() {
             <CatalogButton />
             <ProfitButton />
             <HelpButton />
+            <AuditButton />
             <SettingsButton />
             <PanicButton />
             <DisconnectButton />
@@ -324,6 +326,7 @@ export default async function ProductosPage() {
       <CatalogOverlay items={nodes} />
       <ProfitOverlay items={nodes} />
       <HelpOverlay />
+      <AuditOverlay />
       <Tour />
     </div>
   );

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getSession } from "@/lib/session";
+import { recordAudit, listAudit, type AuditEntry } from "@/lib/db/audit";
 import {
   setListingEnabled,
   setListingRange,
@@ -66,6 +67,11 @@ export async function updateListingRangeAction(formData: FormData): Promise<Acti
       priceMin: parsed.data.priceMin,
       priceMax: parsed.data.priceMax,
     });
+    await recordAudit(
+      session.userId,
+      "listing.range",
+      `Rango ${parsed.data.priceMin ?? "—"}–${parsed.data.priceMax ?? "—"}`,
+    );
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "db_failed" };
   }
@@ -128,6 +134,11 @@ export async function updateListingStrategyAction(
 
   try {
     await setListingStrategy({ userId: session.userId, ...parsed.data });
+    await recordAudit(
+      session.userId,
+      "listing.strategy",
+      `Estrategia ${parsed.data.strategy}`,
+    );
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "db_failed" };
   }
@@ -159,6 +170,11 @@ export async function toggleListingAction(formData: FormData): Promise<ActionRes
       userId: session.userId,
       enabled: parsed.data.enabled,
     });
+    await recordAudit(
+      session.userId,
+      "listing.toggle",
+      parsed.data.enabled ? "Reprecio activado" : "Reprecio pausado",
+    );
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "db_failed" };
   }
@@ -204,6 +220,11 @@ export async function updateListingCompetitionAction(
 
   try {
     await setListingCompetition({ userId: session.userId, ...parsed.data });
+    await recordAudit(
+      session.userId,
+      "listing.competition",
+      "Filtros de competencia actualizados",
+    );
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "db_failed" };
   }
@@ -279,6 +300,11 @@ export async function updateAccountSettingsAction(
 
   try {
     await setAccountSettings({ userId: session.userId, ...parsed.data });
+    await recordAudit(
+      session.userId,
+      "account.settings",
+      "Ajustes de cuenta actualizados",
+    );
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "db_failed" };
   }
@@ -291,6 +317,11 @@ export async function pauseAllAction(): Promise<ActionResult> {
   if (!session) return { ok: false, error: "unauthorized" };
   try {
     await pauseAllForUser(session.userId);
+    await recordAudit(
+      session.userId,
+      "pause_all",
+      "Pausado el reprecio de TODOS los productos",
+    );
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "db_failed" };
   }
@@ -319,6 +350,11 @@ export async function bulkListingsAction(
     else if (parsed.data.action === "defaultsOn")
       await bulkSetUseDefaults(session.userId, parsed.data.ids, true);
     else await bulkSetUseDefaults(session.userId, parsed.data.ids, false);
+    await recordAudit(
+      session.userId,
+      "bulk",
+      `Acción masiva «${parsed.data.action}» en ${parsed.data.ids.length} producto(s)`,
+    );
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "db_failed" };
   }
@@ -343,6 +379,11 @@ export async function updateListingTagsAction(
   if (!parsed.success) return { ok: false, error: "validation_failed" };
   try {
     await setListingTags({ userId: session.userId, ...parsed.data });
+    await recordAudit(
+      session.userId,
+      "listing.tags",
+      `Etiquetas: ${parsed.data.tags || "(vacío)"}`,
+    );
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "db_failed" };
   }
@@ -367,11 +408,28 @@ export async function updateListingParentAction(
   if (!parsed.success) return { ok: false, error: "validation_failed" };
   try {
     await setListingParent({ userId: session.userId, ...parsed.data });
+    await recordAudit(
+      session.userId,
+      "listing.parent",
+      `ASIN padre: ${parsed.data.parentAsin || "(ninguno)"}`,
+    );
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "db_failed" };
   }
   revalidatePath("/sellers/productos");
   return { ok: true };
+}
+
+export async function getAuditLogAction(): Promise<
+  { ok: true; entries: AuditEntry[] } | { ok: false; error: string }
+> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+  try {
+    return { ok: true, entries: await listAudit(session.userId, 200) };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "db_failed" };
+  }
 }
 
 const bulkTagSchema = z.object({
@@ -395,6 +453,13 @@ export async function bulkTagAction(
       parsed.data.ids,
       parsed.data.tag,
       parsed.data.mode,
+    );
+    await recordAudit(
+      session.userId,
+      "bulk.tag",
+      `Etiqueta «${parsed.data.tag}» ${
+        parsed.data.mode === "add" ? "añadida a" : "quitada de"
+      } ${r.count} producto(s)`,
     );
     revalidatePath("/sellers/productos");
     return { ok: true, count: r.count };
@@ -490,6 +555,11 @@ export async function importConfigAction(
 
   try {
     const r = await importListingConfig(session.userId, rows);
+    await recordAudit(
+      session.userId,
+      "import",
+      `Import CSV: ${r.updated} actualizados, ${r.skipped} ignorados`,
+    );
     revalidatePath("/sellers/productos");
     return { ok: true, updated: r.updated, skipped: r.skipped };
   } catch (e) {
