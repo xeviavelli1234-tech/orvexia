@@ -136,7 +136,9 @@ export async function setListingStrategy(params: {
   vatRate: number | null;
   feePercent: number | null;
   targetMargin: number | null;
-  noCompetition: "MAX" | "HOLD";
+  noCompetition: "MAX" | "HOLD" | "STEP_UP";
+  stepUpType: "AMOUNT" | "PERCENT";
+  stepUpValue: number;
 }) {
   const existing = await getListingForUser({
     listingId: params.listingId,
@@ -166,6 +168,8 @@ export async function setListingStrategy(params: {
       feePercent: params.feePercent,
       targetMargin: params.targetMargin,
       noCompetition: params.noCompetition,
+      stepUpType: params.stepUpType,
+      stepUpValue: Math.max(0, params.stepUpValue),
     },
   });
 }
@@ -260,7 +264,9 @@ export interface ImportRow {
   vatRate?: number | null;
   feePercent?: number | null;
   targetMargin?: number | null;
-  noCompetition?: "MAX" | "HOLD";
+  noCompetition?: "MAX" | "HOLD" | "STEP_UP";
+  stepUpType?: "AMOUNT" | "PERCENT";
+  stepUpValue?: number;
   ignoreAmazon?: boolean;
   fulfillmentFilter?: "ANY" | "FBA" | "FBM";
   minSellerRating?: number | null;
@@ -293,6 +299,8 @@ export async function importListingConfig(
     if (row.feePercent !== undefined) data.feePercent = row.feePercent;
     if (row.targetMargin !== undefined) data.targetMargin = row.targetMargin;
     if (row.noCompetition) data.noCompetition = row.noCompetition;
+    if (row.stepUpType) data.stepUpType = row.stepUpType;
+    if (row.stepUpValue !== undefined) data.stepUpValue = row.stepUpValue;
     if (row.ignoreAmazon !== undefined) data.ignoreAmazon = row.ignoreAmazon;
     if (row.fulfillmentFilter) data.fulfillmentFilter = row.fulfillmentFilter;
     if (row.minSellerRating !== undefined) data.minSellerRating = row.minSellerRating;

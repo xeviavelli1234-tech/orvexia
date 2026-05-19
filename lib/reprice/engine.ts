@@ -16,7 +16,7 @@
 
 export type RepriceStrategy = "BUYBOX" | "MATCH" | "FIXED" | "MARGIN";
 export type UndercutType = "AMOUNT" | "PERCENT";
-export type NoCompetitionMode = "MAX" | "HOLD";
+export type NoCompetitionMode = "MAX" | "HOLD" | "STEP_UP";
 
 export type RepriceReason =
   | "competitor_undercut"
@@ -26,6 +26,7 @@ export type RepriceReason =
   | "min_floor"
   | "max_ceiling"
   | "no_competition"
+  | "step_up"
   | "hold"
   | "no_change";
 
@@ -48,6 +49,10 @@ export interface RepriceInput {
   marginFloor?: number | null;
   /** Comportamiento sin competencia. Default MAX. */
   noCompetition?: NoCompetitionMode;
+  /** STEP_UP: tipo del paso de subida (importe € o %). Default AMOUNT. */
+  stepUpType?: UndercutType;
+  /** STEP_UP: tamaño del paso por ciclo (importe o %). */
+  stepUpValue?: number;
 }
 
 export interface RepriceResult {
@@ -102,8 +107,24 @@ export function computeNewPrice(input: RepriceInput): RepriceResult {
     if (noComp === "HOLD") {
       return { newPrice: current, changed: false, reason: "no_change" };
     }
-    target = max;
-    baseReason = "no_competition";
+    if (noComp === "STEP_UP") {
+      // Subir poco a poco hacia el máximo (no saltar de golpe).
+      const stType: UndercutType = input.stepUpType ?? "AMOUNT";
+      const rawV = input.stepUpValue;
+      const v =
+        rawV != null && Number.isFinite(rawV) && rawV > 0
+          ? rawV
+          : stType === "PERCENT"
+            ? 1
+            : 0.05;
+      const rawStep = stType === "PERCENT" ? current * (v / 100) : v;
+      const step = Math.max(0.01, rawStep); // garantiza avance
+      target = round2(current + step);
+      baseReason = "step_up";
+    } else {
+      target = max;
+      baseReason = "no_competition";
+    }
   } else {
     const comp = input.competitorPrice as number;
     if (strategy === "MATCH") {

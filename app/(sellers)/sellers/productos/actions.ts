@@ -79,7 +79,9 @@ const strategySchema = z.object({
   vatRate: z.number().min(0).max(100).nullable(),
   feePercent: z.number().min(0).max(100).nullable(),
   targetMargin: z.number().min(0).max(95).nullable(),
-  noCompetition: z.enum(["MAX", "HOLD"]),
+  noCompetition: z.enum(["MAX", "HOLD", "STEP_UP"]),
+  stepUpType: z.enum(["AMOUNT", "PERCENT"]),
+  stepUpValue: z.number().min(0).max(99999),
 });
 
 export async function updateListingStrategyAction(
@@ -110,6 +112,8 @@ export async function updateListingStrategyAction(
     feePercent: num("feePercent"),
     targetMargin: num("targetMargin"),
     noCompetition: String(formData.get("noCompetition") ?? "MAX"),
+    stepUpType: String(formData.get("stepUpType") ?? "AMOUNT"),
+    stepUpValue: num("stepUpValue") ?? 0.05,
   });
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "validation_failed" };
@@ -206,7 +210,9 @@ const settingsSchema = z.object({
   defaultStrategy: z.enum(["BUYBOX", "MATCH", "FIXED", "MARGIN"]),
   defaultUndercutType: z.enum(["AMOUNT", "PERCENT"]),
   defaultUndercutValue: z.number().min(0).max(99999),
-  defaultNoCompetition: z.enum(["MAX", "HOLD"]),
+  defaultNoCompetition: z.enum(["MAX", "HOLD", "STEP_UP"]),
+  defaultStepUpType: z.enum(["AMOUNT", "PERCENT"]),
+  defaultStepUpValue: z.number().min(0).max(99999),
   alertsEnabled: z.boolean(),
   alertEmail: z.string().max(200).nullable(),
   alertOnBuyBoxLost: z.boolean(),
@@ -242,6 +248,8 @@ export async function updateAccountSettingsAction(
     defaultUndercutType: String(formData.get("defaultUndercutType") ?? "AMOUNT"),
     defaultUndercutValue: numF("defaultUndercutValue", 0.01),
     defaultNoCompetition: String(formData.get("defaultNoCompetition") ?? "MAX"),
+    defaultStepUpType: String(formData.get("defaultStepUpType") ?? "AMOUNT"),
+    defaultStepUpValue: numF("defaultStepUpValue", 0.05),
     alertsEnabled: formData.get("alertsEnabled") === "true",
     alertEmail: ((): string | null => {
       const v = formData.get("alertEmail");
@@ -375,7 +383,9 @@ export async function importConfigAction(
       vatRate: num(get("vatrate")),
       feePercent: num(get("feepercent")),
       targetMargin: num(get("targetmargin")),
-      noCompetition: enumOf(get("nocompetition"), ["MAX", "HOLD"]),
+      noCompetition: enumOf(get("nocompetition"), ["MAX", "HOLD", "STEP_UP"]),
+      stepUpType: enumOf(get("stepuptype"), ["AMOUNT", "PERCENT"]),
+      stepUpValue: num(get("stepupvalue")) ?? undefined,
       ignoreAmazon: bool(get("ignoreamazon")),
       fulfillmentFilter: enumOf(get("fulfillmentfilter"), ["ANY", "FBA", "FBM"]),
       minSellerRating: num(get("minsellerrating")),

@@ -296,6 +296,7 @@ enum UndercutType {
 enum NoCompetitionMode {
   MAX // sin competencia → subir al máximo
   HOLD // sin competencia → mantener precio
+  STEP_UP // sin competencia → subir gradualmente hacia el máximo
 }
 
 enum FulfillmentFilter {
@@ -334,6 +335,8 @@ model SellerAccount {
   defaultUndercutType  UndercutType      @default(AMOUNT)
   defaultUndercutValue Float             @default(0.01)
   defaultNoCompetition NoCompetitionMode @default(MAX)
+  defaultStepUpType    UndercutType      @default(AMOUNT)
+  defaultStepUpValue   Float             @default(0.05)
 
   // ── Programación horaria, simulación y throttling ──
   scheduleEnabled  Boolean @default(false)
@@ -390,6 +393,8 @@ model SellerListing {
   feePercent    Float?            @default(15) // % comisión Amazon
   targetMargin  Float?            @default(10) // % margen objetivo (MARGIN)
   noCompetition NoCompetitionMode @default(MAX)
+  stepUpType    UndercutType      @default(AMOUNT) // STEP_UP: paso € o %
+  stepUpValue   Float             @default(0.05)   // STEP_UP: tamaño del paso
 
   // ── Filtros de competencia ──
   useAccountDefaults Boolean           @default(false) // hereda estrategia de la cuenta

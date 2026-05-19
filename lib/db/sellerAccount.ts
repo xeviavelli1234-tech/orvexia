@@ -67,7 +67,9 @@ export async function setAccountSettings(params: {
   defaultStrategy: "BUYBOX" | "MATCH" | "FIXED" | "MARGIN";
   defaultUndercutType: "AMOUNT" | "PERCENT";
   defaultUndercutValue: number;
-  defaultNoCompetition: "MAX" | "HOLD";
+  defaultNoCompetition: "MAX" | "HOLD" | "STEP_UP";
+  defaultStepUpType: "AMOUNT" | "PERCENT";
+  defaultStepUpValue: number;
   alertsEnabled: boolean;
   alertEmail: string | null;
   alertOnBuyBoxLost: boolean;
@@ -96,6 +98,8 @@ export async function setAccountSettings(params: {
       defaultUndercutType: params.defaultUndercutType,
       defaultUndercutValue: Math.max(0, params.defaultUndercutValue),
       defaultNoCompetition: params.defaultNoCompetition,
+      defaultStepUpType: params.defaultStepUpType,
+      defaultStepUpValue: Math.max(0, params.defaultStepUpValue),
       alertsEnabled: params.alertsEnabled,
       alertEmail: params.alertEmail?.trim() ? params.alertEmail.trim() : null,
       alertOnBuyBoxLost: params.alertOnBuyBoxLost,

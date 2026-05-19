@@ -14,7 +14,9 @@ export interface AccountSettingsData {
   defaultStrategy: "BUYBOX" | "MATCH" | "FIXED" | "MARGIN";
   defaultUndercutType: "AMOUNT" | "PERCENT";
   defaultUndercutValue: number;
-  defaultNoCompetition: "MAX" | "HOLD";
+  defaultNoCompetition: "MAX" | "HOLD" | "STEP_UP";
+  defaultStepUpType: "AMOUNT" | "PERCENT";
+  defaultStepUpValue: number;
   alertsEnabled: boolean;
   alertEmail: string;
   alertOnBuyBoxLost: boolean;
@@ -105,6 +107,8 @@ export default function AccountSettings({ initial }: { initial: AccountSettingsD
     fd.set("defaultUndercutType", s.defaultUndercutType);
     fd.set("defaultUndercutValue", String(s.defaultUndercutValue));
     fd.set("defaultNoCompetition", s.defaultNoCompetition);
+    fd.set("defaultStepUpType", s.defaultStepUpType);
+    fd.set("defaultStepUpValue", String(s.defaultStepUpValue));
     fd.set("alertsEnabled", String(s.alertsEnabled));
     fd.set("alertEmail", s.alertEmail);
     fd.set("alertOnBuyBoxLost", String(s.alertOnBuyBoxLost));
@@ -283,8 +287,47 @@ export default function AccountSettings({ initial }: { initial: AccountSettingsD
                 >
                   <option value="MAX">Subir al máximo</option>
                   <option value="HOLD">Mantener</option>
+                  <option value="STEP_UP">Subir gradualmente</option>
                 </select>
               </label>
+              {s.defaultNoCompetition === "STEP_UP" && (
+                <>
+                  <label className="block">
+                    <span className={lbl}>Paso por</span>
+                    <select
+                      value={s.defaultStepUpType}
+                      onChange={(e) =>
+                        setS((v) => ({
+                          ...v,
+                          defaultStepUpType: e.target
+                            .value as AccountSettingsData["defaultStepUpType"],
+                        }))
+                      }
+                      className={inp}
+                    >
+                      <option value="AMOUNT">Importe €</option>
+                      <option value="PERCENT">Porcentaje %</option>
+                    </select>
+                  </label>
+                  <label className="block">
+                    <span className={lbl}>
+                      {s.defaultStepUpType === "PERCENT" ? "% / ciclo" : "€ / ciclo"}
+                    </span>
+                    <input
+                      inputMode="decimal"
+                      value={s.defaultStepUpValue}
+                      onChange={(e) =>
+                        setS((v) => ({
+                          ...v,
+                          defaultStepUpValue:
+                            Number.parseFloat(e.target.value.replace(",", ".")) || 0,
+                        }))
+                      }
+                      className={inp}
+                    />
+                  </label>
+                </>
+              )}
               <label className="block">
                 <span className={lbl}>Bajar por</span>
                 <select

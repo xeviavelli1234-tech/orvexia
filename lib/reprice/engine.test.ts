@@ -218,3 +218,59 @@ test("sin competencia + HOLD → no_change", () => {
   assert.equal(r.changed, false);
   assert.equal(r.reason, "no_change");
 });
+
+test("sin competencia + STEP_UP (importe) → sube un paso, no salta al máximo", () => {
+  const r = computeNewPrice({
+    priceCurrent: 100,
+    priceMin: 80,
+    priceMax: 130,
+    competitorPrice: null,
+    noCompetition: "STEP_UP",
+    stepUpType: "AMOUNT",
+    stepUpValue: 2,
+  });
+  assert.equal(r.newPrice, 102);
+  assert.equal(r.changed, true);
+  assert.equal(r.reason, "step_up");
+});
+
+test("sin competencia + STEP_UP (porcentaje) → sube ese % del precio actual", () => {
+  const r = computeNewPrice({
+    priceCurrent: 100,
+    priceMin: 80,
+    priceMax: 130,
+    competitorPrice: null,
+    noCompetition: "STEP_UP",
+    stepUpType: "PERCENT",
+    stepUpValue: 5,
+  });
+  assert.equal(r.newPrice, 105);
+  assert.equal(r.reason, "step_up");
+});
+
+test("STEP_UP no supera el máximo (se acota al techo)", () => {
+  const r = computeNewPrice({
+    priceCurrent: 129,
+    priceMin: 80,
+    priceMax: 130,
+    competitorPrice: null,
+    noCompetition: "STEP_UP",
+    stepUpType: "AMOUNT",
+    stepUpValue: 5,
+  });
+  assert.equal(r.newPrice, 130);
+  assert.equal(r.reason, "max_ceiling");
+});
+
+test("STEP_UP ya en el máximo → no_change", () => {
+  const r = computeNewPrice({
+    priceCurrent: 130,
+    priceMin: 80,
+    priceMax: 130,
+    competitorPrice: null,
+    noCompetition: "STEP_UP",
+    stepUpValue: 3,
+  });
+  assert.equal(r.changed, false);
+  assert.equal(r.reason, "no_change");
+});

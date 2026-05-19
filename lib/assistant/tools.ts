@@ -269,7 +269,11 @@ export async function executeTool(
           targetMargin:
             input.targetMargin != null ? Number(input.targetMargin) : cur.targetMargin ?? 10,
           noCompetition:
-            (input.noCompetition as "MAX" | "HOLD") ?? cur.noCompetition ?? "MAX",
+            (input.noCompetition as "MAX" | "HOLD" | "STEP_UP") ??
+            cur.noCompetition ??
+            "MAX",
+          stepUpType: cur.stepUpType ?? "AMOUNT",
+          stepUpValue: cur.stepUpValue ?? 0.05,
         });
       } catch (e) {
         return `No se pudo: ${e instanceof Error ? e.message : "error"}.`;

@@ -31,6 +31,7 @@ const REASON: Record<string, { label: string; cls: string }> = {
   fixed_price: { label: "Precio fijo", cls: "text-indigo-300 bg-indigo-400/10 border-indigo-400/20" },
   margin_floor: { label: "Suelo margen", cls: "text-amber-300 bg-amber-400/10 border-amber-400/20" },
   no_competition: { label: "Sin competencia", cls: "text-emerald-300 bg-emerald-400/10 border-emerald-400/20" },
+  step_up: { label: "Subida gradual", cls: "text-emerald-300 bg-emerald-400/10 border-emerald-400/20" },
   min_floor: { label: "Suelo (mín)", cls: "text-amber-300 bg-amber-400/10 border-amber-400/20" },
   max_ceiling: { label: "Techo (máx)", cls: "text-amber-300 bg-amber-400/10 border-amber-400/20" },
   hold: { label: "Mantener", cls: "text-white/50 bg-white/[0.05] border-white/10" },

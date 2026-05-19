@@ -274,12 +274,16 @@ export async function runRepricer(now: Date = new Date()): Promise<RunSummary> {
                 undercutType: account.defaultUndercutType,
                 undercutValue: account.defaultUndercutValue,
                 noCompetition: account.defaultNoCompetition,
+                stepUpType: account.defaultStepUpType,
+                stepUpValue: account.defaultStepUpValue,
               }
             : {
                 strategy: listing.strategy,
                 undercutType: listing.undercutType,
                 undercutValue: listing.undercutValue,
                 noCompetition: listing.noCompetition,
+                stepUpType: listing.stepUpType,
+                stepUpValue: listing.stepUpValue,
               };
 
           // Suelo de beneficio (estrategia MARGIN): precio mínimo rentable
@@ -309,6 +313,8 @@ export async function runRepricer(now: Date = new Date()): Promise<RunSummary> {
             fixedPrice: listing.fixedPrice,
             marginFloor,
             noCompetition: eff.noCompetition,
+            stepUpType: eff.stepUpType,
+            stepUpValue: eff.stepUpValue,
           });
 
           if (!result.changed) {

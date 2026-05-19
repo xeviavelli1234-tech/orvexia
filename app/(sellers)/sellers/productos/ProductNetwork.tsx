@@ -26,7 +26,7 @@ import {
 
 type Strategy = "BUYBOX" | "MATCH" | "FIXED" | "MARGIN";
 type UndercutType = "AMOUNT" | "PERCENT";
-type NoComp = "MAX" | "HOLD";
+type NoComp = "MAX" | "HOLD" | "STEP_UP";
 type Fulfillment = "ANY" | "FBA" | "FBM";
 type BuyBox = "UNKNOWN" | "WON" | "LOST";
 
@@ -57,6 +57,8 @@ export interface NetNode {
   fulfillmentFilter: Fulfillment;
   minSellerRating: number | null;
   buyBoxStatus: BuyBox;
+  stepUpType: UndercutType;
+  stepUpValue: number;
   lastReason: string | null;
   lastSuccess: boolean | null;
 }
@@ -291,6 +293,8 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
   const [feeP, setFeeP] = useState("15");
   const [tMargin, setTMargin] = useState("10");
   const [noComp, setNoComp] = useState<NoComp>("MAX");
+  const [stepUType, setStepUType] = useState<UndercutType>("AMOUNT");
+  const [stepUVal, setStepUVal] = useState("0.05");
   const [useAccDef, setUseAccDef] = useState(false);
   const [ignoreAmz, setIgnoreAmz] = useState(true);
   const [fulfil, setFulfil] = useState<Fulfillment>("ANY");
@@ -573,6 +577,8 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
     setFeeP(n.feePercent != null ? String(n.feePercent) : "15");
     setTMargin(n.targetMargin != null ? String(n.targetMargin) : "10");
     setNoComp(n.noCompetition);
+    setStepUType(n.stepUpType);
+    setStepUVal(String(n.stepUpValue ?? 0.05));
     setUseAccDef(n.useAccountDefaults);
     setIgnoreAmz(n.ignoreAmazon);
     setFulfil(n.fulfillmentFilter);
@@ -611,6 +617,8 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
     fd.set("feePercent", feeP.trim());
     fd.set("targetMargin", tMargin.trim());
     fd.set("noCompetition", noComp);
+    fd.set("stepUpType", stepUType);
+    fd.set("stepUpValue", stepUVal.trim() || "0.05");
     startTransition(async () => {
       const r = await updateListingStrategyAction(fd);
       if (!r.ok) setErr(errMsg(r.error));
@@ -1615,20 +1623,60 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
                 )}
 
                 {strategy !== "FIXED" && (
-                  <label className="mt-3 block">
-                    <span className="text-[10px] uppercase tracking-wider text-white/40">
-                      Sin competencia
-                    </span>
-                    <select
-                      value={noComp}
-                      onChange={(e) => setNoComp(e.target.value as NoComp)}
-                      disabled={pending}
-                      className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
-                    >
-                      <option value="MAX">Subir al máximo</option>
-                      <option value="HOLD">Mantener precio</option>
-                    </select>
-                  </label>
+                  <>
+                    <label className="mt-3 block">
+                      <span className="text-[10px] uppercase tracking-wider text-white/40">
+                        Sin competencia
+                      </span>
+                      <select
+                        value={noComp}
+                        onChange={(e) => setNoComp(e.target.value as NoComp)}
+                        disabled={pending}
+                        className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
+                      >
+                        <option value="MAX">Subir al máximo</option>
+                        <option value="HOLD">Mantener precio</option>
+                        <option value="STEP_UP">Subir gradualmente</option>
+                      </select>
+                    </label>
+                    {noComp === "STEP_UP" && (
+                      <div className="mt-2 grid grid-cols-2 gap-3">
+                        <label className="block">
+                          <span className="text-[10px] uppercase tracking-wider text-white/40">
+                            Paso por
+                          </span>
+                          <select
+                            value={stepUType}
+                            onChange={(e) =>
+                              setStepUType(e.target.value as UndercutType)
+                            }
+                            disabled={pending}
+                            className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-2 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
+                          >
+                            <option value="AMOUNT">Importe €</option>
+                            <option value="PERCENT">Porcentaje %</option>
+                          </select>
+                        </label>
+                        <label className="block">
+                          <span className="text-[10px] uppercase tracking-wider text-white/40">
+                            {stepUType === "PERCENT" ? "% / ciclo" : "€ / ciclo"}
+                          </span>
+                          <input
+                            value={stepUVal}
+                            onChange={(e) => setStepUVal(e.target.value)}
+                            inputMode="decimal"
+                            placeholder={stepUType === "PERCENT" ? "1" : "0,05"}
+                            disabled={pending}
+                            className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
+                          />
+                        </label>
+                        <p className="col-span-2 text-[10px] text-white/35">
+                          Sin competencia el precio sube este paso cada ciclo
+                          hasta el máximo (no salta de golpe).
+                        </p>
+                      </div>
+                    )}
+                  </>
                 )}
 
                 <button
