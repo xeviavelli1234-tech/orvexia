@@ -108,3 +108,22 @@ test("Buy Box: UNKNOWN si nadie la marca", () => {
   const r = selectCompetitor([offer({ sellerId: "X", price: 9 })], base, "ME");
   assert.equal(r.buyBox, "UNKNOWN");
 });
+
+test("Buy Box: precio real = el de la oferta ganadora", () => {
+  const r = selectCompetitor(
+    [
+      offer({ sellerId: "X", price: 12.5, isBuyBoxWinner: true }),
+      offer({ sellerId: "Y", price: 9 }),
+    ],
+    base,
+    "ME",
+  );
+  assert.equal(r.buyBox, "LOST");
+  assert.equal(r.buyBoxPrice, 12.5);
+  assert.equal(r.price, 9);
+});
+
+test("Buy Box: buyBoxPrice null si nadie la marca", () => {
+  const r = selectCompetitor([offer({ sellerId: "X", price: 9 })], base, "ME");
+  assert.equal(r.buyBoxPrice, null);
+});

@@ -16,20 +16,37 @@ import type { RepriceAlert } from "./alerts";
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const eur = (n: number) => n.toFixed(2).replace(".", ",") + " €";
 
-/** Envía (si procede) un único correo resumen de alertas del ciclo. */
+/** Anti-spam: como máximo un correo de alertas cada 6 h por cuenta. */
+const ALERT_COOLDOWN_MS = 6 * 60 * 60 * 1000;
+
+/** Envía (si procede y fuera del cooldown) un único correo resumen. */
 async function maybeSendAlerts(
   account: {
+    id: string;
     alertsEnabled: boolean;
     alertEmail: string | null;
+    lastAlertAt: Date | null;
     user: { email: string };
   },
   alerts: RepriceAlert[],
+  now: Date,
 ): Promise<void> {
   if (!account.alertsEnabled || alerts.length === 0) return;
+  // Cooldown: no reenviar si ya avisamos hace poco (evita spam por ciclo).
+  if (
+    account.lastAlertAt &&
+    now.getTime() - account.lastAlertAt.getTime() < ALERT_COOLDOWN_MS
+  ) {
+    return;
+  }
   const to = (account.alertEmail && account.alertEmail.trim()) || account.user.email;
   if (!to) return;
   try {
     await sendRepricerAlertEmail({ to, alerts });
+    await prisma.sellerAccount.update({
+      where: { id: account.id },
+      data: { lastAlertAt: now },
+    });
   } catch (e) {
     console.warn("[reprice] alert email failed:", e);
   }
@@ -144,7 +161,7 @@ export async function runRepricer(now: Date = new Date()): Promise<RunSummary> {
                   "Token no descifrable: reconecta tu cuenta de Amazon para reanudar el reprecio.",
               });
             }
-            await maybeSendAlerts(account, accountAlerts);
+            await maybeSendAlerts(account, accountAlerts, now);
             await prisma.$transaction([
               prisma.repricingRun.update({
                 where: { id: run.id },
@@ -244,7 +261,7 @@ export async function runRepricer(now: Date = new Date()): Promise<RunSummary> {
             where: { id: listing.id },
             data: {
               buyBoxStatus: comp.buyBox,
-              buyBoxPrice: competitorPrice ?? undefined,
+              buyBoxPrice: comp.buyBoxPrice ?? competitorPrice ?? undefined,
               buyBoxAt: now,
             },
           });
@@ -455,7 +472,7 @@ export async function runRepricer(now: Date = new Date()): Promise<RunSummary> {
       }),
     ]);
 
-    await maybeSendAlerts(account, accountAlerts);
+    await maybeSendAlerts(account, accountAlerts, now);
 
     summary.listingsProcessed += processed;
     summary.listingsRepriced += repriced;

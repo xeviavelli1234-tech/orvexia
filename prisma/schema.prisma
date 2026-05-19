@@ -352,6 +352,7 @@ model SellerAccount {
   alertOnBuyBoxLost Boolean @default(true)  // avisar al perder la Buy Box
   alertOnPriceFloor Boolean @default(true)  // avisar al tocar el precio mínimo
   alertOnError      Boolean @default(true)  // avisar ante errores de reprecio
+  lastAlertAt       DateTime?               // cooldown anti-spam de correos
 
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt

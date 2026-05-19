@@ -28,6 +28,8 @@ export interface CompetitionResult {
   price: number | null;
   /** WON si la Buy Box es nuestra, LOST si de otro, UNKNOWN si no hay datos. */
   buyBox: "WON" | "LOST" | "UNKNOWN";
+  /** Precio REAL de la oferta ganadora de la Buy Box (SP-API), o null. */
+  buyBoxPrice: number | null;
 }
 
 export function selectCompetitor(
@@ -37,10 +39,15 @@ export function selectCompetitor(
 ): CompetitionResult {
   // Estado de Buy Box (independiente de los filtros de competencia).
   let buyBox: CompetitionResult["buyBox"] = "UNKNOWN";
+  let buyBoxPrice: number | null = null;
   const bbWinner = offers.find((o) => o.isBuyBoxWinner);
   if (bbWinner) {
     buyBox =
       ourSellerId && bbWinner.sellerId === ourSellerId ? "WON" : "LOST";
+    buyBoxPrice =
+      Number.isFinite(bbWinner.price) && bbWinner.price > 0
+        ? bbWinner.price
+        : null;
   }
 
   const eligible = offers.filter((o) => {
@@ -60,5 +67,5 @@ export function selectCompetitor(
       ? null
       : Math.min(...eligible.map((o) => o.price));
 
-  return { price, buyBox };
+  return { price, buyBox, buyBoxPrice };
 }
