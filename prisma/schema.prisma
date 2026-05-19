@@ -380,6 +380,7 @@ model SellerListing {
 
   repricingEnabled Boolean  @default(false)
   lastRepricedAt   DateTime?
+  tags             String   @default("") // etiquetas/grupos, separadas por comas
 
   // ── Estrategia de reprecio ──
   strategy      RepriceStrategy   @default(BUYBOX)

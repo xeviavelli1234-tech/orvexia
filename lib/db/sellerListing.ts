@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import type { NormalizedListing } from "@/lib/amazon/listings";
+import { normalizeTags, addTag, removeTag } from "@/lib/tags";
 
 export async function listListingsByAccount(sellerAccountId: string) {
   return prisma.sellerListing.findMany({
@@ -250,8 +251,53 @@ export async function bulkSetUseDefaults(
   });
 }
 
+/** Reemplaza las etiquetas de un producto (normalizadas). */
+export async function setListingTags(params: {
+  listingId: string;
+  userId: string;
+  tags: string;
+}) {
+  const existing = await getListingForUser({
+    listingId: params.listingId,
+    userId: params.userId,
+  });
+  if (!existing) throw new Error("listing_not_found_or_not_owned");
+  return prisma.sellerListing.update({
+    where: { id: params.listingId },
+    data: { tags: normalizeTags(params.tags) },
+  });
+}
+
+/** Añade o quita una etiqueta a un conjunto de productos del usuario. */
+export async function bulkApplyTag(
+  userId: string,
+  ids: string[],
+  tag: string,
+  mode: "add" | "remove",
+): Promise<{ count: number }> {
+  if (ids.length === 0 || !tag.trim()) return { count: 0 };
+  const listings = await prisma.sellerListing.findMany({
+    where: { id: { in: ids }, sellerAccount: { userId } },
+    select: { id: true, tags: true },
+  });
+  let count = 0;
+  for (const l of listings) {
+    const next =
+      mode === "add" ? addTag(l.tags, tag) : removeTag(l.tags, tag);
+    if (next !== normalizeTags(l.tags)) {
+      await prisma.sellerListing.update({
+        where: { id: l.id },
+        data: { tags: next },
+      });
+      count += 1;
+    }
+  }
+  return { count };
+}
+
 export interface ImportRow {
   sku: string;
+  tags?: string;
   priceMin?: number | null;
   priceMax?: number | null;
   strategy?: "BUYBOX" | "MATCH" | "FIXED" | "MARGIN";
@@ -298,6 +344,7 @@ export async function importListingConfig(
     if (row.vatRate !== undefined) data.vatRate = row.vatRate;
     if (row.feePercent !== undefined) data.feePercent = row.feePercent;
     if (row.targetMargin !== undefined) data.targetMargin = row.targetMargin;
+    if (row.tags !== undefined) data.tags = normalizeTags(row.tags);
     if (row.noCompetition) data.noCompetition = row.noCompetition;
     if (row.stepUpType) data.stepUpType = row.stepUpType;
     if (row.stepUpValue !== undefined) data.stepUpValue = row.stepUpValue;

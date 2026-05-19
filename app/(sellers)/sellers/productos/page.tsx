@@ -105,6 +105,7 @@ export default async function ProductosPage() {
       priceMin: l.priceMin,
       priceMax: l.priceMax,
       repricingEnabled: l.repricingEnabled,
+      tags: l.tags,
       strategy: l.strategy,
       undercutType: l.undercutType,
       undercutValue: l.undercutValue,

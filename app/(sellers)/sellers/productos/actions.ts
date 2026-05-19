@@ -11,6 +11,8 @@ import {
   pauseAllForUser,
   bulkSetEnabled,
   bulkSetUseDefaults,
+  setListingTags,
+  bulkApplyTag,
   importListingConfig,
   type ImportRow,
 } from "@/lib/db/sellerListing";
@@ -313,6 +315,59 @@ export async function bulkListingsAction(
   return { ok: true };
 }
 
+const tagsSchema = z.object({
+  listingId: z.string().min(1),
+  tags: z.string().max(600),
+});
+
+export async function updateListingTagsAction(
+  formData: FormData,
+): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+  const parsed = tagsSchema.safeParse({
+    listingId: String(formData.get("listingId") ?? ""),
+    tags: String(formData.get("tags") ?? ""),
+  });
+  if (!parsed.success) return { ok: false, error: "validation_failed" };
+  try {
+    await setListingTags({ userId: session.userId, ...parsed.data });
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "db_failed" };
+  }
+  revalidatePath("/sellers/productos");
+  return { ok: true };
+}
+
+const bulkTagSchema = z.object({
+  ids: z.array(z.string().min(1)).min(1).max(2000),
+  tag: z.string().min(1).max(24),
+  mode: z.enum(["add", "remove"]),
+});
+
+export async function bulkTagAction(
+  ids: string[],
+  tag: string,
+  mode: string,
+): Promise<ActionResult & { count?: number }> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+  const parsed = bulkTagSchema.safeParse({ ids, tag: tag.trim(), mode });
+  if (!parsed.success) return { ok: false, error: "validation_failed" };
+  try {
+    const r = await bulkApplyTag(
+      session.userId,
+      parsed.data.ids,
+      parsed.data.tag,
+      parsed.data.mode,
+    );
+    revalidatePath("/sellers/productos");
+    return { ok: true, count: r.count };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "db_failed" };
+  }
+}
+
 /** Importa configuración desde el texto de un CSV (cabecera + filas). */
 export async function importConfigAction(
   csv: string,
@@ -371,6 +426,7 @@ export async function importConfigAction(
     const get = (n: string) => (idx(n) >= 0 ? c[idx(n)] : undefined);
     rows.push({
       sku,
+      tags: get("tags"),
       priceMin: num(get("pricemin")),
       priceMax: num(get("pricemax")),
       strategy: enumOf(get("strategy"), ["BUYBOX", "MATCH", "FIXED", "MARGIN"]),

@@ -3,8 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { NetNode } from "./ProductNetwork";
+import { collectTags, parseTags } from "@/lib/tags";
 import {
   bulkListingsAction,
+  bulkTagAction,
   importConfigAction,
   pauseAllAction,
 } from "./actions";
@@ -90,6 +92,7 @@ const CSV_COLS = [
   "minSellerRating",
   "useAccountDefaults",
   "repricingEnabled",
+  "tags",
 ] as const;
 
 function val(n: NetNode, c: (typeof CSV_COLS)[number]): string {
@@ -104,10 +107,17 @@ export default function CatalogOverlay({ items }: { items: NetNode[] }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
+  const [tagFilter, setTagFilter] = useState("");
+  const [tagInput, setTagInput] = useState("");
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
+
+  const allTags = useMemo(
+    () => collectTags(items.map((i) => i.tags)),
+    [items],
+  );
 
   useEffect(() => {
     function onOpen() {
@@ -128,8 +138,14 @@ export default function CatalogOverlay({ items }: { items: NetNode[] }) {
 
   const rows = useMemo(() => {
     const qq = q.trim().toLowerCase();
+    const tf = tagFilter.toLowerCase();
     return items.filter((n) => {
       if (qq && !(`${n.title} ${n.sku} ${n.asin}`.toLowerCase().includes(qq))) return false;
+      if (
+        tf &&
+        !parseTags(n.tags).some((t) => t.toLowerCase() === tf)
+      )
+        return false;
       const noprice = n.priceCurrent <= 0 || !n.asin;
       const norange = n.priceMin == null || n.priceMax == null;
       if (filter === "active") return n.repricingEnabled;
@@ -138,7 +154,28 @@ export default function CatalogOverlay({ items }: { items: NetNode[] }) {
       if (filter === "noprice") return noprice;
       return true;
     });
-  }, [items, q, filter]);
+  }, [items, q, filter, tagFilter]);
+
+  function applyTag(mode: "add" | "remove") {
+    const tag = tagInput.trim();
+    if (sel.size === 0 || !tag) return;
+    setBusy(true);
+    setMsg(null);
+    bulkTagAction([...sel], tag, mode).then((r) => {
+      setBusy(false);
+      if (!r.ok) setMsg("Error: " + r.error);
+      else {
+        setMsg(
+          `Etiqueta "${tag}" ${mode === "add" ? "añadida a" : "quitada de"} ${
+            r.count ?? 0
+          } producto(s).`,
+        );
+        setSel(new Set());
+        setTagInput("");
+        router.refresh();
+      }
+    });
+  }
 
   function toggle(id: string) {
     setSel((s) => {
@@ -237,6 +274,21 @@ export default function CatalogOverlay({ items }: { items: NetNode[] }) {
             <option value="norange">Sin rango</option>
             <option value="noprice">Sin oferta</option>
           </select>
+          {allTags.length > 0 && (
+            <select
+              value={tagFilter}
+              onChange={(e) => setTagFilter(e.target.value)}
+              className="rounded-lg border border-white/15 bg-black/40 px-2 py-1.5 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
+              title="Filtrar por etiqueta"
+            >
+              <option value="">Todas las etiquetas</option>
+              {allTags.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          )}
           <button
             onClick={exportCsv}
             className="rounded-lg border border-white/15 px-2.5 py-1.5 text-[11px] text-white/70 hover:bg-white/10"
@@ -305,6 +357,18 @@ export default function CatalogOverlay({ items }: { items: NetNode[] }) {
                     <td className="py-2 px-2 max-w-[300px]">
                       <div className="truncate text-white/85">{n.title}</div>
                       <div className="font-mono text-[10px] text-white/35">{n.sku}</div>
+                      {parseTags(n.tags).length > 0 && (
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {parseTags(n.tags).map((t) => (
+                            <span
+                              key={t}
+                              className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-1.5 py-0.5 text-[9px] text-cyan-200"
+                            >
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </td>
                     <td className="py-2 px-2 font-mono text-white/70 whitespace-nowrap">
                       {n.priceCurrent > 0 ? n.priceCurrent.toFixed(2) + " €" : "—"}
@@ -353,6 +417,31 @@ export default function CatalogOverlay({ items }: { items: NetNode[] }) {
             </BulkBtn>
             <BulkBtn disabled={busy} onClick={() => bulk("defaultsOff")}>
               Config propia
+            </BulkBtn>
+            <span className="mx-1 h-5 w-px bg-white/15" />
+            <input
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              placeholder="etiqueta…"
+              list="catalog-tags"
+              className="w-32 rounded-lg border border-white/15 bg-black/40 px-2 py-1.5 text-xs text-white placeholder:text-white/30 focus:border-cyan-400/60 focus:outline-none"
+            />
+            <datalist id="catalog-tags">
+              {allTags.map((t) => (
+                <option key={t} value={t} />
+              ))}
+            </datalist>
+            <BulkBtn
+              disabled={busy || !tagInput.trim()}
+              onClick={() => applyTag("add")}
+            >
+              Etiquetar
+            </BulkBtn>
+            <BulkBtn
+              disabled={busy || !tagInput.trim()}
+              onClick={() => applyTag("remove")}
+            >
+              Quitar etiqueta
             </BulkBtn>
           </div>
         )}

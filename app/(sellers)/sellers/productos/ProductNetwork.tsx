@@ -16,11 +16,13 @@ import {
   profitAt,
   type CostInputs,
 } from "@/lib/reprice/margin";
+import { parseTags } from "@/lib/tags";
 import {
   updateListingRangeAction,
   toggleListingAction,
   updateListingStrategyAction,
   updateListingCompetitionAction,
+  updateListingTagsAction,
   pauseAllAction,
 } from "./actions";
 
@@ -41,6 +43,7 @@ export interface NetNode {
   priceMin: number | null;
   priceMax: number | null;
   repricingEnabled: boolean;
+  tags: string;
   strategy: Strategy;
   undercutType: UndercutType;
   undercutValue: number;
@@ -295,6 +298,7 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
   const [noComp, setNoComp] = useState<NoComp>("MAX");
   const [stepUType, setStepUType] = useState<UndercutType>("AMOUNT");
   const [stepUVal, setStepUVal] = useState("0.05");
+  const [tags, setTags] = useState("");
   const [useAccDef, setUseAccDef] = useState(false);
   const [ignoreAmz, setIgnoreAmz] = useState(true);
   const [fulfil, setFulfil] = useState<Fulfillment>("ANY");
@@ -579,10 +583,24 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
     setNoComp(n.noCompetition);
     setStepUType(n.stepUpType);
     setStepUVal(String(n.stepUpValue ?? 0.05));
+    setTags(n.tags ?? "");
     setUseAccDef(n.useAccountDefaults);
     setIgnoreAmz(n.ignoreAmazon);
     setFulfil(n.fulfillmentFilter);
     setMinRating(n.minSellerRating != null ? String(n.minSellerRating) : "");
+  }
+
+  function saveTags() {
+    if (!sel) return;
+    setErr(null);
+    const fd = new FormData();
+    fd.set("listingId", sel.id);
+    fd.set("tags", tags);
+    startTransition(async () => {
+      const r = await updateListingTagsAction(fd);
+      if (!r.ok) setErr(errMsg(r.error));
+      else router.refresh();
+    });
   }
 
   function saveCompetition() {
@@ -1685,6 +1703,58 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
                   className="mt-3 w-full rounded-lg border border-cyan-400/40 text-cyan-200 py-2 text-sm font-semibold hover:bg-cyan-400/10 transition-colors disabled:opacity-50"
                 >
                   {pending ? "Guardando…" : "Guardar estrategia"}
+                </button>
+              </div>
+
+              {/* ── Etiquetas / grupos ── */}
+              <div className="mt-5 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                <div className="text-[10px] uppercase tracking-wider text-white/40">
+                  Etiquetas / grupos
+                </div>
+                {parseTags(tags).length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {parseTags(tags).map((t) => (
+                      <span
+                        key={t}
+                        className="inline-flex items-center gap-1 rounded-full border border-cyan-400/25 bg-cyan-400/10 px-2 py-0.5 text-[11px] text-cyan-200"
+                      >
+                        {t}
+                        <button
+                          type="button"
+                          disabled={pending}
+                          onClick={() =>
+                            setTags(
+                              parseTags(tags)
+                                .filter((x) => x !== t)
+                                .join(","),
+                            )
+                          }
+                          className="text-cyan-300/70 hover:text-white leading-none"
+                          aria-label={`Quitar ${t}`}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <input
+                  value={tags}
+                  onChange={(e) => setTags(e.target.value)}
+                  placeholder="marca, temporada-alta, liquidación…"
+                  disabled={pending}
+                  className="mt-2 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-cyan-400/60 focus:outline-none"
+                />
+                <p className="mt-1 text-[10px] text-white/35">
+                  Separadas por comas. Sirven para filtrar y aplicar acciones
+                  por grupo en el catálogo.
+                </p>
+                <button
+                  onClick={saveTags}
+                  disabled={pending}
+                  className="mt-2 w-full rounded-lg border border-cyan-400/40 text-cyan-200 py-2 text-sm font-semibold hover:bg-cyan-400/10 transition-colors disabled:opacity-50"
+                >
+                  {pending ? "Guardando…" : "Guardar etiquetas"}
                 </button>
               </div>
 
