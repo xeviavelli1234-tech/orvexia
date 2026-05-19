@@ -127,3 +127,30 @@ test("Buy Box: buyBoxPrice null si nadie la marca", () => {
   const r = selectCompetitor([offer({ sellerId: "X", price: 9 })], base, "ME");
   assert.equal(r.buyBoxPrice, null);
 });
+
+test("excluir vendedor (lista negra) lo ignora como competidor", () => {
+  const r = selectCompetitor(
+    [offer({ sellerId: "DUMPER", price: 5 }), offer({ sellerId: "X", price: 30 })],
+    { ...base, excludeSellers: ["dumper"] },
+  );
+  assert.equal(r.price, 30);
+});
+
+test("solo competir contra ciertos vendedores (lista blanca)", () => {
+  const r = selectCompetitor(
+    [
+      offer({ sellerId: "A", price: 10 }),
+      offer({ sellerId: "RIVAL", price: 25 }),
+    ],
+    { ...base, onlySellers: ["rival"] },
+  );
+  assert.equal(r.price, 25);
+});
+
+test("lista blanca vacía → no filtra por vendedor", () => {
+  const r = selectCompetitor(
+    [offer({ sellerId: "A", price: 10 })],
+    { ...base, onlySellers: [] },
+  );
+  assert.equal(r.price, 10);
+});

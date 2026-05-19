@@ -172,6 +172,8 @@ const competitionSchema = z.object({
   ignoreAmazon: z.boolean(),
   fulfillmentFilter: z.enum(["ANY", "FBA", "FBM"]),
   minSellerRating: z.number().min(0).max(5).nullable(),
+  excludeSellers: z.string().max(600),
+  onlySellers: z.string().max(600),
 });
 
 export async function updateListingCompetitionAction(
@@ -192,6 +194,8 @@ export async function updateListingCompetitionAction(
     minSellerRating: minSellerRating != null && Number.isFinite(minSellerRating)
       ? minSellerRating
       : null,
+    excludeSellers: String(formData.get("excludeSellers") ?? ""),
+    onlySellers: String(formData.get("onlySellers") ?? ""),
   });
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "validation_failed" };
@@ -449,6 +453,8 @@ export async function importConfigAction(
       ignoreAmazon: bool(get("ignoreamazon")),
       fulfillmentFilter: enumOf(get("fulfillmentfilter"), ["ANY", "FBA", "FBM"]),
       minSellerRating: num(get("minsellerrating")),
+      excludeSellers: get("excludesellers"),
+      onlySellers: get("onlysellers"),
       useAccountDefaults: bool(get("useaccountdefaults")),
     });
   }

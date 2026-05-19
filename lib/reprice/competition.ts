@@ -21,7 +21,13 @@ export interface CompetitionFilters {
   ignoreAmazon: boolean;
   fulfillment: FulfillmentFilter;
   minRating: number | null;
+  /** Seller IDs a IGNORAR como competidor (lista negra). */
+  excludeSellers?: string[];
+  /** Si tiene valores: SOLO competir contra estos seller IDs (lista blanca). */
+  onlySellers?: string[];
 }
+
+const norm = (s: string | undefined) => (s ?? "").trim().toUpperCase();
 
 export interface CompetitionResult {
   /** Precio del competidor más barato tras filtros, o null si no hay. */
@@ -50,9 +56,15 @@ export function selectCompetitor(
         : null;
   }
 
+  const exclude = (filters.excludeSellers ?? []).map(norm).filter(Boolean);
+  const only = (filters.onlySellers ?? []).map(norm).filter(Boolean);
+
   const eligible = offers.filter((o) => {
     if (ourSellerId && o.sellerId === ourSellerId) return false; // nunca contra nosotros
     if (!Number.isFinite(o.price) || o.price <= 0) return false;
+    const sid = norm(o.sellerId);
+    if (exclude.includes(sid)) return false; // lista negra
+    if (only.length > 0 && !only.includes(sid)) return false; // lista blanca
     if (filters.ignoreAmazon && o.isAmazon) return false;
     if (filters.fulfillment === "FBA" && !o.isFba) return false;
     if (filters.fulfillment === "FBM" && o.isFba) return false;

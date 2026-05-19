@@ -126,6 +126,8 @@ export default async function ProductosPage() {
       ignoreAmazon: l.ignoreAmazon,
       fulfillmentFilter: l.fulfillmentFilter,
       minSellerRating: l.minSellerRating,
+      excludeSellers: l.excludeSellers,
+      onlySellers: l.onlySellers,
       buyBoxStatus: l.buyBoxStatus,
       buyBoxPrice: l.buyBoxPrice,
       lastReason: le?.reason ?? null,

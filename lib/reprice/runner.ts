@@ -8,6 +8,7 @@ import { upsertListingsBatch } from "@/lib/db/sellerListing";
 import { isFixtureMode } from "@/lib/amazon/fixtures";
 import { isRepricingAllowed, type SellerPlan } from "@/lib/billing";
 import { sendRepricerAlertEmail } from "@/lib/email";
+import { parseTags } from "@/lib/tags";
 import { isScheduleAllowed } from "./schedule";
 import { computeNewPrice } from "./engine";
 import { minPriceForMargin } from "./margin";
@@ -256,6 +257,8 @@ export async function runRepricer(
               ignoreAmazon: listing.ignoreAmazon,
               fulfillment: listing.fulfillmentFilter,
               minRating: listing.minSellerRating ?? null,
+              excludeSellers: parseTags(listing.excludeSellers),
+              onlySellers: parseTags(listing.onlySellers),
             },
             account.amazonSellerId,
           );

@@ -90,6 +90,8 @@ const CSV_COLS = [
   "ignoreAmazon",
   "fulfillmentFilter",
   "minSellerRating",
+  "excludeSellers",
+  "onlySellers",
   "useAccountDefaults",
   "repricingEnabled",
   "tags",

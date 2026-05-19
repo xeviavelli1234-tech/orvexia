@@ -403,6 +403,8 @@ model SellerListing {
   ignoreAmazon       Boolean           @default(true)  // ignorar al propio Amazon (retail)
   fulfillmentFilter  FulfillmentFilter @default(ANY)
   minSellerRating    Float?            // ignorar vendedores por debajo (0-5)
+  excludeSellers     String            @default("") // seller IDs a ignorar (lista negra)
+  onlySellers        String            @default("") // si hay: solo estos (lista blanca)
 
   // ── Estado Buy Box ──
   buyBoxStatus  BuyBoxStatus @default(UNKNOWN)

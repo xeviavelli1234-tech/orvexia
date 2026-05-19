@@ -101,6 +101,8 @@ export async function setListingCompetition(params: {
   ignoreAmazon: boolean;
   fulfillmentFilter: "ANY" | "FBA" | "FBM";
   minSellerRating: number | null;
+  excludeSellers: string;
+  onlySellers: string;
 }) {
   const existing = await getListingForUser({
     listingId: params.listingId,
@@ -120,6 +122,8 @@ export async function setListingCompetition(params: {
       ignoreAmazon: params.ignoreAmazon,
       fulfillmentFilter: params.fulfillmentFilter,
       minSellerRating: params.minSellerRating,
+      excludeSellers: normalizeTags(params.excludeSellers),
+      onlySellers: normalizeTags(params.onlySellers),
     },
   });
 }
@@ -316,6 +320,8 @@ export interface ImportRow {
   ignoreAmazon?: boolean;
   fulfillmentFilter?: "ANY" | "FBA" | "FBM";
   minSellerRating?: number | null;
+  excludeSellers?: string;
+  onlySellers?: string;
   useAccountDefaults?: boolean;
 }
 
@@ -351,6 +357,10 @@ export async function importListingConfig(
     if (row.ignoreAmazon !== undefined) data.ignoreAmazon = row.ignoreAmazon;
     if (row.fulfillmentFilter) data.fulfillmentFilter = row.fulfillmentFilter;
     if (row.minSellerRating !== undefined) data.minSellerRating = row.minSellerRating;
+    if (row.excludeSellers !== undefined)
+      data.excludeSellers = normalizeTags(row.excludeSellers);
+    if (row.onlySellers !== undefined)
+      data.onlySellers = normalizeTags(row.onlySellers);
     if (row.useAccountDefaults !== undefined)
       data.useAccountDefaults = row.useAccountDefaults;
     if (Object.keys(data).length === 0) {

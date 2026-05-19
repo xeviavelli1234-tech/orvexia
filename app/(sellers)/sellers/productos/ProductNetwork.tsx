@@ -59,6 +59,8 @@ export interface NetNode {
   ignoreAmazon: boolean;
   fulfillmentFilter: Fulfillment;
   minSellerRating: number | null;
+  excludeSellers: string;
+  onlySellers: string;
   buyBoxStatus: BuyBox;
   buyBoxPrice: number | null;
   stepUpType: UndercutType;
@@ -359,6 +361,8 @@ export default function ProductNetwork({
   const [ignoreAmz, setIgnoreAmz] = useState(true);
   const [fulfil, setFulfil] = useState<Fulfillment>("ANY");
   const [minRating, setMinRating] = useState("");
+  const [exclSellers, setExclSellers] = useState("");
+  const [onlySell, setOnlySell] = useState("");
 
   // ── Viewport (pan / zoom) ──────────────────────────────────
   const svgRef = useRef<SVGSVGElement | null>(null);
@@ -644,6 +648,8 @@ export default function ProductNetwork({
     setIgnoreAmz(n.ignoreAmazon);
     setFulfil(n.fulfillmentFilter);
     setMinRating(n.minSellerRating != null ? String(n.minSellerRating) : "");
+    setExclSellers(n.excludeSellers ?? "");
+    setOnlySell(n.onlySellers ?? "");
   }
 
   function saveTags() {
@@ -668,6 +674,8 @@ export default function ProductNetwork({
     fd.set("ignoreAmazon", String(ignoreAmz));
     fd.set("fulfillmentFilter", fulfil);
     fd.set("minSellerRating", minRating.trim());
+    fd.set("excludeSellers", exclSellers.trim());
+    fd.set("onlySellers", onlySell.trim());
     startTransition(async () => {
       const r = await updateListingCompetitionAction(fd);
       if (!r.ok) setErr(errMsg(r.error));
@@ -1930,6 +1938,36 @@ export default function ProductNetwork({
                     />
                   </label>
                 </div>
+
+                <label className="mt-3 block">
+                  <span className="text-[10px] uppercase tracking-wider text-white/40">
+                    Excluir vendedores (IDs, separados por comas)
+                  </span>
+                  <input
+                    value={exclSellers}
+                    onChange={(e) => setExclSellers(e.target.value)}
+                    placeholder="A1B2C3D4E5, F6G7H8I9J0"
+                    disabled={pending}
+                    className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-cyan-400/60 focus:outline-none"
+                  />
+                </label>
+                <label className="mt-2 block">
+                  <span className="text-[10px] uppercase tracking-wider text-white/40">
+                    Solo competir con (IDs; vacío = todos)
+                  </span>
+                  <input
+                    value={onlySell}
+                    onChange={(e) => setOnlySell(e.target.value)}
+                    placeholder="vacío = todos"
+                    disabled={pending}
+                    className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-cyan-400/60 focus:outline-none"
+                  />
+                </label>
+                <p className="mt-1 text-[10px] text-white/35">
+                  El seller ID aparece en la actividad/competencia. «Excluir»
+                  ignora a esos vendedores; «Solo» compite únicamente contra
+                  ellos.
+                </p>
 
                 <button
                   onClick={saveCompetition}
