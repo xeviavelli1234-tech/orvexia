@@ -106,23 +106,14 @@ export default async function RepricerPage({
                   Amazon Seller real.
                 </p>
                 <div className="mt-7 flex flex-wrap gap-3 justify-center">
-                  {process.env.SP_API_ENV === "production" ? (
-                    <form action="/api/sellers/amazon/self-connect" method="post">
-                      <button
-                        type="submit"
-                        className="rounded-xl bg-white text-[#0b0d1c] px-6 py-3 text-sm font-bold hover:bg-white/90 transition-colors"
-                      >
-                        Conectar mi cuenta de Amazon (real)
-                      </button>
-                    </form>
-                  ) : (
-                    <a
-                      href="/api/sellers/amazon/oauth/start"
-                      className="rounded-xl border border-white/20 text-white px-6 py-3 text-sm font-semibold hover:bg-white/[0.06] transition-colors"
-                    >
-                      Conectar Amazon
-                    </a>
-                  )}
+                  {/* Multi-cliente: cada usuario autoriza SU propia cuenta
+                      de Amazon vía OAuth (su refresh token, su seller id). */}
+                  <a
+                    href="/api/sellers/amazon/oauth/start"
+                    className="rounded-xl bg-white text-[#0b0d1c] px-6 py-3 text-sm font-bold hover:bg-white/90 transition-colors"
+                  >
+                    Conectar mi cuenta de Amazon
+                  </a>
                   <form action="/api/sellers/demo/connect" method="post">
                     <button
                       type="submit"
@@ -132,6 +123,20 @@ export default async function RepricerPage({
                     </button>
                   </form>
                 </div>
+                {process.env.SP_API_ENV === "production" && (
+                  <form
+                    action="/api/sellers/amazon/self-connect"
+                    method="post"
+                    className="mt-3"
+                  >
+                    <button
+                      type="submit"
+                      className="text-[11px] text-white/35 hover:text-white/70 underline underline-offset-4"
+                    >
+                      (Solo dueño: conectar con las credenciales del servidor)
+                    </button>
+                  </form>
+                )}
               </div>
             </div>
           </div>
