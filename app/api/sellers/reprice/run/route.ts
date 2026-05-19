@@ -26,7 +26,10 @@ async function handle(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
-    const summary = await runRepricer();
+    // POST = disparo manual desde el panel → fuerza el ciclo (ignora el
+    // intervalo y el horario). GET = cron de Vercel → respeta intervalo.
+    const force = req.method === "POST";
+    const summary = await runRepricer(new Date(), { force });
     return NextResponse.json({ ok: true, ...summary, ranAt: new Date().toISOString() });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);

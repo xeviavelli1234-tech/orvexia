@@ -72,7 +72,11 @@ export interface RunSummary {
 /** TTL del lock de ciclo: si una ejecución muere, el lock caduca solo. */
 const LOCK_TTL_MS = 5 * 60_000;
 
-export async function runRepricer(now: Date = new Date()): Promise<RunSummary> {
+export async function runRepricer(
+  now: Date = new Date(),
+  opts: { force?: boolean } = {},
+): Promise<RunSummary> {
+  const force = opts.force === true;
   const summary: RunSummary = {
     accountsProcessed: 0,
     listingsProcessed: 0,
@@ -91,14 +95,16 @@ export async function runRepricer(now: Date = new Date()): Promise<RunSummary> {
       continue;
     }
 
-    // ¿Toca ya según su intervalo?
-    if (account.lastRunAt) {
+    // ¿Toca ya según su intervalo? (el disparo manual lo ignora con force)
+    if (!force && account.lastRunAt) {
       const nextDue = account.lastRunAt.getTime() + account.intervalSeconds * 1000;
       if (now.getTime() < nextDue) continue;
     }
 
     // Programación horaria: fuera de la franja → no reprecia.
+    // El disparo manual (force) la ignora para poder probar al momento.
     if (
+      !force &&
       !isScheduleAllowed(
         account.scheduleEnabled,
         account.scheduleStartHour,
