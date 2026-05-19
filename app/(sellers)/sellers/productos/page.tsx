@@ -200,7 +200,7 @@ export default async function ProductosPage() {
           </div>
         </div>
 
-        <div className="px-5 py-5 border-b border-white/10">
+        <div id="tour-resumen" className="px-5 py-5 border-b border-white/10">
           <Eyebrow>Resumen</Eyebrow>
           <div className="mt-3 grid grid-cols-2 gap-2.5">
             <Stat label="Productos" value={String(listings.length)} />
@@ -222,8 +222,12 @@ export default async function ProductosPage() {
           className="px-5 py-5 flex flex-col gap-3 border-b border-white/10"
         >
           <Eyebrow>Acciones</Eyebrow>
-          <SyncButton lastSyncAt={account.lastSyncAt} />
-          <RunNowButton />
+          <div id="tour-sync">
+            <SyncButton lastSyncAt={account.lastSyncAt} />
+          </div>
+          <div id="tour-run">
+            <RunNowButton />
+          </div>
         </div>
 
         <div
@@ -244,15 +248,20 @@ export default async function ProductosPage() {
             lastRunAt={lastRun?.startedAt.toISOString() ?? null}
             proHref="/sellers/facturacion"
           />
-          <CatalogButton />
-          <ProfitButton />
-          <HelpButton />
-          <SettingsButton />
-          <PanicButton />
-          <DisconnectButton />
+          <div id="tour-tools" className="flex flex-col gap-3">
+            <CatalogButton />
+            <ProfitButton />
+            <HelpButton />
+            <SettingsButton />
+            <PanicButton />
+            <DisconnectButton />
+          </div>
         </div>
 
-        <div className="mt-auto px-5 py-5 text-[11px] leading-relaxed text-white/40">
+        <div
+          id="tour-legend"
+          className="mt-auto px-5 py-5 text-[11px] leading-relaxed text-white/40"
+        >
           <Eyebrow>Leyenda</Eyebrow>
           <div className="mt-2.5 space-y-1.5">
             <Legend color="bg-emerald-400" text="Buy Box ganada" />

@@ -1434,7 +1434,10 @@ export default function ProductNetwork({
 
       {/* Búsqueda / filtro del grafo */}
       {nodes.length > 0 && (
-        <div className="absolute top-3 left-3 z-20 flex flex-wrap items-center gap-1.5 rounded-xl border border-white/10 bg-[rgba(8,9,20,0.92)] px-2.5 py-2 backdrop-blur-xl">
+        <div
+          id="tour-toolbar"
+          className="absolute top-3 left-3 z-20 flex flex-wrap items-center gap-1.5 rounded-xl border border-white/10 bg-[rgba(8,9,20,0.92)] px-2.5 py-2 backdrop-blur-xl"
+        >
           <div className="flex overflow-hidden rounded-lg border border-white/15">
             {(["graph", "table"] as const).map((m) => (
               <button
@@ -1673,7 +1676,7 @@ export default function ProductNetwork({
 
       {/* Controles de zoom (solo en vista grafo) */}
       {mode === "graph" && (
-      <div className="absolute bottom-5 left-5 flex flex-col gap-2">
+      <div id="tour-zoom" className="absolute bottom-5 left-5 flex flex-col gap-2">
         <ZoomBtn label="Acercar" onClick={() => zoomCenter(1.25)}>+</ZoomBtn>
         <ZoomBtn label="Alejar" onClick={() => zoomCenter(1 / 1.25)}>−</ZoomBtn>
         <ZoomBtn label="Restablecer vista" onClick={() => setView({ k: 1, x: 0, y: 0 })}>
