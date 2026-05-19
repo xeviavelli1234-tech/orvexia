@@ -95,6 +95,20 @@ export default function ActivityPanel({
             </a>
           )}
         </div>
+        <div className="mt-2.5 grid grid-cols-2 gap-1.5">
+          <a
+            href={proHref}
+            className="rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1.5 text-center text-[11px] text-white/70 hover:bg-white/[0.06] transition-colors"
+          >
+            Facturación
+          </a>
+          <a
+            href="/sellers/facturacion/factura"
+            className="rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1.5 text-center text-[11px] text-white/70 hover:bg-white/[0.06] transition-colors"
+          >
+            Factura (IVA)
+          </a>
+        </div>
       </div>
 
       {/* Mini-resumen de actividad */}
