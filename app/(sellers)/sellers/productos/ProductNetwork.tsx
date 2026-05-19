@@ -327,11 +327,9 @@ function errMsg(code: string): string {
 
 export default function ProductNetwork({
   nodes,
-  demo,
   activeCount,
 }: {
   nodes: NetNode[];
-  demo: boolean;
   activeCount: number;
 }) {
   const router = useRouter();
@@ -1393,16 +1391,6 @@ export default function ProductNetwork({
 
         </g>
       </svg>
-
-      {/* Aviso de modo demo (competencia simulada, no toca Amazon) */}
-      {demo && (
-        <div className="pointer-events-none absolute top-3 left-1/2 -translate-x-1/2 z-20">
-          <div className="rounded-full border border-amber-400/30 bg-amber-500/[0.12] px-4 py-1.5 text-[11px] font-semibold text-amber-200 backdrop-blur">
-            MODO DEMO · competencia simulada · no se modifica tu cuenta de
-            Amazon
-          </div>
-        </div>
-      )}
 
       {/* Primeros pasos: solo si hay productos pero ninguno repreciando */}
       {!hideSteps && !sel && nodes.length > 0 && activeCount === 0 && (

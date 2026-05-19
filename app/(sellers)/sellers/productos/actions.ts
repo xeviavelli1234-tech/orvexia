@@ -16,7 +16,11 @@ import {
   importListingConfig,
   type ImportRow,
 } from "@/lib/db/sellerListing";
-import { setAccountSettings } from "@/lib/db/sellerAccount";
+import {
+  setAccountSettings,
+  exportSellerData,
+  deleteSellerAccount,
+} from "@/lib/db/sellerAccount";
 
 const rangeSchema = z
   .object({
@@ -457,4 +461,36 @@ export async function importConfigAction(
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "db_failed" };
   }
+}
+
+/** RGPD — exporta los datos del repricer del usuario (JSON string). */
+export async function exportMyDataAction(): Promise<
+  (ActionResult & { json?: string }) 
+> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+  try {
+    const data = await exportSellerData(session.userId);
+    if (!data) return { ok: false, error: "no_account" };
+    return { ok: true, json: JSON.stringify(data, null, 2) };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "db_failed" };
+  }
+}
+
+/** RGPD — borrado total de la cuenta de repricer y sus datos. */
+export async function deleteMyAccountAction(
+  confirm: string,
+): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+  if (confirm !== "ELIMINAR") return { ok: false, error: "confirm_required" };
+  try {
+    await deleteSellerAccount(session.userId);
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "db_failed" };
+  }
+  revalidatePath("/sellers/productos");
+  revalidatePath("/dashboard");
+  return { ok: true };
 }

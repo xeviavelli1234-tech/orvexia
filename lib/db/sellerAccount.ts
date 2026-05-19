@@ -56,6 +56,39 @@ export async function deactivateSellerAccount(userId: string) {
   });
 }
 
+/**
+ * RGPD — exporta TODOS los datos del repricer del usuario en un objeto
+ * serializable. NUNCA incluye el refresh token (secreto).
+ */
+export async function exportSellerData(userId: string) {
+  const account = await prisma.sellerAccount.findUnique({
+    where: { userId },
+    include: {
+      listings: true,
+      runs: {
+        orderBy: { startedAt: "desc" },
+        include: { events: true },
+      },
+    },
+  });
+  if (!account) return null;
+  const { refreshToken: _omit, ...safe } = account;
+  void _omit;
+  return {
+    exportedAt: new Date().toISOString(),
+    account: safe,
+  };
+}
+
+/**
+ * RGPD — borrado total: elimina la cuenta de repricer y, en cascada,
+ * sus listings, ciclos y eventos. El token de Amazon se destruye con
+ * la fila. No borra la cuenta de usuario (login) del comparador.
+ */
+export async function deleteSellerAccount(userId: string) {
+  return prisma.sellerAccount.deleteMany({ where: { userId } });
+}
+
 export async function setAccountSettings(params: {
   userId: string;
   scheduleEnabled: boolean;

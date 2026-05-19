@@ -262,11 +262,7 @@ export default async function ProductosPage() {
       {/* ── Lienzo (resto de la ventana) ─────────────────────────── */}
       <section className="relative flex-1 h-full bg-[radial-gradient(ellipse_at_50%_45%,#10173a_0%,#0a0d24_45%,#05060f_100%)]">
         {hasListings ? (
-          <ProductNetwork
-            nodes={nodes}
-            demo={account.spApiEnv !== "production"}
-            activeCount={active}
-          />
+          <ProductNetwork nodes={nodes} activeCount={active} />
         ) : (
           <div className="absolute inset-0 grid place-items-center text-center px-6">
             <div className="max-w-md">

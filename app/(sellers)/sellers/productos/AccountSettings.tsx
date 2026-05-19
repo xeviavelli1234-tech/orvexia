@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { updateAccountSettingsAction } from "./actions";
+import {
+  updateAccountSettingsAction,
+  exportMyDataAction,
+  deleteMyAccountAction,
+} from "./actions";
 
 export interface AccountSettingsData {
   scheduleEnabled: boolean;
@@ -75,11 +79,47 @@ export default function AccountSettings({ initial }: { initial: AccountSettingsD
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [s, setS] = useState<AccountSettingsData>(initial);
+  const [delConfirm, setDelConfirm] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  function exportData() {
+    setErr(null);
+    setBusy(true);
+    exportMyDataAction().then((r) => {
+      setBusy(false);
+      if (!r.ok || !r.json) {
+        setErr(r.ok ? "no_data" : r.error);
+        return;
+      }
+      const blob = new Blob([r.json], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "orvexia-mis-datos.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  }
+
+  function deleteAccount() {
+    setErr(null);
+    setBusy(true);
+    deleteMyAccountAction("ELIMINAR").then((r) => {
+      setBusy(false);
+      if (!r.ok) {
+        setErr(r.error);
+        return;
+      }
+      setOpen(false);
+      window.location.href = "/dashboard";
+    });
+  }
 
   useEffect(() => {
     function onOpen() {
       setS(initial);
       setErr(null);
+      setDelConfirm(false);
       setOpen(true);
     }
     function onKey(e: KeyboardEvent) {
@@ -429,6 +469,62 @@ export default function AccountSettings({ initial }: { initial: AccountSettingsD
                   </label>
                 </div>
               </>
+            )}
+          </section>
+
+          {/* Datos y privacidad (RGPD) */}
+          <section className="rounded-xl border border-white/10 bg-white/[0.03] p-4 space-y-3">
+            <div>
+              <div className="text-sm font-semibold text-white/90">
+                Datos y privacidad (RGPD)
+              </div>
+              <div className="text-[11px] text-white/45">
+                Descarga o elimina todos tus datos del repricer.
+              </div>
+            </div>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={exportData}
+              className="w-full rounded-lg border border-white/15 py-2 text-sm font-semibold text-white/80 hover:bg-white/[0.05] transition-colors disabled:opacity-50"
+            >
+              {busy ? "Procesando…" : "Descargar mis datos (JSON)"}
+            </button>
+            {!delConfirm ? (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => setDelConfirm(true)}
+                className="w-full rounded-lg border border-red-400/40 bg-red-500/10 py-2 text-sm font-semibold text-red-300 hover:bg-red-500/20 transition-colors disabled:opacity-50"
+              >
+                Eliminar mi cuenta y todos mis datos
+              </button>
+            ) : (
+              <div className="rounded-lg border border-red-400/40 bg-red-500/10 p-3 space-y-2">
+                <p className="text-[12px] text-white/80">
+                  Esto borra <strong>de forma permanente</strong> tu conexión
+                  con Amazon, productos, estrategias e histórico. No se puede
+                  deshacer.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={deleteAccount}
+                    className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+                  >
+                    {busy ? "Eliminando…" : "Sí, eliminar todo"}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => setDelConfirm(false)}
+                    className="text-sm text-white/55 hover:text-white"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
             )}
           </section>
 
