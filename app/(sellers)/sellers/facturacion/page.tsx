@@ -105,16 +105,24 @@ export default async function FacturacionPage({
               Plan Pro activo. Reprecio cada {billing.intervalMinutes} min. Gracias por
               confiar en Orvexia 💜
             </p>
-            {stripeReady && account.stripeCustomerId && (
-              <form action="/api/sellers/billing/portal" method="post" className="mt-5">
-                <button
-                  type="submit"
-                  className="rounded-lg border border-fg/15 px-5 py-2.5 text-sm font-semibold hover:bg-fg/[0.04] transition-colors"
-                >
-                  Gestionar suscripción
-                </button>
-              </form>
-            )}
+            <div className="mt-5 flex flex-wrap gap-3">
+              {stripeReady && account.stripeCustomerId && (
+                <form action="/api/sellers/billing/portal" method="post">
+                  <button
+                    type="submit"
+                    className="rounded-lg border border-fg/15 px-5 py-2.5 text-sm font-semibold hover:bg-fg/[0.04] transition-colors"
+                  >
+                    Gestionar suscripción
+                  </button>
+                </form>
+              )}
+              <Link
+                href="/sellers/facturacion/factura"
+                className="rounded-lg border border-fg/15 px-5 py-2.5 text-sm font-semibold hover:bg-fg/[0.04] transition-colors"
+              >
+                Descargar factura (IVA)
+              </Link>
+            </div>
           </>
         )}
       </div>
