@@ -170,6 +170,7 @@ function errMsg(code: string): string {
 export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
   const router = useRouter();
   const [selId, setSelId] = useState<string | null>(null);
+  const [hubOpen, setHubOpen] = useState(false);
   const [pending, startTransition] = useTransition();
   const [err, setErr] = useState<string | null>(null);
   const [min, setMin] = useState("");
@@ -537,13 +538,23 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
             );
           })()}
 
-          {/* Nodo central: icono de Amazon */}
+          {/* Nodo central: icono de Amazon (clic → mostrar/ocultar tools) */}
           {(() => {
             const h = layout.hub;
             const HR = 54;
             const w = HR * 1.15;
             return (
-              <g>
+              <g
+                className="hex-node"
+                onClick={() => {
+                  if (suppressClick.current) {
+                    suppressClick.current = false;
+                    return;
+                  }
+                  setHubOpen((v) => !v);
+                }}
+              >
+                <circle cx={h.x} cy={h.y} r={HR + 16} fill="transparent" />
                 <circle
                   className="hub-ring"
                   cx={h.x}
@@ -610,8 +621,9 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
             );
           })()}
 
-          {/* Ramas del hub → herramientas de cuenta (organizadas aquí) */}
-          {(() => {
+          {/* Ramas del hub → herramientas (solo al pulsar el icono Amazon) */}
+          {hubOpen &&
+            (() => {
             const h = layout.hub;
             const HR = 54;
             const SR = 22;
