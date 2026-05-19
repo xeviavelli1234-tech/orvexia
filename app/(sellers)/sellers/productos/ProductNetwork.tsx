@@ -747,36 +747,67 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
               { key: "panic", label: "Pausar todo", rgb: "248,113,113", icon: "pause", ev: "", panic: true },
             ];
             const n = tools.length;
+            const GAP = 160;
+            const SY = h.y + HR + 120; // centro Y de los iconos
+            const cx = (i: number) => h.x + (i - (n - 1) / 2) * GAP;
+            const dockPadX = 48;
+            const dockLeft = cx(0) - SR - dockPadX;
+            const dockW = (n - 1) * GAP + 2 * (SR + dockPadX);
+            const dockTop = SY - SR - 30;
+            const dockH = SR * 2 + 78;
+            const stem = `M${h.x},${h.y + HR} L${h.x},${dockTop}`;
             return (
               <g>
+                {/* Conector hub → dock: un único trazo, sin cruces */}
+                <path
+                  d={stem}
+                  fill="none"
+                  stroke="rgba(125,211,252,0.28)"
+                  strokeWidth="1.4"
+                  vectorEffect="non-scaling-stroke"
+                />
+                <path
+                  className="net-flow"
+                  d={stem}
+                  fill="none"
+                  stroke="rgba(125,211,252,0.6)"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  vectorEffect="non-scaling-stroke"
+                />
+                {/* Panel que agrupa las herramientas (evita que se
+                    mezclen visualmente con la red de productos) */}
+                <g className="tool-in">
+                  <rect
+                    x={dockLeft}
+                    y={dockTop}
+                    width={dockW}
+                    height={dockH}
+                    rx={26}
+                    fill="rgba(8,9,20,0.92)"
+                    stroke="rgba(255,255,255,0.09)"
+                    strokeWidth="1"
+                  />
+                  <text
+                    x={h.x}
+                    y={dockTop + 19}
+                    textAnchor="middle"
+                    fontSize="9.5"
+                    fontWeight={700}
+                    letterSpacing="2.5"
+                    fill="rgba(255,255,255,0.32)"
+                  >
+                    HERRAMIENTAS
+                  </text>
+                </g>
                 {tools.map((t, i) => {
-                  const SX = h.x + (i - (n - 1) / 2) * 132;
-                  const SY = h.y + HR + 104;
-                  const branch = `M${h.x},${h.y + HR} Q${(h.x + SX) / 2},${
-                    h.y + HR + 46
-                  } ${SX},${SY - SR}`;
+                  const SX = cx(i);
                   return (
                     <g
                       key={t.key}
                       className="tool-in"
-                      style={{ "--td": `${i * 0.07}s` } as CSSProperties}
+                      style={{ "--td": `${0.06 + i * 0.06}s` } as CSSProperties}
                     >
-                      <path
-                        d={branch}
-                        fill="none"
-                        stroke={`rgba(${t.rgb},0.26)`}
-                        strokeWidth="1.2"
-                        vectorEffect="non-scaling-stroke"
-                      />
-                      <path
-                        className="net-flow"
-                        d={branch}
-                        fill="none"
-                        stroke={`rgba(${t.rgb},0.6)`}
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        vectorEffect="non-scaling-stroke"
-                      />
                       <g
                         className="hex-node"
                         onClick={() => {
@@ -851,11 +882,27 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
                           </g>
                         )}
                         {t.icon === "coin" && (
-                          <g fill={`rgb(${t.rgb})`}>
-                            <rect x={SX - 9} y={SY + 1} width="4" height="7" rx="1" />
-                            <rect x={SX - 2} y={SY - 4} width="4" height="12" rx="1" />
-                            <rect x={SX + 5} y={SY - 9} width="4" height="17" rx="1" />
-                          </g>
+                          <>
+                            <circle
+                              cx={SX}
+                              cy={SY}
+                              r={11}
+                              fill="none"
+                              stroke={`rgb(${t.rgb})`}
+                              strokeWidth="1.6"
+                            />
+                            <text
+                              x={SX}
+                              y={SY + 0.5}
+                              textAnchor="middle"
+                              dominantBaseline="central"
+                              fontSize="14"
+                              fontWeight={800}
+                              fill={`rgb(${t.rgb})`}
+                            >
+                              €
+                            </text>
+                          </>
                         )}
                         <text
                           x={SX}
