@@ -100,10 +100,22 @@ export default async function FacturacionPage({
           </p>
         )}
         {billing.plan === "PRO" && (
-          <p className="mt-4 text-sm text-fg/70">
-            Plan Pro activo. Reprecio cada {billing.intervalMinutes} min. Gracias por
-            confiar en Orvexia 💜
-          </p>
+          <>
+            <p className="mt-4 text-sm text-fg/70">
+              Plan Pro activo. Reprecio cada {billing.intervalMinutes} min. Gracias por
+              confiar en Orvexia 💜
+            </p>
+            {stripeReady && account.stripeCustomerId && (
+              <form action="/api/sellers/billing/portal" method="post" className="mt-5">
+                <button
+                  type="submit"
+                  className="rounded-lg border border-fg/15 px-5 py-2.5 text-sm font-semibold hover:bg-fg/[0.04] transition-colors"
+                >
+                  Gestionar suscripción
+                </button>
+              </form>
+            )}
+          </>
         )}
       </div>
 

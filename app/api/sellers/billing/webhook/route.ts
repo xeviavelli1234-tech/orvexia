@@ -43,6 +43,28 @@ export async function POST(req: Request) {
         }
         break;
       }
+      case "customer.subscription.updated": {
+        const sub = event.data.object as Stripe.Subscription;
+        const acc = await prisma.sellerAccount.findFirst({
+          where: { stripeSubscriptionId: sub.id },
+        });
+        if (acc) {
+          // active/trialing → PRO. past_due se mantiene en PRO (periodo de
+          // gracia: Stripe reintenta el cobro). El resto degrada a TRIAL.
+          const live =
+            sub.status === "active" ||
+            sub.status === "trialing" ||
+            sub.status === "past_due";
+          const plan = live ? "PRO" : "TRIAL";
+          if (acc.plan !== plan) {
+            await prisma.sellerAccount.update({
+              where: { id: acc.id },
+              data: { plan, intervalSeconds: intervalForPlan(plan) },
+            });
+          }
+        }
+        break;
+      }
       case "customer.subscription.deleted": {
         const sub = event.data.object as Stripe.Subscription;
         const acc = await prisma.sellerAccount.findFirst({
