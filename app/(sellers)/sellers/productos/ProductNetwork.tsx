@@ -1024,91 +1024,184 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
             );
           })()}
 
-          {/* Rama del producto seleccionado → icono de analítica
-              (antes de los nodos: así los productos quedan por encima
-              y un satélite nunca intercepta el clic de otro producto) */}
+          {/* Opciones del producto seleccionado: mini-dock de iconos
+              (igual concepto que el hub). Antes de los nodos para que
+              los productos queden por encima y no roben el clic. */}
           {(() => {
             if (!selId) return null;
             const p = layout.pos.find((q) => q.id === selId);
             if (!p) return null;
-            const h = layout.hub;
-            const dx = p.x - h.x;
-            const dy = p.y - h.y;
+            const hb = layout.hub;
+            const dx = p.x - hb.x;
+            const dy = p.y - hb.y;
             const len = Math.hypot(dx, dy) || 1;
-            const ux = dx / len;
+            const ux = dx / len; // hacia afuera (alejándose del hub)
             const uy = dy / len;
-            const SX = p.x + ux * 132 - uy * 34;
-            const SY = p.y + uy * 132 + ux * 34;
-            const SR = 24;
-            const branch = `M${p.x},${p.y} Q${(p.x + SX) / 2 - uy * 14},${
-              (p.y + SY) / 2 + ux * 14
-            } ${SX},${SY}`;
+            const px = -uy; // perpendicular
+            const py = ux;
+            const SR = 21;
+            const OUT = 138; // distancia del producto al centro del dock
+            const STEP = 92; // separación entre opciones
+            const Cx = p.x + ux * OUT;
+            const Cy = p.y + uy * OUT;
+
+            const opts: Array<{
+              key: string;
+              label: string;
+              rgb: string;
+              icon: "bars" | "coin" | "pause" | "play";
+              onClick: () => void;
+            }> = [
+              {
+                key: "ana",
+                label: "Analítica",
+                rgb: "125,211,252",
+                icon: "bars",
+                onClick: () =>
+                  window.dispatchEvent(
+                    new CustomEvent("orvexia:open-analytics", {
+                      detail: { productId: selId },
+                    }),
+                  ),
+              },
+              {
+                key: "prof",
+                label: "Rentabilidad",
+                rgb: "52,211,153",
+                icon: "coin",
+                onClick: () =>
+                  window.dispatchEvent(new CustomEvent("orvexia:open-profit")),
+              },
+              {
+                key: "tog",
+                label: p.repricingEnabled ? "Pausar" : "Activar",
+                rgb: p.repricingEnabled ? "251,191,36" : "52,211,153",
+                icon: p.repricingEnabled ? "pause" : "play",
+                onClick: () => toggle(),
+              },
+            ];
+            const m = opts.length;
+
             return (
               <g>
-                <path
-                  d={branch}
-                  fill="none"
-                  stroke="rgba(125,211,252,0.28)"
-                  strokeWidth="1.2"
-                  vectorEffect="non-scaling-stroke"
-                />
-                <path
-                  className="net-flow"
-                  d={branch}
-                  fill="none"
-                  stroke="rgba(125,211,252,0.7)"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  vectorEffect="non-scaling-stroke"
-                />
-                <g
-                  className="hex-node"
-                  onClick={() => {
-                    if (suppressClick.current) {
-                      suppressClick.current = false;
-                      return;
-                    }
-                    window.dispatchEvent(
-                      new CustomEvent("orvexia:open-analytics", {
-                        detail: { productId: selId },
-                      }),
-                    );
-                  }}
-                >
-                  <circle cx={SX} cy={SY} r={SR + 14} fill="transparent" />
-                  <circle
-                    cx={SX}
-                    cy={SY}
-                    r={SR + 5}
-                    fill="none"
-                    stroke="rgba(125,211,252,0.45)"
-                    strokeWidth="1.2"
-                    filter="url(#glow)"
-                  />
-                  <circle
-                    cx={SX}
-                    cy={SY}
-                    r={SR}
-                    fill="rgba(8,10,22,0.92)"
-                    stroke="rgba(125,211,252,0.7)"
-                    strokeWidth="1.3"
-                  />
-                  <g stroke="#7dd3fc" strokeWidth="2.6" strokeLinecap="round">
-                    <line x1={SX - 9} y1={SY + 7} x2={SX - 9} y2={SY + 1} />
-                    <line x1={SX} y1={SY + 7} x2={SX} y2={SY - 5} />
-                    <line x1={SX + 9} y1={SY + 7} x2={SX + 9} y2={SY - 2} />
-                  </g>
-                  <text
-                    x={SX}
-                    y={SY + SR + 15}
-                    textAnchor="middle"
-                    fontSize="11"
-                    fontWeight={700}
-                    fill="rgba(125,211,252,0.85)"
-                  >
-                    Analítica
-                  </text>
-                </g>
+                {opts.map((o, i) => {
+                  const off = (i - (m - 1) / 2) * STEP;
+                  const SX = Cx + px * off;
+                  const SY = Cy + py * off;
+                  const branch = `M${p.x},${p.y} Q${(p.x + SX) / 2},${
+                    (p.y + SY) / 2
+                  } ${SX},${SY}`;
+                  return (
+                    <g
+                      key={o.key}
+                      className="tool-in"
+                      style={{ "--td": `${0.04 + i * 0.06}s` } as CSSProperties}
+                    >
+                      <path
+                        d={branch}
+                        fill="none"
+                        stroke={`rgba(${o.rgb},0.26)`}
+                        strokeWidth="1.2"
+                        vectorEffect="non-scaling-stroke"
+                      />
+                      <path
+                        className="net-flow"
+                        d={branch}
+                        fill="none"
+                        stroke={`rgba(${o.rgb},0.62)`}
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        vectorEffect="non-scaling-stroke"
+                      />
+                      <g
+                        className="hex-node"
+                        style={{ cursor: "pointer" }}
+                        onClick={() => {
+                          if (suppressClick.current) {
+                            suppressClick.current = false;
+                            return;
+                          }
+                          o.onClick();
+                        }}
+                      >
+                        <circle cx={SX} cy={SY} r={SR + 13} fill="transparent" />
+                        <circle
+                          cx={SX}
+                          cy={SY}
+                          r={SR + 5}
+                          fill="none"
+                          stroke={`rgba(${o.rgb},0.45)`}
+                          strokeWidth="1.2"
+                          filter="url(#glow)"
+                        />
+                        <circle
+                          cx={SX}
+                          cy={SY}
+                          r={SR}
+                          fill="rgba(8,10,22,0.94)"
+                          stroke={`rgba(${o.rgb},0.7)`}
+                          strokeWidth="1.3"
+                        />
+                        {o.icon === "bars" && (
+                          <g
+                            stroke={`rgb(${o.rgb})`}
+                            strokeWidth="2.6"
+                            strokeLinecap="round"
+                          >
+                            <line x1={SX - 8} y1={SY + 6} x2={SX - 8} y2={SY + 1} />
+                            <line x1={SX} y1={SY + 6} x2={SX} y2={SY - 5} />
+                            <line x1={SX + 8} y1={SY + 6} x2={SX + 8} y2={SY - 2} />
+                          </g>
+                        )}
+                        {o.icon === "coin" && (
+                          <>
+                            <circle
+                              cx={SX}
+                              cy={SY}
+                              r={10}
+                              fill="none"
+                              stroke={`rgb(${o.rgb})`}
+                              strokeWidth="1.5"
+                            />
+                            <text
+                              x={SX}
+                              y={SY + 0.5}
+                              textAnchor="middle"
+                              dominantBaseline="central"
+                              fontSize="13"
+                              fontWeight={800}
+                              fill={`rgb(${o.rgb})`}
+                            >
+                              €
+                            </text>
+                          </>
+                        )}
+                        {o.icon === "pause" && (
+                          <g fill={`rgb(${o.rgb})`}>
+                            <rect x={SX - 7} y={SY - 8} width="4.5" height="16" rx="1.2" />
+                            <rect x={SX + 2.5} y={SY - 8} width="4.5" height="16" rx="1.2" />
+                          </g>
+                        )}
+                        {o.icon === "play" && (
+                          <path
+                            d={`M${SX - 6},${SY - 8} L${SX + 8},${SY} L${SX - 6},${SY + 8} Z`}
+                            fill={`rgb(${o.rgb})`}
+                          />
+                        )}
+                        <text
+                          x={SX}
+                          y={SY + SR + 15}
+                          textAnchor="middle"
+                          fontSize="11"
+                          fontWeight={700}
+                          fill={`rgba(${o.rgb},0.9)`}
+                        >
+                          {o.label}
+                        </text>
+                      </g>
+                    </g>
+                  );
+                })}
               </g>
             );
           })()}
@@ -1161,6 +1254,18 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
                   className={p.priceCurrent > 0 ? "text-glow-cyan" : undefined}>
                   {p.priceCurrent > 0 ? `${fmt(p.priceCurrent)} ${sym(p.currency)}` : "Sin precio"}
                 </text>
+                {!active && (
+                  <text
+                    x={p.x}
+                    y={p.y + R + 48}
+                    textAnchor="middle"
+                    fontSize="9.5"
+                    fontWeight={700}
+                    fill="rgba(255,255,255,0.32)"
+                  >
+                    ▼ opciones
+                  </text>
+                )}
                 </g>
               </g>
             );
