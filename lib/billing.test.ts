@@ -6,6 +6,9 @@ import {
   isTrialExpired,
   isRepricingAllowed,
   getBillingState,
+  tierForSkuCount,
+  priceForSkuCount,
+  PRICE_TIERS,
 } from "./billing";
 
 const NOW = new Date("2026-05-15T12:00:00Z");
@@ -60,4 +63,30 @@ test("getBillingState coherente — trial expirado", () => {
   assert.equal(s.trialExpired, true);
   assert.equal(s.repricingAllowed, false);
   assert.equal(s.trialDaysLeft, 0);
+});
+
+test("tramo por volumen de SKUs (límites inclusivos)", () => {
+  assert.equal(tierForSkuCount(0).id, "starter");
+  assert.equal(tierForSkuCount(50).id, "starter");
+  assert.equal(tierForSkuCount(51).id, "growth");
+  assert.equal(tierForSkuCount(200).id, "growth");
+  assert.equal(tierForSkuCount(201).id, "scale");
+  assert.equal(tierForSkuCount(1000).id, "scale");
+  assert.equal(tierForSkuCount(1001).id, "unlimited");
+});
+
+test("priceForSkuCount por tramo y bordes inválidos", () => {
+  assert.equal(priceForSkuCount(10), 29);
+  assert.equal(priceForSkuCount(120), 49);
+  assert.equal(priceForSkuCount(500), 99);
+  assert.equal(priceForSkuCount(5000), 149);
+  assert.equal(tierForSkuCount(-5).id, "starter");
+  assert.equal(tierForSkuCount(NaN).id, "starter");
+});
+
+test("tramos crecientes en SKUs y precio", () => {
+  for (let i = 1; i < PRICE_TIERS.length; i++) {
+    assert.ok(PRICE_TIERS[i].maxSkus > PRICE_TIERS[i - 1].maxSkus);
+    assert.ok(PRICE_TIERS[i].priceEur > PRICE_TIERS[i - 1].priceEur);
+  }
 });

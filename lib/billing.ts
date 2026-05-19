@@ -62,6 +62,34 @@ export interface BillingState {
   intervalMinutes: number;
 }
 
+// ── Planes por volumen de SKUs ───────────────────────────────────────────────
+export interface PriceTier {
+  id: string;
+  label: string;
+  maxSkus: number; // inclusivo; Infinity = ilimitado
+  priceEur: number;
+}
+
+export const PRICE_TIERS: PriceTier[] = [
+  { id: "starter", label: "Hasta 50 SKUs", maxSkus: 50, priceEur: 29 },
+  { id: "growth", label: "Hasta 200 SKUs", maxSkus: 200, priceEur: 49 },
+  { id: "scale", label: "Hasta 1.000 SKUs", maxSkus: 1000, priceEur: 99 },
+  { id: "unlimited", label: "SKUs ilimitados", maxSkus: Infinity, priceEur: 149 },
+];
+
+/** Tramo de precio según el número de SKUs del catálogo. */
+export function tierForSkuCount(skuCount: number): PriceTier {
+  const n = Math.max(0, Math.floor(skuCount || 0));
+  return (
+    PRICE_TIERS.find((t) => n <= t.maxSkus) ??
+    PRICE_TIERS[PRICE_TIERS.length - 1]
+  );
+}
+
+export function priceForSkuCount(skuCount: number): number {
+  return tierForSkuCount(skuCount).priceEur;
+}
+
 export function getBillingState(
   plan: SellerPlan,
   trialEndsAt: Date | null,

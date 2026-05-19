@@ -2,7 +2,8 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSession } from "@/lib/session";
 import { getSellerAccountByUserId } from "@/lib/db/sellerAccount";
-import { getBillingState, PRO_PRICE_EUR, type SellerPlan } from "@/lib/billing";
+import { getBillingState, tierForSkuCount, type SellerPlan } from "@/lib/billing";
+import { prisma } from "@/lib/prisma";
 import PrintButton from "./PrintButton";
 
 export const metadata = { title: "Factura · Orvexia Repricer" };
@@ -32,7 +33,11 @@ export default async function FacturaPage() {
   const isPreview = billing.plan !== "PRO";
 
   const now = new Date();
-  const total = PRO_PRICE_EUR; // 29 € IVA incluido
+  const skuCount = await prisma.sellerListing.count({
+    where: { sellerAccountId: account.id },
+  });
+  const tier = tierForSkuCount(skuCount);
+  const total = tier.priceEur; // IVA incluido, según tramo de volumen
   const base = Math.round((total / (1 + VAT_RATE / 100)) * 100) / 100;
   const iva = Math.round((total - base) * 100) / 100;
 
@@ -144,7 +149,8 @@ export default async function FacturaPage() {
           <tbody>
             <tr className="border-b border-[#f1f5f9]">
               <td className="py-3">
-                Suscripción Orvexia Repricer · Plan Pro (mensual)
+                Suscripción Orvexia Repricer · Plan Pro · {tier.label}{" "}
+                (mensual)
               </td>
               <td className="py-3 text-right font-mono">{eur(base)}</td>
               <td className="py-3 text-right font-mono">{eur(iva)}</td>
