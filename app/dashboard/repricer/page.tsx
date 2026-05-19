@@ -6,10 +6,13 @@ import { getBillingState, TRIAL_DAYS, type SellerPlan } from "@/lib/billing";
 import { prisma } from "@/lib/prisma";
 import { RunNowButton } from "@/app/(sellers)/sellers/dashboard/RunNowButton";
 import { DisconnectButton } from "@/app/(sellers)/sellers/dashboard/DisconnectButton";
-import { REPRICER_ENABLED } from "@/lib/featureFlags";
+import { REPRICER_ENABLED, REPRICER_PUBLIC } from "@/lib/featureFlags";
 import RepricerComingSoon from "@/components/RepricerComingSoon";
 
-export const metadata = { title: "Repricer · Orvexia" };
+export const metadata = {
+  title: "Repricer · Orvexia",
+  robots: REPRICER_PUBLIC ? undefined : { index: false, follow: false },
+};
 export const dynamic = "force-dynamic";
 
 const STATUS_MSG: Record<string, { kind: "ok" | "err" | "info"; text: string }> = {

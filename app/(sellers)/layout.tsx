@@ -1,11 +1,13 @@
 import Link from "next/link";
-import { REPRICER_ENABLED } from "@/lib/featureFlags";
+import { REPRICER_ENABLED, REPRICER_PUBLIC } from "@/lib/featureFlags";
 import RepricerComingSoon from "@/components/RepricerComingSoon";
 
 export const metadata = {
   title: "Orvexia Repricer · Reprecio automático para Amazon ES",
   description:
     "Reprecia tus productos en Amazon España automáticamente. Define precio mínimo y máximo por producto y nuestro motor reprecia cada 5 minutos.",
+  // Pre-lanzamiento: no indexar hasta que sea público.
+  robots: REPRICER_PUBLIC ? undefined : { index: false, follow: false },
 };
 
 export default function SellersLayout({ children }: { children: React.ReactNode }) {

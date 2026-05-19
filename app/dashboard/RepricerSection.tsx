@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getSellerAccountByUserId } from "@/lib/db/sellerAccount";
 import { getBillingState, type SellerPlan } from "@/lib/billing";
 import { prisma } from "@/lib/prisma";
-import { REPRICER_ENABLED } from "@/lib/featureFlags";
+import { REPRICER_ENABLED, REPRICER_PUBLIC } from "@/lib/featureFlags";
 
 const STATUS_MESSAGES: Record<string, { kind: "ok" | "err" | "info"; text: string }> = {
   connected: { kind: "ok", text: "Cuenta de Amazon conectada correctamente." },
@@ -20,6 +20,10 @@ export async function RepricerSection({
   userId: string;
   status?: string;
 }) {
+  // Pre-lanzamiento: sin promoción pública. Accesible solo por URL directa
+  // (/sellers/productos) con login. Se activa con REPRICER_PUBLIC=true.
+  if (!REPRICER_PUBLIC) return null;
+
   if (!REPRICER_ENABLED) {
     return (
       <section className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
