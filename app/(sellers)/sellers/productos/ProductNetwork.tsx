@@ -264,9 +264,14 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
   }, []);
 
   function onPointerDown(e: React.PointerEvent) {
+    // Nuevo gesto SIEMPRE limpio: si `moved` quedaba en true de un
+    // pan anterior, el pointerup de un clic limpio sobre un nodo volvía
+    // a activar suppressClick y open() se comía ese clic (el bug real:
+    // "a veces va, a veces deja de ir del todo" tras panear/zoom).
+    drag.current.moved = false;
+
     // Solo botón primario. El click derecho/medio abría un "pan" que nunca
-    // recibía pointerup (sale el menú contextual) → drag fantasma atascado
-    // y a partir de ahí ningún clic en producto funcionaba.
+    // recibía pointerup (sale el menú contextual) → drag fantasma atascado.
     if (e.button !== 0) {
       drag.current.active = false;
       return;
