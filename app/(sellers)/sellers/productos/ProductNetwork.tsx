@@ -342,6 +342,7 @@ export default function ProductNetwork({
   const [gq, setGq] = useState("");
   const [gState, setGState] = useState<"ALL" | State>("ALL");
   const [gTag, setGTag] = useState("");
+  const [mode, setMode] = useState<"graph" | "table">("graph");
   const [pending, startTransition] = useTransition();
   const [err, setErr] = useState<string | null>(null);
   const [min, setMin] = useState("");
@@ -1434,6 +1435,22 @@ export default function ProductNetwork({
       {/* Búsqueda / filtro del grafo */}
       {nodes.length > 0 && (
         <div className="absolute top-3 left-3 z-20 flex flex-wrap items-center gap-1.5 rounded-xl border border-white/10 bg-[rgba(8,9,20,0.92)] px-2.5 py-2 backdrop-blur-xl">
+          <div className="flex overflow-hidden rounded-lg border border-white/15">
+            {(["graph", "table"] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setMode(m)}
+                className={`px-2.5 py-1.5 text-[11px] font-semibold transition-colors ${
+                  mode === m
+                    ? "bg-cyan-400/20 text-cyan-200"
+                    : "text-white/55 hover:bg-white/10"
+                }`}
+              >
+                {m === "graph" ? "Grafo" : "Tabla"}
+              </button>
+            ))}
+          </div>
           <input
             value={gq}
             onChange={(e) => setGq(e.target.value)}
@@ -1485,8 +1502,133 @@ export default function ProductNetwork({
         </div>
       )}
 
+      {/* Vista de tabla (alternativa al grafo) */}
+      {mode === "table" && (
+        <div className="absolute inset-0 z-10 overflow-auto bg-[#05060f] pt-16 px-3 sm:px-5 pb-6">
+          <table className="w-full text-left text-sm">
+            <thead className="sticky top-0 z-10 bg-[#05060f] text-[11px] uppercase tracking-wider text-white/40">
+              <tr className="border-b border-white/10">
+                <th className="py-2.5 px-2">Producto</th>
+                <th className="py-2.5 px-2 whitespace-nowrap">Precio</th>
+                <th className="py-2.5 px-2 whitespace-nowrap hidden sm:table-cell">
+                  Rango
+                </th>
+                <th className="py-2.5 px-2 hidden md:table-cell">Estrategia</th>
+                <th className="py-2.5 px-2">Estado</th>
+                <th className="py-2.5 px-2 text-right">Reprecio</th>
+              </tr>
+            </thead>
+            <tbody>
+              {nodes
+                .filter((n) => !filterActive || matchSet.has(n.id))
+                .map((p) => {
+                  const st = nodeState(p);
+                  const c = STATE_COLOR[st];
+                  const lbl =
+                    STATE_LABEL.find((x) => x.st === st)?.label ?? st;
+                  return (
+                    <tr
+                      key={p.id}
+                      onClick={() => open(p)}
+                      className={`border-b border-white/[0.06] cursor-pointer hover:bg-white/[0.04] ${
+                        selId === p.id ? "bg-cyan-400/[0.06]" : ""
+                      }`}
+                    >
+                      <td className="py-2.5 px-2 max-w-[320px]">
+                        <div className="truncate text-white/90">{p.title}</div>
+                        <div className="font-mono text-[10px] text-white/35 truncate">
+                          {p.sku} · {p.asin || "sin ASIN"}
+                        </div>
+                        {parseTags(p.tags).length > 0 && (
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {parseTags(p.tags).map((t) => (
+                              <span
+                                key={t}
+                                className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-1.5 py-0.5 text-[9px] text-cyan-200"
+                              >
+                                {t}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-2.5 px-2 font-mono text-white/80 whitespace-nowrap">
+                        {p.priceCurrent > 0
+                          ? `${fmt(p.priceCurrent)} ${sym(p.currency)}`
+                          : "—"}
+                      </td>
+                      <td className="py-2.5 px-2 font-mono text-[12px] text-white/50 whitespace-nowrap hidden sm:table-cell">
+                        {p.priceMin != null && p.priceMax != null
+                          ? `${fmt(p.priceMin)}–${fmt(p.priceMax)}`
+                          : "—"}
+                      </td>
+                      <td className="py-2.5 px-2 text-white/60 hidden md:table-cell">
+                        {p.useAccountDefaults ? "Cuenta" : p.strategy}
+                      </td>
+                      <td className="py-2.5 px-2">
+                        <span
+                          className="inline-flex items-center gap-1.5 text-[12px]"
+                          style={{ color: c.dot ?? "rgba(255,255,255,0.6)" }}
+                        >
+                          <span
+                            className="h-2 w-2 rounded-full"
+                            style={{
+                              background: c.dot ?? "rgba(255,255,255,0.4)",
+                            }}
+                          />
+                          {lbl}
+                        </span>
+                      </td>
+                      <td
+                        className="py-2.5 px-2 text-right"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <button
+                          type="button"
+                          disabled={pending}
+                          onClick={() => {
+                            const fd = new FormData();
+                            fd.set("listingId", p.id);
+                            fd.set("enabled", String(!p.repricingEnabled));
+                            startTransition(async () => {
+                              const r = await toggleListingAction(fd);
+                              if (r.ok) router.refresh();
+                            });
+                          }}
+                          className={`rounded-md border px-2.5 py-1 text-[11px] font-semibold transition-colors disabled:opacity-50 ${
+                            p.repricingEnabled
+                              ? "border-emerald-400/40 text-emerald-300 hover:bg-emerald-400/10"
+                              : "border-white/15 text-white/55 hover:bg-white/10"
+                          }`}
+                        >
+                          {p.repricingEnabled ? "Activo" : "Pausado"}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              {nodes.filter((n) => !filterActive || matchSet.has(n.id))
+                .length === 0 && (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="py-10 text-center text-white/45"
+                  >
+                    Sin productos para este filtro.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
       {/* Primeros pasos: solo si hay productos pero ninguno repreciando */}
-      {!hideSteps && !sel && nodes.length > 0 && activeCount === 0 && (
+      {mode === "graph" &&
+        !hideSteps &&
+        !sel &&
+        nodes.length > 0 &&
+        activeCount === 0 && (
         <div className="absolute bottom-5 right-5 z-20 w-72 rounded-2xl border border-cyan-400/20 bg-[rgba(8,9,20,0.94)] p-4 backdrop-blur-xl shadow-[0_24px_60px_-20px_rgba(0,0,0,0.85)] fade-in">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-white/55">
@@ -1529,7 +1671,8 @@ export default function ProductNetwork({
         </div>
       )}
 
-      {/* Controles de zoom */}
+      {/* Controles de zoom (solo en vista grafo) */}
+      {mode === "graph" && (
       <div className="absolute bottom-5 left-5 flex flex-col gap-2">
         <ZoomBtn label="Acercar" onClick={() => zoomCenter(1.25)}>+</ZoomBtn>
         <ZoomBtn label="Alejar" onClick={() => zoomCenter(1 / 1.25)}>−</ZoomBtn>
@@ -1543,6 +1686,7 @@ export default function ProductNetwork({
           <span className="text-[13px] leading-none">🎨</span>
         </ZoomBtn>
       </div>
+      )}
 
       {/* Leyenda visual de estados: muestra exactamente cada color. */}
       {showStates && (
