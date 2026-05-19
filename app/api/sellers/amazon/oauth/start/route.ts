@@ -17,12 +17,17 @@ export async function GET(req: Request) {
 
   const state = randomBytes(32).toString("hex");
   const redirectUri = getOauthRedirectUri(req);
-  // version=beta = self-authorization para apps Sandbox / draft.
-  // El developer autoriza la app contra su propio seller account sin pasar por
-  // el listado público de marketplace (que es donde MD1000 falla porque las
-  // apps Sandbox no están publicadas).
-  const isDraft = process.env.SP_API_ENV !== "production";
-  const url = buildAuthUrl({ state, redirectUri, version: isDraft ? "beta" : "stable" });
+  // version=beta = self-authorization: funciona con apps en BORRADOR pero
+  // SOLO para la cuenta de vendedor del propio developer. version=stable =
+  // consentimiento público (Appstore): requiere la app PUBLICADA, si no →
+  // MD1000. Por defecto beta; pon SP_API_APP_PUBLISHED=true en Vercel
+  // cuando Amazon publique la app para abrirlo a clientes externos.
+  const published = process.env.SP_API_APP_PUBLISHED === "true";
+  const url = buildAuthUrl({
+    state,
+    redirectUri,
+    version: published ? "stable" : "beta",
+  });
 
   const cookieStore = await cookies();
   cookieStore.set(OAUTH_STATE_COOKIE, state, {
