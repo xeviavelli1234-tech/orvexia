@@ -92,11 +92,44 @@ export async function runRepricer(now: Date = new Date()): Promise<RunSummary> {
     let runError: string | null = null;
 
     try {
+      const isFixtureAcc = isFixtureMode(account.spApiEnv);
       let refreshToken: string;
-      try {
-        refreshToken = decryptToken(account.refreshToken);
-      } catch {
+      if (account.refreshToken === "FIXTURE_NO_TOKEN") {
         refreshToken = "FIXTURE_NO_TOKEN";
+      } else {
+        try {
+          refreshToken = decryptToken(account.refreshToken);
+        } catch {
+          // No se puede descifrar (p.ej. cambió ENCRYPTION_KEY). En modo
+          // demo da igual; en PRODUCCIÓN no mandamos un token basura a
+          // Amazon (spam de invalid_grant): saltamos la cuenta con un
+          // error claro de "reconectar".
+          if (isFixtureAcc) {
+            refreshToken = "FIXTURE_NO_TOKEN";
+          } else {
+            runError =
+              "token_no_descifrable: reconecta tu cuenta de Amazon (Desconectar → Conectar) para recifrar el token con la clave actual.";
+            errors += 1;
+            await prisma.$transaction([
+              prisma.repricingRun.update({
+                where: { id: run.id },
+                data: {
+                  finishedAt: new Date(),
+                  listingsProcessed: 0,
+                  listingsRepriced: 0,
+                  errors,
+                  errorMessage: runError,
+                },
+              }),
+              prisma.sellerAccount.update({
+                where: { id: account.id },
+                data: { lastRunAt: now, lockedAt: null },
+              }),
+            ]);
+            summary.errors += errors;
+            continue;
+          }
+        }
       }
       const client = new SpApiClient(refreshToken, account.spApiEnv as SpApiEnv);
       const ctx = { client, spApiEnv: account.spApiEnv, marketplaceId: account.marketplaceId };
