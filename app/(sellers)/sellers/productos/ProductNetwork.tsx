@@ -185,6 +185,15 @@ const STATE_COLOR: Record<
   noprice: { stroke: "rgba(160,160,180,0.4)", halo: "rgba(120,120,140,0.25)" },
 };
 const LIVE_CORE: ReadonlySet<State> = new Set<State>(["won", "active", "floor"]);
+const STATE_LABEL: Array<{ st: State; label: string }> = [
+  { st: "won", label: "Buy Box ganada" },
+  { st: "lost", label: "Buy Box perdida" },
+  { st: "error", label: "Error de reprecio" },
+  { st: "floor", label: "En precio mínimo / techo" },
+  { st: "active", label: "Repreciando (sin datos aún)" },
+  { st: "paused", label: "Configurable / pausado" },
+  { st: "noprice", label: "Sin oferta o ASIN en Amazon" },
+];
 
 function pnum(s: string): number {
   const n = Number.parseFloat(s.replace(",", "."));
@@ -266,6 +275,7 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
   const router = useRouter();
   const [selId, setSelId] = useState<string | null>(null);
   const [hubOpen, setHubOpen] = useState(false);
+  const [showStates, setShowStates] = useState(false);
   const [pending, startTransition] = useTransition();
   const [err, setErr] = useState<string | null>(null);
   const [min, setMin] = useState("");
@@ -1307,7 +1317,63 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
         <ZoomBtn label="Restablecer vista" onClick={() => setView({ k: 1, x: 0, y: 0 })}>
           <span className="text-[11px] leading-none">1:1</span>
         </ZoomBtn>
+        <ZoomBtn
+          label="Ver leyenda de colores de estado"
+          onClick={() => setShowStates((v) => !v)}
+        >
+          <span className="text-[13px] leading-none">🎨</span>
+        </ZoomBtn>
       </div>
+
+      {/* Leyenda visual de estados: muestra exactamente cada color. */}
+      {showStates && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 fade-in">
+          <div className="rounded-2xl border border-white/12 bg-[rgba(8,9,20,0.94)] backdrop-blur-xl px-4 py-3 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.85)]">
+            <div className="flex items-center justify-between gap-4 pb-2 border-b border-white/10">
+              <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/55">
+                Colores de estado
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowStates(false)}
+                aria-label="Cerrar"
+                className="h-6 w-6 grid place-items-center rounded-md text-white/40 hover:text-white hover:bg-white/10 transition-colors leading-none"
+              >
+                ×
+              </button>
+            </div>
+            <div className="mt-2.5 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+              {STATE_LABEL.map(({ st, label }) => {
+                const c = STATE_COLOR[st];
+                return (
+                  <div key={st} className="flex items-center gap-2.5">
+                    <svg width="30" height="30" viewBox="0 0 30 30">
+                      <polygon
+                        points={hexPoints(15, 15, 13)}
+                        fill="none"
+                        stroke={c.halo}
+                        strokeWidth="2"
+                      />
+                      <polygon
+                        points={hexPoints(15, 15, 9)}
+                        fill="rgba(8,8,20,0.85)"
+                        stroke={c.stroke}
+                        strokeWidth="1.5"
+                      />
+                      {c.dot && <circle cx="22" cy="8" r="3" fill={c.dot} />}
+                    </svg>
+                    <span className="text-[12px] text-white/80">{label}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="mt-2.5 text-[10px] text-white/35">
+              El color del producto cambia solo según su último ciclo de
+              reprecio. Pulsa 🎨 para ocultar.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Herramientas: ahora como iconos dentro del grafo (bloque SVG). */}
       </div>
