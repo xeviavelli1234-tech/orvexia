@@ -106,14 +106,16 @@ export default async function RepricerPage({
                   Amazon Seller real.
                 </p>
                 <div className="mt-7 flex flex-wrap gap-3 justify-center">
-                  {/* Multi-cliente: cada usuario autoriza SU propia cuenta
-                      de Amazon vía OAuth (su refresh token, su seller id). */}
-                  <a
-                    href="/api/sellers/amazon/oauth/start"
-                    className="rounded-xl bg-white text-[#0b0d1c] px-6 py-3 text-sm font-bold hover:bg-white/90 transition-colors"
-                  >
-                    Conectar mi cuenta de Amazon
-                  </a>
+                  {/* OAuth multi-cliente: SOLO cuando la app SP-API está
+                      publicada por Amazon. Si no, daría MD1000 a cualquiera. */}
+                  {process.env.SP_API_APP_PUBLISHED === "true" && (
+                    <a
+                      href="/api/sellers/amazon/oauth/start"
+                      className="rounded-xl bg-white text-[#0b0d1c] px-6 py-3 text-sm font-bold hover:bg-white/90 transition-colors"
+                    >
+                      Conectar mi cuenta de Amazon
+                    </a>
+                  )}
                   <form action="/api/sellers/demo/connect" method="post">
                     <button
                       type="submit"
@@ -123,6 +125,13 @@ export default async function RepricerPage({
                     </button>
                   </form>
                 </div>
+                {process.env.SP_API_APP_PUBLISHED !== "true" && (
+                  <p className="mt-4 text-xs text-white/40 max-w-md mx-auto">
+                    La conexión de tu cuenta de Amazon estará disponible en
+                    cuanto Amazon apruebe la publicación de la app. Mientras
+                    tanto puedes probarlo todo en <strong>modo demo</strong>.
+                  </p>
+                )}
                 {process.env.SP_API_ENV === "production" && (
                   <form
                     action="/api/sellers/amazon/self-connect"
