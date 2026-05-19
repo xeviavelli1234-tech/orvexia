@@ -8,8 +8,19 @@ export interface EventDTO {
   priceAfter: number;
   competitorPrice: number | null;
   success: boolean;
+  buyBox: "WON" | "LOST" | "UNKNOWN";
+  simulated: boolean;
   errorMessage: string | null;
   createdAt: string; // ISO
+}
+
+function relTime(iso: string): string {
+  const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+  if (m < 1) return "ahora";
+  if (m < 60) return `${m} min`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `${h} h`;
+  return `${Math.round(h / 24)} d`;
 }
 
 interface PlanInfo {
@@ -35,6 +46,15 @@ export default function ActivityPanel({
     ? Math.max(0, Math.min(100, (plan.trialDaysLeft / plan.trialTotal) * 100))
     : 100;
   const errors = events.filter((e) => !e.success).length;
+  const changes = events.filter(
+    (e) => e.success && Math.abs(e.priceAfter - e.priceBefore) > 0.0001,
+  ).length;
+  const bbWon = events.filter((e) => e.buyBox === "WON").length;
+  const bbTot = bbWon + events.filter((e) => e.buyBox === "LOST").length;
+  const bbPct = bbTot > 0 ? Math.round((bbWon / bbTot) * 100) : null;
+  const lastChange = events.find(
+    (e) => e.success && Math.abs(e.priceAfter - e.priceBefore) > 0.0001,
+  );
 
   return (
     <>
@@ -77,8 +97,64 @@ export default function ActivityPanel({
         </div>
       </div>
 
+      {/* Mini-resumen de actividad */}
+      <div className="grid grid-cols-3 gap-1.5">
+        <MiniStat label="Eventos" value={String(events.length)} />
+        <MiniStat label="Cambios" value={String(changes)} tone="cyan" />
+        <MiniStat
+          label="Errores"
+          value={String(errors)}
+          tone={errors > 0 ? "red" : undefined}
+        />
+        <MiniStat
+          label="% Buy Box"
+          value={bbPct != null ? `${bbPct}%` : "—"}
+          tone={bbPct != null ? (bbPct >= 50 ? "emerald" : "red") : undefined}
+        />
+        <MiniStat
+          label="Últ. cambio"
+          value={lastChange ? relTime(lastChange.createdAt) : "—"}
+        />
+        <MiniStat
+          label="Simulados"
+          value={String(events.filter((e) => e.simulated).length)}
+        />
+      </div>
+
       {/* Disparador del overlay de analíticas (global) */}
       <AnalyticsTrigger count={events.length} errors={errors} />
     </>
+  );
+}
+
+function MiniStat({
+  label,
+  value,
+  sub,
+  tone,
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  tone?: "cyan" | "emerald" | "red";
+}) {
+  const c =
+    tone === "emerald"
+      ? "text-emerald-300"
+      : tone === "red"
+        ? "text-red-300"
+        : tone === "cyan"
+          ? "text-cyan-300"
+          : "text-white/85";
+  return (
+    <div className="rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1.5">
+      <div className="text-[8.5px] uppercase tracking-[0.1em] text-white/40 truncate">
+        {label}
+      </div>
+      <div className={`mt-0.5 font-mono text-sm font-bold tabular-nums ${c}`}>
+        {value}
+        {sub && <span className="ml-1 text-[9px] text-white/35">{sub}</span>}
+      </div>
+    </div>
   );
 }

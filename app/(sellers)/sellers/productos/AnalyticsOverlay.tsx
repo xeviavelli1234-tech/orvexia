@@ -11,6 +11,7 @@ export interface OvEvent {
   competitorPrice: number | null;
   success: boolean;
   buyBox: "WON" | "LOST" | "UNKNOWN";
+  simulated: boolean;
   errorMessage: string | null;
   createdAt: string;
 }
@@ -55,6 +56,14 @@ function rel(iso: string) {
   if (h < 24) return `hace ${h} h`;
   return `hace ${Math.round(h / 24)} d`;
 }
+function fmtRange(ms: number): string {
+  return new Intl.DateTimeFormat("es-ES", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(ms));
+}
 function errorCode(msg: string | null): string {
   if (!msg) return "error";
   try {
@@ -81,11 +90,19 @@ export default function AnalyticsOverlay({
 }) {
   const [open, setOpen] = useState(false);
   const [sel, setSel] = useState<string>("ALL");
+  const [actFilter, setActFilter] = useState<
+    "all" | "changes" | "errors" | "simulated"
+  >("all");
+  const [actLimit, setActLimit] = useState(40);
+  const [nowMs, setNowMs] = useState(() => Date.now());
 
   useEffect(() => {
     function onOpen(e: Event) {
       const id = (e as CustomEvent<{ productId?: string }>).detail?.productId;
       setSel(id && products.some((p) => p.id === id) ? id : "ALL");
+      setNowMs(Date.now());
+      setActLimit(40);
+      setActFilter("all");
       setOpen(true);
     }
     function onKey(e: KeyboardEvent) {
@@ -125,14 +142,28 @@ export default function AnalyticsOverlay({
     }
     const bbWon = evs.filter((e) => e.buyBox === "WON").length;
     const bbLost = evs.filter((e) => e.buyBox === "LOST").length;
+    const bbUnknown = evs.filter((e) => e.buyBox === "UNKNOWN").length;
     const bbTotal = bbWon + bbLost;
+    const simulated = evs.filter((e) => e.simulated).length;
+    const applied = changed.filter((e) => !e.simulated).length;
+    const ok = evs.filter((e) => e.success).length;
+    const avgChange =
+      changed.length > 0
+        ? changed.reduce((s, e) => s + Math.abs(e.priceAfter - e.priceBefore), 0) /
+          changed.length
+        : 0;
     return {
       changed: changed.length,
+      applied,
+      simulated,
       errs: errs.length,
+      successRate: evs.length > 0 ? Math.round((ok / evs.length) * 100) : null,
+      avgChange,
       down,
       up,
       bbWon,
       bbLost,
+      bbUnknown,
       bbPct: bbTotal > 0 ? Math.round((bbWon / bbTotal) * 100) : null,
       reasons: [...byReason.entries()].sort((a, b) => b[1] - a[1]),
       errors: [...byErr.entries()].sort((a, b) => b[1] - a[1]),
@@ -201,9 +232,50 @@ export default function AnalyticsOverlay({
   }, [evs]);
   const maxCmp = Math.max(1, ...compareRows.map((r) => r.events));
 
+  // Resumen por periodo (24 h / 7 d) y rango de fechas
+  const period = useMemo(() => {
+    const now = nowMs;
+    const D = 24 * 60 * 60 * 1000;
+    const win = (ms: number) => {
+      const w = evs.filter((e) => now - new Date(e.createdAt).getTime() <= ms);
+      const ch = w.filter(
+        (e) => e.success && Math.abs(e.priceAfter - e.priceBefore) > 0.0001,
+      );
+      const saved = ch
+        .filter((e) => e.priceAfter < e.priceBefore)
+        .reduce((s, e) => s + (e.priceBefore - e.priceAfter), 0);
+      return { events: w.length, changes: ch.length, saved, errs: w.filter((e) => !e.success).length };
+    };
+    const times = evs.map((e) => new Date(e.createdAt).getTime());
+    return {
+      d1: win(D),
+      d7: win(7 * D),
+      from: times.length ? Math.min(...times) : null,
+      to: times.length ? Math.max(...times) : null,
+    };
+  }, [evs, nowMs]);
+
+  // Distribución de actividad por hora del día (0-23)
+  const hourly = useMemo(() => {
+    const h = new Array(24).fill(0) as number[];
+    for (const e of evs) h[new Date(e.createdAt).getHours()] += 1;
+    return h;
+  }, [evs]);
+  const maxHour = Math.max(1, ...hourly);
+
+  const actEvents = useMemo(() => {
+    return evs.filter((e) => {
+      if (actFilter === "errors") return !e.success;
+      if (actFilter === "simulated") return e.simulated;
+      if (actFilter === "changes")
+        return e.success && Math.abs(e.priceAfter - e.priceBefore) > 0.0001;
+      return true;
+    });
+  }, [evs, actFilter]);
+
   function exportCsv() {
     const rows = [
-      ["fecha", "producto", "motivo", "precio_antes", "precio_despues", "competidor", "buybox", "ok", "error"],
+      ["fecha", "producto", "motivo", "precio_antes", "precio_despues", "competidor", "buybox", "simulado", "ok", "error"],
       ...evs.map((e) => [
         new Date(e.createdAt).toISOString(),
         e.title.replace(/"/g, "'"),
@@ -212,6 +284,7 @@ export default function AnalyticsOverlay({
         String(e.priceAfter),
         e.competitorPrice != null ? String(e.competitorPrice) : "",
         e.buyBox,
+        e.simulated ? "1" : "0",
         e.success ? "1" : "0",
         (e.errorMessage ?? "").replace(/[\r\n",]/g, " "),
       ]),
@@ -249,11 +322,19 @@ export default function AnalyticsOverlay({
               Plan {plan.label} · ciclo {plan.intervalMinutes} min · {runCount} ciclos ·{" "}
               {lastRunAt ? `último ${rel(lastRunAt)}` : "sin ciclos"}
             </p>
+            {period.from && period.to && (
+              <p className="text-[10px] text-white/30">
+                {evs.length} eventos · {fmtRange(period.from)} – {fmtRange(period.to)}
+              </p>
+            )}
           </div>
           <div className="ml-auto flex items-center gap-2">
             <select
               value={sel}
-              onChange={(e) => setSel(e.target.value)}
+              onChange={(e) => {
+                setSel(e.target.value);
+                setActLimit(40);
+              }}
               className="rounded-lg border border-white/15 bg-black/40 px-3 py-1.5 text-sm text-white focus:border-cyan-400/60 focus:outline-none max-w-[230px]"
             >
               <option value="ALL">Todos los productos</option>
@@ -294,18 +375,41 @@ export default function AnalyticsOverlay({
 
         <div className="p-5 space-y-5">
           {/* KPIs */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3">
             <Kpi label="Eventos" value={String(evs.length)} />
-            <Kpi label="Cambios" value={String(stats.changed)} c="cyan" />
-            <Kpi label="Errores" value={String(stats.errs)} c={stats.errs ? "red" : undefined} />
-            <Kpi label="Ahorro" value={eur(stats.down)} c="emerald" />
-            <Kpi label="Margen" value={eur(stats.up)} c="cyan" />
+            <Kpi label="Cambios aplicados" value={String(stats.applied)} c="cyan" />
+            <Kpi label="Simulados" value={String(stats.simulated)} />
+            <Kpi
+              label="Errores"
+              value={String(stats.errs)}
+              c={stats.errs ? "red" : undefined}
+            />
+            <Kpi
+              label="Tasa de éxito"
+              value={stats.successRate != null ? `${stats.successRate}%` : "—"}
+              c={
+                stats.successRate != null && stats.successRate >= 90
+                  ? "emerald"
+                  : stats.successRate != null && stats.successRate < 70
+                    ? "red"
+                    : undefined
+              }
+            />
+            <Kpi label="Cambio medio" value={eur(stats.avgChange)} />
+            <Kpi label="Ahorro total" value={eur(stats.down)} c="emerald" />
+            <Kpi label="Margen recup." value={eur(stats.up)} c="cyan" />
             <Kpi
               label="% Buy Box"
               value={stats.bbPct != null ? `${stats.bbPct}%` : "—"}
               c={stats.bbPct != null && stats.bbPct >= 50 ? "emerald" : "red"}
             />
             <Kpi label="Productos" value={String(listView.length)} />
+          </div>
+
+          {/* Resumen por periodo */}
+          <div className="grid sm:grid-cols-2 gap-3">
+            <PeriodCard title="Últimas 24 h" d={period.d1} />
+            <PeriodCard title="Últimos 7 días" d={period.d7} />
           </div>
 
           {/* Gráfica de líneas */}
@@ -360,6 +464,94 @@ export default function AnalyticsOverlay({
             </Panel>
           )}
 
+          {/* Buy Box + actividad por hora */}
+          <div className="grid lg:grid-cols-2 gap-5">
+            <Panel title="Estado de Buy Box">
+              {stats.bbWon + stats.bbLost + stats.bbUnknown === 0 ? (
+                <Empty />
+              ) : (
+                <>
+                  <div className="flex h-3 w-full overflow-hidden rounded-full bg-white/[0.06]">
+                    {stats.bbWon > 0 && (
+                      <div
+                        className="h-full bg-emerald-400/70"
+                        style={{
+                          width: `${
+                            (stats.bbWon /
+                              (stats.bbWon + stats.bbLost + stats.bbUnknown)) *
+                            100
+                          }%`,
+                        }}
+                      />
+                    )}
+                    {stats.bbLost > 0 && (
+                      <div
+                        className="h-full bg-red-400/70"
+                        style={{
+                          width: `${
+                            (stats.bbLost /
+                              (stats.bbWon + stats.bbLost + stats.bbUnknown)) *
+                            100
+                          }%`,
+                        }}
+                      />
+                    )}
+                    {stats.bbUnknown > 0 && (
+                      <div
+                        className="h-full bg-white/15"
+                        style={{
+                          width: `${
+                            (stats.bbUnknown /
+                              (stats.bbWon + stats.bbLost + stats.bbUnknown)) *
+                            100
+                          }%`,
+                        }}
+                      />
+                    )}
+                  </div>
+                  <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                    <BbCell label="Ganada" value={stats.bbWon} c="text-emerald-300" />
+                    <BbCell label="Perdida" value={stats.bbLost} c="text-red-300" />
+                    <BbCell label="Sin dato" value={stats.bbUnknown} c="text-white/45" />
+                  </div>
+                  {stats.bbPct != null && (
+                    <p className="mt-3 text-[11px] text-white/45">
+                      Tienes la Buy Box el{" "}
+                      <span className="font-semibold text-white/75">
+                        {stats.bbPct}%
+                      </span>{" "}
+                      del tiempo medido.
+                    </p>
+                  )}
+                </>
+              )}
+            </Panel>
+
+            <Panel title="Actividad por hora (local)">
+              {evs.length === 0 ? (
+                <Empty />
+              ) : (
+                <div className="flex items-end gap-[3px] h-28">
+                  {hourly.map((n, h) => (
+                    <div
+                      key={h}
+                      className="flex-1 flex flex-col items-center gap-1"
+                      title={`${h}:00 · ${n} eventos`}
+                    >
+                      <div
+                        className="w-full rounded-t bg-cyan-400/50 min-h-[2px]"
+                        style={{ height: `${(n / maxHour) * 100}%` }}
+                      />
+                      {h % 6 === 0 && (
+                        <span className="text-[8px] text-white/35">{h}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Panel>
+          </div>
+
           <div className="grid lg:grid-cols-2 gap-5">
             <Panel title="Por motivo">
               {stats.reasons.length === 0 ? (
@@ -410,58 +602,123 @@ export default function AnalyticsOverlay({
             </Panel>
           </div>
 
-          <Panel title="Actividad">
-            {evs.length === 0 ? (
+          <section className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+            <div className="mb-3 flex items-center justify-between gap-3 flex-wrap">
+              <h3 className="text-sm font-bold text-white/80">
+                Actividad{" "}
+                <span className="text-white/40 font-normal">
+                  ({actEvents.length})
+                </span>
+              </h3>
+              <select
+                value={actFilter}
+                onChange={(e) => {
+                  setActFilter(
+                    e.target.value as "all" | "changes" | "errors" | "simulated",
+                  );
+                  setActLimit(40);
+                }}
+                className="rounded-lg border border-white/15 bg-black/40 px-2 py-1 text-[11px] text-white focus:border-cyan-400/60 focus:outline-none"
+              >
+                <option value="all">Todo</option>
+                <option value="changes">Solo cambios</option>
+                <option value="errors">Solo errores</option>
+                <option value="simulated">Solo simulados</option>
+              </select>
+            </div>
+            {actEvents.length === 0 ? (
               <Empty />
             ) : (
-              <ul className="divide-y divide-white/[0.05]">
-                {evs.slice(0, 40).map((e, i) => {
-                  const r = REASON[e.reason] ?? REASON.no_change;
-                  const d = e.priceAfter - e.priceBefore;
-                  const down = d < -0.0001;
-                  const up = d > 0.0001;
-                  return (
-                    <li key={i} className="py-3 flex items-center gap-4">
-                      <div className="min-w-0 flex-1">
-                        <div className="text-sm font-medium truncate text-white/85">{e.title}</div>
-                        <div className="mt-0.5 text-[11px] text-white/40 flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                          <span className={`px-1.5 py-0.5 rounded border text-[10px] font-semibold ${r.cls}`}>
-                            {r.label}
-                          </span>
-                          {e.competitorPrice != null && <span>comp. {eur(e.competitorPrice)}</span>}
-                          <span>· {rel(e.createdAt)}</span>
-                          {!e.success && <span className="text-red-400">· error</span>}
-                        </div>
-                        {!e.success && e.errorMessage && (
-                          <div className="mt-1 text-[10px] text-red-400/80 break-words">
-                            {e.errorMessage}
+              <>
+                <ul className="divide-y divide-white/[0.05]">
+                  {actEvents.slice(0, actLimit).map((e, i) => {
+                    const r = REASON[e.reason] ?? REASON.no_change;
+                    const d = e.priceAfter - e.priceBefore;
+                    const down = d < -0.0001;
+                    const up = d > 0.0001;
+                    const pctD =
+                      e.priceBefore > 0 && (up || down)
+                        ? (Math.abs(d) / e.priceBefore) * 100
+                        : null;
+                    return (
+                      <li key={i} className="py-3 flex items-center gap-4">
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-medium truncate text-white/85">
+                            {e.title}
                           </div>
-                        )}
-                      </div>
-                      <div className="text-right whitespace-nowrap">
-                        <div className="text-sm font-mono text-white/55">
-                          {eur(e.priceBefore)}
-                          <span className="mx-1.5 text-white/30">→</span>
-                          <span
-                            className={
-                              down ? "text-emerald-300 font-bold" : up ? "text-cyan-300 font-bold" : "text-white/55"
-                            }
-                          >
-                            {eur(e.priceAfter)}
-                          </span>
-                        </div>
-                        {(up || down) && (
-                          <div className={`text-[10px] font-mono ${down ? "text-emerald-400" : "text-cyan-400"}`}>
-                            {down ? "▼" : "▲"} {eur(Math.abs(d))}
+                          <div className="mt-0.5 text-[11px] text-white/40 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                            <span
+                              className={`px-1.5 py-0.5 rounded border text-[10px] font-semibold ${r.cls}`}
+                            >
+                              {r.label}
+                            </span>
+                            {e.buyBox === "WON" && (
+                              <span className="text-emerald-300">BB ✓</span>
+                            )}
+                            {e.buyBox === "LOST" && (
+                              <span className="text-red-300">BB ✗</span>
+                            )}
+                            {e.simulated && (
+                              <span className="px-1 py-0.5 rounded border border-white/15 text-white/45 text-[9px]">
+                                simulado
+                              </span>
+                            )}
+                            {e.competitorPrice != null && (
+                              <span>comp. {eur(e.competitorPrice)}</span>
+                            )}
+                            <span>· {rel(e.createdAt)}</span>
+                            {!e.success && (
+                              <span className="text-red-400">· error</span>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
+                          {!e.success && e.errorMessage && (
+                            <div className="mt-1 text-[10px] text-red-400/80 break-words">
+                              {e.errorMessage}
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-right whitespace-nowrap">
+                          <div className="text-sm font-mono text-white/55">
+                            {eur(e.priceBefore)}
+                            <span className="mx-1.5 text-white/30">→</span>
+                            <span
+                              className={
+                                down
+                                  ? "text-emerald-300 font-bold"
+                                  : up
+                                    ? "text-cyan-300 font-bold"
+                                    : "text-white/55"
+                              }
+                            >
+                              {eur(e.priceAfter)}
+                            </span>
+                          </div>
+                          {(up || down) && (
+                            <div
+                              className={`text-[10px] font-mono ${
+                                down ? "text-emerald-400" : "text-cyan-400"
+                              }`}
+                            >
+                              {down ? "▼" : "▲"} {eur(Math.abs(d))}
+                              {pctD != null && ` (${pctD.toFixed(1)}%)`}
+                            </div>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+                {actEvents.length > actLimit && (
+                  <button
+                    onClick={() => setActLimit((n) => n + 60)}
+                    className="mt-3 w-full rounded-lg border border-white/15 py-2 text-xs text-white/60 hover:bg-white/[0.05] transition-colors"
+                  >
+                    Ver más ({actEvents.length - actLimit} restantes)
+                  </button>
+                )}
+              </>
             )}
-          </Panel>
+          </section>
         </div>
       </div>
     </div>
@@ -488,6 +745,75 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
 }
 function Empty() {
   return <p className="text-sm text-white/45">Aún no hay datos. Lanza un ciclo de reprecio.</p>;
+}
+function PeriodCard({
+  title,
+  d,
+}: {
+  title: string;
+  d: { events: number; changes: number; saved: number; errs: number };
+}) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+      <h3 className="text-sm font-bold text-white/80 mb-2.5">{title}</h3>
+      <div className="grid grid-cols-4 gap-2 text-center">
+        <div>
+          <div className="font-mono text-base font-extrabold text-white/90">
+            {d.events}
+          </div>
+          <div className="text-[9px] uppercase tracking-wider text-white/40">
+            eventos
+          </div>
+        </div>
+        <div>
+          <div className="font-mono text-base font-extrabold text-cyan-300">
+            {d.changes}
+          </div>
+          <div className="text-[9px] uppercase tracking-wider text-white/40">
+            cambios
+          </div>
+        </div>
+        <div>
+          <div className="font-mono text-base font-extrabold text-emerald-300">
+            {eur(d.saved)}
+          </div>
+          <div className="text-[9px] uppercase tracking-wider text-white/40">
+            ahorro
+          </div>
+        </div>
+        <div>
+          <div
+            className={`font-mono text-base font-extrabold ${
+              d.errs ? "text-red-300" : "text-white/50"
+            }`}
+          >
+            {d.errs}
+          </div>
+          <div className="text-[9px] uppercase tracking-wider text-white/40">
+            errores
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+function BbCell({
+  label,
+  value,
+  c,
+}: {
+  label: string;
+  value: number;
+  c: string;
+}) {
+  return (
+    <div className="rounded-lg border border-white/10 bg-white/[0.03] py-2">
+      <div className={`font-mono text-lg font-extrabold ${c}`}>{value}</div>
+      <div className="text-[9px] uppercase tracking-wider text-white/40">
+        {label}
+      </div>
+    </div>
+  );
 }
 
 const CHART_COLORS = ["#22d3ee", "#a855f7", "#34d399", "#f59e0b", "#60a5fa", "#f472b6"];

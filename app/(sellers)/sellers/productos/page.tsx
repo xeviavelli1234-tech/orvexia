@@ -69,7 +69,7 @@ export default async function ProductosPage() {
     prisma.repricingEvent.findMany({
       where: { listing: { sellerAccountId: account.id } },
       orderBy: { createdAt: "desc" },
-      take: 300,
+      take: 500,
       include: { listing: { select: { title: true } } },
     }),
   ]);
@@ -81,6 +81,8 @@ export default async function ProductosPage() {
     priceAfter: e.priceAfter,
     competitorPrice: e.competitorPrice,
     success: e.success,
+    buyBox: e.buyBox,
+    simulated: e.simulated,
     errorMessage: e.errorMessage,
     createdAt: e.createdAt.toISOString(),
   }));
@@ -138,6 +140,7 @@ export default async function ProductosPage() {
     competitorPrice: e.competitorPrice,
     success: e.success,
     buyBox: e.buyBox,
+    simulated: e.simulated,
     errorMessage: e.errorMessage,
     createdAt: e.createdAt.toISOString(),
   }));
