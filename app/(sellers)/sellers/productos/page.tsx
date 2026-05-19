@@ -160,6 +160,7 @@ export default async function ProductosPage() {
   }));
 
   const accountSettings: AccountSettingsData = {
+    marketplaceId: account.marketplaceId,
     scheduleEnabled: account.scheduleEnabled,
     scheduleStartHour: account.scheduleStartHour,
     scheduleEndHour: account.scheduleEndHour,

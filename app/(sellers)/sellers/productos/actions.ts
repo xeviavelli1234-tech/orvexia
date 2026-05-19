@@ -211,6 +211,7 @@ export async function updateListingCompetitionAction(
 }
 
 const settingsSchema = z.object({
+  marketplaceId: z.string().min(5).max(20),
   scheduleEnabled: z.boolean(),
   scheduleStartHour: z.number().int().min(0).max(23),
   scheduleEndHour: z.number().int().min(1).max(24),
@@ -248,6 +249,7 @@ export async function updateAccountSettingsAction(
   };
 
   const parsed = settingsSchema.safeParse({
+    marketplaceId: String(formData.get("marketplaceId") ?? ""),
     scheduleEnabled: formData.get("scheduleEnabled") === "true",
     scheduleStartHour: numI("scheduleStartHour", 0),
     scheduleEndHour: numI("scheduleEndHour", 24),

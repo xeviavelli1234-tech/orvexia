@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { EU_MARKETPLACES } from "@/lib/amazon/endpoints";
 import {
   updateAccountSettingsAction,
   exportMyDataAction,
@@ -9,6 +10,7 @@ import {
 } from "./actions";
 
 export interface AccountSettingsData {
+  marketplaceId: string;
   scheduleEnabled: boolean;
   scheduleStartHour: number;
   scheduleEndHour: number;
@@ -137,6 +139,7 @@ export default function AccountSettings({ initial }: { initial: AccountSettingsD
     setErr(null);
     setSaving(true);
     const fd = new FormData();
+    fd.set("marketplaceId", s.marketplaceId);
     fd.set("scheduleEnabled", String(s.scheduleEnabled));
     fd.set("scheduleStartHour", String(s.scheduleStartHour));
     fd.set("scheduleEndHour", String(s.scheduleEndHour));
@@ -192,6 +195,27 @@ export default function AccountSettings({ initial }: { initial: AccountSettingsD
         </div>
 
         <div className="p-5 space-y-5">
+          {/* Marketplace */}
+          <section className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+            <div className="text-sm font-semibold text-white/90">Marketplace</div>
+            <p className="mt-1 text-[11px] text-white/45">
+              Marketplace de Amazon EU sobre el que se reprecia.
+            </p>
+            <select
+              value={s.marketplaceId}
+              onChange={(e) =>
+                setS((v) => ({ ...v, marketplaceId: e.target.value }))
+              }
+              className={`${inp} mt-2`}
+            >
+              {EU_MARKETPLACES.map((m) => (
+                <option key={m.id} value={m.id}>
+                  Amazon {m.label} ({m.code}) · {m.currency}
+                </option>
+              ))}
+            </select>
+          </section>
+
           {/* Programación horaria */}
           <section className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
             <div className="flex items-center justify-between">

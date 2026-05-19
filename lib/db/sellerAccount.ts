@@ -1,7 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { encryptToken } from "@/lib/crypto";
-import { MARKETPLACE_IDS } from "@/lib/amazon/endpoints";
+import { MARKETPLACE_IDS, EU_MARKETPLACE_IDS } from "@/lib/amazon/endpoints";
 
 const TRIAL_DAYS = 14;
 const DEFAULT_INTERVAL_SECONDS = 900; // 15 min (TRIAL)
@@ -91,6 +91,7 @@ export async function deleteSellerAccount(userId: string) {
 
 export async function setAccountSettings(params: {
   userId: string;
+  marketplaceId: string;
   scheduleEnabled: boolean;
   scheduleStartHour: number;
   scheduleEndHour: number;
@@ -121,6 +122,9 @@ export async function setAccountSettings(params: {
   return prisma.sellerAccount.update({
     where: { userId: params.userId },
     data: {
+      marketplaceId: EU_MARKETPLACE_IDS.includes(params.marketplaceId)
+        ? params.marketplaceId
+        : MARKETPLACE_IDS.ES,
       scheduleEnabled: params.scheduleEnabled,
       scheduleStartHour: clampH(params.scheduleStartHour, 23),
       scheduleEndHour: clampH(params.scheduleEndHour, 24),
