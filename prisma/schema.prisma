@@ -354,6 +354,12 @@ model SellerAccount {
   alertOnError      Boolean @default(true)  // avisar ante errores de reprecio
   lastAlertAt       DateTime?               // cooldown anti-spam de correos
 
+  // ── Datos fiscales del cliente (para la factura) ──
+  billingName     String @default("") // razón social / nombre fiscal
+  billingTaxId    String @default("") // NIF / CIF / VAT
+  billingAddress  String @default("") // dirección fiscal
+  billingCountry  String @default("ES")
+
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
 

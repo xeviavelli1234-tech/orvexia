@@ -4,6 +4,7 @@ import { getSession } from "@/lib/session";
 import { getSellerAccountByUserId } from "@/lib/db/sellerAccount";
 import { getBillingState, PRO_PRICE_EUR, type SellerPlan } from "@/lib/billing";
 import { isStripeConfigured } from "@/lib/stripe";
+import BillingProfileForm from "./BillingProfileForm";
 
 export const metadata = { title: "Facturación · Orvexia Repricer" };
 
@@ -160,6 +161,15 @@ export default async function FacturacionPage({
           )}
         </div>
       )}
+
+      <BillingProfileForm
+        initial={{
+          billingName: account.billingName,
+          billingTaxId: account.billingTaxId,
+          billingAddress: account.billingAddress,
+          billingCountry: account.billingCountry,
+        }}
+      />
 
       <div className="mt-8 flex items-center justify-between flex-wrap gap-3">
         <Link

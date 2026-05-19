@@ -102,10 +102,25 @@ export default async function FacturaPage() {
             <div className="text-[10px] uppercase tracking-wider text-[#94a3b8] font-bold">
               Facturar a
             </div>
-            <div className="mt-1 text-[#0f172a]">{session.email}</div>
-            {account.stripeCustomerId && (
-              <div className="text-xs text-[#94a3b8] font-mono">
-                Cliente Stripe: {account.stripeCustomerId}
+            {account.billingName ? (
+              <div className="mt-1 text-[#0f172a] text-xs leading-relaxed">
+                <div className="text-sm font-semibold">
+                  {account.billingName}
+                </div>
+                {account.billingTaxId && <div>{account.billingTaxId}</div>}
+                {account.billingAddress && (
+                  <div>{account.billingAddress}</div>
+                )}
+                <div>{account.billingCountry}</div>
+                <div className="text-[#94a3b8]">{session.email}</div>
+              </div>
+            ) : (
+              <div className="mt-1 text-xs">
+                <div className="text-[#0f172a]">{session.email}</div>
+                <div className="text-amber-600">
+                  Completa tus datos fiscales en Facturación para una factura
+                  válida.
+                </div>
               </div>
             )}
           </div>

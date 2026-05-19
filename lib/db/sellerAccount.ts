@@ -56,6 +56,31 @@ export async function deactivateSellerAccount(userId: string) {
   });
 }
 
+/** Datos fiscales del cliente para la factura. */
+export async function setBillingProfile(params: {
+  userId: string;
+  billingName: string;
+  billingTaxId: string;
+  billingAddress: string;
+  billingCountry: string;
+}) {
+  const acc = await prisma.sellerAccount.findUnique({
+    where: { userId: params.userId },
+    select: { id: true },
+  });
+  if (!acc) throw new Error("no_account");
+  const cut = (s: string, n: number) => s.trim().slice(0, n);
+  return prisma.sellerAccount.update({
+    where: { userId: params.userId },
+    data: {
+      billingName: cut(params.billingName, 160),
+      billingTaxId: cut(params.billingTaxId, 40),
+      billingAddress: cut(params.billingAddress, 240),
+      billingCountry: cut(params.billingCountry || "ES", 4).toUpperCase(),
+    },
+  });
+}
+
 /**
  * RGPD — exporta TODOS los datos del repricer del usuario en un objeto
  * serializable. NUNCA incluye el refresh token (secreto).
