@@ -144,8 +144,7 @@ export default function PoliticaDatosAmazon() {
       <H>10. Contacto</H>
       <P>
         Para ejercer derechos sobre los datos, solicitar su eliminación o notificar incidencias
-        de seguridad: <strong>soporte@orvexia.com</strong> (sustituir por el email de soporte
-        real).
+        de seguridad: <strong>orvexiaesp@gmail.com</strong>.
       </P>
 
       <p className="mt-10 text-xs text-fg/40">
