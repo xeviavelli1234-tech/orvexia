@@ -261,6 +261,9 @@ export async function executeTool(
           fixedPrice:
             input.fixedPrice != null ? Number(input.fixedPrice) : cur.fixedPrice ?? null,
           cost: input.cost != null ? Number(input.cost) : cur.cost ?? null,
+          shippingCost: cur.shippingCost ?? null,
+          fbaFee: cur.fbaFee ?? null,
+          vatRate: cur.vatRate ?? 21,
           feePercent:
             input.feePercent != null ? Number(input.feePercent) : cur.feePercent ?? 15,
           targetMargin:

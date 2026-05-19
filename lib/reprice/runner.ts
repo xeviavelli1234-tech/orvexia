@@ -7,10 +7,33 @@ import { fetchAllListings } from "@/lib/amazon/listings";
 import { upsertListingsBatch } from "@/lib/db/sellerListing";
 import { isFixtureMode } from "@/lib/amazon/fixtures";
 import { isRepricingAllowed, type SellerPlan } from "@/lib/billing";
+import { sendRepricerAlertEmail } from "@/lib/email";
 import { isScheduleAllowed } from "./schedule";
 import { computeNewPrice } from "./engine";
+import { minPriceForMargin } from "./margin";
+import type { RepriceAlert } from "./alerts";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const eur = (n: number) => n.toFixed(2).replace(".", ",") + " €";
+
+/** Envía (si procede) un único correo resumen de alertas del ciclo. */
+async function maybeSendAlerts(
+  account: {
+    alertsEnabled: boolean;
+    alertEmail: string | null;
+    user: { email: string };
+  },
+  alerts: RepriceAlert[],
+): Promise<void> {
+  if (!account.alertsEnabled || alerts.length === 0) return;
+  const to = (account.alertEmail && account.alertEmail.trim()) || account.user.email;
+  if (!to) return;
+  try {
+    await sendRepricerAlertEmail({ to, alerts });
+  } catch (e) {
+    console.warn("[reprice] alert email failed:", e);
+  }
+}
 
 type SpApiEnv = "sandbox" | "production";
 
@@ -42,6 +65,7 @@ export async function runRepricer(now: Date = new Date()): Promise<RunSummary> {
 
   const accounts = await prisma.sellerAccount.findMany({
     where: { active: true },
+    include: { user: { select: { email: true } } },
   });
 
   for (const account of accounts) {
@@ -90,6 +114,7 @@ export async function runRepricer(now: Date = new Date()): Promise<RunSummary> {
     let repriced = 0;
     let errors = 0;
     let runError: string | null = null;
+    const accountAlerts: RepriceAlert[] = [];
 
     try {
       const isFixtureAcc = isFixtureMode(account.spApiEnv);
@@ -110,6 +135,16 @@ export async function runRepricer(now: Date = new Date()): Promise<RunSummary> {
             runError =
               "token_no_descifrable: reconecta tu cuenta de Amazon (Desconectar → Conectar) para recifrar el token con la clave actual.";
             errors += 1;
+            if (account.alertOnError) {
+              accountAlerts.push({
+                kind: "error",
+                sku: "—",
+                title: "Cuenta de Amazon",
+                detail:
+                  "Token no descifrable: reconecta tu cuenta de Amazon para reanudar el reprecio.",
+              });
+            }
+            await maybeSendAlerts(account, accountAlerts);
             await prisma.$transaction([
               prisma.repricingRun.update({
                 where: { id: run.id },
@@ -202,6 +237,7 @@ export async function runRepricer(now: Date = new Date()): Promise<RunSummary> {
             account.amazonSellerId,
           );
           const competitorPrice = comp.price;
+          const prevBuyBox = listing.buyBoxStatus;
 
           // Estado de Buy Box (informativo, cada ciclo).
           await prisma.sellerListing.update({
@@ -212,6 +248,24 @@ export async function runRepricer(now: Date = new Date()): Promise<RunSummary> {
               buyBoxAt: now,
             },
           });
+
+          // Alerta SOLO en la transición (no spam cada ciclo): teníamos la
+          // Buy Box (o estado desconocido) y la acabamos de perder.
+          if (
+            account.alertOnBuyBoxLost &&
+            prevBuyBox !== "LOST" &&
+            comp.buyBox === "LOST"
+          ) {
+            accountAlerts.push({
+              kind: "buybox_lost",
+              sku: listing.sku,
+              title: listing.title,
+              detail:
+                competitorPrice != null
+                  ? `Competidor en la Buy Box a ${eur(competitorPrice)}`
+                  : "Has dejado de tener la Buy Box",
+            });
+          }
 
           // Estrategia efectiva: la del producto o la de la cuenta.
           const eff = listing.useAccountDefaults
@@ -228,13 +282,20 @@ export async function runRepricer(now: Date = new Date()): Promise<RunSummary> {
                 noCompetition: listing.noCompetition,
               };
 
-          // Suelo de beneficio (estrategia MARGIN): coste / (1 - fee% - margen%)
+          // Suelo de beneficio (estrategia MARGIN): precio mínimo rentable
+          // según coste + envío + FBA + comisión + IVA y margen objetivo.
           let marginFloor: number | null = null;
           if (listing.cost != null && listing.cost > 0) {
-            const fee = (listing.feePercent ?? 15) / 100;
-            const mgn = (listing.targetMargin ?? 0) / 100;
-            const denom = 1 - fee - mgn;
-            if (denom > 0.05) marginFloor = listing.cost / denom;
+            marginFloor = minPriceForMargin(
+              {
+                cost: listing.cost,
+                shipping: listing.shippingCost,
+                fbaFee: listing.fbaFee,
+                referralPct: listing.feePercent ?? 15,
+                vatPct: listing.vatRate ?? 21,
+              },
+              listing.targetMargin ?? 0,
+            );
           }
 
           const result = computeNewPrice({
@@ -313,12 +374,37 @@ export async function runRepricer(now: Date = new Date()): Promise<RunSummary> {
             repriced += 1;
           }
 
+          // Alerta de precio mínimo: el motor quería bajar más pero topó
+          // con el suelo (mín. manual o suelo de beneficio). Solo cuando
+          // el precio CAMBIA → naturalmente acotado (si ya estaba en el
+          // suelo, result.changed es false y no se llega aquí).
+          if (
+            account.alertOnPriceFloor &&
+            (result.reason === "min_floor" || result.reason === "margin_floor")
+          ) {
+            accountAlerts.push({
+              kind: "price_floor",
+              sku: listing.sku,
+              title: listing.title,
+              detail: `Precio en el mínimo rentable: ${eur(result.newPrice)}`,
+            });
+          }
+
           // Throttling: respiro entre PATCHes (anti QuotaExceeded).
           if (account.patchDelayMs > 0 && !isFixtureMode(account.spApiEnv)) {
             await sleep(account.patchDelayMs);
           }
         } catch (e) {
           errors += 1;
+          const emsg = e instanceof Error ? e.message.slice(0, 500) : String(e);
+          if (account.alertOnError) {
+            accountAlerts.push({
+              kind: "error",
+              sku: listing.sku,
+              title: listing.title,
+              detail: emsg.slice(0, 160),
+            });
+          }
           await prisma.repricingEvent.create({
             data: {
               runId: run.id,
@@ -328,7 +414,7 @@ export async function runRepricer(now: Date = new Date()): Promise<RunSummary> {
               competitorPrice: null,
               reason: "no_change",
               success: false,
-              errorMessage: e instanceof Error ? e.message.slice(0, 500) : String(e),
+              errorMessage: emsg,
             },
           });
         }
@@ -336,6 +422,14 @@ export async function runRepricer(now: Date = new Date()): Promise<RunSummary> {
     } catch (e) {
       runError = e instanceof Error ? e.message.slice(0, 500) : String(e);
       errors += 1;
+      if (account.alertOnError) {
+        accountAlerts.push({
+          kind: "error",
+          sku: "—",
+          title: "Ciclo de reprecio",
+          detail: runError.slice(0, 160),
+        });
+      }
     }
 
     await prisma.$transaction([
@@ -354,6 +448,8 @@ export async function runRepricer(now: Date = new Date()): Promise<RunSummary> {
         data: { lastRunAt: now, lockedAt: null }, // libera el lock
       }),
     ]);
+
+    await maybeSendAlerts(account, accountAlerts);
 
     summary.listingsProcessed += processed;
     summary.listingsRepriced += repriced;

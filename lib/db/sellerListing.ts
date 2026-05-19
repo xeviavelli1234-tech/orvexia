@@ -131,6 +131,9 @@ export async function setListingStrategy(params: {
   undercutValue: number;
   fixedPrice: number | null;
   cost: number | null;
+  shippingCost: number | null;
+  fbaFee: number | null;
+  vatRate: number | null;
   feePercent: number | null;
   targetMargin: number | null;
   noCompetition: "MAX" | "HOLD";
@@ -157,6 +160,9 @@ export async function setListingStrategy(params: {
       undercutValue: params.undercutValue,
       fixedPrice: params.fixedPrice,
       cost: params.cost,
+      shippingCost: params.shippingCost,
+      fbaFee: params.fbaFee,
+      vatRate: params.vatRate,
       feePercent: params.feePercent,
       targetMargin: params.targetMargin,
       noCompetition: params.noCompetition,
@@ -249,6 +255,9 @@ export interface ImportRow {
   undercutValue?: number;
   fixedPrice?: number | null;
   cost?: number | null;
+  shippingCost?: number | null;
+  fbaFee?: number | null;
+  vatRate?: number | null;
   feePercent?: number | null;
   targetMargin?: number | null;
   noCompetition?: "MAX" | "HOLD";
@@ -278,6 +287,9 @@ export async function importListingConfig(
     if (row.undercutValue !== undefined) data.undercutValue = row.undercutValue;
     if (row.fixedPrice !== undefined) data.fixedPrice = row.fixedPrice;
     if (row.cost !== undefined) data.cost = row.cost;
+    if (row.shippingCost !== undefined) data.shippingCost = row.shippingCost;
+    if (row.fbaFee !== undefined) data.fbaFee = row.fbaFee;
+    if (row.vatRate !== undefined) data.vatRate = row.vatRate;
     if (row.feePercent !== undefined) data.feePercent = row.feePercent;
     if (row.targetMargin !== undefined) data.targetMargin = row.targetMargin;
     if (row.noCompetition) data.noCompetition = row.noCompetition;

@@ -73,6 +73,9 @@ export default async function ProductosPage() {
     undercutValue: l.undercutValue,
     fixedPrice: l.fixedPrice,
     cost: l.cost,
+    shippingCost: l.shippingCost,
+    fbaFee: l.fbaFee,
+    vatRate: l.vatRate,
     feePercent: l.feePercent,
     targetMargin: l.targetMargin,
     noCompetition: l.noCompetition,
@@ -144,6 +147,11 @@ export default async function ProductosPage() {
     defaultUndercutType: account.defaultUndercutType,
     defaultUndercutValue: account.defaultUndercutValue,
     defaultNoCompetition: account.defaultNoCompetition,
+    alertsEnabled: account.alertsEnabled,
+    alertEmail: account.alertEmail ?? "",
+    alertOnBuyBoxLost: account.alertOnBuyBoxLost,
+    alertOnPriceFloor: account.alertOnPriceFloor,
+    alertOnError: account.alertOnError,
   };
 
   return (

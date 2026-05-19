@@ -15,6 +15,11 @@ export interface AccountSettingsData {
   defaultUndercutType: "AMOUNT" | "PERCENT";
   defaultUndercutValue: number;
   defaultNoCompetition: "MAX" | "HOLD";
+  alertsEnabled: boolean;
+  alertEmail: string;
+  alertOnBuyBoxLost: boolean;
+  alertOnPriceFloor: boolean;
+  alertOnError: boolean;
 }
 
 export function SettingsButton() {
@@ -100,6 +105,11 @@ export default function AccountSettings({ initial }: { initial: AccountSettingsD
     fd.set("defaultUndercutType", s.defaultUndercutType);
     fd.set("defaultUndercutValue", String(s.defaultUndercutValue));
     fd.set("defaultNoCompetition", s.defaultNoCompetition);
+    fd.set("alertsEnabled", String(s.alertsEnabled));
+    fd.set("alertEmail", s.alertEmail);
+    fd.set("alertOnBuyBoxLost", String(s.alertOnBuyBoxLost));
+    fd.set("alertOnPriceFloor", String(s.alertOnPriceFloor));
+    fd.set("alertOnError", String(s.alertOnError));
     updateAccountSettingsAction(fd).then((r) => {
       setSaving(false);
       if (!r.ok) setErr(r.error);
@@ -308,6 +318,75 @@ export default function AccountSettings({ initial }: { initial: AccountSettingsD
                 />
               </label>
             </div>
+          </section>
+
+          {/* Alertas por email */}
+          <section className="rounded-xl border border-white/10 bg-white/[0.03] p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-semibold text-white/90">
+                  Alertas por email
+                </div>
+                <div className="text-[11px] text-white/45">
+                  Un resumen por ciclo si pasa algo relevante.
+                </div>
+              </div>
+              <Toggle
+                on={s.alertsEnabled}
+                disabled={saving}
+                onClick={() => setS((v) => ({ ...v, alertsEnabled: !v.alertsEnabled }))}
+              />
+            </div>
+            {s.alertsEnabled && (
+              <>
+                <label className="block">
+                  <span className={lbl}>Email (vacío = el de tu cuenta)</span>
+                  <input
+                    type="email"
+                    value={s.alertEmail}
+                    placeholder="avisos@tuempresa.com"
+                    onChange={(e) =>
+                      setS((v) => ({ ...v, alertEmail: e.target.value }))
+                    }
+                    className={inp}
+                  />
+                </label>
+                <div className="space-y-2 pt-1">
+                  <label className="flex items-center justify-between gap-3">
+                    <span className="text-sm text-white/85">Al perder la Buy Box</span>
+                    <Toggle
+                      on={s.alertOnBuyBoxLost}
+                      disabled={saving}
+                      onClick={() =>
+                        setS((v) => ({ ...v, alertOnBuyBoxLost: !v.alertOnBuyBoxLost }))
+                      }
+                    />
+                  </label>
+                  <label className="flex items-center justify-between gap-3">
+                    <span className="text-sm text-white/85">
+                      Al tocar el precio mínimo
+                    </span>
+                    <Toggle
+                      on={s.alertOnPriceFloor}
+                      disabled={saving}
+                      onClick={() =>
+                        setS((v) => ({ ...v, alertOnPriceFloor: !v.alertOnPriceFloor }))
+                      }
+                    />
+                  </label>
+                  <label className="flex items-center justify-between gap-3">
+                    <span className="text-sm text-white/85">Ante errores de reprecio</span>
+                    <Toggle
+                      on={s.alertOnError}
+                      disabled={saving}
+                      onClick={() =>
+                        setS((v) => ({ ...v, alertOnError: !v.alertOnError }))
+                      }
+                    />
+                  </label>
+                </div>
+              </>
+            )}
           </section>
 
           {err && (

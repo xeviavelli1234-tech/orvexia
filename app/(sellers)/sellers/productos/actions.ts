@@ -74,6 +74,9 @@ const strategySchema = z.object({
   undercutValue: z.number().min(0).max(99999),
   fixedPrice: z.number().positive().max(99999).nullable(),
   cost: z.number().positive().max(99999).nullable(),
+  shippingCost: z.number().min(0).max(99999).nullable(),
+  fbaFee: z.number().min(0).max(99999).nullable(),
+  vatRate: z.number().min(0).max(100).nullable(),
   feePercent: z.number().min(0).max(100).nullable(),
   targetMargin: z.number().min(0).max(95).nullable(),
   noCompetition: z.enum(["MAX", "HOLD"]),
@@ -101,6 +104,9 @@ export async function updateListingStrategyAction(
     undercutValue: num("undercutValue") ?? 0.01,
     fixedPrice: num("fixedPrice"),
     cost: num("cost"),
+    shippingCost: num("shippingCost"),
+    fbaFee: num("fbaFee"),
+    vatRate: num("vatRate"),
     feePercent: num("feePercent"),
     targetMargin: num("targetMargin"),
     noCompetition: String(formData.get("noCompetition") ?? "MAX"),
@@ -201,6 +207,11 @@ const settingsSchema = z.object({
   defaultUndercutType: z.enum(["AMOUNT", "PERCENT"]),
   defaultUndercutValue: z.number().min(0).max(99999),
   defaultNoCompetition: z.enum(["MAX", "HOLD"]),
+  alertsEnabled: z.boolean(),
+  alertEmail: z.string().max(200).nullable(),
+  alertOnBuyBoxLost: z.boolean(),
+  alertOnPriceFloor: z.boolean(),
+  alertOnError: z.boolean(),
 });
 
 export async function updateAccountSettingsAction(
@@ -231,6 +242,15 @@ export async function updateAccountSettingsAction(
     defaultUndercutType: String(formData.get("defaultUndercutType") ?? "AMOUNT"),
     defaultUndercutValue: numF("defaultUndercutValue", 0.01),
     defaultNoCompetition: String(formData.get("defaultNoCompetition") ?? "MAX"),
+    alertsEnabled: formData.get("alertsEnabled") === "true",
+    alertEmail: ((): string | null => {
+      const v = formData.get("alertEmail");
+      const s = v == null ? "" : String(v).trim();
+      return s === "" ? null : s;
+    })(),
+    alertOnBuyBoxLost: formData.get("alertOnBuyBoxLost") === "true",
+    alertOnPriceFloor: formData.get("alertOnPriceFloor") === "true",
+    alertOnError: formData.get("alertOnError") === "true",
   });
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "validation_failed" };
@@ -350,6 +370,9 @@ export async function importConfigAction(
       undercutValue: num(get("undercutvalue")) ?? undefined,
       fixedPrice: num(get("fixedprice")),
       cost: num(get("cost")),
+      shippingCost: num(get("shippingcost")),
+      fbaFee: num(get("fbafee")),
+      vatRate: num(get("vatrate")),
       feePercent: num(get("feepercent")),
       targetMargin: num(get("targetmargin")),
       noCompetition: enumOf(get("nocompetition"), ["MAX", "HOLD"]),

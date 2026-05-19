@@ -11,6 +11,12 @@ import {
 import { useRouter } from "next/navigation";
 import WaveField from "./WaveField";
 import {
+  breakEvenPrice,
+  minPriceForMargin,
+  profitAt,
+  type CostInputs,
+} from "@/lib/reprice/margin";
+import {
   updateListingRangeAction,
   toggleListingAction,
   updateListingStrategyAction,
@@ -40,6 +46,9 @@ export interface NetNode {
   undercutValue: number;
   fixedPrice: number | null;
   cost: number | null;
+  shippingCost: number | null;
+  fbaFee: number | null;
+  vatRate: number | null;
   feePercent: number | null;
   targetMargin: number | null;
   noCompetition: NoComp;
@@ -151,6 +160,66 @@ const STATE_COLOR: Record<State, { stroke: string; halo: string }> = {
   noprice: { stroke: "rgba(160,160,180,0.4)", halo: "rgba(120,120,140,0.25)" },
 };
 
+function pnum(s: string): number {
+  const n = Number.parseFloat(s.replace(",", "."));
+  return Number.isFinite(n) ? n : 0;
+}
+
+function CostField({
+  label,
+  value,
+  set,
+  placeholder,
+  disabled,
+}: {
+  label: string;
+  value: string;
+  set: (v: string) => void;
+  placeholder: string;
+  disabled?: boolean;
+}) {
+  return (
+    <label className="block">
+      <span className="text-[10px] uppercase tracking-wider text-white/40">
+        {label}
+      </span>
+      <input
+        value={value}
+        onChange={(e) => set(e.target.value)}
+        inputMode="decimal"
+        placeholder={placeholder}
+        disabled={disabled}
+        className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-2 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
+      />
+    </label>
+  );
+}
+
+function Row({
+  k,
+  v,
+  warn,
+  accent,
+}: {
+  k: string;
+  v: string;
+  warn?: boolean;
+  accent?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-white/45">{k}</span>
+      <span
+        className={`font-mono font-semibold tabular-nums ${
+          warn ? "text-amber-300" : accent ? "text-cyan-200" : "text-white/85"
+        }`}
+      >
+        {v}
+      </span>
+    </div>
+  );
+}
+
 function errMsg(code: string): string {
   const m: Record<string, string> = {
     price_max_must_be_greater_or_equal_to_min: "El máximo debe ser ≥ al mínimo",
@@ -180,6 +249,9 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
   const [undVal, setUndVal] = useState("0.01");
   const [fixedP, setFixedP] = useState("");
   const [cost, setCost] = useState("");
+  const [ship, setShip] = useState("");
+  const [fba, setFba] = useState("");
+  const [vat, setVat] = useState("21");
   const [feeP, setFeeP] = useState("15");
   const [tMargin, setTMargin] = useState("10");
   const [noComp, setNoComp] = useState<NoComp>("MAX");
@@ -351,6 +423,29 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
 
   const sel = nodes.find((x) => x.id === selId) ?? null;
 
+  // Calculadora de costes/margen en vivo (estrategia MARGIN).
+  const costCalc = useMemo(() => {
+    const pf = (s: string) => {
+      const n = Number.parseFloat(s.replace(",", "."));
+      return Number.isFinite(n) ? n : 0;
+    };
+    const c: CostInputs = {
+      cost: pf(cost),
+      shipping: pf(ship),
+      fbaFee: pf(fba),
+      referralPct: pf(feeP) || 15,
+      vatPct: feeP === "" && vat === "" ? 21 : pf(vat),
+    };
+    if (!(c.cost > 0)) return null;
+    const breakEven = breakEvenPrice(c);
+    const minRec = minPriceForMargin(c, pf(tMargin));
+    const atCurrent =
+      sel && sel.priceCurrent > 0 ? profitAt(sel.priceCurrent, c) : null;
+    return { breakEven, minRec, atCurrent };
+  }, [cost, ship, fba, vat, feeP, tMargin, sel]);
+
+  const fmtEur = (n: number) => n.toFixed(2).replace(".", ",") + " €";
+
   function open(n: NetNode) {
     if (suppressClick.current) {
       suppressClick.current = false;
@@ -365,6 +460,9 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
     setUndVal(String(n.undercutValue ?? 0.01));
     setFixedP(n.fixedPrice != null ? String(n.fixedPrice) : "");
     setCost(n.cost != null ? String(n.cost) : "");
+    setShip(n.shippingCost != null ? String(n.shippingCost) : "");
+    setFba(n.fbaFee != null ? String(n.fbaFee) : "");
+    setVat(n.vatRate != null ? String(n.vatRate) : "21");
     setFeeP(n.feePercent != null ? String(n.feePercent) : "15");
     setTMargin(n.targetMargin != null ? String(n.targetMargin) : "10");
     setNoComp(n.noCompetition);
@@ -400,6 +498,9 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
     fd.set("undercutValue", undVal.trim() || "0.01");
     fd.set("fixedPrice", fixedP.trim());
     fd.set("cost", cost.trim());
+    fd.set("shippingCost", ship.trim());
+    fd.set("fbaFee", fba.trim());
+    fd.set("vatRate", vat.trim());
     fd.set("feePercent", feeP.trim());
     fd.set("targetMargin", tMargin.trim());
     fd.set("noCompetition", noComp);
@@ -1093,31 +1194,67 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
                 )}
 
                 {strategy === "MARGIN" && (
-                  <div className="mt-3 grid grid-cols-3 gap-2">
-                    <label className="block">
-                      <span className="text-[10px] uppercase tracking-wider text-white/40">
-                        Coste €
-                      </span>
-                      <input value={cost} onChange={(e) => setCost(e.target.value)}
-                        inputMode="decimal" placeholder="0,00" disabled={pending}
-                        className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-2 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none" />
-                    </label>
-                    <label className="block">
-                      <span className="text-[10px] uppercase tracking-wider text-white/40">
-                        Comis. %
-                      </span>
-                      <input value={feeP} onChange={(e) => setFeeP(e.target.value)}
-                        inputMode="decimal" placeholder="15" disabled={pending}
-                        className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-2 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none" />
-                    </label>
-                    <label className="block">
-                      <span className="text-[10px] uppercase tracking-wider text-white/40">
-                        Margen %
-                      </span>
-                      <input value={tMargin} onChange={(e) => setTMargin(e.target.value)}
-                        inputMode="decimal" placeholder="10" disabled={pending}
-                        className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-2 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none" />
-                    </label>
+                  <div className="mt-3 space-y-3">
+                    <div className="grid grid-cols-3 gap-2">
+                      <CostField label="Coste €" value={cost} set={setCost}
+                        placeholder="0,00" disabled={pending} />
+                      <CostField label="Envío €" value={ship} set={setShip}
+                        placeholder="0,00" disabled={pending} />
+                      <CostField label="FBA €" value={fba} set={setFba}
+                        placeholder="0,00" disabled={pending} />
+                      <CostField label="Comis. %" value={feeP} set={setFeeP}
+                        placeholder="15" disabled={pending} />
+                      <CostField label="IVA %" value={vat} set={setVat}
+                        placeholder="21" disabled={pending} />
+                      <CostField label="Margen %" value={tMargin} set={setTMargin}
+                        placeholder="10" disabled={pending} />
+                    </div>
+
+                    {costCalc && (
+                      <div className="rounded-lg border border-cyan-400/20 bg-cyan-400/[0.04] p-3 space-y-1.5 text-[12px]">
+                        <Row k="Precio de equilibrio"
+                          v={costCalc.breakEven != null
+                            ? fmtEur(costCalc.breakEven)
+                            : "no rentable"}
+                          warn={costCalc.breakEven == null} />
+                        <Row k={`Mínimo para ${pnum(tMargin) || 0}% margen`}
+                          v={costCalc.minRec != null
+                            ? fmtEur(costCalc.minRec)
+                            : "no alcanzable"}
+                          warn={costCalc.minRec == null} accent />
+                        {costCalc.atCurrent && (
+                          <Row
+                            k={`Margen a ${fmtEur(sel.priceCurrent)} (actual)`}
+                            v={`${costCalc.atCurrent.profit
+                              .toFixed(2)
+                              .replace(".", ",")} € · ${costCalc.atCurrent.marginPct.toFixed(
+                              1,
+                            )}%`}
+                            warn={costCalc.atCurrent.profit < 0}
+                          />
+                        )}
+                        {costCalc.minRec != null && (
+                          <button
+                            type="button"
+                            disabled={pending}
+                            onClick={() =>
+                              setMin(
+                                String(
+                                  Math.ceil((costCalc.minRec as number) * 100) / 100,
+                                ),
+                              )
+                            }
+                            className="mt-1 w-full rounded-md border border-cyan-400/40 text-cyan-200 py-1.5 text-[11px] font-semibold hover:bg-cyan-400/10 transition-colors disabled:opacity-50"
+                          >
+                            Usar como precio mínimo ↑
+                          </button>
+                        )}
+                        <p className="text-[10px] text-white/35 pt-0.5">
+                          Precios con IVA incluido. El motor nunca bajará del
+                          mínimo rentable.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
 

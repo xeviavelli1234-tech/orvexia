@@ -343,6 +343,13 @@ model SellerAccount {
   patchDelayMs     Int     @default(0)     // retardo entre PATCHes (anti QuotaExceeded)
   autoSyncHours    Int     @default(0)     // sincroniza catálogo cada N h (0 = manual)
 
+  // ── Alertas por email ──
+  alertsEnabled     Boolean @default(true)
+  alertEmail        String?                 // destino (vacío = email de la cuenta)
+  alertOnBuyBoxLost Boolean @default(true)  // avisar al perder la Buy Box
+  alertOnPriceFloor Boolean @default(true)  // avisar al tocar el precio mínimo
+  alertOnError      Boolean @default(true)  // avisar ante errores de reprecio
+
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
 
@@ -377,6 +384,9 @@ model SellerListing {
   undercutValue Float             @default(0.01)
   fixedPrice    Float?            // estrategia FIXED
   cost          Float?            // coste del producto (estrategia MARGIN)
+  shippingCost  Float?            // envío / logística propia por ud (€)
+  fbaFee        Float?            // tarifa fija FBA / gestión por ud (€)
+  vatRate       Float?            @default(21) // % IVA del PVP (ES 21)
   feePercent    Float?            @default(15) // % comisión Amazon
   targetMargin  Float?            @default(10) // % margen objetivo (MARGIN)
   noCompetition NoCompetitionMode @default(MAX)

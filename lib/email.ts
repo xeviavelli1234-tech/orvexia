@@ -1,4 +1,9 @@
 import { Resend } from "resend";
+import {
+  type RepriceAlert,
+  alertSubject,
+  ALERT_LABEL,
+} from "@/lib/reprice/alerts";
 
 function baseUrl() {
   return process.env.NEXTAUTH_URL || "http://localhost:3000";
@@ -288,6 +293,98 @@ export async function sendPasswordResetEmail(options: {
   } catch (err) {
     console.warn("[email] Resend falló o no está configurado:", err);
     console.warn(`[email] Token manual para ${options.to}: ${options.token}`);
+    return { emailSent: false };
+  }
+}
+
+/**
+ * Correo resumen de alertas del repricer (un único email por ciclo).
+ * Agrupa Buy Box perdidas, productos en precio mínimo y errores.
+ */
+export async function sendRepricerAlertEmail(options: {
+  to: string;
+  alerts: RepriceAlert[];
+}): Promise<{ emailSent: boolean }> {
+  if (options.alerts.length === 0) return { emailSent: false };
+
+  const appName = process.env.NEXT_PUBLIC_APP_NAME || "Orvexia";
+  const panelUrl = `${baseUrl()}/sellers/productos`;
+  const MAX_ROWS = 25;
+  const subject = alertSubject(options.alerts);
+
+  const tone: Record<RepriceAlert["kind"], string> = {
+    buybox_lost: "#dc2626",
+    price_floor: "#d97706",
+    error: "#dc2626",
+  };
+
+  const shown = options.alerts.slice(0, MAX_ROWS);
+  const rest = options.alerts.length - shown.length;
+
+  const rowsHtml = shown
+    .map(
+      (a) => `<tr>
+        <td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;font-size:12px;color:${tone[a.kind]};font-weight:700;white-space:nowrap;">${ALERT_LABEL[a.kind]}</td>
+        <td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;font-size:13px;color:#0f172a;">
+          <div style="font-weight:600;">${a.title}</div>
+          <div style="font-size:11px;color:#64748b;">SKU ${a.sku} · ${a.detail}</div>
+        </td></tr>`,
+    )
+    .join("");
+
+  const restHtml = rest > 0
+    ? `<p style="margin:12px 0 0 0;font-size:12px;color:#64748b;">…y ${rest} alerta${rest === 1 ? "" : "s"} más. Revisa el panel para el detalle completo.</p>`
+    : "";
+
+  const html = `<!DOCTYPE html>
+  <html lang="es">
+    <head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /></head>
+    <body style="margin:0;padding:0;background:#0b1220;font-family:'Segoe UI',Arial,sans-serif;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:28px 0;">
+        <tr><td align="center">
+          <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:18px;overflow:hidden;box-shadow:0 18px 35px rgba(0,0,0,0.18);">
+            <tr>
+              <td style="background:linear-gradient(135deg,#1e293b,#0ea5e9);color:#e2f3ff;padding:28px 28px 18px 28px;">
+                <div style="font-size:13px;letter-spacing:0.08em;text-transform:uppercase;opacity:.9;font-weight:600;">${appName} Repricer</div>
+                <div style="font-size:22px;font-weight:700;margin-top:6px;">Alertas de tu cuenta</div>
+                <div style="margin-top:6px;font-size:14px;line-height:1.5;color:#cfe9ff;">Resumen del último ciclo de reprecio.</div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:24px 28px 18px 28px;color:#0f172a;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
+                  ${rowsHtml}
+                </table>
+                ${restHtml}
+                <div style="margin-top:20px;">
+                  <a href="${panelUrl}" style="display:inline-block;background:#2563EB;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:12px;font-weight:700;font-size:14px;">Abrir centro de control →</a>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style="background:#f1f5f9;color:#475569;padding:16px 28px;font-size:12px;">
+                Puedes desactivar estas alertas en Ajustes de cuenta · Enviado por ${appName}.
+              </td>
+            </tr>
+          </table>
+        </td></tr>
+      </table>
+    </body>
+  </html>`;
+
+  const text =
+    `${subject}\n\n` +
+    shown
+      .map((a) => `- [${ALERT_LABEL[a.kind]}] ${a.title} (SKU ${a.sku}): ${a.detail}`)
+      .join("\n") +
+    (rest > 0 ? `\n…y ${rest} más.` : "") +
+    `\n\nPanel: ${panelUrl}`;
+
+  try {
+    await tryResend(options.to, subject, html, text);
+    return { emailSent: true };
+  } catch (err) {
+    console.warn("[email] Alerta repricer no enviada:", err);
     return { emailSent: false };
   }
 }

@@ -68,6 +68,11 @@ export async function setAccountSettings(params: {
   defaultUndercutType: "AMOUNT" | "PERCENT";
   defaultUndercutValue: number;
   defaultNoCompetition: "MAX" | "HOLD";
+  alertsEnabled: boolean;
+  alertEmail: string | null;
+  alertOnBuyBoxLost: boolean;
+  alertOnPriceFloor: boolean;
+  alertOnError: boolean;
 }) {
   const acc = await prisma.sellerAccount.findUnique({
     where: { userId: params.userId },
@@ -91,6 +96,11 @@ export async function setAccountSettings(params: {
       defaultUndercutType: params.defaultUndercutType,
       defaultUndercutValue: Math.max(0, params.defaultUndercutValue),
       defaultNoCompetition: params.defaultNoCompetition,
+      alertsEnabled: params.alertsEnabled,
+      alertEmail: params.alertEmail?.trim() ? params.alertEmail.trim() : null,
+      alertOnBuyBoxLost: params.alertOnBuyBoxLost,
+      alertOnPriceFloor: params.alertOnPriceFloor,
+      alertOnError: params.alertOnError,
     },
   });
 }
