@@ -406,18 +406,53 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
       minY = VB_H * 0.15,
       maxY = VB_H * 0.85;
 
-    const pos = nodes.map((node, i) => {
-      const g = i * 2.39996323; // ángulo áureo → ramas repartidas
+    // Colocación inicial: espiral áurea (reparte las ramas).
+    const P = nodes.map((node, i) => {
+      const g = i * 2.39996323;
       const rr = HUB_GAP + maxR * Math.sqrt((i + 0.4) / Math.max(n, 1));
       const jx = (hash(node.id + "x") - 0.5) * 44;
       const jy = (hash(node.id + "y") - 0.5) * 40;
-      let x = hx + Math.cos(g) * rr * 1.5 + jx;
-      let y = hy + Math.sin(g) * rr + jy;
-      x = Math.max(minX, Math.min(maxX, x));
-      y = Math.max(minY, Math.min(maxY, y));
-      return { ...node, x, y };
+      return {
+        x: hx + Math.cos(g) * rr * 1.5 + jx,
+        y: hy + Math.sin(g) * rr + jy,
+      };
     });
 
+    // Relajación: separa los nodos para que NUNCA se solapen entre sí
+    // ni invadan el icono central (repulsión por pares + empuje del hub).
+    const MIN = 156; // distancia mínima entre centros (nodo + holgura etiqueta)
+    const HUB_CLEAR = HUB_GAP + R + 14;
+    const ITER = n > 1 ? Math.min(160, 60 + n * 4) : 0;
+    for (let it = 0; it < ITER; it++) {
+      for (let a = 0; a < P.length; a++) {
+        const dx = P[a].x - hx;
+        const dy = P[a].y - hy;
+        const d = Math.hypot(dx, dy) || 1;
+        if (d < HUB_CLEAR) {
+          const f = HUB_CLEAR - d;
+          P[a].x += (dx / d) * f;
+          P[a].y += (dy / d) * f;
+        }
+        for (let b = a + 1; b < P.length; b++) {
+          const ex = P[b].x - P[a].x;
+          const ey = P[b].y - P[a].y;
+          const dd = Math.hypot(ex, ey) || 1;
+          if (dd < MIN) {
+            const f = (MIN - dd) / 2;
+            const ux = ex / dd;
+            const uy = ey / dd;
+            P[a].x -= ux * f;
+            P[a].y -= uy * f;
+            P[b].x += ux * f;
+            P[b].y += uy * f;
+          }
+        }
+        P[a].x = Math.max(minX, Math.min(maxX, P[a].x));
+        P[a].y = Math.max(minY, Math.min(maxY, P[a].y));
+      }
+    }
+
+    const pos = nodes.map((node, i) => ({ ...node, x: P[i].x, y: P[i].y }));
     return { hub: { x: hx, y: hy }, pos };
   }, [nodes]);
 
@@ -727,200 +762,6 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
             );
           })()}
 
-          {/* Ramas del hub → herramientas (solo al pulsar el icono Amazon) */}
-          {hubOpen &&
-            (() => {
-            const h = layout.hub;
-            const HR = 54;
-            const SR = 22;
-            const tools: Array<{
-              key: string;
-              label: string;
-              rgb: string;
-              icon: "list" | "shield" | "pause" | "coin";
-              ev: string;
-              panic?: boolean;
-            }> = [
-              { key: "cat", label: "Catálogo", rgb: "125,211,252", icon: "list", ev: "orvexia:open-catalog" },
-              { key: "profit", label: "Rentabilidad", rgb: "52,211,153", icon: "coin", ev: "orvexia:open-profit" },
-              { key: "set", label: "Cuenta", rgb: "165,180,252", icon: "shield", ev: "orvexia:open-settings" },
-              { key: "panic", label: "Pausar todo", rgb: "248,113,113", icon: "pause", ev: "", panic: true },
-            ];
-            const n = tools.length;
-            const GAP = 160;
-            const SY = h.y + HR + 120; // centro Y de los iconos
-            const cx = (i: number) => h.x + (i - (n - 1) / 2) * GAP;
-            const dockPadX = 48;
-            const dockLeft = cx(0) - SR - dockPadX;
-            const dockW = (n - 1) * GAP + 2 * (SR + dockPadX);
-            const dockTop = SY - SR - 30;
-            const dockH = SR * 2 + 78;
-            const stem = `M${h.x},${h.y + HR} L${h.x},${dockTop}`;
-            return (
-              <g>
-                {/* Conector hub → dock: un único trazo, sin cruces */}
-                <path
-                  d={stem}
-                  fill="none"
-                  stroke="rgba(125,211,252,0.28)"
-                  strokeWidth="1.4"
-                  vectorEffect="non-scaling-stroke"
-                />
-                <path
-                  className="net-flow"
-                  d={stem}
-                  fill="none"
-                  stroke="rgba(125,211,252,0.6)"
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
-                  vectorEffect="non-scaling-stroke"
-                />
-                {/* Panel que agrupa las herramientas (evita que se
-                    mezclen visualmente con la red de productos) */}
-                <g className="tool-in">
-                  <rect
-                    x={dockLeft}
-                    y={dockTop}
-                    width={dockW}
-                    height={dockH}
-                    rx={26}
-                    fill="rgba(8,9,20,0.92)"
-                    stroke="rgba(255,255,255,0.09)"
-                    strokeWidth="1"
-                  />
-                  <text
-                    x={h.x}
-                    y={dockTop + 19}
-                    textAnchor="middle"
-                    fontSize="9.5"
-                    fontWeight={700}
-                    letterSpacing="2.5"
-                    fill="rgba(255,255,255,0.32)"
-                  >
-                    HERRAMIENTAS
-                  </text>
-                </g>
-                {tools.map((t, i) => {
-                  const SX = cx(i);
-                  return (
-                    <g
-                      key={t.key}
-                      className="tool-in"
-                      style={{ "--td": `${0.06 + i * 0.06}s` } as CSSProperties}
-                    >
-                      <g
-                        className="hex-node"
-                        onClick={() => {
-                          if (suppressClick.current) {
-                            suppressClick.current = false;
-                            return;
-                          }
-                          if (t.panic) {
-                            if (
-                              window.confirm(
-                                "¿Pausar el reprecio de TODOS los productos?",
-                              )
-                            ) {
-                              startTransition(async () => {
-                                await pauseAllAction();
-                                router.refresh();
-                              });
-                            }
-                            return;
-                          }
-                          window.dispatchEvent(new CustomEvent(t.ev));
-                        }}
-                      >
-                        <circle cx={SX} cy={SY} r={SR + 14} fill="transparent" />
-                        <circle
-                          cx={SX}
-                          cy={SY}
-                          r={SR + 5}
-                          fill="none"
-                          stroke={`rgba(${t.rgb},0.45)`}
-                          strokeWidth="1.2"
-                          filter="url(#glow)"
-                        />
-                        <circle
-                          cx={SX}
-                          cy={SY}
-                          r={SR}
-                          fill="rgba(10,10,24,0.92)"
-                          stroke={`rgba(${t.rgb},0.7)`}
-                          strokeWidth="1.3"
-                        />
-                        {t.icon === "shield" && (
-                          <>
-                            <path
-                              d={`M${SX},${SY - 12} L${SX + 10},${SY - 7} L${SX + 10},${SY + 2} C${SX + 10},${SY + 8} ${SX + 5},${SY + 12} ${SX},${SY + 14} C${SX - 5},${SY + 12} ${SX - 10},${SY + 8} ${SX - 10},${SY + 2} L${SX - 10},${SY - 7} Z`}
-                              fill="none"
-                              stroke={`rgb(${t.rgb})`}
-                              strokeWidth="1.8"
-                              strokeLinejoin="round"
-                            />
-                            <path
-                              d={`M${SX - 4},${SY + 1} L${SX - 1},${SY + 4} L${SX + 5},${SY - 4}`}
-                              fill="none"
-                              stroke={`rgb(${t.rgb})`}
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </>
-                        )}
-                        {t.icon === "pause" && (
-                          <g fill={`rgb(${t.rgb})`}>
-                            <rect x={SX - 7} y={SY - 8} width="4.5" height="16" rx="1.2" />
-                            <rect x={SX + 2.5} y={SY - 8} width="4.5" height="16" rx="1.2" />
-                          </g>
-                        )}
-                        {t.icon === "list" && (
-                          <g stroke={`rgb(${t.rgb})`} strokeWidth="2" strokeLinecap="round">
-                            <line x1={SX - 8} y1={SY - 6} x2={SX + 8} y2={SY - 6} />
-                            <line x1={SX - 8} y1={SY} x2={SX + 8} y2={SY} />
-                            <line x1={SX - 8} y1={SY + 6} x2={SX + 8} y2={SY + 6} />
-                          </g>
-                        )}
-                        {t.icon === "coin" && (
-                          <>
-                            <circle
-                              cx={SX}
-                              cy={SY}
-                              r={11}
-                              fill="none"
-                              stroke={`rgb(${t.rgb})`}
-                              strokeWidth="1.6"
-                            />
-                            <text
-                              x={SX}
-                              y={SY + 0.5}
-                              textAnchor="middle"
-                              dominantBaseline="central"
-                              fontSize="14"
-                              fontWeight={800}
-                              fill={`rgb(${t.rgb})`}
-                            >
-                              €
-                            </text>
-                          </>
-                        )}
-                        <text
-                          x={SX}
-                          y={SY + SR + 15}
-                          textAnchor="middle"
-                          fontSize="11"
-                          fontWeight={700}
-                          fill={`rgba(${t.rgb},0.9)`}
-                        >
-                          {t.label}
-                        </text>
-                      </g>
-                    </g>
-                  );
-                })}
-              </g>
-            );
-          })()}
 
           {/* Rama del producto seleccionado → icono de analítica
               (antes de los nodos: así los productos quedan por encima
@@ -1075,6 +916,64 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
           <span className="text-[11px] leading-none">1:1</span>
         </ZoomBtn>
       </div>
+
+      {/* Dock de herramientas: capa de UI propia, fija sobre el lienzo.
+          Nunca se solapa con la red de productos (vive fuera del SVG). */}
+      {hubOpen && (
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 fade-in">
+          <div className="flex items-stretch gap-1 rounded-2xl border border-white/10 bg-[rgba(8,9,20,0.94)] backdrop-blur-xl px-3 py-2.5 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.85)]">
+            {(
+              [
+                { key: "cat", label: "Catálogo", rgb: "125,211,252", ev: "orvexia:open-catalog", icon: "list" },
+                { key: "profit", label: "Rentabilidad", rgb: "52,211,153", ev: "orvexia:open-profit", icon: "coin" },
+                { key: "set", label: "Cuenta", rgb: "165,180,252", ev: "orvexia:open-settings", icon: "shield" },
+                { key: "panic", label: "Pausar todo", rgb: "248,113,113", ev: "", icon: "pause", panic: true },
+              ] as Array<{
+                key: string;
+                label: string;
+                rgb: string;
+                ev: string;
+                icon: "list" | "coin" | "shield" | "pause";
+                panic?: boolean;
+              }>
+            ).map((t) => (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => {
+                  if (t.panic) {
+                    if (
+                      window.confirm("¿Pausar el reprecio de TODOS los productos?")
+                    ) {
+                      startTransition(async () => {
+                        await pauseAllAction();
+                        router.refresh();
+                      });
+                    }
+                    return;
+                  }
+                  window.dispatchEvent(new CustomEvent(t.ev));
+                }}
+                className="group flex w-[84px] flex-col items-center gap-1.5 rounded-xl px-1.5 py-2 transition-colors hover:bg-white/[0.06]"
+                style={{ color: `rgb(${t.rgb})` }}
+              >
+                <span
+                  className="grid h-11 w-11 place-items-center rounded-full border transition-transform group-hover:scale-105"
+                  style={{
+                    borderColor: `rgba(${t.rgb},0.6)`,
+                    background: "rgba(10,10,24,0.85)",
+                  }}
+                >
+                  <DockIcon kind={t.icon} />
+                </span>
+                <span className="text-[11px] font-semibold leading-none">
+                  {t.label}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       </div>
 
       {/* Inspector / administración del nodo */}
@@ -1440,6 +1339,58 @@ function Toggle({
         }`}
       />
     </button>
+  );
+}
+
+function DockIcon({ kind }: { kind: "list" | "coin" | "shield" | "pause" }) {
+  const common = {
+    width: 22,
+    height: 22,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 2,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+  };
+  if (kind === "list")
+    return (
+      <svg {...common}>
+        <line x1="5" y1="7" x2="19" y2="7" />
+        <line x1="5" y1="12" x2="19" y2="12" />
+        <line x1="5" y1="17" x2="19" y2="17" />
+      </svg>
+    );
+  if (kind === "shield")
+    return (
+      <svg {...common}>
+        <path d="M12 3l7 3v5c0 4.6-3 7.6-7 9-4-1.4-7-4.4-7-9V6z" />
+        <path d="M9 12l2 2 4-4" />
+      </svg>
+    );
+  if (kind === "pause")
+    return (
+      <svg {...common} fill="currentColor" stroke="none">
+        <rect x="7" y="6" width="3.6" height="12" rx="1" />
+        <rect x="13.4" y="6" width="3.6" height="12" rx="1" />
+      </svg>
+    );
+  return (
+    <svg {...common}>
+      <circle cx="12" cy="12" r="8" />
+      <text
+        x="12"
+        y="12.5"
+        textAnchor="middle"
+        dominantBaseline="central"
+        fontSize="11"
+        fontWeight="800"
+        fill="currentColor"
+        stroke="none"
+      >
+        €
+      </text>
+    </svg>
   );
 }
 
