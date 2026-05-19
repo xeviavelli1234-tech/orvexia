@@ -356,6 +356,7 @@ model SellerAccount {
   alertOnPriceFloor Boolean @default(true)  // avisar al tocar el precio mínimo
   alertOnError      Boolean @default(true)  // avisar ante errores de reprecio
   lastAlertAt       DateTime?               // cooldown anti-spam de correos
+  trialReminderSent Boolean @default(false) // aviso de fin de prueba enviado
 
   // ── Datos fiscales del cliente (para la factura) ──
   billingName     String @default("") // razón social / nombre fiscal

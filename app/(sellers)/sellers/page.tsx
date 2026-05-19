@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PRICE_TIERS } from "@/lib/billing";
 
 export default function SellersLandingPage() {
   return (
@@ -32,7 +33,7 @@ export default function SellersLandingPage() {
           </Link>
         </div>
         <p className="mt-5 text-xs text-fg/50">
-          Sin tarjeta. Sin permanencia. Solo Amazon ES.
+          Sin tarjeta. Sin permanencia. Marketplaces de Amazon EU.
         </p>
       </section>
 
@@ -86,33 +87,59 @@ export default function SellersLandingPage() {
       </section>
 
       {/* ── Pricing ───────────────────────────────────────────────────────── */}
-      <section id="precios" className="px-5 py-20 max-w-3xl mx-auto">
+      <section id="precios" className="px-5 py-20 max-w-4xl mx-auto">
         <h2 className="text-3xl font-bold tracking-tight text-center">
-          Un precio. Sin sorpresas.
+          Precio según tu catálogo
         </h2>
         <p className="mt-3 text-center text-fg/70">
-          Empieza gratis 14 días. Sin tarjeta. Cancela cuando quieras.
+          Pagas por el volumen que gestionas. Empieza gratis 14 días, sin
+          tarjeta y sin permanencia.
         </p>
 
-        <div className="mt-12 rounded-2xl border border-[var(--brand-200)] bg-bg p-8 shadow-sm">
-          <div className="flex items-baseline gap-2">
-            <span className="text-5xl font-bold tracking-tight">29 €</span>
-            <span className="text-fg/60">/mes</span>
-          </div>
-          <ul className="mt-6 space-y-3 text-sm">
-            <Check>Productos ilimitados</Check>
-            <Check>Reprecio cada 5 minutos</Check>
-            <Check>Historial completo de cambios</Check>
-            <Check>Amazon España (más marketplaces próximamente)</Check>
-            <Check>Soporte por email</Check>
-          </ul>
-          <Link
-            href="/login?next=/dashboard"
-            className="mt-8 block text-center rounded-lg bg-[var(--brand-600)] text-white px-6 py-3 font-semibold hover:bg-[var(--brand-700)] transition-colors"
-          >
-            Empezar 14 días gratis
-          </Link>
+        <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {PRICE_TIERS.map((t, i) => (
+            <div
+              key={t.id}
+              className={`rounded-2xl border bg-bg p-6 shadow-sm flex flex-col ${
+                i === 0 ? "border-[var(--brand-300)]" : "border-fg/10"
+              }`}
+            >
+              <div className="text-sm font-semibold text-fg/70">{t.label}</div>
+              <div className="mt-2 flex items-baseline gap-1">
+                <span className="text-3xl font-bold tracking-tight">
+                  {t.priceEur} €
+                </span>
+                <span className="text-fg/55 text-sm">/mes</span>
+              </div>
+              {i === 0 && (
+                <span className="mt-2 inline-block w-fit text-[11px] font-semibold text-[var(--brand-700)] bg-[var(--brand-50)] px-2 py-0.5 rounded-full">
+                  Para empezar
+                </span>
+              )}
+            </div>
+          ))}
         </div>
+
+        <ul className="mt-8 grid sm:grid-cols-2 gap-3 text-sm max-w-2xl mx-auto">
+          <Check>Reprecio automático cada 5 minutos</Check>
+          <Check>Mínimo y máximo por producto</Check>
+          <Check>Estrategias: Buy Box, margen, igualar, fijo, gradual</Check>
+          <Check>Multi-marketplace EU (ES, FR, DE, IT, NL, BE, PL, SE, UK)</Check>
+          <Check>Analíticas, rentabilidad y alertas por email</Check>
+          <Check>Soporte por email · cancela cuando quieras</Check>
+        </ul>
+
+        <Link
+          href="/login?next=/dashboard"
+          className="mt-10 block w-fit mx-auto rounded-lg bg-[var(--brand-600)] text-white px-7 py-3 font-semibold hover:bg-[var(--brand-700)] transition-colors"
+        >
+          Empezar 14 días gratis
+        </Link>
+        <p className="mt-3 text-center text-xs text-fg/50">
+          El tramo se ajusta solo al crecer tu catálogo. El plan Profesional de
+          Amazon (que exige Amazon para automatizar precios) se paga aparte a
+          Amazon.
+        </p>
       </section>
 
       {/* ── FAQ ───────────────────────────────────────────────────────────── */}

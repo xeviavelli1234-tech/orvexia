@@ -7,7 +7,7 @@ import { fetchAllListings } from "@/lib/amazon/listings";
 import { upsertListingsBatch } from "@/lib/db/sellerListing";
 import { isFixtureMode } from "@/lib/amazon/fixtures";
 import { isRepricingAllowed, type SellerPlan } from "@/lib/billing";
-import { sendRepricerAlertEmail } from "@/lib/email";
+import { sendRepricerAlertEmail, sendTrialEndingEmail } from "@/lib/email";
 import { parseTags } from "@/lib/tags";
 import { isScheduleAllowed } from "./schedule";
 import { computeNewPrice } from "./engine";
@@ -91,6 +91,30 @@ export async function runRepricer(
   });
 
   for (const account of accounts) {
+    // Recordatorio de fin de prueba (una sola vez, ≤3 días antes).
+    if (
+      account.plan === "TRIAL" &&
+      account.trialEndsAt &&
+      !account.trialReminderSent
+    ) {
+      const msLeft = account.trialEndsAt.getTime() - now.getTime();
+      const DAY = 86_400_000;
+      if (msLeft <= 3 * DAY && msLeft > -DAY) {
+        const daysLeft = Math.max(0, Math.ceil(msLeft / DAY));
+        try {
+          if (account.user?.email) {
+            await sendTrialEndingEmail({ to: account.user.email, daysLeft });
+          }
+        } catch (e) {
+          console.warn("[reprice] trial reminder failed:", e);
+        }
+        await prisma.sellerAccount.update({
+          where: { id: account.id },
+          data: { trialReminderSent: true },
+        });
+      }
+    }
+
     // Trial expirado y sin pasar a PRO → no reprecia (gating de plan).
     if (!isRepricingAllowed(account.plan as SellerPlan, account.trialEndsAt, now)) {
       continue;

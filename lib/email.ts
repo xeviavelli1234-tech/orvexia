@@ -297,6 +297,48 @@ export async function sendPasswordResetEmail(options: {
   }
 }
 
+/** Aviso de que la prueba gratuita está por terminar. */
+export async function sendTrialEndingEmail(options: {
+  to: string;
+  daysLeft: number;
+}): Promise<{ emailSent: boolean }> {
+  const appName = process.env.NEXT_PUBLIC_APP_NAME || "Orvexia";
+  const url = `${baseUrl()}/sellers/facturacion`;
+  const d = Math.max(0, options.daysLeft);
+  const subject =
+    d <= 0
+      ? "Tu prueba de Orvexia Repricer termina hoy"
+      : `Tu prueba de Orvexia Repricer termina en ${d} día${d === 1 ? "" : "s"}`;
+  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"/></head>
+  <body style="margin:0;padding:0;background:#0b1220;font-family:'Segoe UI',Arial,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:28px 0;"><tr><td align="center">
+      <table role="presentation" width="520" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 18px 35px rgba(0,0,0,0.18);">
+        <tr><td style="background:linear-gradient(135deg,#1e293b,#0ea5e9);color:#e2f3ff;padding:28px;">
+          <div style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;opacity:.9;">${appName} Repricer</div>
+          <div style="font-size:22px;font-weight:700;margin-top:6px;">${subject}</div>
+        </td></tr>
+        <tr><td style="padding:24px 28px;color:#0f172a;font-size:14px;line-height:1.6;">
+          Para que tu reprecio no se pause, pasa a Pro antes de que acabe la
+          prueba. El precio se ajusta a tu volumen de productos y puedes
+          cancelar cuando quieras.
+          <div style="margin-top:20px;">
+            <a href="${url}" style="display:inline-block;background:#2563EB;color:#fff;text-decoration:none;padding:12px 18px;border-radius:12px;font-weight:700;font-size:14px;">Ver planes y pasar a Pro</a>
+          </div>
+        </td></tr>
+        <tr><td style="background:#f1f5f9;color:#475569;padding:16px 28px;font-size:12px;">Enviado por ${appName}.</td></tr>
+      </table>
+    </td></tr></table>
+  </body></html>`;
+  const text = `${subject}. Pasa a Pro para no perder el reprecio: ${url}`;
+  try {
+    await tryResend(options.to, subject, html, text);
+    return { emailSent: true };
+  } catch (err) {
+    console.warn("[email] aviso fin de prueba no enviado:", err);
+    return { emailSent: false };
+  }
+}
+
 /**
  * Correo resumen de alertas del repricer (un único email por ciclo).
  * Agrupa Buy Box perdidas, productos en precio mínimo y errores.
