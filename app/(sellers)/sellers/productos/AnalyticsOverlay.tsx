@@ -846,9 +846,91 @@ function LineChart({ series }: { series: Array<{ title: string; pts: { t: number
     new Intl.DateTimeFormat("es-ES", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(
       new Date(ms),
     );
+
+  // Tiempos únicos ordenados (para "imantar" el cursor a un punto real).
+  const allTimes = Array.from(new Set(all.map((d) => d.t))).sort((a, b) => a - b);
+  const [hover, setHover] = useState<{
+    t: number;
+    leftPx: number;
+    w: number;
+  } | null>(null);
+
+  function onMove(e: React.PointerEvent<SVGSVGElement>) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    if (rect.width === 0) return;
+    const sx = ((e.clientX - rect.left) / rect.width) * W;
+    const rawT =
+      tMin + ((sx - padL) / (W - padL - padR)) * (tMax - tMin);
+    // Imantar al timestamp real más cercano.
+    let best = allTimes[0];
+    let bd = Infinity;
+    for (const t of allTimes) {
+      const dd = Math.abs(t - rawT);
+      if (dd < bd) {
+        bd = dd;
+        best = t;
+      }
+    }
+    const leftPx = Math.max(
+      0,
+      Math.min(rect.width, (x(best) / W) * rect.width),
+    );
+    setHover({ t: best, leftPx, w: rect.width });
+  }
+
+  const hoverRows = hover
+    ? series.map((s, si) => {
+        let np = s.pts[0];
+        let nd = Infinity;
+        for (const pt of s.pts) {
+          const dd = Math.abs(pt.t - hover.t);
+          if (dd < nd) {
+            nd = dd;
+            np = pt;
+          }
+        }
+        return { title: s.title, color: CHART_COLORS[si % CHART_COLORS.length], pt: np };
+      })
+    : [];
+
   return (
-    <div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" preserveAspectRatio="none" height={280}>
+    <div className="relative">
+      {hover && hoverRows.length > 0 && (
+        <div
+          className="pointer-events-none absolute top-1 z-10 -translate-x-1/2 rounded-lg border border-white/15 bg-[rgba(6,7,16,0.96)] px-3 py-2 text-[11px] shadow-xl"
+          style={{
+            left: `${Math.max(70, Math.min(hover.w - 70, hover.leftPx))}px`,
+          }}
+        >
+          <div className="text-white/45 mb-1">{fmtT(hover.t)}</div>
+          {hoverRows.map((r) => (
+            <div key={r.title} className="flex items-center gap-2 whitespace-nowrap">
+              <span
+                className="h-2 w-2 rounded-full shrink-0"
+                style={{ background: r.color }}
+              />
+              <span className="max-w-[160px] truncate text-white/65">
+                {r.title}
+              </span>
+              <span className="ml-auto font-mono font-semibold text-white/90">
+                {r.pt.p.toLocaleString("es-ES", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}{" "}
+                €
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        className="w-full"
+        preserveAspectRatio="none"
+        height={280}
+        onPointerMove={onMove}
+        onPointerLeave={() => setHover(null)}
+      >
         {yT.map((v, i) => (
           <g key={i}>
             <line x1={padL} x2={W - padR} y1={y(v)} y2={y(v)} stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
@@ -885,6 +967,31 @@ function LineChart({ series }: { series: Array<{ title: string; pts: { t: number
             </g>
           );
         })}
+        {hover && (
+          <g>
+            <line
+              x1={x(hover.t)}
+              x2={x(hover.t)}
+              y1={padT}
+              y2={H - padB}
+              stroke="rgba(255,255,255,0.35)"
+              strokeWidth="1"
+              strokeDasharray="4 4"
+              vectorEffect="non-scaling-stroke"
+            />
+            {hoverRows.map((r) => (
+              <circle
+                key={r.title}
+                cx={x(r.pt.t)}
+                cy={y(r.pt.p)}
+                r="5"
+                fill={r.color}
+                stroke="#06070f"
+                strokeWidth="2"
+              />
+            ))}
+          </g>
+        )}
       </svg>
       <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5">
         {series.map((s, si) => (
