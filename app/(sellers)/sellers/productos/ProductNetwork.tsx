@@ -649,7 +649,11 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
                     h.y + HR + 46
                   } ${SX},${SY - SR}`;
                   return (
-                    <g key={t.key}>
+                    <g
+                      key={t.key}
+                      className="tool-in"
+                      style={{ "--td": `${i * 0.07}s` } as CSSProperties}
+                    >
                       <path
                         d={branch}
                         fill="none"
