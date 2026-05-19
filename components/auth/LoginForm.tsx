@@ -3,7 +3,11 @@
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
-import { loginAction, type ActionResult } from "@/app/actions/auth";
+import {
+  loginAction,
+  verifyTwoFactorAction,
+  type ActionResult,
+} from "@/app/actions/auth";
 import { GoogleButton } from "./GoogleButton";
 import { InputField } from "./InputField";
 import { Playfair_Display, Inter } from "next/font/google";
@@ -55,6 +59,12 @@ export function LoginForm({ oauthError, next }: { oauthError?: string; next?: st
     loginAction,
     null
   );
+  const [tfaState, tfaAction] = useActionState<ActionResult, FormData>(
+    verifyTwoFactorAction,
+    null
+  );
+  const requires2fa = !!state?.requires2fa || !!tfaState?.requires2fa;
+  const tfaMsg = tfaState?.message ?? state?.message;
 
   // Field values
   const [email, setEmail] = useState("");
@@ -134,6 +144,52 @@ export function LoginForm({ oauthError, next }: { oauthError?: string; next?: st
       setResendLoading(false);
     }
   };
+
+  if (requires2fa) {
+    return (
+      <div className={`space-y-4 ${inter.className}`}>
+        <div className="text-center">
+          <div className="text-lg font-bold">Verificación en dos pasos</div>
+          <p className="mt-1 text-xs text-fg-muted">
+            Introduce el código de 6 dígitos de tu app de autenticación (o un
+            código de recuperación).
+          </p>
+        </div>
+        <form action={tfaAction} className="space-y-3">
+          <input
+            name="code"
+            inputMode="text"
+            autoComplete="one-time-code"
+            autoFocus
+            placeholder="123456"
+            className="w-full h-11 rounded-xl border border-fg/15 bg-bg px-4 text-center tracking-[0.3em] font-mono text-lg focus:border-brand-600 focus:outline-none"
+          />
+          {tfaMsg && (
+            <p
+              role="alert"
+              className="text-xs text-danger-500 text-center field-msg"
+            >
+              {tfaMsg}
+            </p>
+          )}
+          <span className="aura-cta block rounded-xl">
+            <button
+              type="submit"
+              className="w-full bg-brand-600 hover:bg-brand-700 active:scale-[0.98] text-white font-bold h-11 rounded-xl transition-all"
+            >
+              Verificar y entrar
+            </button>
+          </span>
+        </form>
+        <a
+          href="/login"
+          className="block text-center text-xs text-fg-muted hover:text-fg"
+        >
+          ← Cancelar
+        </a>
+      </div>
+    );
+  }
 
   return (
     <div className={`space-y-4 ${inter.className}`}>

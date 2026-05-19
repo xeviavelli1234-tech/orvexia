@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { ProfileClient } from "./ProfileClient";
+import TwoFactorPanel from "./TwoFactorPanel";
 import { MiActividad } from "@/components/community/MiActividad";
 import type { MyPost, MyComment } from "@/components/community/MiActividad";
 
@@ -11,6 +12,11 @@ export const metadata = { title: "Mi perfil · Orvexia" };
 export default async function PerfilPage() {
   const session = await getSession();
   if (!session) redirect("/login");
+
+  const me = await prisma.user.findUnique({
+    where: { id: session.userId },
+    select: { totpEnabled: true, password: true },
+  });
 
   const [rawPosts, rawComments] = await Promise.all([
     prisma.communityPost.findMany({
@@ -50,6 +56,12 @@ export default async function PerfilPage() {
   return (
     <>
       <ProfileClient />
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 pb-4">
+        <TwoFactorPanel
+          enabled={!!me?.totpEnabled}
+          hasPassword={!!me?.password}
+        />
+      </div>
       <div className="max-w-3xl mx-auto px-4 sm:px-6 pb-12">
         <MiActividad posts={posts} comments={comments} />
       </div>

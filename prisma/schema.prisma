@@ -18,6 +18,9 @@ model User {
   verificationTokenExpires DateTime?
   resetPasswordToken       String?   @unique
   resetPasswordExpires     DateTime?
+  totpSecret               String?   // base32 cifrado (AES-GCM)
+  totpEnabled              Boolean   @default(false)
+  totpRecovery             String?   @db.Text // JSON: hashes bcrypt de códigos
   avatarColor              String    @default("#2563EB")
   avatarEmoji              String?
   avatarUrl                String?   @db.Text

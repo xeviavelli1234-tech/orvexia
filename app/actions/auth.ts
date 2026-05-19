@@ -4,7 +4,15 @@ import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { registerSchema, loginSchema } from "@/lib/validations";
 import { getUserByEmail, createUser, deleteExpiredUnverified } from "@/lib/db/user";
-import { createSession, deleteSession } from "@/lib/session";
+import {
+  createSession,
+  deleteSession,
+  createPending2fa,
+  getPending2fa,
+  clearPending2fa,
+} from "@/lib/session";
+import { decryptToken } from "@/lib/crypto";
+import { verifyTotp } from "@/lib/totp";
 import { randomInt } from "crypto";
 import { sendVerificationEmail } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
@@ -15,6 +23,7 @@ export type ActionResult = {
   errors?: FormErrors;
   message?: string;
   requiresVerification?: boolean;
+  requires2fa?: boolean;
   email?: string;
 } | null;
 
@@ -121,9 +130,74 @@ export async function loginAction(
   }
 
   const rememberMe = formData.get("rememberMe") === "on";
-  await createSession({ userId: user.id, name: user.name, email: user.email }, rememberMe);
   const nextRaw = formData.get("next");
-  redirect(safeNext(typeof nextRaw === "string" ? nextRaw : null) ?? "/dashboard");
+  const next = safeNext(typeof nextRaw === "string" ? nextRaw : null);
+
+  // 2FA activado → no creamos sesión todavía: pedimos el código.
+  if (user.totpEnabled) {
+    await createPending2fa({ userId: user.id, rememberMe, next });
+    return { requires2fa: true, email: user.email };
+  }
+
+  await createSession({ userId: user.id, name: user.name, email: user.email }, rememberMe);
+  redirect(next ?? "/dashboard");
+}
+
+/** Paso 2 del login cuando hay 2FA: verifica código TOTP o de recuperación. */
+export async function verifyTwoFactorAction(
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const pending = await getPending2fa();
+  if (!pending) {
+    return { message: "La verificación ha caducado. Inicia sesión de nuevo." };
+  }
+  const code = String(formData.get("code") ?? "").trim();
+  if (!code) return { requires2fa: true, message: "Introduce el código." };
+
+  const user = await prisma.user.findUnique({ where: { id: pending.userId } });
+  if (!user || !user.totpEnabled || !user.totpSecret) {
+    await clearPending2fa();
+    return { message: "Cuenta no válida para 2FA." };
+  }
+
+  let ok = false;
+  try {
+    ok = verifyTotp(decryptToken(user.totpSecret), code);
+  } catch {
+    ok = false;
+  }
+
+  // Código de recuperación de un solo uso.
+  if (!ok && user.totpRecovery) {
+    try {
+      const hashes: string[] = JSON.parse(user.totpRecovery);
+      for (let i = 0; i < hashes.length; i++) {
+        if (await bcrypt.compare(code.toUpperCase(), hashes[i])) {
+          ok = true;
+          hashes.splice(i, 1); // consumir
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { totpRecovery: JSON.stringify(hashes) },
+          });
+          break;
+        }
+      }
+    } catch {
+      /* recovery malformado → ignora */
+    }
+  }
+
+  if (!ok) {
+    return { requires2fa: true, message: "Código incorrecto." };
+  }
+
+  await clearPending2fa();
+  await createSession(
+    { userId: user.id, name: user.name, email: user.email },
+    pending.rememberMe,
+  );
+  redirect(pending.next ?? "/dashboard");
 }
 
 /**
