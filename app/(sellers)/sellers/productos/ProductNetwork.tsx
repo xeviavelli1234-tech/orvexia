@@ -16,7 +16,7 @@ import {
   profitAt,
   type CostInputs,
 } from "@/lib/reprice/margin";
-import { parseTags } from "@/lib/tags";
+import { parseTags, collectTags } from "@/lib/tags";
 import {
   updateListingRangeAction,
   toggleListingAction,
@@ -339,6 +339,9 @@ export default function ProductNetwork({
   const [hubOpen, setHubOpen] = useState(false);
   const [showStates, setShowStates] = useState(false);
   const [hideSteps, setHideSteps] = useState(false);
+  const [gq, setGq] = useState("");
+  const [gState, setGState] = useState<"ALL" | State>("ALL");
+  const [gTag, setGTag] = useState("");
   const [pending, startTransition] = useTransition();
   const [err, setErr] = useState<string | null>(null);
   const [min, setMin] = useState("");
@@ -597,6 +600,30 @@ export default function ProductNetwork({
   }, [nodes]);
 
   const sel = nodes.find((x) => x.id === selId) ?? null;
+
+  // Búsqueda / filtro del grafo: ids que pasan los filtros activos.
+  const allTags = useMemo(
+    () => collectTags(nodes.map((n) => n.tags)),
+    [nodes],
+  );
+  const filterActive = gq.trim() !== "" || gState !== "ALL" || gTag !== "";
+  const matchSet = useMemo(() => {
+    const q = gq.trim().toLowerCase();
+    const tg = gTag.toLowerCase();
+    const ids = new Set<string>();
+    for (const n of nodes) {
+      if (q && !`${n.title} ${n.sku} ${n.asin}`.toLowerCase().includes(q))
+        continue;
+      if (gState !== "ALL" && nodeState(n) !== gState) continue;
+      if (
+        tg &&
+        !parseTags(n.tags).some((t) => t.toLowerCase() === tg)
+      )
+        continue;
+      ids.add(n.id);
+    }
+    return ids;
+  }, [nodes, gq, gState, gTag]);
 
   // Calculadora de costes/margen en vivo (estrategia MARGIN).
   const costCalc = useMemo(() => {
@@ -1337,6 +1364,7 @@ export default function ProductNetwork({
             const st = nodeState(p);
             const col = STATE_COLOR[st];
             const active = selId === p.id;
+            const dim = filterActive && !matchSet.has(p.id);
             return (
               <g
                 key={p.id}
@@ -1345,6 +1373,9 @@ export default function ProductNetwork({
                   {
                     "--d": `${3.6 + (i % 5) * 0.5}s`,
                     "--dl": `${(i % 7) * 0.45}s`,
+                    opacity: dim ? 0.1 : 1,
+                    pointerEvents: dim ? "none" : undefined,
+                    transition: "opacity .25s ease",
                   } as CSSProperties
                 }
               >
@@ -1399,6 +1430,60 @@ export default function ProductNetwork({
 
         </g>
       </svg>
+
+      {/* Búsqueda / filtro del grafo */}
+      {nodes.length > 0 && (
+        <div className="absolute top-3 left-3 z-20 flex flex-wrap items-center gap-1.5 rounded-xl border border-white/10 bg-[rgba(8,9,20,0.92)] px-2.5 py-2 backdrop-blur-xl">
+          <input
+            value={gq}
+            onChange={(e) => setGq(e.target.value)}
+            placeholder="Buscar título / SKU / ASIN…"
+            className="w-44 rounded-lg border border-white/15 bg-black/40 px-2.5 py-1.5 text-[12px] text-white placeholder:text-white/30 focus:border-cyan-400/60 focus:outline-none"
+          />
+          <select
+            value={gState}
+            onChange={(e) => setGState(e.target.value as "ALL" | State)}
+            className="rounded-lg border border-white/15 bg-black/40 px-2 py-1.5 text-[12px] text-white focus:border-cyan-400/60 focus:outline-none"
+          >
+            <option value="ALL">Todos los estados</option>
+            {STATE_LABEL.map(({ st, label }) => (
+              <option key={st} value={st}>
+                {label}
+              </option>
+            ))}
+          </select>
+          {allTags.length > 0 && (
+            <select
+              value={gTag}
+              onChange={(e) => setGTag(e.target.value)}
+              className="rounded-lg border border-white/15 bg-black/40 px-2 py-1.5 text-[12px] text-white focus:border-cyan-400/60 focus:outline-none"
+            >
+              <option value="">Todas las etiquetas</option>
+              {allTags.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          )}
+          <span className="px-1 text-[11px] font-mono text-white/45">
+            {filterActive ? `${matchSet.size}/${nodes.length}` : nodes.length}
+          </span>
+          {filterActive && (
+            <button
+              type="button"
+              onClick={() => {
+                setGq("");
+                setGState("ALL");
+                setGTag("");
+              }}
+              className="rounded-lg border border-white/15 px-2 py-1.5 text-[11px] text-white/60 hover:bg-white/10 transition-colors"
+            >
+              Limpiar
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Primeros pasos: solo si hay productos pero ninguno repreciando */}
       {!hideSteps && !sel && nodes.length > 0 && activeCount === 0 && (
