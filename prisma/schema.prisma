@@ -375,6 +375,7 @@ model SellerListing {
   sellerAccountId String
 
   asin            String
+  parentAsin      String   @default("") // ASIN padre (variación talla/color)
   sku             String
   title           String
   imageUrl        String?

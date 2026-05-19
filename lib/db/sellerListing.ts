@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import type { NormalizedListing } from "@/lib/amazon/listings";
 import { normalizeTags, addTag, removeTag } from "@/lib/tags";
+import { normalizeAsin } from "@/lib/variations";
 
 export async function listListingsByAccount(sellerAccountId: string) {
   return prisma.sellerListing.findMany({
@@ -272,6 +273,23 @@ export async function setListingTags(params: {
   });
 }
 
+/** Asigna el ASIN padre (variación) de un producto. */
+export async function setListingParent(params: {
+  listingId: string;
+  userId: string;
+  parentAsin: string;
+}) {
+  const existing = await getListingForUser({
+    listingId: params.listingId,
+    userId: params.userId,
+  });
+  if (!existing) throw new Error("listing_not_found_or_not_owned");
+  return prisma.sellerListing.update({
+    where: { id: params.listingId },
+    data: { parentAsin: normalizeAsin(params.parentAsin).slice(0, 20) },
+  });
+}
+
 /** Añade o quita una etiqueta a un conjunto de productos del usuario. */
 export async function bulkApplyTag(
   userId: string,
@@ -302,6 +320,7 @@ export async function bulkApplyTag(
 export interface ImportRow {
   sku: string;
   tags?: string;
+  parentAsin?: string;
   priceMin?: number | null;
   priceMax?: number | null;
   strategy?: "BUYBOX" | "MATCH" | "FIXED" | "MARGIN";
@@ -351,6 +370,8 @@ export async function importListingConfig(
     if (row.feePercent !== undefined) data.feePercent = row.feePercent;
     if (row.targetMargin !== undefined) data.targetMargin = row.targetMargin;
     if (row.tags !== undefined) data.tags = normalizeTags(row.tags);
+    if (row.parentAsin !== undefined)
+      data.parentAsin = normalizeAsin(row.parentAsin).slice(0, 20);
     if (row.noCompetition) data.noCompetition = row.noCompetition;
     if (row.stepUpType) data.stepUpType = row.stepUpType;
     if (row.stepUpValue !== undefined) data.stepUpValue = row.stepUpValue;

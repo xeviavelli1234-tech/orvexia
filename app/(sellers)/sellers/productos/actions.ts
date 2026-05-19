@@ -13,6 +13,7 @@ import {
   bulkSetUseDefaults,
   setListingTags,
   bulkApplyTag,
+  setListingParent,
   importListingConfig,
   type ImportRow,
 } from "@/lib/db/sellerListing";
@@ -349,6 +350,30 @@ export async function updateListingTagsAction(
   return { ok: true };
 }
 
+const parentSchema = z.object({
+  listingId: z.string().min(1),
+  parentAsin: z.string().max(20),
+});
+
+export async function updateListingParentAction(
+  formData: FormData,
+): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+  const parsed = parentSchema.safeParse({
+    listingId: String(formData.get("listingId") ?? ""),
+    parentAsin: String(formData.get("parentAsin") ?? ""),
+  });
+  if (!parsed.success) return { ok: false, error: "validation_failed" };
+  try {
+    await setListingParent({ userId: session.userId, ...parsed.data });
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "db_failed" };
+  }
+  revalidatePath("/sellers/productos");
+  return { ok: true };
+}
+
 const bulkTagSchema = z.object({
   ids: z.array(z.string().min(1)).min(1).max(2000),
   tag: z.string().min(1).max(24),
@@ -437,6 +462,7 @@ export async function importConfigAction(
     rows.push({
       sku,
       tags: get("tags"),
+      parentAsin: get("parentasin"),
       priceMin: num(get("pricemin")),
       priceMax: num(get("pricemax")),
       strategy: enumOf(get("strategy"), ["BUYBOX", "MATCH", "FIXED", "MARGIN"]),

@@ -102,6 +102,7 @@ export default async function ProductosPage() {
       id: l.id,
       title: l.title,
       asin: l.asin,
+      parentAsin: l.parentAsin,
       sku: l.sku,
       imageUrl: l.imageUrl,
       priceCurrent: l.priceCurrent,

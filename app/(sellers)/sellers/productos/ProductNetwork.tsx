@@ -23,6 +23,7 @@ import {
   updateListingStrategyAction,
   updateListingCompetitionAction,
   updateListingTagsAction,
+  updateListingParentAction,
   pauseAllAction,
 } from "./actions";
 
@@ -36,6 +37,7 @@ export interface NetNode {
   id: string;
   title: string;
   asin: string;
+  parentAsin: string;
   sku: string;
   imageUrl: string | null;
   priceCurrent: number;
@@ -361,6 +363,7 @@ export default function ProductNetwork({
   const [stepUType, setStepUType] = useState<UndercutType>("AMOUNT");
   const [stepUVal, setStepUVal] = useState("0.05");
   const [tags, setTags] = useState("");
+  const [parentA, setParentA] = useState("");
   const [useAccDef, setUseAccDef] = useState(false);
   const [ignoreAmz, setIgnoreAmz] = useState(true);
   const [fulfil, setFulfil] = useState<Fulfillment>("ANY");
@@ -613,7 +616,12 @@ export default function ProductNetwork({
     const tg = gTag.toLowerCase();
     const ids = new Set<string>();
     for (const n of nodes) {
-      if (q && !`${n.title} ${n.sku} ${n.asin}`.toLowerCase().includes(q))
+      if (
+        q &&
+        !`${n.title} ${n.sku} ${n.asin} ${n.parentAsin}`
+          .toLowerCase()
+          .includes(q)
+      )
         continue;
       if (gState !== "ALL" && nodeState(n) !== gState) continue;
       if (
@@ -672,6 +680,7 @@ export default function ProductNetwork({
     setStepUType(n.stepUpType);
     setStepUVal(String(n.stepUpValue ?? 0.05));
     setTags(n.tags ?? "");
+    setParentA(n.parentAsin ?? "");
     setUseAccDef(n.useAccountDefaults);
     setIgnoreAmz(n.ignoreAmazon);
     setFulfil(n.fulfillmentFilter);
@@ -688,6 +697,19 @@ export default function ProductNetwork({
     fd.set("tags", tags);
     startTransition(async () => {
       const r = await updateListingTagsAction(fd);
+      if (!r.ok) setErr(errMsg(r.error));
+      else router.refresh();
+    });
+  }
+
+  function saveParent() {
+    if (!sel) return;
+    setErr(null);
+    const fd = new FormData();
+    fd.set("listingId", sel.id);
+    fd.set("parentAsin", parentA);
+    startTransition(async () => {
+      const r = await updateListingParentAction(fd);
       if (!r.ok) setErr(errMsg(r.error));
       else router.refresh();
     });
@@ -1688,6 +1710,14 @@ export default function ProductNetwork({
         >
           <span className="text-[13px] leading-none">🎨</span>
         </ZoomBtn>
+        <ZoomBtn
+          label="Repetir tutorial guiado"
+          onClick={() =>
+            window.dispatchEvent(new CustomEvent("orvexia:open-tour"))
+          }
+        >
+          <span className="text-[13px] leading-none">🎓</span>
+        </ZoomBtn>
       </div>
       )}
 
@@ -2117,6 +2147,30 @@ export default function ProductNetwork({
                 >
                   {pending ? "Guardando…" : "Guardar etiquetas"}
                 </button>
+
+                <div className="mt-4 border-t border-white/10 pt-3">
+                  <span className="text-[10px] uppercase tracking-wider text-white/40">
+                    Variación · ASIN padre
+                  </span>
+                  <input
+                    value={parentA}
+                    onChange={(e) => setParentA(e.target.value)}
+                    placeholder="B0XXXXXXXX (vacío = producto único)"
+                    disabled={pending}
+                    className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-cyan-400/60 focus:outline-none"
+                  />
+                  <p className="mt-1 text-[10px] text-white/35">
+                    Agrupa tallas/colores bajo el mismo ASIN padre para
+                    filtrarlos y gestionarlos como familia.
+                  </p>
+                  <button
+                    onClick={saveParent}
+                    disabled={pending}
+                    className="mt-2 w-full rounded-lg border border-cyan-400/40 text-cyan-200 py-2 text-sm font-semibold hover:bg-cyan-400/10 transition-colors disabled:opacity-50"
+                  >
+                    {pending ? "Guardando…" : "Guardar variación"}
+                  </button>
+                </div>
               </div>
 
               {/* ── Competencia ── */}

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { NetNode } from "./ProductNetwork";
 import { collectTags, parseTags } from "@/lib/tags";
+import { isVariationChild } from "@/lib/variations";
 import {
   bulkListingsAction,
   bulkTagAction,
@@ -71,7 +72,13 @@ export function PanicButton() {
   );
 }
 
-type Filter = "all" | "active" | "paused" | "norange" | "noprice";
+type Filter =
+  | "all"
+  | "active"
+  | "paused"
+  | "norange"
+  | "noprice"
+  | "variations";
 
 const CSV_COLS = [
   "sku",
@@ -95,6 +102,7 @@ const CSV_COLS = [
   "useAccountDefaults",
   "repricingEnabled",
   "tags",
+  "parentAsin",
 ] as const;
 
 function val(n: NetNode, c: (typeof CSV_COLS)[number]): string {
@@ -142,7 +150,13 @@ export default function CatalogOverlay({ items }: { items: NetNode[] }) {
     const qq = q.trim().toLowerCase();
     const tf = tagFilter.toLowerCase();
     return items.filter((n) => {
-      if (qq && !(`${n.title} ${n.sku} ${n.asin}`.toLowerCase().includes(qq))) return false;
+      if (
+        qq &&
+        !`${n.title} ${n.sku} ${n.asin} ${n.parentAsin}`
+          .toLowerCase()
+          .includes(qq)
+      )
+        return false;
       if (
         tf &&
         !parseTags(n.tags).some((t) => t.toLowerCase() === tf)
@@ -154,6 +168,7 @@ export default function CatalogOverlay({ items }: { items: NetNode[] }) {
       if (filter === "paused") return !n.repricingEnabled && !noprice;
       if (filter === "norange") return norange;
       if (filter === "noprice") return noprice;
+      if (filter === "variations") return isVariationChild(n);
       return true;
     });
   }, [items, q, filter, tagFilter]);
@@ -275,6 +290,7 @@ export default function CatalogOverlay({ items }: { items: NetNode[] }) {
             <option value="paused">Pausados</option>
             <option value="norange">Sin rango</option>
             <option value="noprice">Sin oferta</option>
+            <option value="variations">Solo variaciones</option>
           </select>
           {allTags.length > 0 && (
             <select
@@ -358,7 +374,14 @@ export default function CatalogOverlay({ items }: { items: NetNode[] }) {
                     </td>
                     <td className="py-2 px-2 max-w-[300px]">
                       <div className="truncate text-white/85">{n.title}</div>
-                      <div className="font-mono text-[10px] text-white/35">{n.sku}</div>
+                      <div className="font-mono text-[10px] text-white/35">
+                        {n.sku}
+                        {isVariationChild(n) && (
+                          <span className="ml-1.5 text-indigo-300/80">
+                            ↳ {n.parentAsin}
+                          </span>
+                        )}
+                      </div>
                       {parseTags(n.tags).length > 0 && (
                         <div className="mt-1 flex flex-wrap gap-1">
                           {parseTags(n.tags).map((t) => (
