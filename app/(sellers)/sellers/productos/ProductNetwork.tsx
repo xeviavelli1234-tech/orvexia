@@ -737,11 +737,12 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
               key: string;
               label: string;
               rgb: string;
-              icon: "list" | "shield" | "pause";
+              icon: "list" | "shield" | "pause" | "coin";
               ev: string;
               panic?: boolean;
             }> = [
               { key: "cat", label: "Catálogo", rgb: "125,211,252", icon: "list", ev: "orvexia:open-catalog" },
+              { key: "profit", label: "Rentabilidad", rgb: "52,211,153", icon: "coin", ev: "orvexia:open-profit" },
               { key: "set", label: "Cuenta", rgb: "165,180,252", icon: "shield", ev: "orvexia:open-settings" },
               { key: "panic", label: "Pausar todo", rgb: "248,113,113", icon: "pause", ev: "", panic: true },
             ];
@@ -847,6 +848,13 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
                             <line x1={SX - 8} y1={SY - 6} x2={SX + 8} y2={SY - 6} />
                             <line x1={SX - 8} y1={SY} x2={SX + 8} y2={SY} />
                             <line x1={SX - 8} y1={SY + 6} x2={SX + 8} y2={SY + 6} />
+                          </g>
+                        )}
+                        {t.icon === "coin" && (
+                          <g fill={`rgb(${t.rgb})`}>
+                            <rect x={SX - 9} y={SY + 1} width="4" height="7" rx="1" />
+                            <rect x={SX - 2} y={SY - 4} width="4" height="12" rx="1" />
+                            <rect x={SX + 5} y={SY - 9} width="4" height="17" rx="1" />
                           </g>
                         )}
                         <text

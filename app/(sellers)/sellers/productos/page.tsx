@@ -15,6 +15,7 @@ import CatalogOverlay, {
   CatalogButton,
   PanicButton,
 } from "./CatalogOverlay";
+import ProfitOverlay, { ProfitButton } from "./ProfitOverlay";
 import { RunNowButton } from "@/app/(sellers)/sellers/dashboard/RunNowButton";
 import { DisconnectButton } from "@/app/(sellers)/sellers/dashboard/DisconnectButton";
 import { prisma } from "@/lib/prisma";
@@ -212,6 +213,7 @@ export default async function ProductosPage() {
             proHref="/sellers/facturacion"
           />
           <CatalogButton />
+          <ProfitButton />
           <SettingsButton />
           <PanicButton />
           <DisconnectButton />
@@ -262,6 +264,7 @@ export default async function ProductosPage() {
 
       <AccountSettings initial={accountSettings} />
       <CatalogOverlay items={nodes} />
+      <ProfitOverlay items={nodes} />
     </div>
   );
 }
