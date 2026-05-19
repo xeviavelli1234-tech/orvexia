@@ -131,6 +131,17 @@ export default function HelpOverlay() {
             </div>
           </section>
 
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              window.dispatchEvent(new CustomEvent("orvexia:open-tour"));
+            }}
+            className="w-full rounded-lg border border-cyan-400/30 py-2 text-sm font-semibold text-cyan-200 hover:bg-cyan-400/10 transition-colors"
+          >
+            ▶ Repetir tutorial guiado
+          </button>
+
           <p className="text-[11px] text-white/40 border-t border-white/10 pt-3">
             El color y el precio se actualizan tras cada ciclo de reprecio. El
             motor compara tu producto contra el resto de vendedores del mismo

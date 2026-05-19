@@ -17,6 +17,7 @@ import CatalogOverlay, {
 } from "./CatalogOverlay";
 import ProfitOverlay, { ProfitButton } from "./ProfitOverlay";
 import HelpOverlay, { HelpButton } from "./HelpOverlay";
+import Tour from "./Tour";
 import { RunNowButton } from "@/app/(sellers)/sellers/dashboard/RunNowButton";
 import { DisconnectButton } from "@/app/(sellers)/sellers/dashboard/DisconnectButton";
 import { prisma } from "@/lib/prisma";
@@ -216,13 +217,19 @@ export default async function ProductosPage() {
           </div>
         </div>
 
-        <div className="px-5 py-5 flex flex-col gap-3 border-b border-white/10">
+        <div
+          id="tour-actions"
+          className="px-5 py-5 flex flex-col gap-3 border-b border-white/10"
+        >
           <Eyebrow>Acciones</Eyebrow>
           <SyncButton lastSyncAt={account.lastSyncAt} />
           <RunNowButton />
         </div>
 
-        <div className="px-5 py-5 flex flex-col gap-3 border-b border-white/10">
+        <div
+          id="tour-activity"
+          className="px-5 py-5 flex flex-col gap-3 border-b border-white/10"
+        >
           <Eyebrow>Plan y actividad</Eyebrow>
           <ActivityPanel
             events={events}
@@ -263,7 +270,10 @@ export default async function ProductosPage() {
       </aside>
 
       {/* ── Lienzo (resto de la ventana) ─────────────────────────── */}
-      <section className="relative flex-1 h-full bg-[radial-gradient(ellipse_at_50%_45%,#10173a_0%,#0a0d24_45%,#05060f_100%)]">
+      <section
+        id="tour-graph"
+        className="relative flex-1 h-full bg-[radial-gradient(ellipse_at_50%_45%,#10173a_0%,#0a0d24_45%,#05060f_100%)]"
+      >
         {hasListings ? (
           <ProductNetwork nodes={nodes} activeCount={active} />
         ) : (
@@ -304,6 +314,7 @@ export default async function ProductosPage() {
       <CatalogOverlay items={nodes} />
       <ProfitOverlay items={nodes} />
       <HelpOverlay />
+      <Tour />
     </div>
   );
 }
