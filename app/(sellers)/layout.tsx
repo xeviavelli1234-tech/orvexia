@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { REPRICER_ENABLED, REPRICER_PUBLIC } from "@/lib/featureFlags";
 import RepricerComingSoon from "@/components/RepricerComingSoon";
+import SellersHeader from "./SellersHeader";
 
 export const metadata = {
   title: "Orvexia Repricer · Reprecio automático para Amazon ES",
@@ -15,33 +16,7 @@ export default function SellersLayout({ children }: { children: React.ReactNode 
 
   return (
     <div className="min-h-screen flex flex-col bg-bg text-fg">
-      <header className="border-b border-black/5 dark:border-white/10 bg-bg/80 backdrop-blur sticky top-0 z-40">
-        <div className="max-w-6xl mx-auto flex items-center justify-between px-5 py-4">
-          <Link href="/sellers" className="font-bold text-lg tracking-tight">
-            Orvexia <span className="text-[var(--brand-600)]">Repricer</span>
-          </Link>
-          <nav className="flex items-center gap-6 text-sm">
-            <Link href="/sellers#como-funciona" className="hover:text-[var(--brand-600)]">
-              Cómo funciona
-            </Link>
-            <Link href="/sellers#precios" className="hover:text-[var(--brand-600)]">
-              Precios
-            </Link>
-            <Link href="/sellers#faq" className="hover:text-[var(--brand-600)]">
-              FAQ
-            </Link>
-            <Link href="/sellers/facturacion" className="hover:text-[var(--brand-600)]">
-              Facturación
-            </Link>
-            <Link
-              href="/login?next=/dashboard"
-              className="rounded-lg bg-[var(--brand-600)] text-white px-4 py-2 font-semibold hover:bg-[var(--brand-700)] transition-colors"
-            >
-              Empezar gratis
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <SellersHeader />
 
       <main className="flex-1">{children}</main>
 
