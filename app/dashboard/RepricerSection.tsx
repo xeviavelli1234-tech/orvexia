@@ -20,9 +20,13 @@ export async function RepricerSection({
   userId: string;
   status?: string;
 }) {
-  // Pre-lanzamiento: sin promoción pública. Accesible solo por URL directa
-  // (/sellers/productos) con login. Se activa con REPRICER_PUBLIC=true.
-  if (!REPRICER_PUBLIC) return null;
+  const account = await getSellerAccountByUserId(userId);
+  const connected = !!account?.active;
+
+  // Pre-lanzamiento: NO se promociona al público (sin cuenta no se ve
+  // nada), pero quien ya tiene la cuenta de Amazon conectada ve el
+  // acceso directo al Centro de control desde el dashboard.
+  if (!REPRICER_PUBLIC && !connected) return null;
 
   if (!REPRICER_ENABLED) {
     return (
@@ -64,8 +68,6 @@ export async function RepricerSection({
     );
   }
 
-  const account = await getSellerAccountByUserId(userId);
-  const connected = !!account?.active;
   const billing = account
     ? getBillingState(account.plan as SellerPlan, account.trialEndsAt)
     : null;
