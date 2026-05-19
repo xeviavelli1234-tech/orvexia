@@ -60,6 +60,7 @@ export interface NetNode {
   fulfillmentFilter: Fulfillment;
   minSellerRating: number | null;
   buyBoxStatus: BuyBox;
+  buyBoxPrice: number | null;
   stepUpType: UndercutType;
   stepUpValue: number;
   lastReason: string | null;
@@ -260,6 +261,54 @@ function Row({
   );
 }
 
+/** Diagnóstico accionable para el producto seleccionado (intuitivo). */
+function diagnose(
+  n: NetNode,
+): { tone: "ok" | "warn" | "info"; text: string } | null {
+  const f = (v: number) =>
+    v.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) +
+    " " +
+    sym(n.currency);
+  if (n.priceCurrent <= 0 || !n.asin) return null; // ya hay aviso propio
+  if (n.priceMin == null || n.priceMax == null)
+    return {
+      tone: "info",
+      text: "Aún sin rango. Define Precio mín y máx y pulsa «Guardar rango» para poder repreciar.",
+    };
+  if (!n.repricingEnabled)
+    return {
+      tone: "info",
+      text: "Reprecio pausado. Activa «Reprecio automático» para que el motor actúe.",
+    };
+  if (n.buyBoxStatus === "WON")
+    return { tone: "ok", text: "Tienes la Buy Box. El motor mantiene tu posición." };
+  if (
+    n.buyBoxStatus === "LOST" &&
+    n.buyBoxPrice != null &&
+    n.priceMin >= n.buyBoxPrice
+  )
+    return {
+      tone: "warn",
+      text: `Tu mínimo (${f(n.priceMin)}) es ≥ al precio de la Buy Box (${f(
+        n.buyBoxPrice,
+      )}). Baja el mínimo por debajo de ${f(n.buyBoxPrice)} para poder ganarla.`,
+    };
+  if (n.lastReason === "min_floor" || n.lastReason === "margin_floor")
+    return {
+      tone: "warn",
+      text: "El motor topó con tu suelo (mínimo o margen): no puede bajar más. Baja el mínimo o el margen objetivo para competir.",
+    };
+  if (n.buyBoxStatus === "LOST")
+    return {
+      tone: "warn",
+      text: "Otro vendedor tiene la Buy Box. Revisa tu estrategia/rango y ejecuta un ciclo.",
+    };
+  return {
+    tone: "info",
+    text: "Repreciando. Pulsa «Ejecutar reprecio ahora» (barra izquierda) para ver el resultado del próximo ciclo.",
+  };
+}
+
 function errMsg(code: string): string {
   const m: Record<string, string> = {
     price_max_must_be_greater_or_equal_to_min: "El máximo debe ser ≥ al mínimo",
@@ -276,11 +325,20 @@ function errMsg(code: string): string {
   return m[code] ?? code;
 }
 
-export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
+export default function ProductNetwork({
+  nodes,
+  demo,
+  activeCount,
+}: {
+  nodes: NetNode[];
+  demo: boolean;
+  activeCount: number;
+}) {
   const router = useRouter();
   const [selId, setSelId] = useState<string | null>(null);
   const [hubOpen, setHubOpen] = useState(false);
   const [showStates, setShowStates] = useState(false);
+  const [hideSteps, setHideSteps] = useState(false);
   const [pending, startTransition] = useTransition();
   const [err, setErr] = useState<string | null>(null);
   const [min, setMin] = useState("");
@@ -1336,6 +1394,60 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
         </g>
       </svg>
 
+      {/* Aviso de modo demo (competencia simulada, no toca Amazon) */}
+      {demo && (
+        <div className="pointer-events-none absolute top-3 left-1/2 -translate-x-1/2 z-20">
+          <div className="rounded-full border border-amber-400/30 bg-amber-500/[0.12] px-4 py-1.5 text-[11px] font-semibold text-amber-200 backdrop-blur">
+            MODO DEMO · competencia simulada · no se modifica tu cuenta de
+            Amazon
+          </div>
+        </div>
+      )}
+
+      {/* Primeros pasos: solo si hay productos pero ninguno repreciando */}
+      {!hideSteps && !sel && nodes.length > 0 && activeCount === 0 && (
+        <div className="absolute bottom-5 right-5 z-20 w-72 rounded-2xl border border-cyan-400/20 bg-[rgba(8,9,20,0.94)] p-4 backdrop-blur-xl shadow-[0_24px_60px_-20px_rgba(0,0,0,0.85)] fade-in">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-white/55">
+              Primeros pasos
+            </span>
+            <button
+              type="button"
+              onClick={() => setHideSteps(true)}
+              aria-label="Ocultar"
+              className="h-5 w-5 grid place-items-center rounded text-white/40 hover:text-white hover:bg-white/10 leading-none"
+            >
+              ×
+            </button>
+          </div>
+          <ol className="mt-2.5 space-y-1.5 text-[12px] text-white/75">
+            {[
+              "Clic en un producto para abrir su panel.",
+              "Define Precio mín/máx y guarda el rango.",
+              "Elige estrategia y actívala.",
+              "Activa el «Reprecio automático».",
+              "Pulsa «Ejecutar reprecio ahora».",
+            ].map((s, i) => (
+              <li key={i} className="flex gap-2">
+                <span className="grid h-4 w-4 shrink-0 place-items-center rounded-full bg-cyan-400/15 text-[10px] font-bold text-cyan-300">
+                  {i + 1}
+                </span>
+                {s}
+              </li>
+            ))}
+          </ol>
+          <button
+            type="button"
+            onClick={() =>
+              window.dispatchEvent(new CustomEvent("orvexia:open-help"))
+            }
+            className="mt-3 w-full rounded-lg border border-cyan-400/30 py-1.5 text-[11px] font-semibold text-cyan-200 hover:bg-cyan-400/10 transition-colors"
+          >
+            Ver guía completa
+          </button>
+        </div>
+      )}
+
       {/* Controles de zoom */}
       <div className="absolute bottom-5 left-5 flex flex-col gap-2">
         <ZoomBtn label="Acercar" onClick={() => zoomCenter(1.25)}>+</ZoomBtn>
@@ -1466,6 +1578,27 @@ export default function ProductNetwork({ nodes }: { nodes: NetNode[] }) {
                 </span>
               </div>
             </div>
+
+          {(() => {
+            const dg = diagnose(sel);
+            if (!dg) return null;
+            const cls =
+              dg.tone === "ok"
+                ? "text-emerald-300/90 border-emerald-400/25 bg-emerald-400/[0.06]"
+                : dg.tone === "warn"
+                  ? "text-amber-300/90 border-amber-400/25 bg-amber-400/[0.06]"
+                  : "text-cyan-200/90 border-cyan-400/20 bg-cyan-400/[0.05]";
+            return (
+              <div
+                className={`mt-4 flex gap-2 rounded-lg border px-3 py-2.5 text-[12px] leading-relaxed ${cls}`}
+              >
+                <span className="shrink-0">
+                  {dg.tone === "ok" ? "✓" : dg.tone === "warn" ? "⚠" : "ℹ"}
+                </span>
+                <span>{dg.text}</span>
+              </div>
+            );
+          })()}
 
           {selState === "noprice" ? (
             <p className="mt-4 text-xs text-amber-300/80 rounded-lg border border-amber-400/20 bg-amber-400/5 p-3">

@@ -16,6 +16,7 @@ import CatalogOverlay, {
   PanicButton,
 } from "./CatalogOverlay";
 import ProfitOverlay, { ProfitButton } from "./ProfitOverlay";
+import HelpOverlay, { HelpButton } from "./HelpOverlay";
 import { RunNowButton } from "@/app/(sellers)/sellers/dashboard/RunNowButton";
 import { DisconnectButton } from "@/app/(sellers)/sellers/dashboard/DisconnectButton";
 import { prisma } from "@/lib/prisma";
@@ -126,6 +127,7 @@ export default async function ProductosPage() {
       fulfillmentFilter: l.fulfillmentFilter,
       minSellerRating: l.minSellerRating,
       buyBoxStatus: l.buyBoxStatus,
+      buyBoxPrice: l.buyBoxPrice,
       lastReason: le?.reason ?? null,
       lastSuccess: le ? le.success : null,
     };
@@ -234,6 +236,7 @@ export default async function ProductosPage() {
           />
           <CatalogButton />
           <ProfitButton />
+          <HelpButton />
           <SettingsButton />
           <PanicButton />
           <DisconnectButton />
@@ -259,18 +262,30 @@ export default async function ProductosPage() {
       {/* ── Lienzo (resto de la ventana) ─────────────────────────── */}
       <section className="relative flex-1 h-full bg-[radial-gradient(ellipse_at_50%_45%,#10173a_0%,#0a0d24_45%,#05060f_100%)]">
         {hasListings ? (
-          <ProductNetwork nodes={nodes} />
+          <ProductNetwork
+            nodes={nodes}
+            demo={account.spApiEnv !== "production"}
+            activeCount={active}
+          />
         ) : (
           <div className="absolute inset-0 grid place-items-center text-center px-6">
-            <div>
-              <p className="text-white/70">
-                No hay productos en la red. Pulsa{" "}
+            <div className="max-w-md">
+              <div className="text-2xl font-extrabold tracking-tight text-gradient-neon">
+                Empieza aquí
+              </div>
+              <p className="mt-3 text-white/70">
+                Pulsa{" "}
                 <strong className="text-white">&ldquo;Sincronizar con Amazon&rdquo;</strong>{" "}
-                en la barra de la izquierda.
+                en la barra de la izquierda para traer tus productos.
               </p>
-              <p className="mt-3 text-xs text-white/40">
-                Se traerán todos los listings publicados en tu cuenta de Seller Central.
+              <p className="mt-2 text-xs text-white/40">
+                Se importan todos los listings de tu Seller Central. Luego clic
+                en un producto → define mín/máx → estrategia → activa →
+                «Ejecutar reprecio ahora».
               </p>
+              <div className="mt-5 inline-block w-64">
+                <HelpButton />
+              </div>
             </div>
           </div>
         )}
@@ -289,6 +304,7 @@ export default async function ProductosPage() {
       <AccountSettings initial={accountSettings} />
       <CatalogOverlay items={nodes} />
       <ProfitOverlay items={nodes} />
+      <HelpOverlay />
     </div>
   );
 }
