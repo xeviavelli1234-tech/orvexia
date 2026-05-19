@@ -161,10 +161,20 @@ export default async function FacturacionPage({
         </div>
       )}
 
-      <p className="mt-8 text-xs text-fg/50">
-        Pagos procesados de forma segura por Stripe. Orvexia nunca almacena los datos de
-        tu tarjeta.
-      </p>
+      <div className="mt-8 flex items-center justify-between flex-wrap gap-3">
+        <Link
+          href="/sellers/facturacion/factura"
+          className="text-sm font-semibold text-[var(--brand-600)] hover:underline"
+        >
+          {billing.plan === "PRO"
+            ? "Descargar factura (IVA) →"
+            : "Ver ejemplo de factura con IVA →"}
+        </Link>
+        <p className="text-xs text-fg/50">
+          Pagos procesados de forma segura por Stripe. Orvexia nunca almacena
+          los datos de tu tarjeta.
+        </p>
+      </div>
     </div>
   );
 }

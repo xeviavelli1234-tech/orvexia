@@ -27,23 +27,9 @@ export default async function FacturaPage() {
   if (!account) redirect("/sellers/facturacion");
 
   const billing = getBillingState(account.plan as SellerPlan, account.trialEndsAt);
-  if (billing.plan !== "PRO") {
-    return (
-      <div className="max-w-2xl mx-auto px-5 py-12">
-        <h1 className="text-3xl font-bold tracking-tight">Factura</h1>
-        <p className="mt-4 text-fg/70">
-          No hay facturas en el plan de prueba. Pasa a Pro para generar
-          facturas con IVA.
-        </p>
-        <Link
-          href="/sellers/facturacion"
-          className="mt-6 inline-block text-[var(--brand-600)] underline"
-        >
-          ← Volver a Facturación
-        </Link>
-      </div>
-    );
-  }
+  // En trial mostramos la MISMA factura como VISTA PREVIA (para que se
+  // vea el formato y el desglose de IVA); en Pro es el documento real.
+  const isPreview = billing.plan !== "PRO";
 
   const now = new Date();
   const total = PRO_PRICE_EUR; // 29 € IVA incluido
@@ -78,6 +64,14 @@ export default async function FacturaPage() {
         <PrintButton />
       </div>
 
+      {isPreview && (
+        <div className="max-w-2xl mx-auto mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-xs text-amber-800 print:hidden">
+          <strong>Vista previa.</strong> Estás en plan de prueba: este
+          documento es un <em>ejemplo</em> del formato y el desglose de IVA.
+          No es una factura válida hasta que pases a Pro y haya un cobro.
+        </div>
+      )}
+
       <div className="max-w-2xl mx-auto bg-white text-[#0f172a] rounded-xl shadow-sm print:shadow-none p-8 sm:p-10">
         <div className="flex items-start justify-between gap-6 border-b border-[#e2e8f0] pb-6">
           <div>
@@ -94,7 +88,7 @@ export default async function FacturaPage() {
           </div>
           <div className="text-right">
             <div className="text-lg font-bold uppercase tracking-wider">
-              Factura
+              {isPreview ? "Factura (vista previa)" : "Factura"}
             </div>
             <div className="mt-1 text-xs text-[#475569]">
               Nº <span className="font-mono">{invoiceNo}</span>
