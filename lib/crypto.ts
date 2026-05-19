@@ -2,6 +2,7 @@ import "server-only";
 import {
   createCipheriv,
   createDecipheriv,
+  createHash,
   randomBytes,
   type CipherGCM,
   type DecipherGCM,
@@ -12,13 +13,16 @@ const IV_LENGTH = 12;
 const AUTH_TAG_LENGTH = 16;
 
 function getKey(): Buffer {
-  const hex = process.env.ENCRYPTION_KEY;
-  if (!hex) throw new Error("ENCRYPTION_KEY is not set");
-  const key = Buffer.from(hex, "hex");
-  if (key.length !== 32) {
-    throw new Error("ENCRYPTION_KEY must be 32 bytes (64 hex chars)");
+  const raw = process.env.ENCRYPTION_KEY;
+  if (!raw) throw new Error("ENCRYPTION_KEY is not set");
+  // Si es exactamente 64 hex → se usan esos 32 bytes (compatibilidad con
+  // tokens ya cifrados con ese formato). Si NO, se deriva una clave de 32
+  // bytes determinista vía SHA-256: así CUALQUIER valor es válido y estable
+  // entre deployments (antes un valor mal formado reventaba el cifrado).
+  if (/^[0-9a-fA-F]{64}$/.test(raw.trim())) {
+    return Buffer.from(raw.trim(), "hex");
   }
-  return key;
+  return createHash("sha256").update(raw, "utf8").digest();
 }
 
 export function encryptToken(plaintext: string): string {
