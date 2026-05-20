@@ -204,6 +204,7 @@ export default function ProductModal({ product, onClose }: Props) {
   // Si el índice activo queda fuera de rango (porque la imagen activa falló),
   // saltamos a la primera viva.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (active >= all.length && all.length > 0) setActive(0);
   }, [active, all.length]);
 

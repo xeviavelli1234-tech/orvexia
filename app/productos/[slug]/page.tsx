@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import type { Category } from "@/app/generated/prisma/client";
 import ProductPageClient from "./ProductPageClient";
 import { buildAnalysis, getCategoryStats } from "@/lib/productAnalysis";
 
@@ -95,7 +96,7 @@ async function getProduct(slug: string) {
 
 async function getRelated(category: string, excludeId: string) {
   return prisma.product.findMany({
-    where: { category: category as any, id: { not: excludeId } },
+    where: { category: category as Category, id: { not: excludeId } },
     include: { offers: { orderBy: { priceCurrent: "asc" }, take: 1 } },
     orderBy: { rating: "desc" },
     take: 4,

@@ -10,8 +10,10 @@ export function ThemeToggle() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     const t = (document.documentElement.getAttribute("data-theme") as "light" | "dark") ?? "light";
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTheme(t);
   }, []);
 

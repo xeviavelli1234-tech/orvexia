@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export const metadata = {
   title: "Fotos y Experiencias · Orvexia",
   description: "Esta sección está en construcción. Muy pronto podrás compartir fotos y experiencias.",
@@ -52,12 +54,12 @@ export default function FotosPage() {
               </div>
             </div>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <a
+              <Link
                 href="/comunidad"
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white border border-white/15 hover:bg-white/[0.06] hover:border-white/30 transition"
               >
                 Ir al foro
-              </a>
+              </Link>
               <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-mono-ui text-xs font-semibold uppercase tracking-wider text-orange-300 bg-orange-400/10 border border-orange-400/30">
                 launch · soon
               </span>

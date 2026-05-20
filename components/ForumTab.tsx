@@ -61,8 +61,8 @@ export default function ForumTab({
   // Data injection via prop (SSR) or global fallback mocks
   const threadsSource: Thread[] = useMemo(() => {
     if (threads && threads.length) return threads;
-    const g: any = (globalThis as any);
-    if (g.__FORUM_DATA__?.threads?.length) return g.__FORUM_DATA__.threads as Thread[];
+    const g = globalThis as unknown as { __FORUM_DATA__?: { threads?: Thread[] } };
+    if (g.__FORUM_DATA__?.threads?.length) return g.__FORUM_DATA__.threads;
     return [];
   }, []);
 

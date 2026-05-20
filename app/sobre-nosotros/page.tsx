@@ -105,7 +105,7 @@ export default function SobreNosotrosPage() {
             <p>
               Orvexia nació de una frustración muy concreta: comprar un electrodoméstico en España es
               más difícil de lo que debería. Los comparadores genéricos mezclan categorías sin criterio,
-              los precios que muestran a menudo están desactualizados y los "análisis" son en realidad
+              los precios que muestran a menudo están desactualizados y los &ldquo;análisis&rdquo; son en realidad
               artículos de afiliados escritos sin haber tocado el producto.
             </p>
             <p>
