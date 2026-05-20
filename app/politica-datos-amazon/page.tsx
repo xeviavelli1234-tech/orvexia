@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Política de Protección de Datos de Amazon · Orvexia Repricer",
@@ -9,25 +10,70 @@ export const metadata: Metadata = {
 const UPDATED = "19 de mayo de 2026";
 
 function H({ children }: { children: React.ReactNode }) {
-  return <h2 className="mt-8 text-lg font-bold text-fg">{children}</h2>;
+  return (
+    <h2 className="mt-10 text-xl font-bold text-white tracking-tight">
+      {children}
+    </h2>
+  );
 }
 function P({ children }: { children: React.ReactNode }) {
-  return <p className="mt-3 text-sm leading-relaxed text-fg/70">{children}</p>;
+  return (
+    <p className="mt-3 text-sm leading-relaxed text-white/70">{children}</p>
+  );
 }
 function LI({ children }: { children: React.ReactNode }) {
-  return <li className="mt-1.5 text-sm leading-relaxed text-fg/70">{children}</li>;
+  return (
+    <li className="mt-1.5 text-sm leading-relaxed text-white/70">{children}</li>
+  );
 }
 
 export default function PoliticaDatosAmazon() {
   return (
-    <main className="max-w-3xl mx-auto px-5 py-14">
-      <h1 className="text-3xl font-extrabold tracking-tight text-fg">
-        Política de Protección de Datos de Amazon
-      </h1>
-      <p className="mt-2 text-sm text-fg/50">
-        Aplicable a Orvexia Repricer · Última actualización: {UPDATED}
-      </p>
+    <main>
+      {/* Hero cibernético */}
+      <div className="relative border-b border-white/[0.06] overflow-hidden">
+        <div className="absolute inset-0 bg-grid-cyber opacity-40 pointer-events-none" />
+        <div
+          className="absolute -top-32 left-1/3 w-[800px] h-[400px] rounded-full pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(ellipse, rgba(94,234,212,0.16), transparent 65%)",
+          }}
+        />
+        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 py-12">
+          <div className="flex items-center gap-2 font-mono-ui text-[10px] uppercase tracking-wider text-white/40 mb-4">
+            <Link href="/" className="hover:text-cyan-300 transition-colors">
+              ~/
+            </Link>
+            <span className="text-white/25">›</span>
+            <span className="text-cyan-300">amazon-data</span>
+          </div>
+          <p className="font-mono-ui text-[10px] uppercase tracking-wider text-cyan-300 mb-2">
+            ▸ /legal · sp-api data protection
+          </p>
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-3">
+            Protección de datos de{" "}
+            <span className="text-gradient-aurora">Amazon</span>
+          </h1>
+          <p className="text-sm text-white/55">
+            Aplicable a Orvexia Repricer · Última actualización:{" "}
+            <strong className="text-white/85">{UPDATED}</strong>
+          </p>
+          <p className="mt-3 text-sm text-white/55 leading-relaxed max-w-2xl">
+            Cómo accedemos, usamos, protegemos, conservamos y eliminamos los
+            datos obtenidos a través de la{" "}
+            <strong className="text-white/85">
+              Amazon Selling Partner API (SP-API)
+            </strong>
+            , conforme al <em>Acceptable Use Policy</em> y la{" "}
+            <em>Data Protection Policy</em>.
+          </p>
+        </div>
+        <div className="holo-divider mx-auto max-w-4xl" />
+      </div>
 
+      {/* Contenido */}
+      <article className="relative max-w-3xl mx-auto px-5 py-14">
       <P>
         Esta política describe cómo Orvexia Repricer (&ldquo;la Aplicación&rdquo;) accede,
         utiliza, almacena, protege, conserva y elimina la información obtenida a través de la
@@ -147,9 +193,11 @@ export default function PoliticaDatosAmazon() {
         de seguridad: <strong>orvexiaesp@gmail.com</strong>.
       </P>
 
-      <p className="mt-10 text-xs text-fg/40">
-        Este documento puede actualizarse; la fecha de la última revisión figura al inicio.
+      <p className="mt-10 text-xs text-white/40">
+        Este documento puede actualizarse; la fecha de la última revisión
+        figura al inicio.
       </p>
+      </article>
     </main>
   );
 }
