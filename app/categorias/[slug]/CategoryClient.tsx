@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
 import { FuturisticFX } from "@/components/FuturisticFX";
@@ -136,6 +136,188 @@ export default function CategoryClient({ products, meta, content }: { products: 
     ...(onlyDiscount ? [{ label: "Con descuento", clear: () => setOnlyDiscount(false) }] : []),
   ];
 
+  // Body content of the filters — shared between desktop sidebar and mobile bottom sheet.
+  // Touch targets are kept generous (h-9/h-10) so it feels comfortable on phones.
+  const filtersBody = (
+    <>
+      {/* Marca */}
+      <section>
+        <p className="text-[10px] font-bold text-fg-subtle uppercase tracking-[0.18em] mb-3">Marca</p>
+        <div className="space-y-1">
+          {brands.map((b) => {
+            const checked = selectedBrands.includes(b);
+            return (
+              <label
+                key={b}
+                className={`flex items-center gap-3 cursor-pointer py-2 px-2.5 -mx-2.5 rounded-lg transition-colors ${
+                  checked ? "bg-cyan-400/[0.07]" : "hover:bg-bg-subtle"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => toggle(selectedBrands, b, setSelectedBrands)}
+                  className="w-[18px] h-[18px] rounded border-border accent-brand-600 flex-shrink-0"
+                />
+                <span className={`text-sm flex-1 transition-colors ${checked ? "text-fg font-semibold" : "text-fg-muted"}`}>{b}</span>
+                <span className="text-[11px] text-fg-faint tabular">{enriched.filter((p) => p.brand === b).length}</span>
+              </label>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Tienda */}
+      {stores.length > 1 && (
+        <section>
+          <p className="text-[10px] font-bold text-fg-subtle uppercase tracking-[0.18em] mb-3">Tienda</p>
+          <div className="space-y-1">
+            {stores.map((s) => {
+              const checked = selectedStores.includes(s);
+              return (
+                <label
+                  key={s}
+                  className={`flex items-center gap-3 cursor-pointer py-2 px-2.5 -mx-2.5 rounded-lg transition-colors ${
+                    checked ? "bg-cyan-400/[0.07]" : "hover:bg-bg-subtle"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => toggle(selectedStores, s, setSelectedStores)}
+                    className="w-[18px] h-[18px] rounded border-border accent-brand-600 flex-shrink-0"
+                  />
+                  <span className={`text-sm flex-1 transition-colors ${checked ? "text-fg font-semibold" : "text-fg-muted"}`}>{s}</span>
+                  <span className="text-[11px] text-fg-faint tabular">
+                    {enriched.filter((p) => p.offers.some((o) => o.store === s)).length}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* Precio */}
+      <section>
+        <div className="flex items-baseline justify-between mb-3">
+          <p className="text-[10px] font-bold text-fg-subtle uppercase tracking-[0.18em]">Precio máximo</p>
+          <span className="text-xs font-bold tabular" style={{ color: maxPrice < globalMax ? "var(--brand-400)" : "var(--fg-faint)" }}>
+            {maxPrice < globalMax ? `≤ ${maxPrice} €` : `hasta ${globalMax} €`}
+          </span>
+        </div>
+        <input
+          type="range"
+          min={globalMin}
+          max={globalMax}
+          step={10}
+          value={maxPrice === 9999 ? globalMax : maxPrice}
+          onChange={(e) => setMaxPrice(Number(e.target.value))}
+          className="w-full accent-brand-600 mb-3 h-2"
+        />
+        <div className="grid grid-cols-3 gap-1.5">
+          {[200, 300, 400, 500, 700, 1000].filter((v) => v <= globalMax + 50).map((v) => (
+            <button
+              key={v}
+              onClick={() => setMaxPrice(maxPrice === v ? 9999 : v)}
+              className={`text-xs h-9 rounded-lg font-semibold border transition-colors tabular ${
+                maxPrice === v
+                  ? "bg-cyan-400/15 text-cyan-200 border-cyan-400/50"
+                  : "border-white/10 text-fg-muted hover:text-fg hover:border-white/25"
+              }`}
+            >
+              {v}€
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* Tecnología */}
+      {techs.length > 0 && (
+        <section>
+          <p className="text-[10px] font-bold text-fg-subtle uppercase tracking-[0.18em] mb-3">Tecnología</p>
+          <div className="flex flex-wrap gap-2">
+            {techs.map((t) => (
+              <button
+                key={t}
+                onClick={() => toggle(selectedTechs, t, setSelectedTechs)}
+                className={`px-3.5 h-9 rounded-lg text-xs font-bold border transition-all ${
+                  selectedTechs.includes(t)
+                    ? "bg-cyan-400/15 text-cyan-200 border-cyan-400/50"
+                    : "border-white/10 text-fg-muted hover:text-fg hover:border-white/25"
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* OS */}
+      {osList.length > 0 && (
+        <section>
+          <p className="text-[10px] font-bold text-fg-subtle uppercase tracking-[0.18em] mb-3">Sistema operativo</p>
+          <div className="flex flex-wrap gap-2">
+            {osList.map((os) => (
+              <button
+                key={os}
+                onClick={() => toggle(selectedOS, os, setSelectedOS)}
+                className={`px-3.5 h-9 rounded-lg text-xs font-bold border transition-all ${
+                  selectedOS.includes(os)
+                    ? "bg-cyan-400/15 text-cyan-200 border-cyan-400/50"
+                    : "border-white/10 text-fg-muted hover:text-fg hover:border-white/25"
+                }`}
+              >
+                {os}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Valoración */}
+      <section>
+        <p className="text-[10px] font-bold text-fg-subtle uppercase tracking-[0.18em] mb-3">Valoración mínima</p>
+        <div className="grid grid-cols-4 gap-1.5">
+          {[3, 3.5, 4, 4.5].map((r) => (
+            <button
+              key={r}
+              onClick={() => setMinRating(minRating === r ? 0 : r)}
+              className={`h-9 rounded-lg text-xs font-bold border transition-all ${
+                minRating === r
+                  ? "bg-amber-400/15 text-amber-200 border-amber-400/50"
+                  : "border-white/10 text-fg-muted hover:text-fg hover:border-white/25"
+              }`}
+            >
+              ★{r}+
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* Solo con descuento */}
+      <button
+        type="button"
+        onClick={() => setOnlyDiscount((v) => !v)}
+        className="w-full flex items-center justify-between pt-3 border-t border-white/10"
+      >
+        <span className="text-sm font-semibold text-fg-muted select-none">Solo con descuento</span>
+        <span
+          className={`relative w-11 h-6 rounded-full transition-colors duration-200 flex-shrink-0 ${
+            onlyDiscount ? "bg-cyan-400/40 shadow-[0_0_12px_-2px_rgba(94,234,212,0.6)]" : "bg-white/10"
+          }`}
+        >
+          <span
+            className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+              onlyDiscount ? "translate-x-6" : "translate-x-1"
+            }`}
+          />
+        </span>
+      </button>
+    </>
+  );
+
   const sidebarJSX = (
     <div className="bg-bg-elevated rounded-2xl border border-white/[0.08] p-5 space-y-6">
       <div className="flex items-center justify-between">
@@ -152,166 +334,27 @@ export default function CategoryClient({ products, meta, content }: { products: 
           </button>
         )}
       </div>
-
-      {/* Marca */}
-      <div>
-        <p className="text-[10px] font-bold text-fg-subtle uppercase tracking-[0.18em] mb-3">Marca</p>
-        <div className="space-y-1.5">
-          {brands.map((b) => (
-            <label key={b} className="flex items-center gap-2.5 cursor-pointer group py-1 -mx-2 px-2 rounded-md hover:bg-bg-subtle transition-colors">
-              <input
-                type="checkbox"
-                checked={selectedBrands.includes(b)}
-                onChange={() => toggle(selectedBrands, b, setSelectedBrands)}
-                className="w-4 h-4 rounded border-border accent-brand-600"
-              />
-              <span className="text-sm text-fg-muted group-hover:text-fg transition-colors flex-1">{b}</span>
-              <span className="text-[11px] text-fg-faint tabular">{enriched.filter((p) => p.brand === b).length}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      {/* Tienda */}
-      {stores.length > 1 && (
-        <div>
-          <p className="text-[10px] font-bold text-fg-subtle uppercase tracking-[0.18em] mb-3">Tienda</p>
-          <div className="space-y-1.5">
-            {stores.map((s) => (
-              <label key={s} className="flex items-center gap-2.5 cursor-pointer group py-1 -mx-2 px-2 rounded-md hover:bg-bg-subtle transition-colors">
-                <input
-                  type="checkbox"
-                  checked={selectedStores.includes(s)}
-                  onChange={() => toggle(selectedStores, s, setSelectedStores)}
-                  className="w-4 h-4 rounded border-border accent-brand-600"
-                />
-                <span className="text-sm text-fg-muted group-hover:text-fg transition-colors flex-1">{s}</span>
-                <span className="text-[11px] text-fg-faint tabular">
-                  {enriched.filter((p) => p.offers.some((o) => o.store === s)).length}
-                </span>
-              </label>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Precio */}
-      <div>
-        <div className="flex items-baseline justify-between mb-3">
-          <p className="text-[10px] font-bold text-fg-subtle uppercase tracking-[0.18em]">Precio máximo</p>
-          {maxPrice < globalMax && (
-            <span className="text-xs font-bold text-brand-600 tabular">≤ {maxPrice} €</span>
-          )}
-        </div>
-        <input
-          type="range"
-          min={globalMin}
-          max={globalMax}
-          step={10}
-          value={maxPrice === 9999 ? globalMax : maxPrice}
-          onChange={(e) => setMaxPrice(Number(e.target.value))}
-          className="w-full accent-brand-600 mb-3"
-        />
-        <div className="grid grid-cols-3 gap-1.5">
-          {[200, 300, 400, 500, 700, 1000].filter((v) => v <= globalMax + 50).map((v) => (
-            <button
-              key={v}
-              onClick={() => setMaxPrice(maxPrice === v ? 9999 : v)}
-              className={`text-xs h-8 rounded-md font-semibold border transition-colors tabular ${
-                maxPrice === v
-                  ? "bg-cyan-400/15 text-cyan-200 border-cyan-400/50"
-                  : "border-white/10 text-fg-muted hover:text-fg hover:border-white/25"
-              }`}
-            >
-              {v}€
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Tecnología */}
-      {techs.length > 0 && (
-        <div>
-          <p className="text-[10px] font-bold text-fg-subtle uppercase tracking-[0.18em] mb-3">Tecnología</p>
-          <div className="flex flex-wrap gap-1.5">
-            {techs.map((t) => (
-              <button
-                key={t}
-                onClick={() => toggle(selectedTechs, t, setSelectedTechs)}
-                className={`px-3 h-8 rounded-md text-xs font-bold border transition-all ${
-                  selectedTechs.includes(t)
-                    ? "bg-cyan-400/15 text-cyan-200 border-cyan-400/50"
-                    : "border-white/10 text-fg-muted hover:text-fg hover:border-white/25"
-                }`}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* OS */}
-      {osList.length > 0 && (
-        <div>
-          <p className="text-[10px] font-bold text-fg-subtle uppercase tracking-[0.18em] mb-3">Sistema operativo</p>
-          <div className="space-y-1.5">
-            {osList.map((os) => (
-              <label key={os} className="flex items-center gap-2.5 cursor-pointer group py-1 -mx-2 px-2 rounded-md hover:bg-bg-subtle transition-colors">
-                <input
-                  type="checkbox"
-                  checked={selectedOS.includes(os)}
-                  onChange={() => toggle(selectedOS, os, setSelectedOS)}
-                  className="w-4 h-4 rounded border-border accent-brand-600"
-                />
-                <span className="text-sm text-fg-muted group-hover:text-fg transition-colors">{os}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Valoración */}
-      <div>
-        <p className="text-[10px] font-bold text-fg-subtle uppercase tracking-[0.18em] mb-3">Valoración mínima</p>
-        <div className="grid grid-cols-4 gap-1.5">
-          {[3, 3.5, 4, 4.5].map((r) => (
-            <button
-              key={r}
-              onClick={() => setMinRating(minRating === r ? 0 : r)}
-              className={`h-8 rounded-md text-xs font-bold border transition-all ${
-                minRating === r
-                  ? "bg-amber-400/15 text-amber-200 border-amber-400/50"
-                  : "border-white/10 text-fg-muted hover:text-fg hover:border-white/25"
-              }`}
-            >
-              ★{r}+
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Solo con descuento */}
-      <button
-        type="button"
-        onClick={() => setOnlyDiscount((v) => !v)}
-        className="w-full flex items-center justify-between pt-2 border-t border-white/10"
-      >
-        <span className="text-sm font-semibold text-fg-muted select-none">Solo con descuento</span>
-        <span
-          className={`relative w-10 h-6 rounded-full transition-colors duration-200 flex-shrink-0 ${
-            onlyDiscount ? "bg-cyan-400/40 shadow-[0_0_12px_-2px_rgba(94,234,212,0.6)]" : "bg-white/10"
-          }`}
-        >
-          <span
-            className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${
-              onlyDiscount ? "translate-x-5" : "translate-x-1"
-            }`}
-          />
-        </span>
-      </button>
+      {filtersBody}
     </div>
   );
+
+  // Lock body scroll while the mobile bottom-sheet is open.
+  useEffect(() => {
+    if (!showFilters) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [showFilters]);
+
+  // Close sheet with Esc.
+  useEffect(() => {
+    if (!showFilters) return;
+    const h = (e: KeyboardEvent) => { if (e.key === "Escape") setShowFilters(false); };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [showFilters]);
 
   return (
     <main className="min-h-screen">
@@ -461,49 +504,58 @@ export default function CategoryClient({ products, meta, content }: { products: 
         {/* MAIN */}
         <div className="flex-1 min-w-0">
 
-          {/* Barra de control */}
-          <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
-            <p className="font-mono-ui text-[11px] uppercase tracking-wider text-white/55">
-              <span className="text-emerald-300 tabular">{filtered.length.toString().padStart(2, "0")}</span> result{filtered.length !== 1 ? "s" : ""}
-              {search && <> · query=&ldquo;<span className="text-cyan-300">{search}</span>&rdquo;</>}
-            </p>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setShowFilters((v) => !v)}
-                className="lg:hidden flex items-center gap-1.5 text-sm font-semibold px-3 h-9 bg-bg-elevated border border-white/[0.10] rounded-lg hover:border-white/25 transition-colors text-white/80"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h18M7 8h10M11 12h2" />
-                </svg>
-                Filtros
-                {activeCount > 0 && (
-                  <span className="bg-cyan-400/20 text-cyan-200 border border-cyan-400/40 text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center tabular">
-                    {activeCount}
-                  </span>
-                )}
-              </button>
-              <select
-                value={sort}
-                onChange={(e) => setSort(e.target.value as SortKey)}
-                className="text-sm font-medium border border-white/[0.10] bg-bg-elevated rounded-lg px-3 h-9 outline-none hover:border-white/25 focus-visible:border-cyan-400/50 focus-visible:ring-2 focus-visible:ring-cyan-400/15 transition-all cursor-pointer text-fg"
-              >
-                <option value="relevancia">Relevancia</option>
-                <option value="precio_asc">Precio: menor a mayor</option>
-                <option value="precio_desc">Precio: mayor a menor</option>
-                <option value="descuento">Mayor descuento</option>
-                <option value="valoracion">Mejor valorado</option>
-              </select>
+          {/* Control bar — sticky on mobile (below the 64px page header) so Filtros/Ordenar are always reachable */}
+          <div className="lg:static sticky top-16 z-30 -mx-4 sm:-mx-6 lg:mx-0 px-4 sm:px-6 lg:px-0 py-3 lg:py-0 mb-4 bg-bg/85 lg:bg-transparent backdrop-blur-md lg:backdrop-blur-none border-b border-white/[0.06] lg:border-0">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <p className="font-mono-ui text-[11px] uppercase tracking-wider text-white/55 hidden sm:block">
+                <span className="text-emerald-300 tabular">{filtered.length.toString().padStart(2, "0")}</span> result{filtered.length !== 1 ? "s" : ""}
+                {search && <> · query=&ldquo;<span className="text-cyan-300">{search}</span>&rdquo;</>}
+              </p>
+              <p className="sm:hidden text-xs text-white/70 tabular">
+                <span className="font-bold text-emerald-300">{filtered.length}</span> producto{filtered.length !== 1 ? "s" : ""}
+              </p>
+              <div className="flex items-center gap-2 sm:ml-auto">
+                <button
+                  onClick={() => setShowFilters(true)}
+                  className={`lg:hidden flex items-center gap-1.5 text-sm font-semibold px-3.5 h-10 rounded-lg transition-all ${
+                    activeCount > 0
+                      ? "bg-cyan-400/15 border border-cyan-400/45 text-cyan-100 shadow-[0_0_18px_-6px_rgba(94,234,212,0.6)]"
+                      : "bg-bg-elevated border border-white/[0.10] hover:border-white/25 text-white/85"
+                  }`}
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h18M7 8h10M11 12h2" />
+                  </svg>
+                  Filtros
+                  {activeCount > 0 && (
+                    <span className="bg-cyan-400/30 text-cyan-50 text-[10px] font-bold min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center tabular">
+                      {activeCount}
+                    </span>
+                  )}
+                </button>
+                <select
+                  value={sort}
+                  onChange={(e) => setSort(e.target.value as SortKey)}
+                  className="text-sm font-medium border border-white/[0.10] bg-bg-elevated rounded-lg px-3 h-10 lg:h-9 outline-none hover:border-white/25 focus-visible:border-cyan-400/50 focus-visible:ring-2 focus-visible:ring-cyan-400/15 transition-all cursor-pointer text-fg"
+                >
+                  <option value="relevancia">Relevancia</option>
+                  <option value="precio_asc">Precio: menor a mayor</option>
+                  <option value="precio_desc">Precio: mayor a menor</option>
+                  <option value="descuento">Mayor descuento</option>
+                  <option value="valoracion">Mejor valorado</option>
+                </select>
+              </div>
             </div>
           </div>
 
           {/* Active chips */}
           {activeChips.length > 0 && (
-            <div className="flex flex-wrap items-center gap-1.5 mb-5">
+            <div className="flex flex-nowrap lg:flex-wrap items-center gap-1.5 mb-5 -mx-4 sm:mx-0 px-4 sm:px-0 overflow-x-auto lg:overflow-visible scrollbar-hide">
               {activeChips.map((c) => (
                 <button
                   key={c.label}
                   onClick={c.clear}
-                  className="inline-flex items-center gap-1 text-xs font-semibold px-3 h-7 rounded-full bg-cyan-400/10 text-cyan-200 border border-cyan-400/30 hover:bg-cyan-400/15 hover:border-cyan-400/50 transition-colors"
+                  className="flex-shrink-0 inline-flex items-center gap-1 text-xs font-semibold px-3 h-8 rounded-full bg-cyan-400/10 text-cyan-200 border border-cyan-400/30 hover:bg-cyan-400/15 hover:border-cyan-400/50 transition-colors"
                 >
                   {c.label}
                   <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round">
@@ -513,17 +565,83 @@ export default function CategoryClient({ products, meta, content }: { products: 
               ))}
               <button
                 onClick={clearAll}
-                className="font-mono-ui text-[10px] uppercase tracking-wider text-white/45 hover:text-white ml-1 transition-colors"
+                className="flex-shrink-0 font-mono-ui text-[10px] uppercase tracking-wider text-white/45 hover:text-white ml-1 transition-colors"
               >
                 limpiar todo
               </button>
             </div>
           )}
 
-          {/* Filtros móvil */}
+          {/* Bottom sheet de filtros (móvil/tablet) */}
           {showFilters && (
-            <div className="filters-scroll lg:hidden mb-6 max-h-[70vh] overflow-y-auto overscroll-contain rounded-2xl pr-1 touch-pan-y">
-              {sidebarJSX}
+            <div className="lg:hidden">
+              {/* Backdrop */}
+              <div
+                onClick={() => setShowFilters(false)}
+                className="fixed inset-0 z-40 bg-black/65 backdrop-blur-sm animate-fade-in"
+                aria-hidden="true"
+              />
+              {/* Sheet */}
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-label="Filtros"
+                className="fixed inset-x-0 bottom-0 z-50 flex flex-col bg-bg-elevated border-t border-white/[0.10] rounded-t-3xl shadow-[0_-24px_60px_-12px_rgba(0,0,0,0.7)] animate-slide-up"
+                style={{ maxHeight: "90vh" }}
+              >
+                {/* Drag handle */}
+                <button
+                  onClick={() => setShowFilters(false)}
+                  aria-label="Cerrar filtros"
+                  className="flex justify-center pt-3 pb-1 group"
+                >
+                  <span className="w-11 h-1.5 rounded-full bg-white/20 group-hover:bg-white/40 transition-colors" />
+                </button>
+                {/* Header */}
+                <div className="flex items-center justify-between px-5 pt-2 pb-3 border-b border-white/[0.06]">
+                  <div>
+                    <p className="font-mono-ui text-[10px] uppercase tracking-wider text-cyan-300/80 mb-0.5">▸ /filters</p>
+                    <h3 className="text-base font-bold text-fg">Filtros</h3>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {activeCount > 0 && (
+                      <button
+                        onClick={clearAll}
+                        className="text-xs font-semibold text-white/65 hover:text-white px-3 h-9 rounded-lg hover:bg-bg-subtle transition-colors"
+                      >
+                        Limpiar
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setShowFilters(false)}
+                      aria-label="Cerrar"
+                      className="w-9 h-9 rounded-full bg-bg-subtle hover:bg-bg-muted text-white/70 hover:text-white flex items-center justify-center transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                {/* Body */}
+                <div className="filters-scroll flex-1 overflow-y-auto overscroll-contain px-5 py-5 space-y-7 touch-pan-y">
+                  {filtersBody}
+                </div>
+                {/* Sticky apply CTA */}
+                <div
+                  className="px-5 py-4 border-t border-white/[0.08] bg-bg-elevated/95 backdrop-blur-md"
+                  style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0) + 1rem)" }}
+                >
+                  <button
+                    onClick={() => setShowFilters(false)}
+                    className="w-full h-12 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-[0.98] text-white font-bold text-sm transition-all shadow-[0_0_24px_-6px_rgba(99,102,241,0.6)]"
+                  >
+                    {filtered.length === 0
+                      ? "Sin resultados — ajusta filtros"
+                      : `Ver ${filtered.length} resultado${filtered.length !== 1 ? "s" : ""}`}
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
