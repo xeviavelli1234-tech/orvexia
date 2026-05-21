@@ -277,9 +277,9 @@ export default function AssistantWidget() {
   const canRegen = !loading && msgs.some((m) => m.role === "user");
 
   return (
-    <div className="fixed bottom-6 right-6 z-[60]">
+    <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[60]">
       {open && (
-        <div className="mb-3 flex h-[33rem] w-[24rem] max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-2xl border border-cyan-400/20 bg-[rgba(7,7,18,0.97)] backdrop-blur-2xl shadow-[0_24px_70px_-18px_rgba(34,211,238,0.45)] fade-in">
+        <div className="mb-3 flex h-[min(33rem,80vh)] w-[calc(100vw-2rem)] sm:w-[24rem] max-w-[calc(100vw-2rem)] sm:max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-2xl border border-cyan-400/20 bg-[rgba(7,7,18,0.97)] backdrop-blur-2xl shadow-[0_24px_70px_-18px_rgba(34,211,238,0.45)] fade-in">
           <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-white/10">
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_8px_2px_rgba(34,211,238,0.7)]" />

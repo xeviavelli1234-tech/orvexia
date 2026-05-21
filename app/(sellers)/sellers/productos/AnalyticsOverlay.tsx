@@ -305,37 +305,49 @@ export default function AnalyticsOverlay({
 
   return (
     <div
-      className="fixed inset-0 z-[58] bg-black/75 backdrop-blur-sm p-3 sm:p-6 overflow-y-auto"
+      className="fixed inset-0 z-[58] bg-black/75 backdrop-blur-sm p-0 sm:p-6 overflow-y-auto"
       onClick={() => setOpen(false)}
     >
       <div
-        className="mx-auto max-w-5xl rounded-2xl border border-cyan-400/20 bg-[rgba(7,8,18,0.99)] shadow-[0_30px_80px_-20px_rgba(34,211,238,0.4)] fade-in"
+        className="mx-auto max-w-5xl min-h-full sm:min-h-0 rounded-none sm:rounded-2xl border-0 sm:border sm:border-cyan-400/20 bg-[rgba(7,8,18,0.99)] sm:shadow-[0_30px_80px_-20px_rgba(34,211,238,0.4)] fade-in"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Cabecera */}
-        <div className="sticky top-0 z-10 flex flex-wrap items-center gap-3 px-5 py-4 border-b border-white/10 bg-[rgba(7,8,18,0.99)] rounded-t-2xl">
-          <div className="min-w-0">
-            <h2 className="text-base font-extrabold tracking-tight">
-              Analíticas y <span className="text-gradient-neon">actividad</span>
-            </h2>
-            <p className="text-[11px] text-white/40">
-              Plan {plan.label} · ciclo {plan.intervalMinutes} min · {runCount} ciclos ·{" "}
-              {lastRunAt ? `último ${rel(lastRunAt)}` : "sin ciclos"}
-            </p>
-            {period.from && period.to && (
-              <p className="text-[10px] text-white/30">
-                {evs.length} eventos · {fmtRange(period.from)} – {fmtRange(period.to)}
+        <div className="sticky top-0 z-10 px-4 sm:px-5 py-3 sm:py-4 border-b border-white/10 bg-[rgba(7,8,18,0.99)] backdrop-blur-md sm:rounded-t-2xl">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <h2 className="text-base font-extrabold tracking-tight">
+                Analíticas y <span className="text-gradient-neon">actividad</span>
+              </h2>
+              <p className="text-[11px] text-white/40 mt-0.5">
+                Plan {plan.label} · ciclo {plan.intervalMinutes} min · {runCount} ciclos ·{" "}
+                {lastRunAt ? `último ${rel(lastRunAt)}` : "sin ciclos"}
               </p>
-            )}
+              {period.from && period.to && (
+                <p className="text-[10px] text-white/30 hidden sm:block">
+                  {evs.length} eventos · {fmtRange(period.from)} – {fmtRange(period.to)}
+                </p>
+              )}
+            </div>
+            <button
+              onClick={() => setOpen(false)}
+              aria-label="Cerrar"
+              className="h-9 w-9 grid place-items-center rounded-full text-white/55 hover:text-white hover:bg-white/10 transition-colors flex-shrink-0"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
           </div>
-          <div className="ml-auto flex items-center gap-2">
+          {/* Controls row */}
+          <div className="mt-2.5 flex items-center gap-2 -mx-4 sm:mx-0 px-4 sm:px-0 overflow-x-auto scrollbar-hide">
             <select
               value={sel}
               onChange={(e) => {
                 setSel(e.target.value);
                 setActLimit(40);
               }}
-              className="rounded-lg border border-white/15 bg-black/40 px-3 py-1.5 text-sm text-white focus:border-cyan-400/60 focus:outline-none max-w-[230px]"
+              className="flex-1 sm:flex-initial min-w-0 sm:max-w-[260px] rounded-lg border border-white/15 bg-black/40 px-3 h-9 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
             >
               <option value="ALL">Todos los productos</option>
               {products.map((p) => (
@@ -346,34 +358,27 @@ export default function AnalyticsOverlay({
             </select>
             <button
               onClick={exportCsv}
-              className="rounded-lg border border-white/15 px-2.5 py-1.5 text-[11px] text-white/70 hover:bg-white/10 transition-colors"
+              className="flex-shrink-0 rounded-lg border border-white/15 px-3 h-9 text-[11px] font-semibold text-white/75 hover:bg-white/10 transition-colors"
               title="Exportar CSV"
             >
               CSV
             </button>
             <button
               onClick={() => window.print()}
-              className="rounded-lg border border-white/15 px-2.5 py-1.5 text-[11px] text-white/70 hover:bg-white/10 transition-colors"
+              className="flex-shrink-0 rounded-lg border border-white/15 px-3 h-9 text-[11px] font-semibold text-white/75 hover:bg-white/10 transition-colors"
               title="Imprimir / Guardar como PDF"
             >
               PDF
             </button>
-            <button
-              onClick={() => setOpen(false)}
-              aria-label="Cerrar"
-              className="h-8 w-8 grid place-items-center rounded-md text-white/40 hover:text-white hover:bg-white/10 transition-colors text-lg leading-none"
-            >
-              ×
-            </button>
           </div>
           {focus && (
-            <div className="w-full font-mono text-[10px] text-white/35">
+            <div className="mt-2 w-full font-mono text-[10px] text-white/40 truncate">
               {focus.asin || "sin ASIN"} · {focus.sku}
             </div>
           )}
         </div>
 
-        <div className="p-5 space-y-5">
+        <div className="p-4 sm:p-5 space-y-4 sm:space-y-5">
           {/* KPIs */}
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3">
             <Kpi label="Eventos" value={String(evs.length)} />
