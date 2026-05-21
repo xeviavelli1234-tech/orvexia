@@ -37,10 +37,24 @@ export default function PasswordlessButtons() {
       window.location.href = "/dashboard";
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
+      const name = e instanceof Error ? e.name : "";
       if (/cancel|abort/i.test(msg)) {
         setErr("Has cancelado.");
+      } else if (
+        name === "NotAllowedError" ||
+        /timed out|not allowed|no available/i.test(msg)
+      ) {
+        // Caso típico: el usuario no tiene passkeys registradas todavía
+        // en este dispositivo / dominio.
+        setErr(
+          "No hay passkeys disponibles. Inicia sesión con tu contraseña y añade una desde tu perfil.",
+        );
+      } else if (name === "SecurityError" || /rpId|origin/i.test(msg)) {
+        setErr(
+          "Configuración inválida del dominio (RP_ID). Avisa al administrador.",
+        );
       } else {
-        setErr(msg.length > 90 ? msg.slice(0, 90) + "…" : msg);
+        setErr(msg.length > 110 ? msg.slice(0, 110) + "…" : msg);
       }
     } finally {
       setBusy(null);
