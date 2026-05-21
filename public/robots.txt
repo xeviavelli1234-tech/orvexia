@@ -1,4 +1,33 @@
 User-agent: *
 Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /sellers/productos
+Disallow: /sellers/facturacion
+Disallow: /sellers/analiticas
+Disallow: /sellers/asistente-aprendizaje
+Disallow: /sellers/dashboard
+Disallow: /perfil
+Disallow: /dashboard
+Disallow: /login/magic
+Disallow: /verify
+Disallow: /forgot-password
+Disallow: /reset-password
+
+# AI crawlers: catálogo público sí, panel privado no
+User-agent: GPTBot
+Disallow: /api/
+Disallow: /sellers/productos
+Disallow: /admin/
+Disallow: /perfil
+Disallow: /dashboard
+
+User-agent: ClaudeBot
+Disallow: /api/
+Disallow: /sellers/productos
+Disallow: /admin/
+Disallow: /perfil
+Disallow: /dashboard
 
 Sitemap: https://orvexia.es/sitemap.xml
+Sitemap: https://www.orvexia.es/sitemap.xml

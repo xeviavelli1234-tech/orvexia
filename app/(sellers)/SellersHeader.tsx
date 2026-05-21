@@ -11,7 +11,10 @@ export default function SellersHeader() {
   const [open, setOpen] = useState(false);
 
   // Close menu on route change.
-  useEffect(() => setOpen(false), [pathname]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setOpen(false);
+  }, [pathname]);
 
   // Lock body scroll while the mobile drawer is open.
   useEffect(() => {

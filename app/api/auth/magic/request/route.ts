@@ -39,7 +39,13 @@ export async function POST(req: Request) {
   if (!email || !/.+@.+\..+/.test(email)) {
     return NextResponse.json({ error: "bad_email" }, { status: 400 });
   }
-  if (rateLimited(email)) {
+  const meta = readRequestMeta(req);
+  // Doble rate-limit: por email Y por IP. Frena tanto spam de cuentas
+  // como abusos masivos desde una misma IP.
+  if (rateLimited(`email:${email}`)) {
+    return NextResponse.json({ ok: true, throttled: true });
+  }
+  if (meta.ip && rateLimited(`ip:${meta.ip}`)) {
     return NextResponse.json({ ok: true, throttled: true });
   }
 
@@ -54,7 +60,6 @@ export async function POST(req: Request) {
 
   const token = randomBytes(32).toString("base64url"); // 256 bits
   const tokenHash = await bcrypt.hash(token, 10);
-  const meta = readRequestMeta(req);
 
   await prisma.magicLink.create({
     data: {
