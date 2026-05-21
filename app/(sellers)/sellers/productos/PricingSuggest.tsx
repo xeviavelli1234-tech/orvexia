@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 type Urgency = "low" | "normal" | "high";
 type Aggression = "conservative" | "balanced" | "aggressive";
@@ -66,6 +67,32 @@ export default function PricingSuggest({
   const [data, setData] = useState<ApiResponse | null>(null);
   const [urgency, setUrgency] = useState<Urgency>("normal");
   const [aggression, setAggression] = useState<Aggression>("balanced");
+  const [mounted, setMounted] = useState(false);
+
+  // Solo creamos el portal en cliente (evita hydration mismatch)
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Cerrar con Escape
+  useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  // Bloquea scroll del body cuando el modal está abierto
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
 
   async function run() {
     setLoading(true);
@@ -105,14 +132,14 @@ export default function PricingSuggest({
         Sugerir precio con IA
       </button>
 
-      {open && (
+      {open && mounted && createPortal(
         <div
-          className="fixed inset-0 z-[80] grid place-items-center bg-black/70 backdrop-blur-sm fade-in"
+          className="fixed inset-0 z-[100] grid place-items-center bg-black/70 backdrop-blur-sm fade-in p-3 sm:p-6"
           onClick={() => setOpen(false)}
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-[min(560px,calc(100vw-2rem))] max-h-[90vh] overflow-y-auto rounded-2xl border border-cyan-400/25 bg-[rgba(7,7,18,0.97)] shadow-[0_20px_60px_-20px_rgba(34,211,238,0.55)]"
+            className="w-full max-w-[560px] max-h-[90vh] overflow-y-auto rounded-2xl border border-cyan-400/25 bg-[rgba(7,7,18,0.97)] shadow-[0_20px_60px_-20px_rgba(34,211,238,0.55)]"
           >
             <header className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-3.5">
               <div>
@@ -302,7 +329,7 @@ export default function PricingSuggest({
                     <div className="text-[10px] uppercase tracking-wider text-white/45 mb-2">
                       Aplicar al producto
                     </div>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       {onApplyMin && (
                         <button
                           type="button"
@@ -310,21 +337,10 @@ export default function PricingSuggest({
                             onApplyMin(data.suggestion.conservative_price);
                             setOpen(false);
                           }}
-                          className="rounded-md border border-emerald-400/30 bg-emerald-500/10 px-3 py-1.5 text-xs text-emerald-200 hover:bg-emerald-500/20 transition-colors"
+                          className="rounded-md border border-emerald-400/30 bg-emerald-500/10 px-2 py-2 text-xs text-emerald-200 hover:bg-emerald-500/20 transition-colors text-left"
                         >
-                          → Mín (conservador)
-                        </button>
-                      )}
-                      {onApplyMax && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            onApplyMax(data.suggestion.aggressive_price);
-                            setOpen(false);
-                          }}
-                          className="rounded-md border border-rose-400/30 bg-rose-500/10 px-3 py-1.5 text-xs text-rose-200 hover:bg-rose-500/20 transition-colors"
-                        >
-                          → Máx (agresivo)
+                          <div className="font-semibold">→ Mín</div>
+                          <div className="text-[10px] opacity-70">conservador</div>
                         </button>
                       )}
                       {onApplyFixed && (
@@ -334,9 +350,23 @@ export default function PricingSuggest({
                             onApplyFixed(data.suggestion.recommended_price);
                             setOpen(false);
                           }}
-                          className="rounded-md border border-cyan-400/30 bg-cyan-500/10 px-3 py-1.5 text-xs text-cyan-200 hover:bg-cyan-500/20 transition-colors"
+                          className="rounded-md border border-cyan-400/30 bg-cyan-500/10 px-2 py-2 text-xs text-cyan-200 hover:bg-cyan-500/20 transition-colors text-left"
                         >
-                          → Precio fijo (recomendado)
+                          <div className="font-semibold">→ Precio fijo</div>
+                          <div className="text-[10px] opacity-70">recomendado</div>
+                        </button>
+                      )}
+                      {onApplyMax && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onApplyMax(data.suggestion.aggressive_price);
+                            setOpen(false);
+                          }}
+                          className="rounded-md border border-rose-400/30 bg-rose-500/10 px-2 py-2 text-xs text-rose-200 hover:bg-rose-500/20 transition-colors text-left"
+                        >
+                          <div className="font-semibold">→ Máx</div>
+                          <div className="text-[10px] opacity-70">agresivo</div>
                         </button>
                       )}
                     </div>
@@ -348,9 +378,9 @@ export default function PricingSuggest({
                           onApplyMax?.(data.suggestion.aggressive_price);
                           setOpen(false);
                         }}
-                        className="mt-2 w-full rounded-md border border-white/20 bg-white/[0.04] px-3 py-1.5 text-xs text-white/85 hover:bg-white/10 transition-colors"
+                        className="mt-2 w-full rounded-md border border-white/20 bg-white/[0.04] px-3 py-2 text-xs text-white/85 hover:bg-white/10 transition-colors"
                       >
-                        → Aplicar Mín y Máx a la vez
+                        → Aplicar Mín y Máx a la vez (rango completo)
                       </button>
                     )}
                   </div>
@@ -364,7 +394,8 @@ export default function PricingSuggest({
               </p>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );
