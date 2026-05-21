@@ -9,7 +9,6 @@ import { SavedProvider } from "@/components/SavedProvider";
 import { ProfileProvider } from "@/components/ProfileProvider";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 import { CookieConsentScripts } from "@/components/CookieConsentScripts";
-import MobileTour from "@/components/MobileTour";
 import { COOKIE_CONSENT_COOKIE, parseCookieConsent } from "@/lib/cookie-consent";
 import { THEME_COOKIE, parseTheme } from "@/lib/theme";
 import { Analytics } from "@vercel/analytics/next";
@@ -69,7 +68,6 @@ export default async function RootLayout({
         </ProfileProvider>
         <CookieConsentScripts initialConsent={initialConsent} />
         <CookieConsentBanner initialConsent={initialConsent} />
-        <MobileTour />
         <Analytics />
         <SpeedInsights />
       </body>
