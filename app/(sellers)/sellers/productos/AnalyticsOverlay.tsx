@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 export interface OvEvent {
   listingId: string;
@@ -818,12 +818,29 @@ function BbCell({
 
 const CHART_COLORS = ["#22d3ee", "#a855f7", "#34d399", "#f59e0b", "#60a5fa", "#f472b6"];
 function LineChart({ series }: { series: Array<{ title: string; pts: { t: number; p: number }[] }> }) {
-  const W = 1000;
-  const H = 300;
-  const padL = 60;
-  const padR = 18;
-  const padT = 16;
-  const padB = 32;
+  // Container-aware viewBox so the chart doesn't distort on narrow phones.
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [W, setW] = useState(1000);
+  useEffect(() => {
+    if (!wrapRef.current) return;
+    const ro = new ResizeObserver((entries) => {
+      for (const e of entries) {
+        const cw = Math.max(280, Math.floor(e.contentRect.width));
+        setW(cw);
+      }
+    });
+    ro.observe(wrapRef.current);
+    return () => ro.disconnect();
+  }, []);
+  const isCompact = W < 520;
+  const H = isCompact ? 220 : 300;
+  const padL = isCompact ? 44 : 60;
+  const padR = isCompact ? 12 : 18;
+  const padT = isCompact ? 14 : 16;
+  const padB = isCompact ? 26 : 32;
+  const labelFs = isCompact ? 10 : 11;
+  const dotR = isCompact ? 2.2 : 2.6;
+  const xTickCount = isCompact ? 2 : 3;
   const all = series.flatMap((s) => s.pts);
   const tMin = Math.min(...all.map((d) => d.t));
   let tMax = Math.max(...all.map((d) => d.t));
@@ -841,11 +858,17 @@ function LineChart({ series }: { series: Array<{ title: string; pts: { t: number
   const x = (t: number) => padL + ((t - tMin) / (tMax - tMin)) * (W - padL - padR);
   const y = (p: number) => padT + (1 - (p - pMin) / (pMax - pMin)) * (H - padT - padB);
   const yT = Array.from({ length: 4 }, (_, i) => pMin + ((pMax - pMin) * i) / 3);
-  const xT = Array.from({ length: 3 }, (_, i) => tMin + ((tMax - tMin) * i) / 2);
+  const xT = Array.from({ length: xTickCount }, (_, i) => tMin + ((tMax - tMin) * i) / (xTickCount - 1));
   const fmtT = (ms: number) =>
-    new Intl.DateTimeFormat("es-ES", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(
-      new Date(ms),
-    );
+    new Intl.DateTimeFormat("es-ES", {
+      day: "2-digit",
+      month: "2-digit",
+      ...(isCompact ? {} : { hour: "2-digit", minute: "2-digit" }),
+    }).format(new Date(ms));
+  const fmtY = (v: number) =>
+    isCompact && Math.abs(v) >= 1000
+      ? `${Math.round(v / 1000)}k €`
+      : `${v.toLocaleString("es-ES", { maximumFractionDigits: isCompact ? 0 : 2 })} €`;
 
   // Tiempos únicos ordenados (para "imantar" el cursor a un punto real).
   const allTimes = Array.from(new Set(all.map((d) => d.t))).sort((a, b) => a - b);
@@ -894,7 +917,7 @@ function LineChart({ series }: { series: Array<{ title: string; pts: { t: number
     : [];
 
   return (
-    <div className="relative">
+    <div ref={wrapRef} className="relative w-full">
       {hover && hoverRows.length > 0 && (
         <div
           className="pointer-events-none absolute top-1 z-10 -translate-x-1/2 rounded-lg border border-white/15 bg-[rgba(6,7,16,0.96)] px-3 py-2 text-[11px] shadow-xl"
@@ -927,15 +950,15 @@ function LineChart({ series }: { series: Array<{ title: string; pts: { t: number
         viewBox={`0 0 ${W} ${H}`}
         className="w-full"
         preserveAspectRatio="none"
-        height={280}
+        style={{ height: H }}
         onPointerMove={onMove}
         onPointerLeave={() => setHover(null)}
       >
         {yT.map((v, i) => (
           <g key={i}>
             <line x1={padL} x2={W - padR} y1={y(v)} y2={y(v)} stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
-            <text x={padL - 8} y={y(v) + 3} textAnchor="end" fontSize="11" fill="rgba(255,255,255,0.4)">
-              {v.toLocaleString("es-ES", { maximumFractionDigits: 2 })} €
+            <text x={padL - 6} y={y(v) + 3} textAnchor="end" fontSize={labelFs} fill="rgba(255,255,255,0.45)">
+              {fmtY(v)}
             </text>
           </g>
         ))}
@@ -943,10 +966,10 @@ function LineChart({ series }: { series: Array<{ title: string; pts: { t: number
           <text
             key={i}
             x={x(t)}
-            y={H - 10}
+            y={H - 8}
             textAnchor={i === 0 ? "start" : i === xT.length - 1 ? "end" : "middle"}
-            fontSize="11"
-            fill="rgba(255,255,255,0.4)"
+            fontSize={labelFs}
+            fill="rgba(255,255,255,0.45)"
           >
             {fmtT(t)}
           </text>
@@ -962,7 +985,7 @@ function LineChart({ series }: { series: Array<{ title: string; pts: { t: number
                 <path d={d} fill="none" stroke={c} strokeWidth="2" vectorEffect="non-scaling-stroke" />
               )}
               {s.pts.map((pt, i) => (
-                <circle key={i} cx={x(pt.t)} cy={y(pt.p)} r="2.6" fill={c} />
+                <circle key={i} cx={x(pt.t)} cy={y(pt.p)} r={dotR} fill={c} />
               ))}
             </g>
           );
@@ -993,12 +1016,12 @@ function LineChart({ series }: { series: Array<{ title: string; pts: { t: number
           </g>
         )}
       </svg>
-      <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5">
+      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
         {series.map((s, si) => (
-          <div key={s.title} className="flex items-center gap-2 text-xs text-white/60">
-            <span className="h-2.5 w-2.5 rounded-full" style={{ background: CHART_COLORS[si % CHART_COLORS.length] }} />
-            <span className="max-w-[220px] truncate">{s.title}</span>
-            <span className="font-mono text-white/45">
+          <div key={s.title} className="flex items-center gap-2 text-xs text-white/65 min-w-0">
+            <span className="h-2.5 w-2.5 rounded-full flex-shrink-0" style={{ background: CHART_COLORS[si % CHART_COLORS.length] }} />
+            <span className="max-w-[180px] sm:max-w-[220px] truncate">{s.title}</span>
+            <span className="font-mono text-white/45 tabular text-[11px]">
               {s.pts[s.pts.length - 1].p.toLocaleString("es-ES", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,

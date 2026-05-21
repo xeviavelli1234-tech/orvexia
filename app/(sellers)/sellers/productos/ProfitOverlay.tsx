@@ -226,79 +226,152 @@ export default function ProfitOverlay({ items }: { items: NetNode[] }) {
 
   return (
     <div
-      className="fixed inset-0 z-[58] bg-black/75 backdrop-blur-sm p-3 sm:p-6 overflow-y-auto"
+      className="fixed inset-0 z-[58] bg-black/75 backdrop-blur-sm p-0 sm:p-6 overflow-y-auto"
       onClick={() => setOpen(false)}
     >
       <div
-        className="mx-auto max-w-6xl rounded-2xl border border-emerald-400/20 bg-[rgba(7,8,18,0.99)] shadow-[0_30px_80px_-20px_rgba(16,185,129,0.4)] fade-in"
+        className="mx-auto max-w-6xl min-h-full sm:min-h-0 rounded-none sm:rounded-2xl border-0 sm:border sm:border-emerald-400/20 bg-[rgba(7,8,18,0.99)] sm:shadow-[0_30px_80px_-20px_rgba(16,185,129,0.4)] fade-in"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Cabecera + KPIs */}
-        <div className="sticky top-0 z-10 px-5 py-4 border-b border-white/10 bg-[rgba(7,8,18,0.99)] rounded-t-2xl">
-          <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="sticky top-0 z-10 px-4 sm:px-5 py-3 sm:py-4 border-b border-white/10 bg-[rgba(7,8,18,0.99)] backdrop-blur-md sm:rounded-t-2xl">
+          <div className="flex items-center justify-between gap-2 mb-3">
             <h2 className="text-base font-extrabold tracking-tight">
               Panel de <span className="text-gradient-neon">rentabilidad</span>
             </h2>
             <div className="flex items-center gap-2">
               <button
                 onClick={exportCsv}
-                className="rounded-lg border border-emerald-400/40 text-emerald-200 px-3 py-1.5 text-xs font-semibold hover:bg-emerald-400/10 transition-colors"
+                className="rounded-lg border border-emerald-400/40 text-emerald-200 px-3 h-9 text-xs font-semibold hover:bg-emerald-400/10 transition-colors whitespace-nowrap"
               >
-                Exportar CSV
+                Export CSV
               </button>
               <button
                 onClick={() => setOpen(false)}
                 aria-label="Cerrar"
-                className="h-8 w-8 grid place-items-center rounded-md text-white/40 hover:text-white hover:bg-white/10 transition-colors text-lg leading-none"
+                className="h-9 w-9 grid place-items-center rounded-full text-white/55 hover:text-white hover:bg-white/10 transition-colors"
               >
-                ×
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
               </button>
             </div>
           </div>
 
-          <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
             <Kpi label="Con coste" value={`${kpi.withCost}/${kpi.total}`} />
             <Kpi label="Rentables" value={String(kpi.ok)} tone="ok" />
             <Kpi label="Bajo objetivo" value={String(kpi.below)} tone="warn" />
             <Kpi label="En pérdida" value={String(kpi.loss)} tone="bad" />
             <Kpi label="Margen medio" value={pct(kpi.avgMargin)} />
-            <Kpi label="Beneficio medio/ud" value={eur(kpi.avgProfit)} />
+            <Kpi label="Benef. medio/ud" value={eur(kpi.avgProfit)} />
           </div>
 
-          <div className="mt-3 flex flex-wrap items-center gap-2">
+          {/* Search + sort controls */}
+          <div className="mt-3 space-y-2 sm:space-y-0 sm:flex sm:flex-wrap sm:items-center sm:gap-2">
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Buscar título/SKU/ASIN…"
-              className="flex-1 min-w-[140px] rounded-lg border border-white/15 bg-black/40 px-3 py-1.5 text-sm text-white placeholder:text-white/30 focus:border-emerald-400/60 focus:outline-none"
+              className="w-full sm:flex-1 sm:min-w-[140px] rounded-lg border border-white/15 bg-black/40 px-3 h-10 sm:h-9 text-sm text-white placeholder:text-white/30 focus:border-emerald-400/60 focus:outline-none"
             />
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value as Filter)}
-              className="rounded-lg border border-white/15 bg-black/40 px-2 py-1.5 text-sm text-white focus:border-emerald-400/60 focus:outline-none"
-            >
-              <option value="all">Todos</option>
-              <option value="withcost">Con coste</option>
-              <option value="nocost">Sin coste</option>
-              <option value="loss">En pérdida</option>
-              <option value="below">Bajo objetivo</option>
-              <option value="active">Repreciando</option>
-            </select>
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value as SortKey)}
-              className="rounded-lg border border-white/15 bg-black/40 px-2 py-1.5 text-sm text-white focus:border-emerald-400/60 focus:outline-none"
-            >
-              <option value="margin">Orden: margen ↑</option>
-              <option value="profit">Orden: beneficio ↑</option>
-              <option value="price">Orden: precio ↓</option>
-              <option value="title">Orden: nombre</option>
-            </select>
+            <div className="flex items-center gap-2 -mx-4 sm:mx-0 px-4 sm:px-0 overflow-x-auto scrollbar-hide">
+              <select
+                value={filter}
+                onChange={(e) => setFilter(e.target.value as Filter)}
+                className="flex-shrink-0 rounded-lg border border-white/15 bg-black/40 px-2.5 h-9 text-sm text-white focus:border-emerald-400/60 focus:outline-none"
+              >
+                <option value="all">Todos</option>
+                <option value="withcost">Con coste</option>
+                <option value="nocost">Sin coste</option>
+                <option value="loss">En pérdida</option>
+                <option value="below">Bajo objetivo</option>
+                <option value="active">Repreciando</option>
+              </select>
+              <select
+                value={sort}
+                onChange={(e) => setSort(e.target.value as SortKey)}
+                className="flex-shrink-0 rounded-lg border border-white/15 bg-black/40 px-2.5 h-9 text-sm text-white focus:border-emerald-400/60 focus:outline-none"
+              >
+                <option value="margin">Margen ↑</option>
+                <option value="profit">Beneficio ↑</option>
+                <option value="price">Precio ↓</option>
+                <option value="title">Nombre</option>
+              </select>
+            </div>
           </div>
         </div>
 
-        {/* Tabla */}
-        <div className="p-3 sm:p-5">
+        {/* Mobile cards */}
+        {rows.length === 0 ? (
+          <p className="sm:hidden py-10 text-center text-sm text-white/45 px-4">
+            Sin productos para este filtro.
+          </p>
+        ) : (
+          <div className="sm:hidden p-3 space-y-2">
+            {rows.map((r) => {
+              const m = STATUS_META[r.status];
+              return (
+                <button
+                  key={r.n.id}
+                  type="button"
+                  onClick={() =>
+                    window.dispatchEvent(
+                      new CustomEvent("orvexia:open-analytics", { detail: { productId: r.n.id } }),
+                    )
+                  }
+                  className="w-full text-left px-3 py-3 rounded-xl border border-white/[0.08] bg-white/[0.015] hover:border-emerald-400/30 hover:bg-emerald-400/[0.04] active:scale-[0.99] transition-all"
+                >
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm text-white/90 line-clamp-2 leading-snug">{r.n.title}</div>
+                      <div className="text-[10px] text-white/40 truncate mt-0.5">
+                        {r.n.sku} · {r.n.asin}
+                        {r.n.repricingEnabled && (
+                          <span className="ml-1 text-emerald-400/80">· repreciando</span>
+                        )}
+                      </div>
+                    </div>
+                    <span className={`flex-shrink-0 inline-block rounded-full border px-2 h-5 text-[10px] font-bold leading-5 ${m.cls}`}>
+                      {m.label}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-[11px] tabular">
+                    <div>
+                      <div className="text-[9px] uppercase tracking-wider text-white/35">Precio</div>
+                      <div className="font-mono font-semibold text-white/90">{eur(r.n.priceCurrent)}</div>
+                    </div>
+                    <div>
+                      <div className="text-[9px] uppercase tracking-wider text-white/35">Benef./ud</div>
+                      <div className={`font-mono font-semibold ${
+                        !r.hasCost ? "text-white/35" : r.profit < 0 ? "text-red-300" : "text-emerald-300"
+                      }`}>
+                        {r.hasCost ? eur(r.profit) : "—"}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[9px] uppercase tracking-wider text-white/35">Margen</div>
+                      <div className={`font-mono font-semibold ${
+                        !r.hasCost
+                          ? "text-white/35"
+                          : r.profit < 0
+                            ? "text-red-300"
+                            : r.status === "below"
+                              ? "text-amber-300"
+                              : "text-emerald-300"
+                      }`}>
+                        {r.hasCost ? pct(r.marginPct) : "—"}
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Desktop table */}
+        <div className="hidden sm:block p-3 sm:p-5">
           {rows.length === 0 ? (
             <p className="py-10 text-center text-sm text-white/45">
               Sin productos para este filtro.

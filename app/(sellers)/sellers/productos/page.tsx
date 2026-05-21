@@ -24,6 +24,7 @@ import { DisconnectButton } from "@/app/(sellers)/sellers/dashboard/DisconnectBu
 import { prisma } from "@/lib/prisma";
 import { getBillingState, TRIAL_DAYS, type SellerPlan } from "@/lib/billing";
 import ActivityPanel, { type EventDTO } from "./ActivityPanel";
+import ControlCenterShell from "./ControlCenterShell";
 
 export const metadata = { title: "Centro de control · Orvexia Repricer" };
 export const dynamic = "force-dynamic";
@@ -183,26 +184,24 @@ export default async function ProductosPage() {
     alertOnError: account.alertOnError,
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex bg-[#020207] text-white">
-      {/* ── Zona de herramientas (izquierda) ─────────────────────── */}
-      <aside className="flex h-full w-60 sm:w-72 shrink-0 flex-col overflow-y-auto border-r border-white/10 bg-[rgba(6,6,16,0.94)] backdrop-blur-xl">
-        <div className="px-5 py-5 border-b border-white/10">
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-1 text-[11px] text-white/45 hover:text-white/80 transition-colors"
-          >
-            ← Dashboard
-          </Link>
-          <div className="mt-2 flex items-center gap-2">
-            <span className="h-2.5 w-2.5 rounded-full bg-cyan-400 shadow-[0_0_10px_2px_rgba(34,211,238,0.7)]" />
-            <h1 className="text-lg font-extrabold tracking-tight">
-              Centro de <span className="text-gradient-neon">control</span>
-            </h1>
-          </div>
+  const sidebar = (
+    <>
+      <div className="px-5 py-5 border-b border-white/10 hidden lg:block">
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center gap-1 text-[11px] text-white/45 hover:text-white/80 transition-colors"
+        >
+          ← Dashboard
+        </Link>
+        <div className="mt-2 flex items-center gap-2">
+          <span className="h-2.5 w-2.5 rounded-full bg-cyan-400 shadow-[0_0_10px_2px_rgba(34,211,238,0.7)]" />
+          <h1 className="text-lg font-extrabold tracking-tight">
+            Centro de <span className="text-gradient-neon">control</span>
+          </h1>
         </div>
+      </div>
 
-        <div id="tour-resumen" className="px-5 py-5 border-b border-white/10">
+      <div id="tour-resumen" className="px-5 py-5 border-b border-white/10">
           <Eyebrow>Resumen</Eyebrow>
           <div className="mt-3 grid grid-cols-2 gap-2.5">
             <Stat label="Productos" value={String(listings.length)} />
@@ -279,56 +278,59 @@ export default async function ProductosPage() {
             Clic en un nodo para definir mín/máx y la estrategia.
           </p>
         </div>
-      </aside>
+      </>
+    );
 
-      {/* ── Lienzo (resto de la ventana) ─────────────────────────── */}
-      <section
-        id="tour-graph"
-        className="relative flex-1 h-full bg-[radial-gradient(ellipse_at_50%_45%,#10173a_0%,#0a0d24_45%,#05060f_100%)]"
-      >
-        {hasListings ? (
-          <ProductNetwork nodes={nodes} activeCount={active} />
-        ) : (
-          <div className="absolute inset-0 grid place-items-center text-center px-6">
-            <div className="max-w-md">
-              <div className="text-2xl font-extrabold tracking-tight text-gradient-neon">
-                Empieza aquí
-              </div>
-              <p className="mt-3 text-white/70">
-                Pulsa{" "}
-                <strong className="text-white">&ldquo;Sincronizar con Amazon&rdquo;</strong>{" "}
-                en la barra de la izquierda para traer tus productos.
-              </p>
-              <p className="mt-2 text-xs text-white/40">
-                Se importan todos los listings de tu Seller Central. Luego clic
-                en un producto → define mín/máx → estrategia → activa →
-                «Ejecutar reprecio ahora».
-              </p>
-              <div className="mt-5 inline-block w-64">
-                <HelpButton />
-              </div>
-            </div>
-          </div>
-        )}
-      </section>
-
-      <AssistantWidget />
-
-      <AnalyticsOverlay
-        products={ovProducts}
-        events={ovEvents}
-        plan={{ label: billing.label, intervalMinutes: billing.intervalMinutes }}
-        runCount={runCount}
-        lastRunAt={lastRun?.startedAt.toISOString() ?? null}
-      />
-
-      <AccountSettings initial={accountSettings} />
-      <CatalogOverlay items={nodes} />
-      <ProfitOverlay items={nodes} />
-      <HelpOverlay />
-      <AuditOverlay />
-      <Tour />
+  const canvas = hasListings ? (
+    <ProductNetwork nodes={nodes} activeCount={active} />
+  ) : (
+    <div className="absolute inset-0 grid place-items-center text-center px-6">
+      <div className="max-w-md">
+        <div className="text-2xl font-extrabold tracking-tight text-gradient-neon">
+          Empieza aquí
+        </div>
+        <p className="mt-3 text-white/70">
+          Pulsa{" "}
+          <strong className="text-white">&ldquo;Sincronizar con Amazon&rdquo;</strong>{" "}
+          <span className="hidden lg:inline">en la barra de la izquierda</span>
+          <span className="lg:hidden">en el menú</span>{" "}
+          para traer tus productos.
+        </p>
+        <p className="mt-2 text-xs text-white/40">
+          Se importan todos los listings de tu Seller Central. Luego clic
+          en un producto → define mín/máx → estrategia → activa →
+          «Ejecutar reprecio ahora».
+        </p>
+        <div className="mt-5 inline-block w-64">
+          <HelpButton />
+        </div>
+      </div>
     </div>
+  );
+
+  return (
+    <ControlCenterShell
+      sidebar={sidebar}
+      canvas={canvas}
+      overlays={
+        <>
+          <AssistantWidget />
+          <AnalyticsOverlay
+            products={ovProducts}
+            events={ovEvents}
+            plan={{ label: billing.label, intervalMinutes: billing.intervalMinutes }}
+            runCount={runCount}
+            lastRunAt={lastRun?.startedAt.toISOString() ?? null}
+          />
+          <AccountSettings initial={accountSettings} />
+          <CatalogOverlay items={nodes} />
+          <ProfitOverlay items={nodes} />
+          <HelpOverlay />
+          <AuditOverlay />
+          <Tour />
+        </>
+      }
+    />
   );
 }
 

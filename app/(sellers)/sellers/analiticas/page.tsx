@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getSession } from "@/lib/session";
 import { getSellerAccountByUserId } from "@/lib/db/sellerAccount";
 import { listListingsByAccount } from "@/lib/db/sellerListing";
+import ResponsiveLineChart, { type ChartSeries } from "./ResponsiveLineChart";
 import { prisma } from "@/lib/prisma";
 import { getBillingState, type SellerPlan } from "@/lib/billing";
 
@@ -405,118 +406,4 @@ function Empty() {
   return <p className="text-sm text-white/45">Aún no hay datos. Lanza un ciclo de reprecio.</p>;
 }
 
-interface ChartSeries {
-  title: string;
-  pts: { t: number; p: number }[];
-}
-
-const CHART_COLORS = ["#22d3ee", "#a855f7", "#34d399", "#f59e0b", "#60a5fa", "#f472b6"];
-
-function LineChart({ series }: { series: ChartSeries[] }) {
-  const W = 1000;
-  const H = 320;
-  const padL = 60;
-  const padR = 18;
-  const padT = 18;
-  const padB = 34;
-  const plotW = W - padL - padR;
-  const plotH = H - padT - padB;
-
-  const all = series.flatMap((s) => s.pts);
-  const tMin = Math.min(...all.map((d) => d.t));
-  let tMax = Math.max(...all.map((d) => d.t));
-  let pMin = Math.min(...all.map((d) => d.p));
-  let pMax = Math.max(...all.map((d) => d.p));
-  if (!(tMax > tMin)) tMax = tMin + 1;
-  if (!(pMax > pMin)) {
-    pMin -= 1;
-    pMax += 1;
-  } else {
-    const pad = (pMax - pMin) * 0.12;
-    pMin -= pad;
-    pMax += pad;
-  }
-  const x = (t: number) => padL + ((t - tMin) / (tMax - tMin)) * plotW;
-  const y = (p: number) => padT + (1 - (p - pMin) / (pMax - pMin)) * plotH;
-
-  const yTicks = Array.from({ length: 4 }, (_, i) => pMin + ((pMax - pMin) * i) / 3);
-  const xTicks = Array.from({ length: 3 }, (_, i) => tMin + ((tMax - tMin) * i) / 2);
-  const fmtT = (ms: number) =>
-    new Intl.DateTimeFormat("es-ES", {
-      day: "2-digit",
-      month: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(new Date(ms));
-
-  return (
-    <div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" preserveAspectRatio="none" height={300}>
-        {/* grid + eje Y */}
-        {yTicks.map((v, i) => (
-          <g key={i}>
-            <line
-              x1={padL}
-              x2={W - padR}
-              y1={y(v)}
-              y2={y(v)}
-              stroke="rgba(255,255,255,0.08)"
-              strokeWidth="1"
-            />
-            <text x={padL - 8} y={y(v) + 3} textAnchor="end" fontSize="11" fill="rgba(255,255,255,0.4)">
-              {v.toLocaleString("es-ES", { maximumFractionDigits: 2 })} €
-            </text>
-          </g>
-        ))}
-        {/* eje X */}
-        {xTicks.map((t, i) => (
-          <text
-            key={i}
-            x={x(t)}
-            y={H - 10}
-            textAnchor={i === 0 ? "start" : i === xTicks.length - 1 ? "end" : "middle"}
-            fontSize="11"
-            fill="rgba(255,255,255,0.4)"
-          >
-            {fmtT(t)}
-          </text>
-        ))}
-        {/* series */}
-        {series.map((s, si) => {
-          const c = CHART_COLORS[si % CHART_COLORS.length];
-          const d = s.pts
-            .map((pt, i) => `${i === 0 ? "M" : "L"}${x(pt.t).toFixed(1)},${y(pt.p).toFixed(1)}`)
-            .join(" ");
-          return (
-            <g key={s.title}>
-              {s.pts.length > 1 && (
-                <path d={d} fill="none" stroke={c} strokeWidth="2" vectorEffect="non-scaling-stroke" />
-              )}
-              {s.pts.map((pt, i) => (
-                <circle key={i} cx={x(pt.t)} cy={y(pt.p)} r="2.6" fill={c} />
-              ))}
-            </g>
-          );
-        })}
-      </svg>
-      <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5">
-        {series.map((s, si) => (
-          <div key={s.title} className="flex items-center gap-2 text-xs text-white/60">
-            <span
-              className="h-2.5 w-2.5 rounded-full"
-              style={{ background: CHART_COLORS[si % CHART_COLORS.length] }}
-            />
-            <span className="max-w-[220px] truncate">{s.title}</span>
-            <span className="font-mono text-white/45">
-              {s.pts[s.pts.length - 1].p.toLocaleString("es-ES", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}{" "}
-              €
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
+const LineChart = ResponsiveLineChart;
