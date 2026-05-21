@@ -23,6 +23,7 @@ import {
   exportSellerData,
   deleteSellerAccount,
 } from "@/lib/db/sellerAccount";
+import { prisma } from "@/lib/prisma";
 
 const rangeSchema = z
   .object({
@@ -304,6 +305,54 @@ export async function updateAccountSettingsAction(
       session.userId,
       "account.settings",
       "Ajustes de cuenta actualizados",
+    );
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "db_failed" };
+  }
+  revalidatePath("/sellers/productos");
+  return { ok: true };
+}
+
+/**
+ * Actualiza la allowlist de IPs de la cuenta. Vacío = sin restricción.
+ * Acepta IPs (1.2.3.4 / IPv6) o CIDR (1.2.3.0/24, 2001:db8::/32),
+ * separadas por coma, espacios o saltos de línea.
+ */
+export async function updateIpAllowlistAction(
+  formData: FormData,
+): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+
+  const raw = String(formData.get("ipAllowlist") ?? "").trim();
+  // Normaliza: quita espacios extra, repite con comas.
+  const items = raw
+    .split(/[,\n\s]+/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 50);
+  // Validación somera: cada item debe parecer IP/CIDR.
+  const re = /^[0-9a-fA-F:.]+(?:\/\d{1,3})?$/;
+  for (const it of items) {
+    if (!re.test(it)) {
+      return { ok: false, error: `Entrada inválida: "${it}". Usa IP o CIDR.` };
+    }
+  }
+  const value = items.join(",");
+  try {
+    const acc = await prisma.sellerAccount.findUnique({
+      where: { userId: session.userId },
+      select: { id: true },
+    });
+    if (!acc) return { ok: false, error: "no_account" };
+    await prisma.sellerAccount.update({
+      where: { id: acc.id },
+      data: { ipAllowlist: value },
+    });
+    await recordAudit(
+      session.userId,
+      "account.ip_allowlist",
+      value ? `Allowlist actualizada (${items.length} entradas)` : "Allowlist desactivada",
     );
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "db_failed" };

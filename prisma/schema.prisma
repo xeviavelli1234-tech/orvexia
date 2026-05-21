@@ -35,6 +35,87 @@ model User {
   communityVotes    CommunityVote[]
   reviews           Review[]
   sellerAccount     SellerAccount?
+  passkeys          Passkey[]
+  magicLinks        MagicLink[]
+  loginAttempts     LoginAttempt[]
+  trustedLocations  TrustedLocation[]
+}
+
+// ─── Seguridad: passkeys, magic links, intentos de inicio, ubicaciones ──────
+model Passkey {
+  id              String   @id @default(cuid())
+  userId          String
+  credentialId    String   @unique // base64url del id de la credencial
+  publicKey       String   @db.Text // base64url de la public key
+  counter         Int      @default(0)
+  transports      String   @default("") // "internal,hybrid" etc, CSV
+  deviceType      String   @default("singleDevice") // singleDevice | multiDevice
+  backedUp        Boolean  @default(false)
+  name            String   @default("Mi llave") // alias para el usuario
+  createdAt       DateTime @default(now())
+  lastUsedAt      DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model MagicLink {
+  id          String   @id @default(cuid())
+  userId      String
+  tokenHash   String   @unique // bcrypt del token enviado (no se guarda en claro)
+  expiresAt   DateTime
+  usedAt      DateTime?
+  ipAtRequest String?
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  userId    String?
+  email     String?
+  ip        String?
+  country   String?
+  userAgent String?  @db.Text
+  method    String   @default("password") // password | passkey | magic | totp_verify | google
+  success   Boolean
+  reason    String?  // "bad_password" | "totp_failed" | "new_location" | "ok"
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([email, createdAt])
+}
+
+model TrustedLocation {
+  id        String   @id @default(cuid())
+  userId    String
+  ip        String   // recordamos la /24 (IPv4) o /64 (IPv6) para tolerar cambios menores
+  country   String?
+  label     String   @default("Sin etiqueta") // p. ej. "Casa", "Oficina"
+  createdAt DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, ip])
+  @@index([userId])
+}
+
+model WebAuthnChallenge {
+  id        String   @id @default(cuid())
+  userId    String?  // null durante el registro guest (no soportado aquí)
+  challenge String   @unique
+  type      String   // "registration" | "authentication"
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([challenge, expiresAt])
 }
 
 // ─── Categorías disponibles ───────────────────────────────────────────────────
@@ -363,6 +444,9 @@ model SellerAccount {
   billingTaxId    String @default("") // NIF / CIF / VAT
   billingAddress  String @default("") // dirección fiscal
   billingCountry  String @default("ES")
+
+  // ── Seguridad: allowlist de IPs (CSV; vacío = sin restricción) ──
+  ipAllowlist     String @default("") @db.Text
 
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt

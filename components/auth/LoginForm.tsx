@@ -9,6 +9,7 @@ import {
   type ActionResult,
 } from "@/app/actions/auth";
 import { GoogleButton } from "./GoogleButton";
+import PasswordlessButtons from "./PasswordlessButtons";
 import { InputField } from "./InputField";
 import { Playfair_Display, Inter } from "next/font/google";
 
@@ -194,6 +195,7 @@ export function LoginForm({ oauthError, next }: { oauthError?: string; next?: st
   return (
     <div className={`space-y-4 ${inter.className}`}>
       <GoogleButton label="Continuar con Google" />
+      <PasswordlessButtons />
 
       {errorMsg && (
         <p

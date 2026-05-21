@@ -16,6 +16,17 @@ import { verifyTotp } from "@/lib/totp";
 import { randomInt } from "crypto";
 import { sendVerificationEmail } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
+import { headers } from "next/headers";
+import { readRequestMeta } from "@/lib/security/request";
+import {
+  recordLoginAttempt,
+  checkAndMarkLocation,
+} from "@/lib/security/login-monitoring";
+
+async function currentMeta() {
+  const h = await headers();
+  return readRequestMeta(new Request("http://x", { headers: h }));
+}
 
 export type FormErrors = Record<string, string[]>;
 
@@ -110,14 +121,30 @@ export async function loginAction(
 
   const { email, password } = result.data;
 
+  const meta = await currentMeta();
   const user = await getUserByEmail(email);
   if (!user || !user.password) {
-    // Sin contraseña = cuenta creada con Google
+    await recordLoginAttempt({
+      ...meta,
+      userId: user?.id ?? null,
+      email,
+      success: false,
+      method: "password",
+      reason: !user ? "no_user" : "no_password",
+    });
     return { message: "Credenciales inválidas." };
   }
 
   const valid = await bcrypt.compare(password, user.password);
   if (!valid) {
+    await recordLoginAttempt({
+      ...meta,
+      userId: user.id,
+      email,
+      success: false,
+      method: "password",
+      reason: "bad_password",
+    });
     return { message: "Credenciales inválidas." };
   }
 
@@ -140,6 +167,22 @@ export async function loginAction(
   }
 
   await createSession({ userId: user.id, name: user.name, email: user.email }, rememberMe);
+  await recordLoginAttempt({
+    ...meta,
+    userId: user.id,
+    email: user.email,
+    success: true,
+    method: "password",
+    reason: "ok",
+  });
+  await checkAndMarkLocation({
+    userId: user.id,
+    email: user.email,
+    name: user.name,
+    ip: meta.ip,
+    country: meta.country,
+    userAgent: meta.userAgent,
+  });
   redirect(next ?? "/dashboard");
 }
 
@@ -188,7 +231,16 @@ export async function verifyTwoFactorAction(
     }
   }
 
+  const meta = await currentMeta();
   if (!ok) {
+    await recordLoginAttempt({
+      ...meta,
+      userId: user.id,
+      email: user.email,
+      success: false,
+      method: "totp_verify",
+      reason: "bad_code",
+    });
     return { requires2fa: true, message: "Código incorrecto." };
   }
 
@@ -197,6 +249,22 @@ export async function verifyTwoFactorAction(
     { userId: user.id, name: user.name, email: user.email },
     pending.rememberMe,
   );
+  await recordLoginAttempt({
+    ...meta,
+    userId: user.id,
+    email: user.email,
+    success: true,
+    method: "totp_verify",
+    reason: "ok",
+  });
+  await checkAndMarkLocation({
+    userId: user.id,
+    email: user.email,
+    name: user.name,
+    ip: meta.ip,
+    country: meta.country,
+    userAgent: meta.userAgent,
+  });
   redirect(pending.next ?? "/dashboard");
 }
 
