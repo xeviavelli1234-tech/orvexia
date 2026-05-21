@@ -292,6 +292,12 @@ body {
 .animate-fade-in  { animation: sheet-fade-in 0.22s var(--ease-out) both; }
 .animate-slide-up { animation: sheet-slide-up 0.32s var(--ease-out) both; }
 
+@keyframes slide-in-left {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
+.animate-slide-in-left { animation: slide-in-left 0.28s var(--ease-out) both; }
+
 /* Hide scrollbar but keep scroll functionality (chip rails, etc.) */
 .scrollbar-hide { scrollbar-width: none; -ms-overflow-style: none; }
 .scrollbar-hide::-webkit-scrollbar { display: none; }

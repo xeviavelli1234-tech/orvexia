@@ -263,84 +263,178 @@ export default function CatalogOverlay({ items }: { items: NetNode[] }) {
 
   return (
     <div
-      className="fixed inset-0 z-[58] bg-black/75 backdrop-blur-sm p-3 sm:p-6 overflow-y-auto"
+      className="fixed inset-0 z-[58] bg-black/75 backdrop-blur-sm p-0 sm:p-6 overflow-y-auto"
       onClick={() => setOpen(false)}
     >
       <div
-        className="mx-auto max-w-5xl rounded-2xl border border-cyan-400/20 bg-[rgba(7,8,18,0.99)] shadow-[0_30px_80px_-20px_rgba(34,211,238,0.4)] fade-in"
+        className="mx-auto max-w-5xl min-h-full sm:min-h-0 rounded-none sm:rounded-2xl border-0 sm:border sm:border-cyan-400/20 bg-[rgba(7,8,18,0.99)] sm:shadow-[0_30px_80px_-20px_rgba(34,211,238,0.4)] fade-in"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 px-5 py-3.5 border-b border-white/10 bg-[rgba(7,8,18,0.99)] rounded-t-2xl">
-          <h2 className="text-base font-extrabold tracking-tight">
-            Catálogo <span className="text-gradient-neon">· {items.length}</span>
-          </h2>
+        <div className="sticky top-0 z-10 px-4 sm:px-5 py-3 sm:py-3.5 border-b border-white/10 bg-[rgba(7,8,18,0.99)] backdrop-blur-md sm:rounded-t-2xl">
+          {/* Row 1: title + close */}
+          <div className="flex items-center justify-between gap-2 mb-2.5 sm:mb-3">
+            <h2 className="text-base font-extrabold tracking-tight">
+              Catálogo <span className="text-gradient-neon">· {items.length}</span>
+            </h2>
+            <button
+              onClick={() => setOpen(false)}
+              aria-label="Cerrar"
+              className="h-9 w-9 grid place-items-center rounded-full text-white/55 hover:text-white hover:bg-white/10 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          </div>
+          {/* Row 2: search (full width on mobile) */}
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Buscar título/SKU/ASIN…"
-            className="ml-2 flex-1 min-w-[140px] rounded-lg border border-white/15 bg-black/40 px-3 py-1.5 text-sm text-white placeholder:text-white/30 focus:border-cyan-400/60 focus:outline-none"
+            placeholder="Buscar título / SKU / ASIN…"
+            className="w-full rounded-lg border border-white/15 bg-black/40 px-3 h-10 text-sm text-white placeholder:text-white/30 focus:border-cyan-400/60 focus:outline-none mb-2"
           />
-          <select
-            value={filter}
-            onChange={(e) => setFilter(e.target.value as Filter)}
-            className="rounded-lg border border-white/15 bg-black/40 px-2 py-1.5 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
-          >
-            <option value="all">Todos</option>
-            <option value="active">Repreciando</option>
-            <option value="paused">Pausados</option>
-            <option value="norange">Sin rango</option>
-            <option value="noprice">Sin oferta</option>
-            <option value="variations">Solo variaciones</option>
-          </select>
-          {allTags.length > 0 && (
+          {/* Row 3: filters + actions (horizontal scroll on mobile) */}
+          <div className="flex items-center gap-1.5 sm:gap-2 -mx-4 sm:mx-0 px-4 sm:px-0 overflow-x-auto scrollbar-hide pb-0.5">
             <select
-              value={tagFilter}
-              onChange={(e) => setTagFilter(e.target.value)}
-              className="rounded-lg border border-white/15 bg-black/40 px-2 py-1.5 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
-              title="Filtrar por etiqueta"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value as Filter)}
+              className="flex-shrink-0 rounded-lg border border-white/15 bg-black/40 px-2.5 h-9 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
             >
-              <option value="">Todas las etiquetas</option>
-              {allTags.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
+              <option value="all">Todos</option>
+              <option value="active">Repreciando</option>
+              <option value="paused">Pausados</option>
+              <option value="norange">Sin rango</option>
+              <option value="noprice">Sin oferta</option>
+              <option value="variations">Solo variaciones</option>
             </select>
-          )}
-          <button
-            onClick={exportCsv}
-            className="rounded-lg border border-white/15 px-2.5 py-1.5 text-[11px] text-white/70 hover:bg-white/10"
-            title="Exportar configuración (selección o todos)"
-          >
-            Export CSV
-          </button>
-          <button
-            onClick={() => fileRef.current?.click()}
-            className="rounded-lg border border-white/15 px-2.5 py-1.5 text-[11px] text-white/70 hover:bg-white/10"
-          >
-            Import CSV
-          </button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".csv,text/csv"
-            onChange={onImport}
-            className="hidden"
-          />
-          <button
-            onClick={() => setOpen(false)}
-            aria-label="Cerrar"
-            className="h-8 w-8 grid place-items-center rounded-md text-white/40 hover:text-white hover:bg-white/10 text-lg leading-none"
-          >
-            ×
-          </button>
+            {allTags.length > 0 && (
+              <select
+                value={tagFilter}
+                onChange={(e) => setTagFilter(e.target.value)}
+                className="flex-shrink-0 rounded-lg border border-white/15 bg-black/40 px-2.5 h-9 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
+                title="Filtrar por etiqueta"
+              >
+                <option value="">Todas las etiquetas</option>
+                {allTags.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            )}
+            <button
+              onClick={exportCsv}
+              className="flex-shrink-0 rounded-lg border border-white/15 px-3 h-9 text-[11px] font-semibold text-white/75 hover:bg-white/10 transition-colors whitespace-nowrap"
+              title="Exportar configuración (selección o todos)"
+            >
+              Export CSV
+            </button>
+            <button
+              onClick={() => fileRef.current?.click()}
+              className="flex-shrink-0 rounded-lg border border-white/15 px-3 h-9 text-[11px] font-semibold text-white/75 hover:bg-white/10 transition-colors whitespace-nowrap"
+            >
+              Import CSV
+            </button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".csv,text/csv"
+              onChange={onImport}
+              className="hidden"
+            />
+          </div>
         </div>
 
         {msg && (
           <div className="px-5 pt-3 text-[11px] text-cyan-200">{msg}</div>
         )}
 
-        <div className="p-3 sm:p-5 overflow-x-auto">
+        {/* Mobile card list */}
+        <div className="sm:hidden p-3 space-y-2">
+          {rows.length === 0 ? (
+            <div className="py-10 text-center text-sm text-white/45">Sin resultados.</div>
+          ) : (
+            <>
+              {/* Select-all row */}
+              <label className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg border border-white/10 bg-white/[0.02]">
+                <span className="flex items-center gap-2.5">
+                  <input type="checkbox" checked={allSel} onChange={selectAll} className="w-4 h-4 accent-cyan-500" />
+                  <span className="text-xs font-semibold text-white/75 uppercase tracking-wider">
+                    {sel.size > 0 ? `${sel.size} seleccionados` : "Seleccionar todos"}
+                  </span>
+                </span>
+                <span className="text-[10px] text-white/35 tabular">{rows.length}</span>
+              </label>
+              {rows.map((n) => {
+                const noprice = n.priceCurrent <= 0 || !n.asin;
+                const st = noprice
+                  ? "Sin oferta"
+                  : n.repricingEnabled
+                    ? "Repreciando"
+                    : n.priceMin != null && n.priceMax != null
+                      ? "Pausado"
+                      : "Sin rango";
+                const stColor =
+                  st === "Repreciando"
+                    ? "bg-emerald-400/15 text-emerald-200 border-emerald-400/30"
+                    : st === "Sin oferta"
+                      ? "bg-white/[0.06] text-white/55 border-white/15"
+                      : "bg-blue-400/15 text-blue-200 border-blue-400/30";
+                return (
+                  <label
+                    key={n.id}
+                    className={`flex items-start gap-3 px-3 py-3 rounded-xl border transition-colors ${
+                      sel.has(n.id) ? "border-cyan-400/40 bg-cyan-400/[0.05]" : "border-white/[0.08] bg-white/[0.015]"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={sel.has(n.id)}
+                      onChange={() => toggle(n.id)}
+                      className="mt-0.5 w-4 h-4 accent-cyan-500 flex-shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm text-white/90 line-clamp-2 leading-snug">{n.title}</div>
+                      <div className="font-mono text-[10px] text-white/40 mt-0.5 truncate">
+                        {n.sku}
+                        {isVariationChild(n) && (
+                          <span className="ml-1.5 text-indigo-300/80">↳ {n.parentAsin}</span>
+                        )}
+                      </div>
+                      {parseTags(n.tags).length > 0 && (
+                        <div className="mt-1.5 flex flex-wrap gap-1">
+                          {parseTags(n.tags).map((t) => (
+                            <span
+                              key={t}
+                              className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-1.5 py-0.5 text-[9px] text-cyan-200"
+                            >
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      <div className="mt-2 flex items-center gap-2 flex-wrap">
+                        <span className="font-mono text-xs text-white/85 tabular">
+                          {n.priceCurrent > 0 ? n.priceCurrent.toFixed(2) + " €" : "—"}
+                        </span>
+                        <span className="text-white/25 text-xs">·</span>
+                        <span className="text-[11px] text-white/55">
+                          {n.useAccountDefaults ? "Cuenta" : n.strategy}
+                        </span>
+                        <span className={`ml-auto inline-flex items-center text-[10px] font-bold px-2 h-5 rounded-full border ${stColor}`}>
+                          {st}
+                        </span>
+                      </div>
+                    </div>
+                  </label>
+                );
+              })}
+            </>
+          )}
+        </div>
+
+        {/* Desktop table */}
+        <div className="hidden sm:block p-3 sm:p-5 overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="text-[11px] uppercase tracking-wider text-white/40">
               <tr>

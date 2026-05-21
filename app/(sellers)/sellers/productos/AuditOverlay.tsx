@@ -91,32 +91,34 @@ export default function AuditOverlay() {
 
   return (
     <div
-      className="fixed inset-0 z-[58] bg-black/75 backdrop-blur-sm p-3 sm:p-6 overflow-y-auto"
+      className="fixed inset-0 z-[58] bg-black/75 backdrop-blur-sm p-0 sm:p-6 overflow-y-auto"
       onClick={() => setOpen(false)}
     >
       <div
-        className="mx-auto max-w-2xl rounded-2xl border border-cyan-400/20 bg-[rgba(7,8,18,0.99)] shadow-[0_30px_80px_-20px_rgba(34,211,238,0.4)] fade-in"
+        className="mx-auto max-w-2xl min-h-full sm:min-h-0 rounded-none sm:rounded-2xl border-0 sm:border sm:border-cyan-400/20 bg-[rgba(7,8,18,0.99)] sm:shadow-[0_30px_80px_-20px_rgba(34,211,238,0.4)] fade-in"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 border-b border-white/10 bg-[rgba(7,8,18,0.99)] rounded-t-2xl">
-          <div>
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-2 px-4 sm:px-5 py-3 sm:py-4 border-b border-white/10 bg-[rgba(7,8,18,0.99)] backdrop-blur-md sm:rounded-t-2xl">
+          <div className="min-w-0">
             <h2 className="text-base font-extrabold tracking-tight">
               Registro de <span className="text-gradient-neon">actividad</span>
             </h2>
-            <p className="text-[11px] text-white/40">
+            <p className="text-[11px] text-white/40 mt-0.5">
               Cambios de configuración de tu cuenta (auditoría)
             </p>
           </div>
           <button
             onClick={() => setOpen(false)}
             aria-label="Cerrar"
-            className="h-8 w-8 grid place-items-center rounded-md text-white/40 hover:text-white hover:bg-white/10 transition-colors text-lg leading-none"
+            className="h-9 w-9 grid place-items-center rounded-full text-white/55 hover:text-white hover:bg-white/10 transition-colors flex-shrink-0"
           >
-            ×
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </button>
         </div>
 
-        <div className="p-5">
+        <div className="p-4 sm:p-5">
           {loading ? (
             <p className="text-sm text-white/45 py-8 text-center">Cargando…</p>
           ) : err ? (
