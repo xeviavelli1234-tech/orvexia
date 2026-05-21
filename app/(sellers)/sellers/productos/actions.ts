@@ -16,6 +16,7 @@ import {
   bulkApplyTag,
   setListingParent,
   importListingConfig,
+  getListingForUser,
   type ImportRow,
 } from "@/lib/db/sellerListing";
 import {
@@ -357,6 +358,86 @@ export async function updateIpAllowlistAction(
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "db_failed" };
   }
+  revalidatePath("/sellers/productos");
+  return { ok: true };
+}
+
+/**
+ * Sincroniza los pedidos SP-API de la cuenta del usuario. Best-effort:
+ * si la app no tiene rol Orders, devuelve ok con 0 pedidos.
+ */
+export async function syncOrdersAction(): Promise<ActionResult & { imported?: number }> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+  try {
+    const { syncAllAccountsOrders } = await import("@/lib/reprice/orders-sync");
+    const result = await syncAllAccountsOrders({ sinceDays: 30 });
+    await recordAudit(
+      session.userId,
+      "orders.sync",
+      `Sincronizados ${result.ordersImported} pedidos (${result.itemsImported} items)`,
+    );
+    revalidatePath("/sellers/productos");
+    return { ok: true, imported: result.ordersImported };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "sync_failed" };
+  }
+}
+
+/**
+ * Reconoce un cambio de precio manual detectado: limpia la bandera para que
+ * el aviso desaparezca del inspector. No modifica el precio.
+ */
+export async function ackManualPriceAction(formData: FormData): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+  const listingId = String(formData.get("listingId") ?? "");
+  if (!listingId) return { ok: false, error: "bad_input" };
+  const listing = await getListingForUser({ listingId, userId: session.userId });
+  if (!listing) return { ok: false, error: "not_found" };
+  await prisma.sellerListing.update({
+    where: { id: listing.id },
+    data: {
+      manualPriceDetected: false,
+      manualPriceAt: null,
+      manualPriceBefore: null,
+      manualPriceAfter: null,
+    },
+  });
+  await recordAudit(
+    session.userId,
+    "listing.manual_price_ack",
+    `SKU ${listing.sku}: aceptado cambio manual de precio`,
+  );
+  revalidatePath("/sellers/productos");
+  return { ok: true };
+}
+
+/**
+ * Reanuda un listing autopausado. Borra el sello autoPausedAt/Reason y
+ * resetea consecutiveErrors a 0 para empezar limpio.
+ */
+export async function resumeAutoPausedAction(formData: FormData): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+  const listingId = String(formData.get("listingId") ?? "");
+  if (!listingId) return { ok: false, error: "bad_input" };
+  const listing = await getListingForUser({ listingId, userId: session.userId });
+  if (!listing) return { ok: false, error: "not_found" };
+  await prisma.sellerListing.update({
+    where: { id: listing.id },
+    data: {
+      repricingEnabled: true,
+      autoPausedAt: null,
+      autoPausedReason: null,
+      consecutiveErrors: 0,
+    },
+  });
+  await recordAudit(
+    session.userId,
+    "listing.auto_paused_resumed",
+    `SKU ${listing.sku}: reanudado tras autopausa`,
+  );
   revalidatePath("/sellers/productos");
   return { ok: true };
 }

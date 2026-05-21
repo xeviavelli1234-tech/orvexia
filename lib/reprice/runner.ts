@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { decryptToken } from "@/lib/crypto";
 import { SpApiClient } from "@/lib/amazon/client";
 import { getCompetition, patchListingPrice } from "@/lib/amazon/pricing";
+import { runPatchWithBackoff } from "./backoff";
+import { persistPatchOutcome } from "./resilience";
 import { fetchAllListings } from "@/lib/amazon/listings";
 import { upsertListingsBatch } from "@/lib/db/sellerListing";
 import { isFixtureMode } from "@/lib/amazon/fixtures";
@@ -400,13 +402,53 @@ export async function runRepricer(
             });
             repriced += 1;
           } else {
-            await patchListingPrice(ctx, {
-              amazonSellerId: account.amazonSellerId,
-              sku: listing.sku,
-              productType: listing.productType,
-              newPrice: result.newPrice,
-              currency: listing.currency,
-            });
+            // PATCH con backoff exponencial + telemetría
+            const { outcome } = await runPatchWithBackoff(() =>
+              patchListingPrice(ctx, {
+                amazonSellerId: account.amazonSellerId,
+                sku: listing.sku,
+                productType: listing.productType,
+                newPrice: result.newPrice,
+                currency: listing.currency,
+              }),
+            );
+
+            if (!outcome.applied) {
+              // El PATCH falló (rate limit agotado o error duro): NO cambiamos
+              // priceCurrent en nuestra BD para no mentir al usuario.
+              await prisma.repricingEvent.create({
+                data: {
+                  runId: run.id,
+                  listingId: listing.id,
+                  priceBefore: listing.priceCurrent,
+                  priceAfter: listing.priceCurrent,
+                  competitorPrice,
+                  reason: outcome.rateLimited ? "throttled" : "patch_error",
+                  success: false,
+                  errorMessage: outcome.error?.message ?? "",
+                  buyBox: comp.buyBox,
+                },
+              });
+              const { autoPaused } = await persistPatchOutcome({
+                sellerAccountId: account.id,
+                listingId: listing.id,
+                outcome,
+              });
+              if (autoPaused && account.alertOnError) {
+                accountAlerts.push({
+                  kind: "error",
+                  sku: listing.sku,
+                  title: listing.title,
+                  detail: "Pausado automáticamente tras errores repetidos",
+                });
+              }
+              errors += 1;
+              // Throttling: respiro antes del siguiente
+              if (account.patchDelayMs > 0 && !isFixtureMode(account.spApiEnv)) {
+                await sleep(account.patchDelayMs);
+              }
+              continue;
+            }
 
             await prisma.$transaction([
               prisma.sellerListing.update({
@@ -426,6 +468,12 @@ export async function runRepricer(
                 },
               }),
             ]);
+            await persistPatchOutcome({
+              sellerAccountId: account.id,
+              listingId: listing.id,
+              outcome,
+              appliedPrice: result.newPrice,
+            });
 
             repriced += 1;
           }

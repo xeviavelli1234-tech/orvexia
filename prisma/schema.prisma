@@ -519,11 +519,23 @@ model SellerListing {
   buyBoxPrice   Float?
   buyBoxAt      DateTime?
 
+  // ── Resiliencia / sync inverso ──
+  consecutiveErrors    Int       @default(0)   // se incrementa en cada error, se resetea al primer éxito
+  autoPausedAt         DateTime?               // sello de pausado automático por errores
+  autoPausedReason     String?                 // motivo legible del autopausa
+  lastExpectedPrice    Float?                  // último precio que NOSOTROS aplicamos
+  lastExpectedAt       DateTime?               // cuándo lo aplicamos (para no comparar contra valores viejos)
+  manualPriceDetected  Boolean   @default(false) // se enciende al detectar cambio manual en Seller Central
+  manualPriceAt        DateTime?               // cuándo lo detectamos
+  manualPriceBefore    Float?                  // precio que esperábamos
+  manualPriceAfter     Float?                  // precio que encontramos
+
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
   sellerAccount SellerAccount    @relation(fields: [sellerAccountId], references: [id], onDelete: Cascade)
   events        RepricingEvent[]
+  orderItems    RepriceOrderItem[]
 
   @@unique([sellerAccountId, sku])
   @@index([sellerAccountId, repricingEnabled])
@@ -637,4 +649,66 @@ model AssistantLearnedTopic {
 
   @@index([approved, helpfulCount])
   @@index([createdAt])
+}
+
+// ─── Resiliencia del motor: quota tracker ──────────────────────────────────
+// Una fila por cuenta y día. Incrementamos PATCHes y errores en cada ciclo
+// para mostrar al usuario "1.243 de 100k PATCHes hoy" y detectar abusos.
+model RepriceQuotaUsage {
+  id              String   @id @default(cuid())
+  sellerAccountId String
+  day             DateTime @db.Date
+  patchCount      Int      @default(0)
+  patchRetries   Int      @default(0)
+  errorCount      Int      @default(0)
+  rateLimitedCount Int     @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([sellerAccountId, day])
+  @@index([sellerAccountId, day])
+}
+
+// ─── Pedidos reales (SP-API Orders) ─────────────────────────────────────────
+// Sync periódico desde Amazon. Alimenta velocidad de venta, gráficas de
+// ventas, heatmap horario y el pricing engine con confianza alta.
+model RepriceOrder {
+  id              String   @id @default(cuid())
+  sellerAccountId String
+  amazonOrderId   String                          // ej: 123-1234567-1234567
+  purchaseDate    DateTime
+  orderStatus     String                          // Pending|Unshipped|Shipped|Canceled|...
+  totalAmount     Float?                          // bruto en divisa local
+  currency        String   @default("EUR")
+  marketplaceId   String   @default("A1RKKUPIHCS9HS")
+  buyerEmail      String?                         // hash o pseudonimizado
+  fulfillment     String?                         // AFN (FBA) | MFN (FBM)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  items RepriceOrderItem[]
+
+  @@unique([sellerAccountId, amazonOrderId])
+  @@index([sellerAccountId, purchaseDate])
+}
+
+model RepriceOrderItem {
+  id           String   @id @default(cuid())
+  orderId      String
+  listingId    String?                         // join con SellerListing por SKU si existe
+  asin         String
+  sku          String
+  title        String
+  quantity     Int      @default(1)
+  unitPrice    Float?                          // precio unitario neto si está disponible
+  itemPrice    Float?                          // total línea bruto
+  createdAt    DateTime @default(now())
+
+  order   RepriceOrder   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  listing SellerListing? @relation(fields: [listingId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@index([listingId, createdAt])
+  @@index([asin])
+  @@index([sku])
 }

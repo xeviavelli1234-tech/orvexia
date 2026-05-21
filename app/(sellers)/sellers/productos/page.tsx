@@ -16,6 +16,7 @@ import CatalogOverlay, {
   PanicButton,
 } from "./CatalogOverlay";
 import ProfitOverlay, { ProfitButton } from "./ProfitOverlay";
+import RealDataPanel, { RealDataButton } from "./RealDataPanel";
 import HelpOverlay, { HelpButton } from "./HelpOverlay";
 import Tour from "./Tour";
 import AuditOverlay, { AuditButton } from "./AuditOverlay";
@@ -252,6 +253,7 @@ export default async function ProductosPage() {
           <div id="tour-tools" className="flex flex-col gap-3">
             <CatalogButton />
             <ProfitButton />
+            <RealDataButton />
             <HelpButton />
             <AuditButton />
             <SettingsButton />
@@ -327,6 +329,7 @@ export default async function ProductosPage() {
           <ProfitOverlay items={nodes} />
           <HelpOverlay />
           <AuditOverlay />
+          <RealDataPanel />
           <Tour />
         </>
       }

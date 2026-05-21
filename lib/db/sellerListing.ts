@@ -20,10 +20,55 @@ export async function getListingForUser(params: { listingId: string; userId: str
 export async function upsertListingsBatch(params: {
   sellerAccountId: string;
   items: NormalizedListing[];
-}): Promise<{ inserted: number; updated: number; deleted: number }> {
+}): Promise<{
+  inserted: number;
+  updated: number;
+  deleted: number;
+  manualPriceDetections: number;
+}> {
   let inserted = 0;
   let updated = 0;
+  let manualPriceDetections = 0;
+  // Tolerancia: variaciones <1 céntimo no se consideran cambio manual.
+  const PRICE_EPSILON = 0.01;
+  // Ventana: si lastExpectedAt es muy antiguo (>24h), no podemos asegurar
+  // que el precio actual sea "manual"; lo aceptamos como estado nuevo.
+  const STALE_WINDOW_MS = 24 * 60 * 60 * 1000;
+
   for (const item of params.items) {
+    // 1) Mira el estado previo (precio que nosotros esperábamos)
+    const previous = await prisma.sellerListing.findUnique({
+      where: {
+        sellerAccountId_sku: {
+          sellerAccountId: params.sellerAccountId,
+          sku: item.sku,
+        },
+      },
+      select: {
+        id: true,
+        priceCurrent: true,
+        lastExpectedPrice: true,
+        lastExpectedAt: true,
+        manualPriceDetected: true,
+      },
+    });
+
+    // 2) Detección de cambio manual ANTES de upsert (compara contra lo que esperábamos)
+    let manualPatch: Record<string, unknown> | null = null;
+    if (previous && previous.lastExpectedPrice != null && previous.lastExpectedAt) {
+      const stale = Date.now() - previous.lastExpectedAt.getTime() > STALE_WINDOW_MS;
+      const diff = Math.abs(item.priceCurrent - previous.lastExpectedPrice);
+      if (!stale && diff > PRICE_EPSILON) {
+        manualPatch = {
+          manualPriceDetected: true,
+          manualPriceAt: new Date(),
+          manualPriceBefore: previous.lastExpectedPrice,
+          manualPriceAfter: item.priceCurrent,
+        };
+        manualPriceDetections++;
+      }
+    }
+
     const result = await prisma.sellerListing.upsert({
       where: {
         sellerAccountId_sku: {
@@ -48,6 +93,7 @@ export async function upsertListingsBatch(params: {
         productType: item.productType ?? undefined,
         priceCurrent: item.priceCurrent,
         currency: item.currency,
+        ...(manualPatch ?? {}),
       },
       select: { createdAt: true, updatedAt: true },
     });
@@ -67,7 +113,7 @@ export async function upsertListingsBatch(params: {
     },
   });
 
-  return { inserted, updated, deleted: deleted.count };
+  return { inserted, updated, deleted: deleted.count, manualPriceDetections };
 }
 
 export async function setListingRange(params: {

@@ -9,6 +9,7 @@ import {
   type Urgency,
   type Aggression,
 } from "@/lib/assistant/pricing";
+import { getSalesVelocity } from "@/lib/reprice/orders-sync";
 
 export const maxDuration = 45;
 
@@ -122,9 +123,15 @@ export async function POST(req: Request) {
     urgency,
     aggression,
     desiredMargin: desiredMargin ?? listing.targetMargin ?? null,
-    salesVelocityKnown: false, // SP-API Orders no integrado todavía
+    salesVelocityKnown: false, // se sobrescribe abajo si hay datos reales
     date: new Date().toISOString().slice(0, 10),
   };
+
+  // Velocidad de venta real (SP-API Orders) si la hay
+  const velocity = await getSalesVelocity(listing.id, 30);
+  if (velocity && velocity.totalUnits > 0) {
+    input.salesVelocityKnown = true;
+  }
 
   const output = await suggestPrice(input);
   return NextResponse.json({
