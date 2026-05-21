@@ -109,6 +109,7 @@ export default function AssistantWidget() {
   const [streaming, setStreaming] = useState(false);
   const [followups, setFollowups] = useState<string[]>([]);
   const [copied, setCopied] = useState<number | null>(null);
+  const [aiMode, setAiMode] = useState<"ai" | "local" | "unknown">("unknown");
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const taRef = useRef<HTMLTextAreaElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -142,6 +143,17 @@ export default function AssistantWidget() {
   useEffect(() => {
     if (open) setUnread(false);
   }, [open]);
+
+  // Detecta si la IA está activa para mostrar el badge correcto
+  useEffect(() => {
+    if (!open || aiMode !== "unknown") return;
+    fetch("/api/sellers/assistant/status")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (j) setAiMode(j.aiEnabled ? "ai" : "local");
+      })
+      .catch(() => {});
+  }, [open, aiMode]);
 
   function onScroll() {
     const el = scrollRef.current;
@@ -326,6 +338,22 @@ export default function AssistantWidget() {
               <span className="text-sm font-bold text-white/90">
                 Asistente <span className="text-gradient-neon">Orvexia</span>
               </span>
+              {aiMode === "ai" && (
+                <span
+                  title="IA activa (Claude)"
+                  className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-400/15 text-emerald-300 border border-emerald-400/30"
+                >
+                  IA
+                </span>
+              )}
+              {aiMode === "local" && (
+                <span
+                  title="Modo respuestas locales. Configura ANTHROPIC_API_KEY para activar IA."
+                  className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-400/15 text-amber-300 border border-amber-400/30"
+                >
+                  Local
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-1">
               <button

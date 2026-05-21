@@ -1,4 +1,5 @@
 import "server-only";
+import { findBestTopic } from "./matcher";
 
 /**
  * Base de conocimiento del Orvexia Repricer.
@@ -146,9 +147,50 @@ interface Topic {
   keys: string[];
   answer: string;
   follow?: string[];
+  /**
+   * Frases enteras (case/acentos-insensible) que disparan este topic con
+   * máxima prioridad. Si la pregunta del usuario CONTIENE una de estas
+   * frases, este topic gana sí o sí. Útil para resolver ambigüedades del
+   * tipo "como reprecio los productos" (contiene "productos" pero la
+   * intención es el flujo, no la sincronización).
+   */
+  phrases?: string[];
+  /** Boost manual para casos especiales (default 1). */
+  priority?: number;
 }
 
 const TOPICS: Topic[] = [
+  // ─── INTENCIÓN: "cómo reprecio / cómo funciona / empezar / primeros pasos" ───
+  {
+    phrases: [
+      "como reprecio",
+      "como reprecia",
+      "como repreciar",
+      "como uso",
+      "como usar",
+      "como empezar",
+      "como empieza",
+      "como funciona el repricer",
+      "como funciona orvexia",
+      "primeros pasos",
+      "guia rapida",
+      "guia rápida",
+      "que tengo que hacer",
+      "por donde empiezo",
+      "como configuro",
+      "como configurar",
+      "paso a paso",
+    ],
+    keys: ["empezar", "configurar", "como funciona", "como reprecio"],
+    answer:
+      "**Cómo repreciar tus productos paso a paso:**\n\n1. **Sincroniza** con Amazon (botón en la barra izquierda) — trae todos tus listings.\n2. **Clic** sobre un producto en el grafo (o en la vista Tabla) para abrir el inspector a la derecha.\n3. Define **precio mínimo y máximo** (Mín = tu precio rentable; Máx = techo razonable).\n4. Elige una **estrategia**:\n   - **Ganar Buy Box** — bajar 1 cént. (o %) del competidor más barato. La más agresiva.\n   - **Igualar al competidor** — el mismo precio que el más barato.\n   - **Precio fijo** — ignora la competencia.\n   - **Por margen** — usa coste + comisión + IVA + margen objetivo para nunca malvender.\n5. Activa el toggle **\"Reprecio automático\"**.\n6. Opcional: pulsa **\"Ejecutar reprecio ahora\"** para forzar un ciclo inmediato.\n\nEl motor reprecia solo cada **15 min en TRIAL** o **5 min en PRO**.",
+    follow: [
+      "¿Qué estrategia me conviene?",
+      "¿Cómo configuro Por margen?",
+      "¿Cómo evito vender a pérdida?",
+    ],
+    priority: 3,
+  },
   {
     keys: ["min", "máx", "max", "mínimo", "minimo", "maximo", "máximo", "rango", "límite", "limite", "horquilla"],
     answer:
@@ -398,22 +440,13 @@ export interface StaticMatch {
  * de aprendizaje (matchedScore=0 → candidato a aprender).
  */
 export function matchTopic(question: string): StaticMatch | null {
-  const q = norm(question);
-  let best: Topic | null = null;
-  let bestScore = 0;
-  for (const t of TOPICS) {
-    const score = t.keys.reduce((s, k) => (q.includes(norm(k)) ? s + 1 : s), 0);
-    if (score > bestScore) {
-      bestScore = score;
-      best = t;
-    }
-  }
-  if (!best || bestScore === 0) return null;
+  const result = scoreBestTopic(question);
+  if (!result) return null;
   return {
-    answer: best.answer,
-    follow: best.follow,
-    matchedKey: best.keys[0],
-    matchedScore: bestScore,
+    answer: result.topic.answer,
+    follow: result.topic.follow,
+    matchedKey: result.matchedKey,
+    matchedScore: Math.round(result.score),
   };
 }
 
@@ -428,25 +461,13 @@ export function followUps(question: string): string[] {
   );
 }
 
-function norm(s: string): string {
-  return s
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, ""); // sin acentos
-}
 
 function bestTopic(question: string): Topic | null {
-  const q = norm(question);
-  let best: Topic | null = null;
-  let bestScore = 0;
-  for (const t of TOPICS) {
-    const score = t.keys.reduce((s, k) => (q.includes(norm(k)) ? s + 1 : s), 0);
-    if (score > bestScore) {
-      bestScore = score;
-      best = t;
-    }
-  }
-  return bestScore > 0 ? best : null;
+  return findBestTopic(question, TOPICS)?.topic ?? null;
+}
+
+function scoreBestTopic(question: string) {
+  return findBestTopic(question, TOPICS);
 }
 
 /** Guía para el modelo sobre cuándo y cómo usar las herramientas. */
