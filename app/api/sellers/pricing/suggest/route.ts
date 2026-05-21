@@ -13,16 +13,9 @@ import { getSalesVelocity } from "@/lib/reprice/orders-sync";
 
 export const maxDuration = 45;
 
-// ─── Rate limiting (20/min) ────────────────────────────────────────────────
-const HITS = new Map<string, number[]>();
-const LIMIT = 20;
-const WINDOW = 60_000;
+import { rateLimit } from "@/lib/rate-limit";
 function rateLimited(userId: string): boolean {
-  const now = Date.now();
-  const arr = (HITS.get(userId) ?? []).filter((t) => now - t < WINDOW);
-  arr.push(now);
-  HITS.set(userId, arr);
-  return arr.length > LIMIT;
+  return rateLimit("pricing-suggest", userId, 20, 60_000);
 }
 
 const URGENCIES: Urgency[] = ["low", "normal", "high"];

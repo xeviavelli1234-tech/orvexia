@@ -158,17 +158,18 @@ export default function ProductModal({ product, onClose }: Props) {
   const formatEuro = (value: number) =>
     new Intl.NumberFormat("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
 
-  // Construir array de imágenes de forma segura
-  const rawImages = Array.isArray(product.images) ? product.images : [];
-  const candidates = rawImages.length > 0 ? rawImages : product.image ? [product.image] : [];
-
   // URLs que han fallado al cargar — se filtran de la galería (no se muestran ni en
   // carrusel ni en miniaturas, evitando huecos vacíos).
   const [failedSrcs, setFailedSrcs] = useState<Set<string>>(() => new Set());
-  const all = useMemo(
-    () => candidates.filter((src) => src && !failedSrcs.has(src)),
-    [candidates, failedSrcs],
-  );
+
+  // Construir array de imágenes de forma segura (dentro del useMemo para
+  // que su identidad no cambie en cada render).
+  const all = useMemo(() => {
+    const rawImages = Array.isArray(product.images) ? product.images : [];
+    const candidates =
+      rawImages.length > 0 ? rawImages : product.image ? [product.image] : [];
+    return candidates.filter((src) => src && !failedSrcs.has(src));
+  }, [product.images, product.image, failedSrcs]);
 
   const markFailed = useCallback((src: string) => {
     setFailedSrcs((prev) => {

@@ -401,9 +401,10 @@ export default function ReviewSection({ productId }: { productId: string }) {
     init();
   }, [fetchReviews]);
 
-  function handleSave(review: Review) {
+  function handleSave(_review: Review) {
     setEditing(false);
-    // Optimistically refresh
+    // Optimistically refresh (la firma recibe `Review` porque la usa
+    // el componente hijo; aquí solo nos interesa cerrar el editor).
     fetchReviews();
   }
 

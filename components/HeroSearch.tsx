@@ -160,6 +160,7 @@ export function HeroSearch() {
             aria-autocomplete="list"
             aria-expanded={open}
             aria-haspopup="listbox"
+            role="combobox"
             className="flex-1 min-w-0 text-base text-slate-900 placeholder:text-slate-400 outline-none bg-transparent"
             style={{ color: "#0B0D12" }}
           />

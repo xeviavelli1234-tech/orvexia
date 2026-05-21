@@ -3,16 +3,7 @@ import { generateAuthenticationOptions } from "@simplewebauthn/server";
 import { prisma } from "@/lib/prisma";
 import { rpConfig, saveChallenge } from "@/lib/security/webauthn";
 import { readRequestMeta } from "@/lib/security/request";
-
-// Rate limit por IP: 30 challenges / minuto
-const HITS = new Map<string, number[]>();
-function rateLimited(key: string, limit = 30, windowMs = 60_000): boolean {
-  const now = Date.now();
-  const arr = (HITS.get(key) ?? []).filter((t) => now - t < windowMs);
-  arr.push(now);
-  HITS.set(key, arr);
-  return arr.length > limit;
-}
+import { rateLimit } from "@/lib/rate-limit";
 
 /**
  * POST /api/auth/passkey/login/options
@@ -23,7 +14,7 @@ function rateLimited(key: string, limit = 30, windowMs = 60_000): boolean {
  */
 export async function POST(req: Request) {
   const meta = readRequestMeta(req);
-  if (meta.ip && rateLimited(`pk:${meta.ip}`)) {
+  if (meta.ip && rateLimit("passkey-options-ip", meta.ip, 30, 60_000)) {
     return NextResponse.json({ error: "rate_limited" }, { status: 429 });
   }
   let email: string | undefined;

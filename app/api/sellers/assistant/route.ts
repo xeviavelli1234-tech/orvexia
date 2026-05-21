@@ -24,15 +24,11 @@ interface Msg {
   content: string;
 }
 
-const HITS = new Map<string, number[]>();
-const LIMIT = 20;
-const WINDOW = 60_000;
+import { rateLimit } from "@/lib/rate-limit";
+const ASSISTANT_LIMIT = 20;
+const ASSISTANT_WINDOW = 60_000;
 function rateLimited(userId: string): boolean {
-  const now = Date.now();
-  const arr = (HITS.get(userId) ?? []).filter((t) => now - t < WINDOW);
-  arr.push(now);
-  HITS.set(userId, arr);
-  return arr.length > LIMIT;
+  return rateLimit("assistant-user", userId, ASSISTANT_LIMIT, ASSISTANT_WINDOW);
 }
 
 function sanitize(input: unknown): Msg[] {

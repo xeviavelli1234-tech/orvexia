@@ -4,17 +4,10 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { sendMagicLinkEmail } from "@/lib/email";
 import { readRequestMeta } from "@/lib/security/request";
+import { rateLimit } from "@/lib/rate-limit";
 
-const HITS = new Map<string, number[]>();
 const LIMIT = 5;
-const WINDOW = 10 * 60_000; // 5 envíos / 10 min por email
-function rateLimited(key: string): boolean {
-  const now = Date.now();
-  const arr = (HITS.get(key) ?? []).filter((t) => now - t < WINDOW);
-  arr.push(now);
-  HITS.set(key, arr);
-  return arr.length > LIMIT;
-}
+const WINDOW = 10 * 60_000; // 5 envíos / 10 min
 
 function baseUrl(): string {
   return process.env.NEXTAUTH_URL || "http://localhost:3000";
@@ -42,10 +35,10 @@ export async function POST(req: Request) {
   const meta = readRequestMeta(req);
   // Doble rate-limit: por email Y por IP. Frena tanto spam de cuentas
   // como abusos masivos desde una misma IP.
-  if (rateLimited(`email:${email}`)) {
+  if (rateLimit("magic-email", email, LIMIT, WINDOW)) {
     return NextResponse.json({ ok: true, throttled: true });
   }
-  if (meta.ip && rateLimited(`ip:${meta.ip}`)) {
+  if (meta.ip && rateLimit("magic-ip", meta.ip, LIMIT, WINDOW)) {
     return NextResponse.json({ ok: true, throttled: true });
   }
 

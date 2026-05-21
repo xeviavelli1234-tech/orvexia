@@ -64,7 +64,7 @@ export default function ForumTab({
     const g = globalThis as unknown as { __FORUM_DATA__?: { threads?: Thread[] } };
     if (g.__FORUM_DATA__?.threads?.length) return g.__FORUM_DATA__.threads;
     return [];
-  }, []);
+  }, [threads]);
 
   const filtered = useMemo(() => {
     return threadsSource.filter((t) => {
