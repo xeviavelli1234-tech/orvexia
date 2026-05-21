@@ -394,18 +394,18 @@ export default function CategoryClient({ products, meta, content }: { products: 
 
   return (
     <main className="min-h-screen">
-      {/* HERO con accent de la categoría */}
+      {/* HERO con accent de la categoría — decoración pesada solo en sm+ */}
       <section className="relative overflow-hidden border-b border-white/[0.06]">
-        <div className="absolute inset-0 bg-grid-cyber opacity-50 pointer-events-none" />
-        <div className="absolute inset-0 pointer-events-none">
+        <div className="hidden sm:block absolute inset-0 bg-grid-cyber opacity-50 pointer-events-none" />
+        <div className="hidden sm:block absolute inset-0 pointer-events-none">
           <FuturisticFX particleCount={5} streamCount={2} beam seed={meta.label.length} />
         </div>
         <div
-          className="absolute -top-40 left-1/2 -translate-x-1/2 w-[1200px] h-[600px] rounded-full halo-breathe pointer-events-none"
+          className="hidden sm:block absolute -top-40 left-1/2 -translate-x-1/2 w-[1200px] h-[600px] rounded-full halo-breathe pointer-events-none"
           style={{ background: `radial-gradient(ellipse at center, ${meta.color}33, transparent 65%)` }}
         />
         <div
-          className="absolute -top-20 -right-32 w-[500px] h-[500px] rounded-full opacity-50 pointer-events-none"
+          className="hidden sm:block absolute -top-20 -right-32 w-[500px] h-[500px] rounded-full opacity-50 pointer-events-none"
           style={{ background: `radial-gradient(circle, ${meta.color}33, transparent 70%)` }}
         />
 

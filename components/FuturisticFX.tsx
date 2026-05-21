@@ -51,12 +51,15 @@ export function FuturisticFX({
     };
   });
 
+  // All decorative elements are hidden below sm: on mobile the constant
+  // CSS animation loops were measurably hurting scroll perf. The DOM nodes
+  // are still emitted (so SSR matches) but display:none stops animations.
   return (
     <>
       {particles.map((p, i) => (
         <span
           key={`p-${i}`}
-          className="particle"
+          className="particle hidden sm:inline-block"
           style={{
             left: `${p.left}%`,
             bottom: "0%",
@@ -70,7 +73,7 @@ export function FuturisticFX({
       {streams.map((s, i) => (
         <span
           key={`s-${i}`}
-          className="data-stream"
+          className="data-stream hidden sm:inline-block"
           style={{
             [s.side]: `${s.pos}%`,
             top: `${s.top}%`,
@@ -82,7 +85,7 @@ export function FuturisticFX({
       ))}
       {beam && (
         <div
-          className="beam-sweep"
+          className="beam-sweep hidden sm:block"
           style={{ ['--delay' as string]: `${(seed * 1.7) % 6}s` }}
         />
       )}

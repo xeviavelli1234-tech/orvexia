@@ -274,8 +274,8 @@ export default async function HomePage() {
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden isolate">
 
-        {/* Background mesh */}
-        <div className="absolute inset-0 -z-0 pointer-events-none overflow-hidden">
+        {/* Background mesh — heavy decorative layer, only on sm+ to keep mobile scroll smooth */}
+        <div className="hidden sm:block absolute inset-0 -z-0 pointer-events-none overflow-hidden">
           <div className="absolute inset-0 bg-grid-cyber opacity-70" style={{
             maskImage: "radial-gradient(ellipse 70% 60% at 50% 35%, black 0%, transparent 80%)",
             WebkitMaskImage: "radial-gradient(ellipse 70% 60% at 50% 35%, black 0%, transparent 80%)",
@@ -439,8 +439,8 @@ export default async function HomePage() {
 
       {/* ── CATEGORIES ──────────────────────────────────────────────────── */}
       <section className="relative px-4 sm:px-6 pt-20 pb-16 overflow-hidden">
-        <div className="absolute inset-0 bg-grid-cyber-fine opacity-30 pointer-events-none" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[400px] rounded-full pointer-events-none" style={{ background: "radial-gradient(ellipse, rgba(129,140,248,0.12), transparent 70%)" }} />
+        <div className="hidden sm:block absolute inset-0 bg-grid-cyber-fine opacity-30 pointer-events-none" />
+        <div className="hidden sm:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[400px] rounded-full pointer-events-none" style={{ background: "radial-gradient(ellipse, rgba(129,140,248,0.12), transparent 70%)" }} />
 
         <div className="relative max-w-7xl mx-auto">
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-9">
@@ -495,7 +495,7 @@ export default async function HomePage() {
       {/* ── TOP DEALS — LIVE MARKET ────────────────────────────────────── */}
       <section className="relative px-4 sm:px-6 py-16 overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full opacity-60" style={{ background: "radial-gradient(circle, rgba(240,171,252,0.10), transparent 65%)" }} />
+          <div className="hidden sm:block absolute top-0 right-0 w-[600px] h-[600px] rounded-full opacity-60" style={{ background: "radial-gradient(circle, rgba(240,171,252,0.10), transparent 65%)" }} />
         </div>
 
         <div className="relative max-w-7xl mx-auto">
@@ -612,8 +612,8 @@ export default async function HomePage() {
           <div className="neon-border rounded-3xl overflow-hidden">
             <div className="relative bg-grid-cyber overflow-hidden rounded-[calc(1.5rem-1px)]" style={{ background: "linear-gradient(150deg, #0b0d1c 0%, #08091a 50%, #050913 100%)" }}>
               <div className="absolute inset-0 bg-grid-cyber-fine opacity-40 pointer-events-none" />
-              <div className="absolute -top-32 -right-32 w-80 h-80 rounded-full halo-breathe" style={{ background: "radial-gradient(circle, rgba(129,140,248,0.25), transparent 65%)" }} />
-              <div className="absolute -bottom-24 -left-24 w-72 h-72 rounded-full halo-breathe" style={{ background: "radial-gradient(circle, rgba(94,234,212,0.18), transparent 65%)", animationDelay: "2s" }} />
+              <div className="hidden sm:block absolute -top-32 -right-32 w-80 h-80 rounded-full halo-breathe" style={{ background: "radial-gradient(circle, rgba(129,140,248,0.25), transparent 65%)" }} />
+              <div className="hidden sm:block absolute -bottom-24 -left-24 w-72 h-72 rounded-full halo-breathe" style={{ background: "radial-gradient(circle, rgba(94,234,212,0.18), transparent 65%)", animationDelay: "2s" }} />
 
               {/* Console header bar */}
               <div className="relative border-b border-white/[0.08] px-6 sm:px-10 h-10 flex items-center justify-between font-mono-ui text-[10px] uppercase">
@@ -705,7 +705,7 @@ export default async function HomePage() {
       {/* ── RECOMENDADOS — AI ENGINE ───────────────────────────────────── */}
       <section className="relative px-4 sm:px-6 py-20 overflow-hidden">
         <div className="absolute inset-0 bg-grid-cyber-fine opacity-25 pointer-events-none" />
-        <div className="absolute top-1/2 left-1/3 -translate-y-1/2 w-[500px] h-[500px] rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(251,191,36,0.10), transparent 65%)" }} />
+        <div className="hidden sm:block absolute top-1/2 left-1/3 -translate-y-1/2 w-[500px] h-[500px] rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(251,191,36,0.10), transparent 65%)" }} />
 
         <div className="relative max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
@@ -799,7 +799,7 @@ export default async function HomePage() {
       {/* ── FAQ — KNOWLEDGE BASE ────────────────────────────────────────── */}
       <section className="relative px-4 sm:px-6 pt-12 pb-24 overflow-hidden" aria-labelledby="faq-title">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] rounded-full" style={{ background: "radial-gradient(ellipse, rgba(99,102,241,0.10), transparent 70%)" }} />
+          <div className="hidden sm:block absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] rounded-full" style={{ background: "radial-gradient(ellipse, rgba(99,102,241,0.10), transparent 70%)" }} />
         </div>
 
         <div className="relative max-w-3xl mx-auto">
@@ -867,11 +867,11 @@ export default async function HomePage() {
             >
               <div className="absolute inset-0 bg-grid-cyber-fine opacity-40 pointer-events-none" />
               <div
-                className="absolute -top-32 -left-32 w-80 h-80 rounded-full halo-breathe pointer-events-none"
+                className="hidden sm:block absolute -top-32 -left-32 w-80 h-80 rounded-full halo-breathe pointer-events-none"
                 style={{ background: "radial-gradient(circle, rgba(94,234,212,0.20), transparent 65%)" }}
               />
               <div
-                className="absolute -bottom-24 -right-24 w-72 h-72 rounded-full halo-breathe pointer-events-none"
+                className="hidden sm:block absolute -bottom-24 -right-24 w-72 h-72 rounded-full halo-breathe pointer-events-none"
                 style={{ background: "radial-gradient(circle, rgba(129,140,248,0.22), transparent 65%)", animationDelay: "2s" }}
               />
 
