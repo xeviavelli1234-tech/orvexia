@@ -189,7 +189,7 @@ export default async function OfertasDestacadasPage({
             <p className="font-mono-ui text-[11px] uppercase tracking-wider text-white/45">no_deals · stand_by</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 pb-16">
+          <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-3 gap-2 sm:gap-5 pb-16">
             {deals.map((product, i) => (
               <ProductCard key={product.id} product={product} priority={i === 0} />
             ))}
