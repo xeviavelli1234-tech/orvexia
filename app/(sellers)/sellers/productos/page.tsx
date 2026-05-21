@@ -17,6 +17,7 @@ import CatalogOverlay, {
 } from "./CatalogOverlay";
 import ProfitOverlay, { ProfitButton } from "./ProfitOverlay";
 import RealDataPanel, { RealDataButton } from "./RealDataPanel";
+import ToolboxPanel, { ToolboxButton } from "./ToolboxPanel";
 import DemoBanner from "./DemoBanner";
 import HelpOverlay, { HelpButton } from "./HelpOverlay";
 import Tour from "./Tour";
@@ -255,6 +256,7 @@ export default async function ProductosPage() {
             <CatalogButton />
             <ProfitButton />
             <RealDataButton />
+            <ToolboxButton />
             <HelpButton />
             <AuditButton />
             <SettingsButton />
@@ -367,6 +369,17 @@ export default async function ProductosPage() {
           <HelpOverlay />
           <AuditOverlay />
           <RealDataPanel />
+          <ToolboxPanel
+            initialVacation={{
+              vacationFrom: account.vacationFrom
+                ? account.vacationFrom.toISOString().slice(0, 16)
+                : null,
+              vacationTo: account.vacationTo
+                ? account.vacationTo.toISOString().slice(0, 16)
+                : null,
+              vacationNote: account.vacationNote,
+            }}
+          />
           <Tour />
         </>
       }

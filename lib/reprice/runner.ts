@@ -53,6 +53,37 @@ async function maybeSendAlerts(
   } catch (e) {
     console.warn("[reprice] alert email failed:", e);
   }
+
+  // Notificaciones externas (Slack/Telegram/Discord) — agrupadas por categoría
+  try {
+    const { sendToExternalChannels } = await import("./notify-external");
+    const byKind = new Map<string, typeof alerts>();
+    for (const a of alerts) {
+      const arr = byKind.get(a.kind) ?? [];
+      arr.push(a);
+      byKind.set(a.kind, arr);
+    }
+    for (const [kind, arr] of byKind) {
+      const cat =
+        kind === "buy_box_lost"
+          ? "buybox_lost"
+          : kind === "price_floor"
+            ? "price_floor"
+            : "error";
+      const text = arr
+        .slice(0, 10)
+        .map((a) => `• ${a.title} (${a.sku}): ${a.detail}`)
+        .join("\n");
+      const header = `🛎️ Orvexia Repricer · ${arr.length} aviso(s)`;
+      await sendToExternalChannels({
+        sellerAccountId: account.id,
+        category: cat,
+        text: `${header}\n${text}`,
+      });
+    }
+  } catch (e) {
+    console.warn("[reprice] external channels failed:", e);
+  }
 }
 
 type SpApiEnv = "sandbox" | "production";
@@ -126,6 +157,14 @@ export async function runRepricer(
     if (!force && account.lastRunAt) {
       const nextDue = account.lastRunAt.getTime() + account.intervalSeconds * 1000;
       if (now.getTime() < nextDue) continue;
+    }
+
+    // Modo vacaciones: ventana en la que TODO se pausa (incluso el force).
+    if (account.vacationFrom && account.vacationTo) {
+      const t = now.getTime();
+      if (t >= account.vacationFrom.getTime() && t <= account.vacationTo.getTime()) {
+        continue;
+      }
     }
 
     // Programación horaria: fuera de la franja → no reprecia.

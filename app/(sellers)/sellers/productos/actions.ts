@@ -362,6 +362,251 @@ export async function updateIpAllowlistAction(
   return { ok: true };
 }
 
+// ─── Canales externos de notificación ─────────────────────────────────────
+export async function addNotificationChannelAction(formData: FormData): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+  const acc = await prisma.sellerAccount.findUnique({
+    where: { userId: session.userId },
+    select: { id: true },
+  });
+  if (!acc) return { ok: false, error: "no_account" };
+  const kind = String(formData.get("kind") ?? "");
+  const label = String(formData.get("label") ?? "").trim();
+  const webhookUrl = String(formData.get("webhookUrl") ?? "").trim();
+  const extraTarget = String(formData.get("extraTarget") ?? "").trim();
+  if (!["slack", "telegram", "discord", "webhook"].includes(kind)) {
+    return { ok: false, error: "kind_invalido" };
+  }
+  if (!/^https?:\/\//i.test(webhookUrl)) {
+    return { ok: false, error: "url_invalida" };
+  }
+  if (kind === "telegram" && !extraTarget) {
+    return { ok: false, error: "telegram_requiere_chat_id" };
+  }
+  await prisma.notificationChannel.create({
+    data: {
+      sellerAccountId: acc.id,
+      kind,
+      label: label || kind,
+      webhookUrl,
+      extraTarget,
+    },
+  });
+  await recordAudit(session.userId, "notify.channel_added", `Canal ${kind} (${label || kind})`);
+  revalidatePath("/sellers/productos");
+  return { ok: true };
+}
+
+export async function deleteNotificationChannelAction(formData: FormData): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+  const id = String(formData.get("id") ?? "");
+  if (!id) return { ok: false, error: "bad_input" };
+  // ownership
+  const ch = await prisma.notificationChannel.findUnique({
+    where: { id },
+    select: { sellerAccountId: true },
+  });
+  if (!ch) return { ok: false, error: "not_found" };
+  const acc = await prisma.sellerAccount.findUnique({
+    where: { id: ch.sellerAccountId },
+    select: { userId: true },
+  });
+  if (!acc || acc.userId !== session.userId) return { ok: false, error: "not_found" };
+  await prisma.notificationChannel.delete({ where: { id } });
+  await recordAudit(session.userId, "notify.channel_deleted", `Canal ${id}`);
+  revalidatePath("/sellers/productos");
+  return { ok: true };
+}
+
+export async function testNotificationChannelAction(formData: FormData): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+  const id = String(formData.get("id") ?? "");
+  if (!id) return { ok: false, error: "bad_input" };
+  const ch = await prisma.notificationChannel.findUnique({
+    where: { id },
+    select: { sellerAccountId: true },
+  });
+  if (!ch) return { ok: false, error: "not_found" };
+  const acc = await prisma.sellerAccount.findUnique({
+    where: { id: ch.sellerAccountId },
+    select: { userId: true },
+  });
+  if (!acc || acc.userId !== session.userId) return { ok: false, error: "not_found" };
+  try {
+    const { testChannel } = await import("@/lib/reprice/notify-external");
+    await testChannel(id);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message.slice(0, 120) : "send_failed" };
+  }
+}
+
+/**
+ * Añade una nota interna a un listing (memoria del equipo).
+ */
+export async function addListingNoteAction(formData: FormData): Promise<ActionResult & { id?: string }> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+  const listingId = String(formData.get("listingId") ?? "");
+  const content = String(formData.get("content") ?? "").trim().slice(0, 2000);
+  if (!listingId || !content) return { ok: false, error: "bad_input" };
+  const listing = await getListingForUser({ listingId, userId: session.userId });
+  if (!listing) return { ok: false, error: "not_found" };
+  const created = await prisma.listingNote.create({
+    data: { listingId, userId: session.userId, content },
+    select: { id: true },
+  });
+  revalidatePath("/sellers/productos");
+  return { ok: true, id: created.id };
+}
+
+export async function deleteListingNoteAction(formData: FormData): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+  const id = String(formData.get("id") ?? "");
+  if (!id) return { ok: false, error: "bad_input" };
+  // Solo el autor puede borrar
+  const note = await prisma.listingNote.findUnique({
+    where: { id },
+    select: { userId: true },
+  });
+  if (!note || note.userId !== session.userId) return { ok: false, error: "not_owner" };
+  await prisma.listingNote.delete({ where: { id } });
+  revalidatePath("/sellers/productos");
+  return { ok: true };
+}
+
+export async function listListingNotesAction(listingId: string) {
+  const session = await getSession();
+  if (!session) return [];
+  const listing = await getListingForUser({ listingId, userId: session.userId });
+  if (!listing) return [];
+  const notes = await prisma.listingNote.findMany({
+    where: { listingId },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+  });
+  return notes.map((n) => ({
+    id: n.id,
+    content: n.content,
+    createdAt: n.createdAt.toISOString(),
+    isMine: n.userId === session.userId,
+  }));
+}
+
+/**
+ * Clona la configuración (estrategia, rango, costes, competencia, etiquetas)
+ * de un listing origen a uno o varios destinos. NO clona el precio actual
+ * ni el toggle activo: el usuario activa cada destino cuando esté listo.
+ */
+export async function cloneListingConfigAction(formData: FormData): Promise<ActionResult & { applied?: number }> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+  const sourceId = String(formData.get("sourceId") ?? "");
+  const targetIdsRaw = String(formData.get("targetIds") ?? "");
+  if (!sourceId || !targetIdsRaw) return { ok: false, error: "bad_input" };
+  const targetIds = targetIdsRaw.split(",").map((s) => s.trim()).filter(Boolean);
+  if (targetIds.length === 0) return { ok: false, error: "no_targets" };
+
+  const source = await getListingForUser({ listingId: sourceId, userId: session.userId });
+  if (!source) return { ok: false, error: "source_not_found" };
+
+  // Verifica ownership de todos los destinos
+  const targets = await prisma.sellerListing.findMany({
+    where: {
+      id: { in: targetIds },
+      sellerAccount: { userId: session.userId },
+    },
+    select: { id: true, sku: true },
+  });
+  if (targets.length === 0) return { ok: false, error: "no_valid_targets" };
+
+  const payload = {
+    priceMin: source.priceMin,
+    priceMax: source.priceMax,
+    strategy: source.strategy,
+    undercutType: source.undercutType,
+    undercutValue: source.undercutValue,
+    fixedPrice: source.fixedPrice,
+    cost: source.cost,
+    shippingCost: source.shippingCost,
+    fbaFee: source.fbaFee,
+    vatRate: source.vatRate,
+    feePercent: source.feePercent,
+    targetMargin: source.targetMargin,
+    noCompetition: source.noCompetition,
+    stepUpType: source.stepUpType,
+    stepUpValue: source.stepUpValue,
+    useAccountDefaults: source.useAccountDefaults,
+    ignoreAmazon: source.ignoreAmazon,
+    fulfillmentFilter: source.fulfillmentFilter,
+    minSellerRating: source.minSellerRating,
+    excludeSellers: source.excludeSellers,
+    onlySellers: source.onlySellers,
+    tags: source.tags,
+  };
+  const r = await prisma.sellerListing.updateMany({
+    where: { id: { in: targets.map((t) => t.id) } },
+    data: payload,
+  });
+  await recordAudit(
+    session.userId,
+    "listing.config_cloned",
+    `Configuración de ${source.sku} clonada a ${targets.length} SKU(s): ${targets.map((t) => t.sku).join(", ").slice(0, 200)}`,
+  );
+  revalidatePath("/sellers/productos");
+  return { ok: true, applied: r.count };
+}
+
+/**
+ * Activa el modo vacaciones: el motor no reprecia entre las fechas dadas.
+ * Vacío = desactivar.
+ */
+export async function setVacationModeAction(formData: FormData): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+  const fromRaw = String(formData.get("vacationFrom") ?? "").trim();
+  const toRaw = String(formData.get("vacationTo") ?? "").trim();
+  const note = String(formData.get("vacationNote") ?? "").trim().slice(0, 200);
+
+  let vacationFrom: Date | null = null;
+  let vacationTo: Date | null = null;
+  if (fromRaw && toRaw) {
+    const f = new Date(fromRaw);
+    const t = new Date(toRaw);
+    if (!Number.isFinite(f.getTime()) || !Number.isFinite(t.getTime())) {
+      return { ok: false, error: "fechas_invalidas" };
+    }
+    if (t.getTime() <= f.getTime()) {
+      return { ok: false, error: "rango_invalido" };
+    }
+    vacationFrom = f;
+    vacationTo = t;
+  }
+
+  const acc = await prisma.sellerAccount.findUnique({
+    where: { userId: session.userId },
+    select: { id: true },
+  });
+  if (!acc) return { ok: false, error: "no_account" };
+  await prisma.sellerAccount.update({
+    where: { id: acc.id },
+    data: { vacationFrom, vacationTo, vacationNote: note },
+  });
+  await recordAudit(
+    session.userId,
+    "account.vacation_mode",
+    vacationFrom && vacationTo
+      ? `Modo vacaciones ${vacationFrom.toISOString().slice(0, 10)} → ${vacationTo.toISOString().slice(0, 10)}`
+      : "Modo vacaciones desactivado",
+  );
+  revalidatePath("/sellers/productos");
+  return { ok: true };
+}
+
 /**
  * Borra todos los SellerListing del seller (datos demo). Se usa cuando el
  * usuario está esperando aprobación de Amazon y prefiere ver el panel

@@ -448,6 +448,14 @@ model SellerAccount {
   // ── Seguridad: allowlist de IPs (CSV; vacío = sin restricción) ──
   ipAllowlist     String @default("") @db.Text
 
+  // ── Modo vacaciones: rango de pausa total ──
+  vacationFrom    DateTime?
+  vacationTo      DateTime?
+  vacationNote    String   @default("")
+
+  // ── Resumen semanal IA (cooldown) ──
+  weeklyDigestSentAt DateTime?
+
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
 
@@ -536,9 +544,79 @@ model SellerListing {
   sellerAccount SellerAccount    @relation(fields: [sellerAccountId], references: [id], onDelete: Cascade)
   events        RepricingEvent[]
   orderItems    RepriceOrderItem[]
+  notes         ListingNote[]
 
   @@unique([sellerAccountId, sku])
   @@index([sellerAccountId, repricingEnabled])
+}
+
+// ─── Notas internas del equipo por listing ─────────────────────────────────
+model ListingNote {
+  id        String   @id @default(cuid())
+  listingId String
+  userId    String   // autor
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  listing SellerListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId, createdAt])
+}
+
+// ─── Canales externos de notificación (Slack/Telegram/Discord/Webhook) ────
+model NotificationChannel {
+  id              String   @id @default(cuid())
+  sellerAccountId String
+  kind            String   // "slack" | "telegram" | "discord" | "webhook"
+  label           String   @default("Canal")
+  webhookUrl      String   @db.Text
+  // Para Telegram: chat_id (se concatena al URL en formato bot/sendMessage)
+  extraTarget     String   @default("")
+  enabled         Boolean  @default(true)
+  alertBuyBoxLost Boolean  @default(true)
+  alertPriceFloor Boolean  @default(true)
+  alertError      Boolean  @default(true)
+  alertAutoPause  Boolean  @default(true)
+  alertWeekly     Boolean  @default(true)
+  lastSentAt      DateTime?
+  lastError       String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([sellerAccountId, enabled])
+}
+
+// ─── Cache de explicaciones IA por evento ──────────────────────────────────
+// "Explica este cambio" genera narrativa una vez y la cachea: evita pagar
+// repetidamente el mismo token y mantiene la respuesta determinista para
+// el usuario aunque la BD se purgue.
+model EventExplanation {
+  id        String   @id @default(cuid())
+  eventId   String   @unique
+  narrative String   @db.Text
+  source    String   @default("ai") // "ai" | "heuristic"
+  tokensIn  Int      @default(0)
+  tokensOut Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// ─── Vendedores marcados como "dumper" ──────────────────────────────────────
+// El detector los identifica si nos baja el precio repetidamente. El usuario
+// puede convertirlos en exclusión con un clic.
+model DetectedDumper {
+  id              String   @id @default(cuid())
+  sellerAccountId String
+  amazonSellerId  String   // ID del vendedor que dumpea
+  occurrences     Int      @default(1)
+  lastDetectedAt  DateTime @default(now())
+  acknowledged    Boolean  @default(false) // el usuario lo marcó como visto
+  excluded        Boolean  @default(false) // ya lo añadió a la blacklist
+  createdAt       DateTime @default(now())
+
+  @@unique([sellerAccountId, amazonSellerId])
+  @@index([sellerAccountId, acknowledged])
 }
 
 model RepricingRun {

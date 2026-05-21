@@ -423,6 +423,96 @@ export async function sendMagicLinkEmail(options: {
   }
 }
 
+/**
+ * Resumen ejecutivo semanal con métricas + narrativa IA.
+ */
+export async function sendRepricerWeeklyDigestEmail(options: {
+  to: string;
+  name: string;
+  narrative: string;
+  summary: {
+    healthScore: number;
+    healthLetter: string;
+    suggestionsCount: number;
+    topSuggestions: string[];
+    eventsCount: number;
+    errorsCount: number;
+    ordersCount: number;
+    revenueTotal: number;
+    bestHour: number | null;
+    quotaPatch: number;
+    quotaRateLimited: number;
+  };
+  aiUsed: boolean;
+}): Promise<{ emailSent: boolean }> {
+  const appName = process.env.NEXT_PUBLIC_APP_NAME || "Orvexia";
+  const subject = `Resumen semanal · ${appName} Repricer (${options.summary.healthLetter} · ${options.summary.healthScore}/100)`;
+  const dashUrl = `${baseUrl()}/sellers/productos`;
+  const sugList = options.summary.topSuggestions.length
+    ? `<ul style="margin:8px 0 0 0;padding-left:20px;color:#475569;font-size:13px;line-height:1.5;">${options.summary.topSuggestions
+        .map((s) => `<li>${escapeHtml(s)}</li>`)
+        .join("")}</ul>`
+    : "";
+  const bestHour =
+    options.summary.bestHour != null
+      ? `${String(options.summary.bestHour).padStart(2, "0")}:00`
+      : "—";
+  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"/></head>
+  <body style="margin:0;padding:0;background:#0b1220;font-family:'Segoe UI',Arial,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:28px 0;"><tr><td align="center">
+      <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 18px 35px rgba(0,0,0,0.18);">
+        <tr><td style="background:linear-gradient(135deg,#1e293b,#0ea5e9);color:#e2f3ff;padding:28px;">
+          <div style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;opacity:.9;">${appName} Repricer · Resumen semanal</div>
+          <div style="font-size:24px;font-weight:700;margin-top:6px;">Hola ${escapeHtml(options.name)},</div>
+          <div style="font-size:14px;margin-top:6px;opacity:.85;">Salud del catálogo: <strong style="font-size:18px;">${options.summary.healthLetter} (${options.summary.healthScore}/100)</strong></div>
+        </td></tr>
+        <tr><td style="padding:24px 28px;color:#0f172a;font-size:14px;line-height:1.6;">
+          <div style="background:#f8fafc;border-left:3px solid #0ea5e9;padding:14px 16px;border-radius:6px;">
+            ${escapeHtml(options.narrative).replace(/\n/g, "<br/>")}
+          </div>
+          ${
+            options.aiUsed
+              ? `<div style="font-size:11px;color:#94a3b8;margin-top:4px;">↑ Narrativa generada por IA</div>`
+              : ""
+          }
+
+          <h3 style="margin-top:22px;margin-bottom:8px;font-size:13px;color:#475569;text-transform:uppercase;letter-spacing:.06em;">Métricas (últimos 7 días)</h3>
+          <table role="presentation" width="100%" style="font-size:13px;border-collapse:collapse;">
+            <tr><td style="padding:6px 0;color:#64748b;">Eventos exitosos</td><td style="text-align:right;font-weight:600;">${options.summary.eventsCount}</td></tr>
+            <tr><td style="padding:6px 0;color:#64748b;">Errores</td><td style="text-align:right;font-weight:600;color:${options.summary.errorsCount > 0 ? "#dc2626" : "#0f172a"};">${options.summary.errorsCount}</td></tr>
+            <tr><td style="padding:6px 0;color:#64748b;">Pedidos</td><td style="text-align:right;font-weight:600;">${options.summary.ordersCount}</td></tr>
+            <tr><td style="padding:6px 0;color:#64748b;">Facturación</td><td style="text-align:right;font-weight:600;">${options.summary.revenueTotal.toFixed(2)} €</td></tr>
+            <tr><td style="padding:6px 0;color:#64748b;">Mejor hora de venta</td><td style="text-align:right;font-weight:600;">${bestHour}</td></tr>
+            <tr><td style="padding:6px 0;color:#64748b;">PATCH a Amazon</td><td style="text-align:right;font-weight:600;">${options.summary.quotaPatch}</td></tr>
+            ${options.summary.quotaRateLimited > 0 ? `<tr><td style="padding:6px 0;color:#64748b;">Rate-limited</td><td style="text-align:right;font-weight:600;color:#d97706;">${options.summary.quotaRateLimited}</td></tr>` : ""}
+          </table>
+
+          ${
+            options.summary.suggestionsCount > 0
+              ? `<h3 style="margin-top:22px;margin-bottom:8px;font-size:13px;color:#475569;text-transform:uppercase;letter-spacing:.06em;">${options.summary.suggestionsCount} sugerencia(s) accionables</h3>${sugList}`
+              : ""
+          }
+
+          <div style="margin-top:24px;text-align:center;">
+            <a href="${dashUrl}" style="display:inline-block;background:#2563EB;color:#fff;text-decoration:none;padding:12px 22px;border-radius:12px;font-weight:700;font-size:14px;">Ir al panel</a>
+          </div>
+        </td></tr>
+        <tr><td style="background:#f1f5f9;color:#475569;padding:16px 28px;font-size:12px;">
+          Resumen automático de ${appName}. Para dejar de recibirlo, desactiva las alertas semanales en tus canales de notificación.
+        </td></tr>
+      </table>
+    </td></tr></table>
+  </body></html>`;
+  const text = `${subject}\n\n${options.narrative}\n\nIr al panel: ${dashUrl}`;
+  try {
+    await tryResend(options.to, subject, html, text);
+    return { emailSent: true };
+  } catch (err) {
+    console.warn("[email] resumen semanal no enviado:", err);
+    return { emailSent: false };
+  }
+}
+
 /** Aviso de que la prueba gratuita está por terminar. */
 export async function sendTrialEndingEmail(options: {
   to: string;
