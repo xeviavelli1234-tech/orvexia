@@ -790,8 +790,81 @@ export default function ProductNetwork({
 
   return (
     <div className="absolute inset-0">
+      {/* ── Mobile list view (lg-: replaces the heavy SVG/canvas viz) ── */}
+      {!sel && (
+        <div className="lg:hidden absolute inset-0 overflow-y-auto overscroll-contain p-3 pb-24 bg-[#040513]">
+          <p className="font-mono-ui text-[10px] uppercase tracking-[0.18em] text-cyan-300/70 mb-2.5 px-1">
+            ▸ /productos · {nodes.length}
+          </p>
+          <ul className="space-y-2">
+            {nodes.map((n) => {
+              const st = nodeState(n);
+              const color =
+                st === "won" ? "bg-emerald-400" :
+                st === "active" ? "bg-cyan-400" :
+                st === "floor" ? "bg-amber-400" :
+                st === "lost" ? "bg-red-400" :
+                st === "error" ? "bg-orange-500" :
+                st === "noprice" ? "bg-slate-500" :
+                "bg-blue-400";
+              const stLabel =
+                st === "won" ? "Buy Box" :
+                st === "active" ? "Repreciando" :
+                st === "floor" ? "En mínimo" :
+                st === "lost" ? "BB perdida" :
+                st === "error" ? "Error" :
+                st === "noprice" ? "Sin oferta" :
+                "Pausado";
+              const range =
+                n.priceMin != null && n.priceMax != null
+                  ? `${fmt(n.priceMin)}–${fmt(n.priceMax)} ${sym(n.currency)}`
+                  : "sin rango";
+              return (
+                <li key={n.id}>
+                  <button
+                    type="button"
+                    onClick={() => setSelId(n.id)}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.025] hover:border-cyan-400/30 active:scale-[0.985] active:bg-white/[0.05] transition-all text-left"
+                  >
+                    <div className="h-12 w-12 shrink-0 rounded-lg border border-white/10 bg-white/[0.04] overflow-hidden grid place-items-center">
+                      {n.imageUrl ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img src={n.imageUrl} alt="" className="h-full w-full object-contain" loading="lazy" referrerPolicy="no-referrer" />
+                      ) : (
+                        <span className="text-white/30 text-xs">—</span>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <span className={`h-1.5 w-1.5 rounded-full ${color}`} />
+                        <span className="text-[10px] font-mono-ui uppercase tracking-wider text-white/55 truncate">
+                          {stLabel}
+                        </span>
+                      </div>
+                      <div className="text-sm font-semibold text-white/90 leading-tight line-clamp-2">
+                        {n.title}
+                      </div>
+                      <div className="mt-1 flex items-center gap-2 text-[11px] tabular">
+                        <span className="font-mono font-bold text-white/85">
+                          {n.priceCurrent > 0 ? `${fmt(n.priceCurrent)} ${sym(n.currency)}` : "—"}
+                        </span>
+                        <span className="text-white/25">·</span>
+                        <span className="text-white/50 truncate">{range}</span>
+                      </div>
+                    </div>
+                    <svg className="w-4 h-4 text-white/35 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
       <div
-        className={`absolute inset-y-0 left-0 right-0 transition-[right] duration-300 ${
+        className={`hidden lg:block absolute inset-y-0 left-0 right-0 transition-[right] duration-300 ${
           sel ? "sm:right-[380px]" : ""
         }`}
       >
