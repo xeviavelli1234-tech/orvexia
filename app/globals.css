@@ -191,6 +191,55 @@ body {
   background-attachment: fixed, fixed, fixed, fixed, fixed;
 }
 
+/* ============================================================
+   Mobile performance overrides
+   Phones (especially low-end Android) can't afford the heavy
+   decoration stack: backdrop-blur, fixed background-attachment,
+   long-blur shadows, and many continuous keyframe animations all
+   stacked together caused visible scroll jank. The rules below
+   strip those effects only below the sm breakpoint (640px).
+   ============================================================ */
+@media (max-width: 639px) {
+  body {
+    /* `fixed` repaints the whole background every frame while scrolling
+       on mobile GPUs — switch to `scroll` so it can be cached. */
+    background-attachment: scroll, scroll, scroll, scroll, scroll;
+  }
+  /* Kill backdrop-blur everywhere on phones. Solid bg-colors already
+     give enough separation on cards/headers; the blur was eating GPU. */
+  [class*="backdrop-blur"] {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  /* Disable hover-only transforms (they trigger on tap on touch). */
+  [class*="hover:scale-"]:not(:active),
+  [class*="hover:-translate-y-"]:not(:active),
+  [class*="group-hover:scale-"]:not(:active) {
+    transform: none !important;
+  }
+  /* Disable the always-on decorative animations. They run regardless of
+     viewport so the cost is paid even when offscreen. Critical UX
+     animations (fade-in, slide-up, sheet animations) keep working. */
+  .halo-breathe,
+  .scanline-drift,
+  .aura-spin,
+  .flicker,
+  .beam-sweep,
+  .orbit,
+  .drift-up,
+  .data-stream,
+  .ticker-x,
+  .hub-spin,
+  .hex-breathe,
+  .node-pulse,
+  .spin-slow {
+    animation: none !important;
+  }
+  /* Shine-on-hover is purely decorative and fires on every tap on touch
+     devices — kill the sweep on mobile. */
+  .shine-on-hover::after { display: none !important; }
+}
+
 ::selection {
   background: rgba(94,234,212,0.35);
   color: #ECFEFF;
