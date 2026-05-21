@@ -28,6 +28,10 @@ export default function WaveField() {
     const ctx: CanvasRenderingContext2D = c;
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // Skip the canvas entirely on phones — the rAF loop is the single
+    // biggest cost on the Control Center page on mobile GPUs.
+    const phone = window.innerWidth < 640;
+    if (phone) return;
 
     let w = 0;
     let h = 0;
@@ -36,10 +40,9 @@ export default function WaveField() {
     // Densidad ajustada para fluidez. Tres tramos: phone (< 640) cae a
     // ~⅓ de los puntos del desktop para evitar jank en GPUs lentas.
     const vw = typeof window !== "undefined" ? window.innerWidth : 1280;
-    const phone = vw < 640;
     const small = vw < 900;
-    const COLS = phone ? 24 : small ? 48 : 64;
-    const ROWS = phone ? 16 : small ? 32 : 42;
+    const COLS = small ? 48 : 64;
+    const ROWS = small ? 32 : 42;
 
     function resize() {
       const parent = canvas.parentElement;
@@ -81,7 +84,7 @@ export default function WaveField() {
       s = (s * 1664525 + 1013904223) >>> 0;
       return s / 4294967296;
     };
-    const orbs = Array.from({ length: phone ? 3 : 7 }, () => ({
+    const orbs = Array.from({ length: 7 }, () => ({
       x: rnd(),
       y: rnd(),
       r: 90 + rnd() * 170,
