@@ -10,6 +10,7 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import WaveField from "./WaveField";
+import PricingSuggest from "./PricingSuggest";
 import {
   breakEvenPrice,
   minPriceForMargin,
@@ -1956,6 +1957,20 @@ export default function ProductNetwork({
                 className="mt-3 w-full rounded-lg bg-[var(--brand-600)] text-white py-2 text-sm font-semibold hover:bg-[var(--brand-700)] transition-colors disabled:opacity-50">
                 {pending ? "Guardando…" : "Guardar rango"}
               </button>
+
+              <PricingSuggest
+                listingId={sel.id}
+                currency={sel.currency}
+                onApplyMin={(v) => setMin(String(v).replace(".", ","))}
+                onApplyMax={(v) => setMax(String(v).replace(".", ","))}
+                onApplyFixed={(v) => {
+                  setStrategy("FIXED");
+                  setFixedP(String(v).replace(".", ","));
+                }}
+              />
+              <p className="mt-1 text-[10px] text-white/30 text-center">
+                IA analiza histórico, competencia y márgenes
+              </p>
 
               <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3.5">
                 <div className="min-w-0">
