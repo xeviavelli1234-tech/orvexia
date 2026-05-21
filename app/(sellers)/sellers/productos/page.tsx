@@ -17,6 +17,7 @@ import CatalogOverlay, {
 } from "./CatalogOverlay";
 import ProfitOverlay, { ProfitButton } from "./ProfitOverlay";
 import RealDataPanel, { RealDataButton } from "./RealDataPanel";
+import DemoBanner from "./DemoBanner";
 import HelpOverlay, { HelpButton } from "./HelpOverlay";
 import Tour from "./Tour";
 import AuditOverlay, { AuditButton } from "./AuditOverlay";
@@ -283,26 +284,53 @@ export default async function ProductosPage() {
       </>
     );
 
+  const envIsProduction = process.env.SP_API_ENV === "production";
+  const accountInProd = account.spApiEnv === "production";
+  const isDemoMode = !envIsProduction || !accountInProd;
+
   const canvas = hasListings ? (
     <ProductNetwork nodes={nodes} activeCount={active} />
   ) : (
     <div className="absolute inset-0 grid place-items-center text-center px-6">
       <div className="max-w-md">
-        <div className="text-2xl font-extrabold tracking-tight text-gradient-neon">
-          Empieza aquí
-        </div>
-        <p className="mt-3 text-white/70">
-          Pulsa{" "}
-          <strong className="text-white">&ldquo;Sincronizar con Amazon&rdquo;</strong>{" "}
-          <span className="hidden lg:inline">en la barra de la izquierda</span>
-          <span className="lg:hidden">en el menú</span>{" "}
-          para traer tus productos.
-        </p>
-        <p className="mt-2 text-xs text-white/40">
-          Se importan todos los listings de tu Seller Central. Luego clic
-          en un producto → define mín/máx → estrategia → activa →
-          «Ejecutar reprecio ahora».
-        </p>
+        {isDemoMode ? (
+          <>
+            <div className="font-mono-ui text-[10px] uppercase tracking-wider text-amber-300 mb-2">
+              ▸ app sp-api · pendiente de aprobación
+            </div>
+            <div className="text-2xl font-extrabold tracking-tight text-gradient-neon">
+              Esperando luz verde de Amazon
+            </div>
+            <p className="mt-3 text-white/70">
+              Tu panel está limpio. En cuanto Amazon apruebe tu app SP-API y
+              configures <code className="text-amber-300">SP_API_ENV=production</code> en
+              Vercel, podrás reconectar y se traerán tus listings reales de Seller Central.
+            </p>
+            <p className="mt-2 text-xs text-white/40">
+              Mientras tanto puedes <strong className="text-white">Sincronizar</strong>{" "}
+              para sembrar 4 productos demo (Bosch, Balay, LG, Samsung) y probar
+              estrategias, calculadora de margen, rentabilidad, IA, etc.
+            </p>
+          </>
+        ) : (
+          <>
+            <div className="text-2xl font-extrabold tracking-tight text-gradient-neon">
+              Empieza aquí
+            </div>
+            <p className="mt-3 text-white/70">
+              Pulsa{" "}
+              <strong className="text-white">&ldquo;Sincronizar con Amazon&rdquo;</strong>{" "}
+              <span className="hidden lg:inline">en la barra de la izquierda</span>
+              <span className="lg:hidden">en el menú</span>{" "}
+              para traer tus productos.
+            </p>
+            <p className="mt-2 text-xs text-white/40">
+              Se importan todos los listings de tu Seller Central. Luego clic en un
+              producto → define mín/máx → estrategia → activa → «Ejecutar reprecio
+              ahora».
+            </p>
+          </>
+        )}
         <div className="mt-5 inline-block w-64">
           <HelpButton />
         </div>
@@ -314,6 +342,15 @@ export default async function ProductosPage() {
     <ControlCenterShell
       sidebar={sidebar}
       canvas={canvas}
+      banner={
+        isDemoMode ? (
+          <DemoBanner
+            spApiEnv={account.spApiEnv}
+            envIsProduction={envIsProduction}
+            listingsCount={listings.length}
+          />
+        ) : null
+      }
       overlays={
         <>
           <AssistantWidget />

@@ -7,9 +7,10 @@ interface Props {
   sidebar: ReactNode;
   canvas: ReactNode;
   overlays?: ReactNode;
+  banner?: ReactNode;
 }
 
-export default function ControlCenterShell({ sidebar, canvas, overlays }: Props) {
+export default function ControlCenterShell({ sidebar, canvas, overlays, banner }: Props) {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   // Lock body scroll while the drawer is open on mobile.
@@ -96,10 +97,11 @@ export default function ControlCenterShell({ sidebar, canvas, overlays }: Props)
 
       {/* ── Canvas / graph area ───────────────────────────────────── */}
       <section
-        className="relative flex-1 min-h-0 bg-[radial-gradient(ellipse_at_50%_45%,#10173a_0%,#0a0d24_45%,#05060f_100%)]"
+        className="relative flex-1 min-h-0 bg-[radial-gradient(ellipse_at_50%_45%,#10173a_0%,#0a0d24_45%,#05060f_100%)] flex flex-col"
         id="tour-graph"
       >
-        {canvas}
+        {banner}
+        <div className="relative flex-1 min-h-0">{canvas}</div>
       </section>
 
       {overlays}

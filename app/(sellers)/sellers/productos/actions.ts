@@ -363,6 +363,33 @@ export async function updateIpAllowlistAction(
 }
 
 /**
+ * Borra todos los SellerListing del seller (datos demo). Se usa cuando el
+ * usuario está esperando aprobación de Amazon y prefiere ver el panel
+ * vacío en vez de los fixtures. No toca la cuenta ni el token: al hacer
+ * Sincronizar de nuevo, vuelven a sembrarse (mientras siga modo demo) o
+ * llegan los reales (si ya está en producción).
+ */
+export async function clearDemoListingsAction(): Promise<ActionResult & { deleted?: number }> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+  const acc = await prisma.sellerAccount.findUnique({
+    where: { userId: session.userId },
+    select: { id: true },
+  });
+  if (!acc) return { ok: false, error: "no_account" };
+  const res = await prisma.sellerListing.deleteMany({
+    where: { sellerAccountId: acc.id },
+  });
+  await recordAudit(
+    session.userId,
+    "listings.demo_cleared",
+    `Borrados ${res.count} productos demo`,
+  );
+  revalidatePath("/sellers/productos");
+  return { ok: true, deleted: res.count };
+}
+
+/**
  * Sincroniza los pedidos SP-API de la cuenta del usuario. Best-effort:
  * si la app no tiene rol Orders, devuelve ok con 0 pedidos.
  */
