@@ -143,24 +143,38 @@ export default function CategoryClient({ products, meta, content }: { products: 
       {/* Marca */}
       <section>
         <p className="text-[10px] font-bold text-fg-subtle uppercase tracking-[0.18em] mb-3">Marca</p>
-        <div className="space-y-1">
+        <div className="space-y-0.5">
           {brands.map((b) => {
             const checked = selectedBrands.includes(b);
             return (
               <label
                 key={b}
                 className={`flex items-center gap-3 cursor-pointer py-2 px-2.5 -mx-2.5 rounded-lg transition-colors ${
-                  checked ? "bg-cyan-400/[0.07]" : "hover:bg-bg-subtle"
+                  checked ? "bg-cyan-400/[0.10]" : "hover:bg-bg-subtle"
                 }`}
               >
                 <input
                   type="checkbox"
                   checked={checked}
                   onChange={() => toggle(selectedBrands, b, setSelectedBrands)}
-                  className="w-[18px] h-[18px] rounded border-border accent-brand-600 flex-shrink-0"
+                  className="sr-only peer"
                 />
+                <span
+                  aria-hidden
+                  className={`flex items-center justify-center w-5 h-5 rounded-md border transition-all flex-shrink-0 ${
+                    checked
+                      ? "bg-cyan-500 border-cyan-400 shadow-[0_0_10px_-2px_rgba(94,234,212,0.7)]"
+                      : "bg-white/[0.04] border-white/20 peer-hover:border-white/40"
+                  }`}
+                >
+                  {checked && (
+                    <svg className="w-3 h-3 text-bg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </span>
                 <span className={`text-sm flex-1 transition-colors ${checked ? "text-fg font-semibold" : "text-fg-muted"}`}>{b}</span>
-                <span className="text-[11px] text-fg-faint tabular">{enriched.filter((p) => p.brand === b).length}</span>
+                <span className={`text-[11px] tabular ${checked ? "text-cyan-200/80" : "text-fg-faint"}`}>{enriched.filter((p) => p.brand === b).length}</span>
               </label>
             );
           })}
@@ -171,24 +185,38 @@ export default function CategoryClient({ products, meta, content }: { products: 
       {stores.length > 1 && (
         <section>
           <p className="text-[10px] font-bold text-fg-subtle uppercase tracking-[0.18em] mb-3">Tienda</p>
-          <div className="space-y-1">
+          <div className="space-y-0.5">
             {stores.map((s) => {
               const checked = selectedStores.includes(s);
               return (
                 <label
                   key={s}
                   className={`flex items-center gap-3 cursor-pointer py-2 px-2.5 -mx-2.5 rounded-lg transition-colors ${
-                    checked ? "bg-cyan-400/[0.07]" : "hover:bg-bg-subtle"
+                    checked ? "bg-cyan-400/[0.10]" : "hover:bg-bg-subtle"
                   }`}
                 >
                   <input
                     type="checkbox"
                     checked={checked}
                     onChange={() => toggle(selectedStores, s, setSelectedStores)}
-                    className="w-[18px] h-[18px] rounded border-border accent-brand-600 flex-shrink-0"
+                    className="sr-only peer"
                   />
+                  <span
+                    aria-hidden
+                    className={`flex items-center justify-center w-5 h-5 rounded-md border transition-all flex-shrink-0 ${
+                      checked
+                        ? "bg-cyan-500 border-cyan-400 shadow-[0_0_10px_-2px_rgba(94,234,212,0.7)]"
+                        : "bg-white/[0.04] border-white/20 peer-hover:border-white/40"
+                    }`}
+                  >
+                    {checked && (
+                      <svg className="w-3 h-3 text-bg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </span>
                   <span className={`text-sm flex-1 transition-colors ${checked ? "text-fg font-semibold" : "text-fg-muted"}`}>{s}</span>
-                  <span className="text-[11px] text-fg-faint tabular">
+                  <span className={`text-[11px] tabular ${checked ? "text-cyan-200/80" : "text-fg-faint"}`}>
                     {enriched.filter((p) => p.offers.some((o) => o.store === s)).length}
                   </span>
                 </label>
@@ -213,7 +241,8 @@ export default function CategoryClient({ products, meta, content }: { products: 
           step={10}
           value={maxPrice === 9999 ? globalMax : maxPrice}
           onChange={(e) => setMaxPrice(Number(e.target.value))}
-          className="w-full accent-brand-600 mb-3 h-2"
+          className="filter-range w-full mb-4"
+          aria-label="Precio máximo"
         />
         <div className="grid grid-cols-3 gap-1.5">
           {[200, 300, 400, 500, 700, 1000].filter((v) => v <= globalMax + 50).map((v) => (
@@ -299,18 +328,25 @@ export default function CategoryClient({ products, meta, content }: { products: 
       {/* Solo con descuento */}
       <button
         type="button"
+        role="switch"
+        aria-checked={onlyDiscount}
         onClick={() => setOnlyDiscount((v) => !v)}
-        className="w-full flex items-center justify-between pt-3 border-t border-white/10"
+        className="w-full flex items-center justify-between gap-3 pt-3 border-t border-white/10 select-none"
       >
-        <span className="text-sm font-semibold text-fg-muted select-none">Solo con descuento</span>
+        <span className={`text-sm font-semibold transition-colors ${onlyDiscount ? "text-cyan-100" : "text-fg-muted"}`}>
+          Solo con descuento
+        </span>
+        {/* Track 44x24 · thumb 20x20 · 2px margin all sides (symmetric) */}
         <span
-          className={`relative w-11 h-6 rounded-full transition-colors duration-200 flex-shrink-0 ${
-            onlyDiscount ? "bg-cyan-400/40 shadow-[0_0_12px_-2px_rgba(94,234,212,0.6)]" : "bg-white/10"
+          className={`relative inline-block w-11 h-6 rounded-full transition-colors duration-200 flex-shrink-0 ${
+            onlyDiscount
+              ? "bg-cyan-500/70 shadow-[0_0_14px_-2px_rgba(34,211,238,0.55)]"
+              : "bg-white/[0.12]"
           }`}
         >
           <span
-            className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${
-              onlyDiscount ? "translate-x-6" : "translate-x-1"
+            className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-200 will-change-transform ${
+              onlyDiscount ? "translate-x-5" : "translate-x-0"
             }`}
           />
         </span>
