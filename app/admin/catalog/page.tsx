@@ -49,11 +49,19 @@ export default async function CatalogAdmin() {
         </p>
       </header>
 
-      <section className="grid grid-cols-3 gap-3 mb-8">
+      <section className="grid grid-cols-3 gap-3 mb-4">
         <Kpi label="Productos" value={productCount} />
         <Kpi label="Ofertas" value={offerCount} />
         <Kpi label="LG en catálogo" value={lgCount} tone="ok" />
       </section>
+      <div className="mb-8">
+        <Link
+          href="/admin/catalog/products"
+          className="inline-flex items-center gap-2 rounded-lg border border-cyan-400/40 bg-cyan-400/10 px-4 py-2 text-sm font-semibold text-cyan-200 hover:bg-cyan-400/20 transition-colors"
+        >
+          📋 Ver todos los productos →
+        </Link>
+      </div>
 
       <CatalogImportClient />
 
