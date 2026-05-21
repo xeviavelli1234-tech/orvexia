@@ -280,6 +280,22 @@ body {
 }
 .fade-in { animation: fade-in 0.4s var(--ease-out) both; }
 
+/* Bottom sheet (filters on mobile) */
+@keyframes sheet-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes sheet-slide-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+.animate-fade-in  { animation: sheet-fade-in 0.22s var(--ease-out) both; }
+.animate-slide-up { animation: sheet-slide-up 0.32s var(--ease-out) both; }
+
+/* Hide scrollbar but keep scroll functionality (chip rails, etc.) */
+.scrollbar-hide { scrollbar-width: none; -ms-overflow-style: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
 /* Tour interactivo: resalta el elemento y oscurece el resto */
 .tour-spot {
   position: relative;
