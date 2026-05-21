@@ -385,6 +385,38 @@ export function answerLocally(question: string): string {
   return "Puedo explicarte cualquier parte del repricer: **estrategias** (Ganar Buy Box, Igualar, Fijo, Por margen, Subida gradual), **rango Mín/Máx**, **calculadora de costes/margen**, **panel de rentabilidad**, **analíticas y gráficas**, **etiquetas/grupos**, **variaciones ASIN**, **reglas por competidor**, **multi-marketplace EU**, **alertas por email**, **modo tabla / búsqueda en el grafo**, **2FA**, **factura con IVA**, **RGPD (exportar/borrar)**, **logs de auditoría**, **planes por volumen** y el **modo demo**. ¿Sobre cuál quieres saber?";
 }
 
+export interface StaticMatch {
+  answer: string;
+  follow?: string[];
+  matchedKey: string;
+  matchedScore: number;
+}
+
+/**
+ * Versión enriquecida: devuelve también la clave del topic y el score
+ * (cuántas palabras de la pregunta golpearon). Útil para la telemetría
+ * de aprendizaje (matchedScore=0 → candidato a aprender).
+ */
+export function matchTopic(question: string): StaticMatch | null {
+  const q = norm(question);
+  let best: Topic | null = null;
+  let bestScore = 0;
+  for (const t of TOPICS) {
+    const score = t.keys.reduce((s, k) => (q.includes(norm(k)) ? s + 1 : s), 0);
+    if (score > bestScore) {
+      bestScore = score;
+      best = t;
+    }
+  }
+  if (!best || bestScore === 0) return null;
+  return {
+    answer: best.answer,
+    follow: best.follow,
+    matchedKey: best.keys[0],
+    matchedScore: bestScore,
+  };
+}
+
 export function followUps(question: string): string[] {
   const t = bestTopic(question);
   return (

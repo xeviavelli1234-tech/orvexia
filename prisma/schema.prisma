@@ -508,3 +508,49 @@ model RepricingEvent {
 //   product     Product  @relation(fields: [productId], references: [id])
 //   @@unique([userId, productId])
 // }
+
+// ─── Aprendizaje continuo del asistente ─────────────────────────────────────
+// Registramos cada Q&A y el feedback del usuario. Un cron agrupa preguntas
+// con baja confianza o feedback negativo y propone topics nuevos a aprobar.
+model AssistantInteraction {
+  id            String   @id @default(cuid())
+  userId        String?
+  question      String   @db.Text
+  answer        String   @db.Text
+  matchedKind   String   @default("none") // "static" | "learned" | "model" | "none"
+  matchedKey    String?
+  matchedScore  Int      @default(0)
+  helpful       Boolean?
+  clusterId     String?  // se setea cuando el motor de aprendizaje lo agrupa
+  createdAt     DateTime @default(now())
+
+  cluster AssistantLearnedTopic? @relation(fields: [clusterId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([matchedKind, helpful])
+  @@index([clusterId])
+}
+
+// Topic aprendido automáticamente (candidato) o aprobado manualmente.
+// Cuando approved=true entra al runtime del asistente y refuerza por uso.
+model AssistantLearnedTopic {
+  id            String   @id @default(cuid())
+  keywords      String   @db.Text // separadas por coma (normalizadas, sin acentos)
+  sampleQuestion String  @db.Text // pregunta representativa del cluster
+  answer        String   @db.Text
+  followUps     String   @default("") // "preg1|preg2|preg3"
+  source        String   @default("auto") // "auto" | "manual"
+  approved      Boolean  @default(false)
+  approvedAt    DateTime?
+  usageCount    Int      @default(0)
+  helpfulCount  Int      @default(0)
+  unhelpfulCount Int     @default(0)
+  occurrences   Int      @default(1) // cuántas preguntas se agruparon aquí
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  interactions AssistantInteraction[]
+
+  @@index([approved, helpfulCount])
+  @@index([createdAt])
+}

@@ -2,8 +2,20 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { getSellerAccountByUserId } from "@/lib/db/sellerAccount";
 import { listListingsByAccount } from "@/lib/db/sellerListing";
-import { SYSTEM_PROMPT, TOOLS_GUIDE, answerLocally, followUps } from "@/lib/assistant/kb";
+import {
+  SYSTEM_PROMPT,
+  TOOLS_GUIDE,
+  answerLocally,
+  followUps,
+  matchTopic,
+} from "@/lib/assistant/kb";
 import { TOOLS, executeTool } from "@/lib/assistant/tools";
+import {
+  lookupLearned,
+  recordInteraction,
+  getApprovedLearnedTopics,
+} from "@/lib/assistant/store";
+import { parseFollowUps } from "@/lib/assistant/learning";
 
 export const maxDuration = 45;
 
@@ -129,21 +141,68 @@ export async function POST(req: Request) {
   const lastUser = [...messages].reverse().find((m) => m.role === "user");
   if (!lastUser) return NextResponse.json({ error: "no_question" }, { status: 400 });
 
+  // 1) Intento: topic aprendido (DB, cacheado 5 min, ya aprobado por humano)
+  const learned = await lookupLearned(lastUser.content);
+  if (learned) {
+    const lfu = parseFollowUps(learned.followUps);
+    const fu = lfu.length > 0 ? lfu : followUps(lastUser.content);
+    const interactionId = await recordInteraction({
+      userId: session.userId,
+      question: lastUser.content,
+      answer: learned.answer,
+      matchedKind: "learned",
+      matchedKey: learned.id,
+      matchedScore: 1,
+      clusterId: learned.id,
+    });
+    return new Response(streamText(learned.answer), {
+      headers: {
+        "content-type": "text/plain; charset=utf-8",
+        "cache-control": "no-store",
+        "x-followups": Buffer.from(JSON.stringify(fu), "utf-8").toString("base64"),
+        ...(interactionId ? { "x-interaction-id": interactionId } : {}),
+      },
+    });
+  }
+
   const fuHeader = Buffer.from(JSON.stringify(followUps(lastUser.content)), "utf-8").toString(
     "base64",
   );
-  const headers = {
-    "content-type": "text/plain; charset=utf-8",
-    "cache-control": "no-store",
-    "x-followups": fuHeader,
-  };
-
   const apiKey = process.env.ANTHROPIC_API_KEY;
   const context = await buildContext(session.userId);
-  const system = `${SYSTEM_PROMPT}\n\n${TOOLS_GUIDE}\n\nDATOS DEL USUARIO (úsalos para responder concreto; no los recites literalmente):\n${context}`;
+
+  // Topics aprendidos como bloque adicional para el modelo (pocas líneas).
+  const learnedTopics = await getApprovedLearnedTopics();
+  const learnedBlock =
+    learnedTopics.length > 0
+      ? `\n\nCONOCIMIENTO APRENDIDO (aprobado manualmente, prioritario):\n${learnedTopics
+          .slice(0, 30)
+          .map((t) => `- [${t.keywords}] ${t.answer.slice(0, 300).replace(/\n+/g, " ")}`)
+          .join("\n")}`
+      : "";
+
+  const system = `${SYSTEM_PROMPT}\n\n${TOOLS_GUIDE}${learnedBlock}\n\nDATOS DEL USUARIO (úsalos para responder concreto; no los recites literalmente):\n${context}`;
 
   if (!apiKey) {
-    return new Response(streamText(answerLocally(lastUser.content)), { headers });
+    // 2) Sin API key: caemos al matcher estático y registramos (matchedScore=0 si no hay topic)
+    const m = matchTopic(lastUser.content);
+    const answer = m?.answer ?? answerLocally(lastUser.content);
+    const interactionId = await recordInteraction({
+      userId: session.userId,
+      question: lastUser.content,
+      answer,
+      matchedKind: m ? "static" : "none",
+      matchedKey: m?.matchedKey ?? null,
+      matchedScore: m?.matchedScore ?? 0,
+    });
+    return new Response(streamText(answer), {
+      headers: {
+        "content-type": "text/plain; charset=utf-8",
+        "cache-control": "no-store",
+        "x-followups": fuHeader,
+        ...(interactionId ? { "x-interaction-id": interactionId } : {}),
+      },
+    });
   }
 
   const model = process.env.ASSISTANT_MODEL ?? "claude-3-5-haiku-latest";
@@ -198,8 +257,38 @@ export async function POST(req: Request) {
       break;
     }
     if (!finalText) finalText = "He completado la operación.";
-    return new Response(streamText(finalText), { headers });
+    const interactionId = await recordInteraction({
+      userId: session.userId,
+      question: lastUser.content,
+      answer: finalText,
+      matchedKind: "model",
+    });
+    return new Response(streamText(finalText), {
+      headers: {
+        "content-type": "text/plain; charset=utf-8",
+        "cache-control": "no-store",
+        "x-followups": fuHeader,
+        ...(interactionId ? { "x-interaction-id": interactionId } : {}),
+      },
+    });
   } catch {
-    return new Response(streamText(answerLocally(lastUser.content)), { headers });
+    const m = matchTopic(lastUser.content);
+    const answer = m?.answer ?? answerLocally(lastUser.content);
+    const interactionId = await recordInteraction({
+      userId: session.userId,
+      question: lastUser.content,
+      answer,
+      matchedKind: m ? "static" : "none",
+      matchedKey: m?.matchedKey ?? null,
+      matchedScore: m?.matchedScore ?? 0,
+    });
+    return new Response(streamText(answer), {
+      headers: {
+        "content-type": "text/plain; charset=utf-8",
+        "cache-control": "no-store",
+        "x-followups": fuHeader,
+        ...(interactionId ? { "x-interaction-id": interactionId } : {}),
+      },
+    });
   }
 }

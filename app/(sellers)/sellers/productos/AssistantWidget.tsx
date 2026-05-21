@@ -5,6 +5,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 interface Msg {
   role: "user" | "assistant";
   content: string;
+  interactionId?: string;
+  feedback?: "up" | "down";
 }
 
 const GREETING: Msg = {
@@ -171,6 +173,7 @@ export default function AssistantWidget() {
           signal: ctrl.signal,
         });
         const fu = decodeFollowups(res.headers.get("x-followups"));
+        const interactionId = res.headers.get("x-interaction-id") || undefined;
         if (!res.ok || !res.body) {
           let reply = "No he podido responder ahora mismo. Inténtalo de nuevo.";
           try {
@@ -200,6 +203,16 @@ export default function AssistantWidget() {
               role: "assistant",
               content: c[c.length - 1].content + chunk,
             };
+            return c;
+          });
+        }
+        if (interactionId) {
+          setMsgs((m) => {
+            const c = [...m];
+            const last = c[c.length - 1];
+            if (last && last.role === "assistant") {
+              c[c.length - 1] = { ...last, interactionId };
+            }
             return c;
           });
         }
@@ -272,6 +285,33 @@ export default function AssistantWidget() {
     }
   }
 
+  async function rate(idx: number, helpful: boolean) {
+    const target = msgs[idx];
+    if (!target?.interactionId) return;
+    const prev = target.feedback;
+    const next: "up" | "down" = helpful ? "up" : "down";
+    setMsgs((m) => {
+      const c = [...m];
+      c[idx] = { ...c[idx], feedback: next };
+      return c;
+    });
+    try {
+      const res = await fetch("/api/sellers/assistant/feedback", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ interactionId: target.interactionId, helpful }),
+      });
+      if (!res.ok) throw new Error("fb");
+    } catch {
+      // revertir si falla
+      setMsgs((m) => {
+        const c = [...m];
+        c[idx] = { ...c[idx], feedback: prev };
+        return c;
+      });
+    }
+  }
+
   const showStarters = msgs.length <= 1 && !loading;
   const chips = showStarters ? START_SUGGESTIONS : followups;
   const canRegen = !loading && msgs.some((m) => m.role === "user");
@@ -341,12 +381,34 @@ export default function AssistantWidget() {
                         <span className="ml-0.5 inline-block h-3.5 w-1.5 translate-y-0.5 animate-pulse bg-cyan-300/80" />
                       )}
                       {!streaming && m.content && (
-                        <button
-                          onClick={() => copy(m.content, i)}
-                          className="mt-1 text-[10px] text-white/30 hover:text-white/70 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          {copied === i ? "✓ copiado" : "copiar"}
-                        </button>
+                        <div className="mt-1 flex items-center gap-2 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => copy(m.content, i)}
+                            className="text-white/30 hover:text-white/70"
+                          >
+                            {copied === i ? "✓ copiado" : "copiar"}
+                          </button>
+                          {m.interactionId && (
+                            <span className="flex items-center gap-1">
+                              <button
+                                onClick={() => rate(i, true)}
+                                title="Útil"
+                                disabled={m.feedback === "up"}
+                                className={`px-1 rounded ${m.feedback === "up" ? "text-emerald-300" : "text-white/30 hover:text-emerald-300"}`}
+                              >
+                                👍
+                              </button>
+                              <button
+                                onClick={() => rate(i, false)}
+                                title="No útil"
+                                disabled={m.feedback === "down"}
+                                className={`px-1 rounded ${m.feedback === "down" ? "text-rose-300" : "text-white/30 hover:text-rose-300"}`}
+                              >
+                                👎
+                              </button>
+                            </span>
+                          )}
+                        </div>
                       )}
                     </div>
                   ) : (
