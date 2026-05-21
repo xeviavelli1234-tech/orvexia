@@ -30,22 +30,117 @@ ESTILO:
 - No inventes. Si algo no está aquí, dilo y sugiere usar el botón de soporte o Facturación.
 - No des asesoramiento legal ni fiscal (autónomo, Hacienda): remite a un profesional.
 
-CONOCIMIENTO:
-- Flujo: conectar Amazon → "Sincronizar" trae TODOS los listings publicados → cada producto es un nodo en el Centro de control → clic en el nodo → definir Mín/Máx + estrategia → activar el toggle "Reprecio automático".
-- Rango Mín/Máx: límites duros. El precio NUNCA baja del Mín ni sube del Máx. La estrategia decide qué precio poner; el rango hasta dónde llega. Sin Mín y Máx no se puede activar el reprecio. Mín = precio mínimo rentable; Máx = techo razonable.
-- Estrategias:
-  • **Ganar Buy Box**: por debajo del competidor más barato (importe € fijo, ej. 0,01, o un %).
-  • **Igualar al competidor**: tu precio = el del competidor más barato.
-  • **Precio fijo**: ignora competencia, precio fijo (acotado a Mín/Máx).
-  • **Por margen**: suelo = coste / (1 − comisión% − margen%). Nunca vende por debajo; por encima actúa como Ganar Buy Box.
-- "Sin competencia": "Subir al máximo" (más margen estando solo) o "Mantener precio".
-- Estados de nodo: **verde** = repreciando; **azul** = configurable (tiene precio, sin reprecio activo); **gris** = sin oferta/precio o sin ASIN → no repreciable.
-- Ciclo: cron cada 15 min en TRIAL y 5 min en PRO. "Ejecutar reprecio ahora" fuerza un ciclo.
-- Motor: por cada producto activo lee la competencia (SP-API), calcula con su estrategia y límites, y si cambia hace PATCH real del precio en Amazon y registra el evento.
-- Igualar precio de mercado: estrategia "Igualar al competidor", sin competencia "Mantener precio", rango que contenga el precio de mercado. Para 1 céntimo menos: "Ganar Buy Box" con importe 0,01.
-- Solo marketplace Amazon España (ES). Se repricia solo lo que tenga Mín/Máx + estrategia + toggle activo + precio/ASIN válido.
-- Plan TRIAL gratuito (prueba); PRO con ciclo más rápido. Facturación/plan en el enlace de la barra. Modo demo: datos de prueba sin tocar Amazon.
-- Panel: rueda = zoom, arrastrar = mover, botones +/−/1:1, clic en nodo abre su configuración.`;
+CONOCIMIENTO (REPRICER):
+
+FLUJO BÁSICO
+- Conectar Amazon → "Sincronizar" trae todos los listings → cada producto es un nodo en el Centro de control → clic → definir Mín/Máx + estrategia → activar "Reprecio automático".
+- "Ejecutar reprecio ahora": fuerza un ciclo al instante e IGNORA el intervalo de plan y el horario (el cron sí los respeta).
+
+RANGO MÍN/MÁX
+- Límites duros: el precio NUNCA baja del Mín ni sube del Máx. La estrategia decide qué precio poner; el rango hasta dónde puede llegar. Sin Mín/Máx no se activa el reprecio. Mín = precio mínimo rentable; Máx = techo razonable.
+
+ESTRATEGIAS
+- **Ganar Buy Box**: 1 cént. (o %) por debajo del competidor más barato. La más agresiva.
+- **Igualar al competidor**: tu precio = el competidor más barato.
+- **Precio fijo**: ignora la competencia, precio fijo dentro del rango.
+- **Por margen**: usa la calculadora de costes (coste + envío + FBA + comisión + IVA + margen objetivo) → suelo de beneficio. Nunca vende por debajo. Por encima actúa como Ganar Buy Box.
+- **Sin competencia**: Subir al máximo · Mantener · **Subida gradual** (step-up, sube el precio un poco cada ciclo hasta el máximo en vez de saltar).
+
+CALCULADORA DE COSTES/MARGEN
+- En el inspector del producto, sección Por margen: introduce coste, envío, FBA, % comisión Amazon, % IVA, % margen objetivo. La app calcula: precio de equilibrio, precio mínimo recomendado y margen al precio actual. Botón "Usar como precio mínimo".
+
+ESTADOS DE NODO (color = estado del último ciclo)
+- 🟢 verde: **Buy Box ganada**.
+- 🔴 rojo: **Buy Box perdida**.
+- 🟠 naranja: **error de reprecio** (token caducado, error de Amazon…).
+- 🟡 ámbar: **en precio mínimo / techo** (tocó el suelo).
+- 🔵 cian: **repreciando** (aún sin datos del ciclo).
+- 🔷 azul: **pausado / configurable**.
+- ⚪ gris: **sin oferta / ASIN** → no repreciable.
+- Botón 🎨 (controles de zoom) abre la leyenda exacta con muestras.
+
+DIAGNÓSTICO ACTIONABLE
+- El inspector muestra un aviso accionable según el estado: p. ej. "Tu mínimo (10 €) ≥ precio Buy Box (9,99 €): baja el mínimo por debajo de 9,99 € para poder ganarla", "Reprecio pausado: actívalo", "Topó con el suelo del margen: baja el mínimo o el margen".
+
+PANEL DE RENTABILIDAD (icono € · "Rentabilidad")
+- Tabla por SKU con coste fijo, comisión, IVA, ingreso neto, beneficio/unidad, % margen, mínimo rentable y estado (rentable / bajo objetivo / pérdida / sin coste). KPIs agregados. Filtros y export CSV.
+
+ANALÍTICAS Y ACTIVIDAD (icono 📊)
+- KPIs: eventos, cambios aplicados, simulados, errores, tasa de éxito, cambio medio €, ahorro total, margen recuperado, % Buy Box, productos.
+- Resumen por periodo (24 h y 7 d) con eventos, cambios, ahorro y errores.
+- Buy Box: barra apilada won/lost/unknown.
+- Distribución por hora del día.
+- Gráficas interactivas (evolución de precios y tendencias acumuladas) con tooltip al pasar el ratón mostrando fecha y valor de cada serie.
+- Lista de actividad filtrable (todo / cambios / errores / simulados), con etiqueta BB ✓/✗, "simulado", variación €+% y "ver más".
+- Export CSV y PDF (imprimir).
+
+ETIQUETAS / GRUPOS
+- Cada producto puede llevar etiquetas (p. ej. marca, temporada-alta, liquidación). Se editan en el inspector (chips) y se aplican en masa desde el Catálogo. Filtran en el catálogo y en el grafo. Importable por CSV.
+
+VARIACIONES ASIN PADRE/HIJO
+- Campo "Variación · ASIN padre" en el inspector. Agrupa tallas/colores como familia. El Catálogo muestra "↳ ASIN padre" y tiene filtro "Solo variaciones". La búsqueda incluye el ASIN padre para encontrar la familia entera.
+
+REGLAS POR COMPETIDOR
+- En el inspector → Competencia: Excluir vendedores (lista negra de seller IDs) y "Solo competir con" (lista blanca). Compatibles con los filtros existentes (ignorar Amazon retail, FBA/FBM, valoración mínima).
+
+CATÁLOGO Y MODO TABLA
+- Vista alternativa al grafo: tabla con producto / precio / rango / estrategia / estado / Activo-Pausado. Selección masiva, etiqueta masiva, import/export CSV. Conmutador Grafo/Tabla en la barra superior.
+
+BÚSQUEDA Y FILTROS EN EL GRAFO
+- Barra arriba a la izquierda: buscar por título/SKU/ASIN, filtrar por estado (won/lost/floor/error/active/paused/noprice) y por etiqueta. Los nodos no coincidentes se atenúan.
+
+ALERTAS POR EMAIL (Ajustes de cuenta)
+- Resumen único por ciclo si pasa algo notable: Buy Box perdida (solo en la transición), tocar precio mínimo (al cambiar) y errores. Cooldown anti-spam de **6 h** por cuenta. Configurable: activar/desactivar, email destino, y por tipo.
+
+MULTI-MARKETPLACE EU
+- Selector de marketplace en Ajustes de cuenta. Soportados: ES, FR, DE, IT, NL, BE, PL, SE, UK (todos sobre sellingpartnerapi-eu).
+
+PLANES POR VOLUMEN DE SKUs
+- TRIAL: 14 días, ciclo cada 15 min.
+- PRO: ciclo cada 5 min. Precio según volumen del catálogo:
+  • Hasta 50 SKUs → **29 €/mes**
+  • Hasta 200 → **49 €/mes**
+  • Hasta 1.000 → **99 €/mes**
+  • Ilimitados → **149 €/mes**
+- Pasarela: Stripe (checkout + portal del cliente para cancelar/cambiar).
+- Aviso por email ≤3 días antes de que termine la prueba.
+
+FACTURACIÓN
+- En /sellers/facturacion: tabla de tramos con el tuyo resaltado, formulario de datos fiscales (razón social, NIF/CIF/VAT, dirección, país) y enlace a la factura.
+- Factura con IVA (España 21 %): emisor por env INVOICE_ISSUER_*, número ORV-AAAAMM-XXXXXX, base + IVA + total, descargable como PDF (imprimir). En TRIAL es vista previa.
+
+RGPD (Ajustes de cuenta → Datos y privacidad)
+- "Descargar mis datos (JSON)": cuenta + productos + ciclos + eventos (sin el token cifrado).
+- "Eliminar mi cuenta y todos mis datos": borrado total en cascada con doble confirmación. No borra el login del comparador.
+
+LOGS DE AUDITORÍA (botón "Registro de actividad")
+- Cada cambio de configuración queda registrado: rango, estrategia, competencia, etiquetas, variación, activar/pausar, ajustes de cuenta, datos de facturación, pausar todo, acciones masivas, etiquetado masivo e importación CSV. Visor con etiqueta + detalle + fecha relativa.
+
+2FA (verificación en dos pasos) — en /perfil
+- TOTP (Google Authenticator, Authy, 1Password). Activar = escanear clave/otpauth + confirmar con código → te muestra **códigos de recuperación** una vez. En login, tras la contraseña pide el código (o un código de recuperación, de un solo uso). Desactivar exige la contraseña.
+
+NAVEGACIÓN
+- Login → /dashboard → tarjeta Repricer → Centro de control. Desde el Centro: ← Dashboard, Catálogo, Rentabilidad, Cómo funciona, Ajustes, Registro de actividad, Pausar todo, Desconectar. Facturación y Factura en la tarjeta Plan y actividad.
+
+TOUR INTERACTIVO
+- Se abre solo la primera vez con 11 pasos guiados que resaltan cada zona (spotlight). Repetible desde el botón 🎓 (junto a zoom) o desde "Cómo funciona".
+
+MOTOR
+- Cada ciclo, por cada producto activo:
+  1) lee competencia vía SP-API (Pricing/Listings Items),
+  2) calcula nuevo precio con la estrategia y límites,
+  3) si cambia, hace PATCH real en Amazon y guarda el evento,
+  4) acumula alertas; al final del ciclo envía un único email resumen (respetando el cooldown de 6 h).
+- Lock anti-solape, retardo configurable entre PATCHes (anti QuotaExceeded), horario programable, modo dry-run, auto-sync del catálogo cada N horas.
+
+MODO DEMO (cuenta no en producción)
+- La competencia es **simulada** y el PATCH a Amazon es **no-op** (solo se persiste en nuestra BD). Todo lo demás funciona igual. Ideal para aprender. Para datos reales y modificar precios: app de Amazon publicada + SP_API_ENV=production en Vercel.
+
+BUY BOX REAL (SP-API)
+- El motor usa IsBuyBoxWinner del SP-API real para determinar WON/LOST/UNKNOWN y guarda el precio REAL de la oferta ganadora (no se infiere).
+
+PANEL UI
+- Rueda = zoom; arrastrar = mover; +/−/1:1 zoom; 🎨 leyenda colores; 🎓 repetir tour. Clic en un nodo abre la configuración a la derecha. Clic en el icono central de Amazon abre el dock de herramientas (Catálogo, Rentabilidad, Cuenta, Pausar todo).`;
 
 interface Topic {
   keys: string[];
@@ -101,9 +196,10 @@ const TOPICS: Topic[] = [
     follow: ["¿Por qué un producto sale en gris?"],
   },
   {
-    keys: ["color", "verde", "azul", "gris", "estado", "nodo", "no se reprecia"],
+    keys: ["color", "verde", "rojo", "amarillo", "amber", "naranja", "azul", "gris", "cian", "estado", "nodo", "no se reprecia", "leyenda", "🎨"],
     answer:
-      "Color del nodo:\n- **Verde**: repreciando (toggle activo).\n- **Azul**: configurable (tiene precio, sin reprecio activo).\n- **Gris**: sin oferta/precio o sin ASIN → no repreciable.\nSi quieres que un azul se reprecie: define Mín/Máx, estrategia y activa el toggle.",
+      "Color del nodo según el último ciclo (botón **🎨** abre la leyenda):\n- 🟢 **verde**: Buy Box **ganada**.\n- 🔴 **rojo**: Buy Box **perdida** (revisa mínimo/estrategia).\n- 🟠 **naranja**: **error** de reprecio (token, error de Amazon…).\n- 🟡 **ámbar**: tocó el **precio mínimo / techo**.\n- 🔵 **cian**: repreciando pero **aún sin datos** del ciclo.\n- 🔷 **azul**: **configurable / pausado**.\n- ⚪ **gris**: sin oferta o ASIN → no repreciable.",
+    follow: ["¿Cómo paso un nodo a verde?", "¿Por qué sale ámbar?"],
   },
   {
     keys: ["activar", "toggle", "empezar", "encender", "no reprecia", "no funciona"],
@@ -126,9 +222,10 @@ const TOPICS: Topic[] = [
       "La **Buy Box** es la oferta destacada de una ficha de Amazon (el botón “Añadir a la cesta”). La gana el vendedor con mejor combinación de precio, envío y reputación. La mayoría de ventas van a quien tiene la Buy Box; por eso interesa ganarla sin malvender.",
   },
   {
-    keys: ["trial", "pro", "plan", "precio del plan", "pagar", "suscrip"],
+    keys: ["trial", "pro", "plan", "precio del plan", "pagar", "suscrip", "cuánto cuesta el repricer", "cuanto cuesta el repricer", "tarifa", "tramo", "tramos", "volumen", "stripe"],
     answer:
-      "**TRIAL** es la prueba gratuita (ciclo cada 15 min). **PRO** reprecia más rápido (cada 5 min) y sin las limitaciones de la prueba. Puedes ver plan y facturación en el enlace **Facturación y plan** de la barra izquierda.",
+      "Planes por **volumen de SKUs**:\n- **TRIAL** 14 días gratis (ciclo cada 15 min).\n- **PRO** (ciclo cada 5 min) con tramos por catálogo:\n  · hasta 50 SKUs → **29 €/mes**\n  · hasta 200 → **49 €/mes**\n  · hasta 1.000 → **99 €/mes**\n  · ilimitados → **149 €/mes**\nEl tramo se ajusta solo. Pago por Stripe (portal del cliente para cancelar/cambiar). En /sellers/facturacion ves los tramos y tu posición.",
+    follow: ["¿Cómo paso a Pro?", "¿Dónde gestiono la suscripción?"],
   },
   {
     keys: ["autónomo", "autonomo", "hacienda", "impuestos", "iva", "factura", "legal", "fiscal"],
@@ -193,21 +290,108 @@ const TOPICS: Topic[] = [
     answer:
       "Con **Desconectar mi cuenta de Amazon** (barra izquierda) se detiene el reprecio y se desvincula la cuenta. Tendrás que volver a conectarla para reanudar.",
   },
+  {
+    keys: ["calculadora", "costes", "coste", "envío", "envio", "fba", "iva", "comisión", "comision", "margen objetivo", "precio mínimo rentable", "precio minimo rentable", "equilibrio", "break even"],
+    answer:
+      "La **calculadora de costes/margen** vive dentro de la estrategia **Por margen**: introduces coste, envío, FBA, % comisión Amazon, % IVA y % margen objetivo y obtienes en vivo el **precio de equilibrio**, el **precio mínimo recomendado** y el **margen al precio actual**. Botón **\"Usar como precio mínimo\"** para llevártelo al campo Mín. El motor nunca venderá por debajo de ese suelo rentable.",
+    follow: ["¿Cómo no malvendo?", "Ver mi rentabilidad por SKU"],
+  },
+  {
+    keys: ["rentabilidad", "panel de rentabilidad", "beneficio por sku", "beneficio neto", "margen real", "margen por producto"],
+    answer:
+      "El **Panel de Rentabilidad** (icono **€** en el dock) muestra por SKU: coste fijo, comisión, IVA, ingreso neto, **beneficio/unidad**, **% margen**, mínimo rentable y estado (rentable / bajo objetivo / pérdida / sin coste). KPIs agregados arriba, filtros (con/sin coste, en pérdida, bajo objetivo, repreciando) y **export CSV**.",
+    follow: ["¿Cómo configuro los costes?", "Productos en pérdida"],
+  },
+  {
+    keys: ["alerta", "alertas", "correo", "email", "aviso", "notificacion", "notificación", "spam", "demasiados correos"],
+    answer:
+      "Las **alertas por email** envían **un solo correo resumen por ciclo** si pasa algo notable: Buy Box perdida (solo en la transición), tocar precio mínimo (al cambiar) y errores. Hay un **cooldown de 6 h por cuenta** para que no te llegue spam. Se configuran en **Ajustes de cuenta → Alertas por email**: activar/desactivar, email destino y por tipo.",
+  },
+  {
+    keys: ["etiqueta", "etiquetas", "grupos", "grupo", "tag", "tags", "categorizar"],
+    answer:
+      "Cada producto admite **etiquetas** (p. ej. *marca · liquidación · temporada-alta*). Se editan en el inspector (chips) o en masa desde el **Catálogo** (selección + Etiquetar / Quitar etiqueta). Filtran tanto en el grafo como en el catálogo. Se importan/exportan por CSV en la columna `tags`.",
+  },
+  {
+    keys: ["variación", "variacion", "variaciones", "talla", "color", "asin padre", "padre/hijo", "familia", "parentasin"],
+    answer:
+      "Las **variaciones ASIN padre/hijo** (tallas/colores) se gestionan con el campo **\"Variación · ASIN padre\"** del inspector. El catálogo muestra **\"↳ ASIN padre\"** debajo del SKU, tiene filtro **\"Solo variaciones\"** y la búsqueda incluye el ASIN padre para encontrar toda la familia. Después puedes seleccionar todas y aplicar acciones masivas.",
+  },
+  {
+    keys: ["excluir", "exclude", "ignorar vendedor", "lista negra", "lista blanca", "solo competir", "seller id", "competidor concreto", "dumper"],
+    answer:
+      "En el inspector → **Competencia**:\n- **Excluir vendedores**: seller IDs separados por comas que el motor IGNORA como competencia (útil para un dumper o tu segunda cuenta).\n- **Solo competir con**: si hay valores, solo se considera a esos vendedores; vacío = todos.\nNo afecta a la detección de Buy Box (la Buy Box es la Buy Box).",
+  },
+  {
+    keys: ["marketplace", "francia", "alemania", "italia", "uk", "reino unido", "polonia", "suecia", "belgica", "holanda", "paises", "países", "multi-marketplace", "fr", "de", "it"],
+    answer:
+      "Soporte **multi-marketplace EU**: ES, FR, DE, IT, NL, BE, PL, SE y UK. El selector está en **Ajustes de cuenta → Marketplace** (con divisa). Comparten endpoint sellingpartnerapi-eu, así que cambiar de marketplace no exige reconfigurar nada técnico.",
+  },
+  {
+    keys: ["2fa", "doble factor", "verificación", "verificacion", "totp", "authenticator", "google authenticator", "authy", "recuperación", "recuperacion"],
+    answer:
+      "**Verificación en dos pasos (2FA)** vía TOTP. En **/perfil** activas el 2FA escaneando la clave/otpauth en tu app (Google Authenticator, Authy, 1Password…), confirmas con el código de 6 dígitos y te muestra **códigos de recuperación** (guárdalos, se ven una sola vez). Al iniciar sesión te pedirá el código tras la contraseña. Desactivar exige la contraseña actual.",
+  },
+  {
+    keys: ["factura", "iva", "facturación", "facturacion", "datos fiscales", "razón social", "razon social", "nif", "cif", "vat", "recibo", "pdf"],
+    answer:
+      "**Factura con IVA** en **/sellers/facturacion → Factura (IVA)**. Lleva tu nº (`ORV-AAAAMM-XXXXXX`), fecha, emisor (envs INVOICE_ISSUER_*), tus **datos fiscales** (razón social, NIF, dirección — los rellenas en Facturación), concepto del plan/tramo y desglose **base + IVA 21 % + total**. Descargable como PDF. En TRIAL se ve como **vista previa**; en PRO es el documento real.",
+  },
+  {
+    keys: ["rgpd", "borrar mi cuenta", "eliminar mi cuenta", "exportar datos", "descargar mis datos", "derecho de supresión", "supresion"],
+    answer:
+      "**RGPD** en **Ajustes de cuenta → Datos y privacidad**:\n- **Descargar mis datos (JSON)**: cuenta + productos + ciclos + eventos (sin tokens).\n- **Eliminar mi cuenta y todos mis datos**: borrado total en cascada con doble confirmación. No borra tu login del comparador, solo los datos del repricer.",
+  },
+  {
+    keys: ["auditoría", "auditoria", "log", "logs", "registro de actividad", "historial de cambios", "quién cambió", "quien cambio"],
+    answer:
+      "El botón **\"Registro de actividad\"** (sidebar) muestra los **logs de auditoría** de tu cuenta: rango, estrategia, competencia, etiquetas, variación, activar/pausar, ajustes, datos de facturación, pausar todo, acciones masivas e importación CSV. Cada entrada con etiqueta, detalle y fecha relativa.",
+  },
+  {
+    keys: ["tour", "tutorial", "guía", "guia", "cómo funciona", "como funciona", "primera vez", "ayuda", "ayúdame", "ayudame", "?"],
+    answer:
+      "Tienes una **guía rápida** (botón **\"Cómo funciona\"** en el sidebar) con los pasos, estrategias y leyenda de colores. Y un **tour interactivo** de 11 pasos con spotlight que se abre solo la primera vez; lo puedes **repetir** desde el botón **🎓** (junto al zoom) o desde \"Cómo funciona → Repetir tutorial guiado\".",
+  },
+  {
+    keys: ["tabla", "vista tabla", "modo tabla", "lista grande", "muchos productos", "100 productos", "1000 productos", "muchos skus"],
+    answer:
+      "Para catálogos grandes hay un **conmutador Grafo ↔ Tabla** en la barra superior del Centro de control. La tabla lista producto, precio, rango, estrategia, estado y un botón Activo/Pausado por fila. Filtros y búsqueda activos también ahí.",
+  },
+  {
+    keys: ["buscar producto", "buscar en el grafo", "filtrar grafo", "buscar sku", "buscar asin"],
+    answer:
+      "Arriba a la izquierda del Centro de control hay una **barra de búsqueda + filtros**: busca por título/SKU/ASIN, filtra por **estado** (won/lost/floor/error/active/paused/noprice) y por **etiqueta**. Los nodos que no coinciden se atenúan y dejan de robar clic.",
+  },
+  {
+    keys: ["step", "step-up", "subida gradual", "subir poco a poco", "subir gradual"],
+    answer:
+      "Cuando un producto **no tiene competencia**, en lugar de saltar al máximo de golpe puedes elegir **\"Subida gradual\"** (step-up): cada ciclo sube un paso configurable (importe € o %) hacia el máximo. Útil para no asustar al mercado y maximizar margen progresivamente.",
+  },
+  {
+    keys: ["modo demo", "demo", "competencia simulada", "sin tocar amazon", "production", "producción"],
+    answer:
+      "El **modo demo** está activo si tu cuenta no está en producción (`SP_API_ENV ≠ production`). La competencia es **simulada** (no es el precio real de Amazon) y el cambio de precio es un **no-op** (se persiste en nuestra BD para que veas el resultado, pero NO toca tu listing real). Para datos reales: app publicada en Amazon + `SP_API_ENV=production` en Vercel + token real.",
+  },
+  {
+    keys: ["recordatorio", "fin de prueba", "termina la prueba", "se acaba el trial", "expira"],
+    answer:
+      "Tres días antes de que termine tu prueba te llega **un email recordatorio** con enlace a Facturación. Si no pasas a Pro y el trial expira, el motor no reprecia hasta que actualices el plan (la configuración no se pierde).",
+  },
 ];
 
 export function answerLocally(question: string): string {
   const t = bestTopic(question);
   if (t) return t.answer;
-  return "Puedo ayudarte con el **motor de reprecio**: rango Mín/Máx, estrategias (Ganar Buy Box, Igualar, Precio fijo, Por margen), sin competencia, sincronización, estados de los nodos, frecuencia del ciclo o cómo igualar el precio de mercado. ¿Sobre cuál quieres saber?";
+  return "Puedo explicarte cualquier parte del repricer: **estrategias** (Ganar Buy Box, Igualar, Fijo, Por margen, Subida gradual), **rango Mín/Máx**, **calculadora de costes/margen**, **panel de rentabilidad**, **analíticas y gráficas**, **etiquetas/grupos**, **variaciones ASIN**, **reglas por competidor**, **multi-marketplace EU**, **alertas por email**, **modo tabla / búsqueda en el grafo**, **2FA**, **factura con IVA**, **RGPD (exportar/borrar)**, **logs de auditoría**, **planes por volumen** y el **modo demo**. ¿Sobre cuál quieres saber?";
 }
 
 export function followUps(question: string): string[] {
   const t = bestTopic(question);
   return (
     t?.follow ?? [
-      "¿Qué hace el rango Mín/Máx?",
-      "¿Cómo igualo el precio de mercado?",
-      "¿Cada cuánto reprecia?",
+      "¿Cómo paso un producto a verde (Buy Box)?",
+      "¿Cuánto cuesta el plan según mis SKUs?",
+      "¿Cómo configuro la calculadora de costes?",
     ]
   );
 }
