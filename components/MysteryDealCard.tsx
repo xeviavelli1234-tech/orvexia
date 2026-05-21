@@ -121,9 +121,9 @@ export default function MysteryDealCard({
           type="button"
           onClick={open}
           aria-label="Abrir oferta misteriosa"
-          className={`absolute inset-0 z-20 w-full overflow-hidden rounded-2xl
+          className={`absolute inset-0 z-20 w-full overflow-hidden rounded-lg sm:rounded-2xl
             bg-bg-elevated border border-white/[0.08]
-            flex flex-col items-center justify-center gap-3.5 p-5 text-center
+            flex flex-col items-center justify-center gap-1.5 sm:gap-3.5 p-2 sm:p-5 text-center
             transition-all duration-500 ease-out
             ${opening ? "opacity-0 scale-110 blur-[3px] pointer-events-none" : "hover:border-cyan-400/40"}
             motion-reduce:transition-none`}
@@ -139,13 +139,13 @@ export default function MysteryDealCard({
               bg-[conic-gradient(from_0deg,transparent,rgba(217,70,239,0.10),transparent,rgba(94,234,212,0.12),transparent)]"
           />
 
-          <span className="relative font-mono-ui text-[10px] uppercase tracking-widest text-white/55
+          <span className="hidden sm:inline relative font-mono-ui text-[10px] uppercase tracking-widest text-white/55
             border border-white/10 rounded-full px-3 py-1 bg-white/[0.03]">
             {catLabel}
           </span>
 
           <span
-            className={`relative text-5xl transition-transform duration-500 ease-out
+            className={`relative text-2xl sm:text-5xl transition-transform duration-500 ease-out
               ${opening ? "scale-150 -translate-y-2 rotate-6" : "group-hover:scale-105"}`}
           >
             🎁
@@ -153,21 +153,22 @@ export default function MysteryDealCard({
 
           {discount > 0 ? (
             <span className="relative leading-none">
-              <span className="block text-4xl font-black text-gradient-neon">-{discount}%</span>
+              <span className="block text-lg sm:text-4xl font-black text-gradient-neon">-{discount}%</span>
               {savings > 0 && (
-                <span className="mt-1.5 block font-mono-ui text-[11px] text-emerald-300/90">
+                <span className="hidden sm:block mt-1.5 font-mono-ui text-[11px] text-emerald-300/90">
                   ahorras {new Intl.NumberFormat("es-ES", { maximumFractionDigits: 0 }).format(savings)} €
                 </span>
               )}
             </span>
           ) : (
-            <span className="relative text-sm font-bold text-white/80">Oferta sorpresa</span>
+            <span className="relative text-[11px] sm:text-sm font-bold text-white/80">Oferta sorpresa</span>
           )}
 
-          <span className="relative mt-0.5 inline-flex items-center gap-2 font-mono-ui text-[11px] uppercase font-bold
-            px-4 h-9 rounded-full text-cyan-200 border border-cyan-400/30 bg-cyan-400/[0.06]
+          <span className="relative mt-0.5 inline-flex items-center gap-1 sm:gap-2 font-mono-ui text-[9px] sm:text-[11px] uppercase font-bold
+            px-2 sm:px-4 h-6 sm:h-9 rounded-full text-cyan-200 border border-cyan-400/30 bg-cyan-400/[0.06]
             group-hover:bg-cyan-400/[0.12] transition-colors">
-            Abrir oferta
+            <span className="sm:hidden">Abrir</span>
+            <span className="hidden sm:inline">Abrir oferta</span>
             <span className="transition-transform group-hover:translate-x-0.5">▸</span>
           </span>
         </button>

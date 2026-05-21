@@ -529,7 +529,7 @@ export default function CategoryClient({ products, meta, content }: { products: 
 
           {/* Grid */}
           {filtered.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
+            <div className="grid grid-cols-3 sm:grid-cols-3 xl:grid-cols-3 gap-2 sm:gap-5">
               {filtered.map((p, i) => (
                 <ProductCard key={p.id} product={p} priority={i === 0} />
               ))}

@@ -533,15 +533,15 @@ export default async function HomePage() {
               </div>
             </HudFrame>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+            <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-5">
               {productos.map((producto, i) => (
                 <div key={producto.id} className="group relative">
                   {/* Index marker */}
-                  <div className="absolute -top-2 -left-2 z-10 flex items-center gap-1.5 px-2 h-6 rounded-md bg-black/80 border border-white/15 backdrop-blur-sm font-mono-ui text-[9px] uppercase text-white/65">
+                  <div className="absolute -top-1.5 -left-1.5 sm:-top-2 sm:-left-2 z-10 flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 h-5 sm:h-6 rounded sm:rounded-md bg-black/80 border border-white/15 backdrop-blur-sm font-mono-ui text-[8px] sm:text-[9px] uppercase text-white/65">
                     <span className="text-cyan-300">#</span>
                     {String(i + 1).padStart(2, "0")}
                   </div>
-                  <div className="rounded-2xl overflow-hidden ring-1 ring-white/[0.06] group-hover:ring-cyan-400/30 transition-all duration-300 shadow-lg shadow-black/30">
+                  <div className="rounded-lg sm:rounded-2xl overflow-hidden ring-1 ring-white/[0.06] group-hover:ring-cyan-400/30 transition-all duration-300 shadow-lg shadow-black/30">
                     <MysteryDealCard product={producto} priority={i === 0} revealKey={dayKey} />
                   </div>
                 </div>

@@ -147,7 +147,7 @@ export default async function BajadasRecientesPage({
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 pb-16">
+          <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-3 gap-2 sm:gap-5 pb-16">
             {products.map((p, i) => (
               <ProductCard key={p.id} product={p} priority={i === 0} />
             ))}

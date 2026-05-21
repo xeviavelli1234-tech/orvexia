@@ -259,7 +259,7 @@ export default function ProductModal({ product, onClose }: Props) {
       onClick={onClose}
     >
       <div
-        className="modal-card relative w-full h-[95vh] md:h-[58vh] max-h-[95vh] md:max-h-[820px] bg-bg-elevated rounded-t-3xl md:rounded-3xl shadow-[0_32px_80px_-12px_rgba(0,0,0,0.35)] overflow-hidden flex flex-col md:flex-row"
+        className="modal-card relative w-full h-[88vh] md:h-[58vh] max-h-[88vh] md:max-h-[820px] bg-bg-elevated rounded-t-3xl md:rounded-3xl shadow-[0_32px_80px_-12px_rgba(0,0,0,0.35)] overflow-hidden flex flex-col md:flex-row"
         style={{ maxWidth: "min(1100px, 100vw)" }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -275,7 +275,7 @@ export default function ProductModal({ product, onClose }: Props) {
 
         {/* ── Columna izquierda: carrusel ── */}
         <div
-          className="h-[40vh] min-h-[260px] md:h-auto md:min-h-0 md:w-1/2 bg-white flex flex-col"
+          className="h-[30vh] min-h-[200px] md:h-auto md:min-h-0 md:w-1/2 bg-white flex flex-col"
           onMouseEnter={() => setPaused(true)}
           onMouseLeave={() => setPaused(false)}
         >
