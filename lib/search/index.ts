@@ -31,6 +31,11 @@ export function normalize(s: string): string {
 
 // ── Sinónimos y correcciones ────────────────────────────────────────────────
 // Cada clave debe ser su forma NORMALIZADA (sin tildes, minúscula).
+//
+// Multi-idioma: además del castellano coloquial, cubrimos catalán, inglés
+// común y términos básicos en gallego y euskera. El catálogo está en
+// castellano, así que `expand` añade siempre el equivalente castellano para
+// que el match contra `name/description` siga funcionando.
 
 interface SynonymEntry {
   /** Si el usuario escribe esto, la categoría es muy probable que sea X. */
@@ -40,7 +45,7 @@ interface SynonymEntry {
 }
 
 const SYNONYMS: Record<string, SynonymEntry> = {
-  // ── Categorías y coloquialismos ──────────────────────────────────────
+  // ── Categorías y coloquialismos (castellano) ─────────────────────────
   "nevera":              { categoryHint: "FRIGORIFICOS", expand: ["frigorifico"] },
   "frigo":               { categoryHint: "FRIGORIFICOS", expand: ["frigorifico"] },
   "frigorifico":         { categoryHint: "FRIGORIFICOS" },
@@ -84,6 +89,62 @@ const SYNONYMS: Record<string, SynonymEntry> = {
   "aire acondicionado":  { categoryHint: "AIRES_ACONDICIONADOS" },
   "ac":                  { categoryHint: "AIRES_ACONDICIONADOS" },
   "split":               { categoryHint: "AIRES_ACONDICIONADOS" },
+
+  // ── Catalán ──────────────────────────────────────────────────────────
+  // "nevera" y "congelador" ya cubren CAT también (mismo lema).
+  "frigorific":          { categoryHint: "FRIGORIFICOS", expand: ["frigorifico"] },   // frigorífic
+  "televisio":           { categoryHint: "TELEVISORES", expand: ["televisor"] },      // televisió
+  "rentadora":           { categoryHint: "LAVADORAS", expand: ["lavadora"] },
+  "assecadora":          { categoryHint: "SECADORAS", expand: ["secadora"] },
+  "rentaplats":          { categoryHint: "LAVAVAJILLAS", expand: ["lavavajillas"] },
+  "rentavaixella":       { categoryHint: "LAVAVAJILLAS", expand: ["lavavajillas"] },
+  "forn":                { categoryHint: "HORNOS", expand: ["horno"] },
+  "pirolitic":           { categoryHint: "HORNOS", expand: ["horno", "pirolitico"] }, // piròlitic
+  "microones":           { categoryHint: "MICROONDAS", expand: ["microondas"] },
+  // "aspiradora" y "cafetera" son idénticas a las castellanas → ya cubiertas.
+  "escombra":            { categoryHint: "ASPIRADORAS", expand: ["aspiradora", "escoba"] },
+  "aire condicionat":    { categoryHint: "AIRES_ACONDICIONADOS", expand: ["aire acondicionado"] },
+
+  // ── Inglés (mezcla habitual en queries de usuarios) ──────────────────
+  "fridge":              { categoryHint: "FRIGORIFICOS", expand: ["frigorifico"] },
+  "freezer":             { categoryHint: "FRIGORIFICOS", expand: ["congelador"] },
+  // "television" en inglés ya está cubierto por la entrada castellana.
+  "washer":              { categoryHint: "LAVADORAS", expand: ["lavadora"] },
+  "washing machine":     { categoryHint: "LAVADORAS", expand: ["lavadora"] },
+  "dryer":               { categoryHint: "SECADORAS", expand: ["secadora"] },
+  "tumble dryer":        { categoryHint: "SECADORAS", expand: ["secadora"] },
+  "dishwasher":          { categoryHint: "LAVAVAJILLAS", expand: ["lavavajillas"] },
+  "oven":                { categoryHint: "HORNOS", expand: ["horno"] },
+  "microwave":           { categoryHint: "MICROONDAS", expand: ["microondas"] },
+  "vacuum":              { categoryHint: "ASPIRADORAS", expand: ["aspiradora"] },
+  "vacuum cleaner":      { categoryHint: "ASPIRADORAS", expand: ["aspiradora"] },
+  "robot vacuum":        { categoryHint: "ASPIRADORAS", expand: ["aspiradora", "roomba"] },
+  "coffee maker":        { categoryHint: "CAFETERAS", expand: ["cafetera"] },
+  "coffee machine":      { categoryHint: "CAFETERAS", expand: ["cafetera"] },
+  "espresso machine":    { categoryHint: "CAFETERAS", expand: ["cafetera"] },
+  "air conditioner":     { categoryHint: "AIRES_ACONDICIONADOS", expand: ["aire acondicionado"] },
+  "air conditioning":    { categoryHint: "AIRES_ACONDICIONADOS", expand: ["aire acondicionado"] },
+
+  // ── Gallego ──────────────────────────────────────────────────────────
+  // "frigorifico", "lavadora", "secadora", "microondas", "cafetera" coinciden con ES.
+  "neveira":             { categoryHint: "FRIGORIFICOS", expand: ["frigorifico", "nevera"] },
+  // "televisor" es igual en gallego → ya cubierto por la entrada castellana.
+  "lavalouza":           { categoryHint: "LAVAVAJILLAS", expand: ["lavavajillas"] },
+  "lavalouzas":          { categoryHint: "LAVAVAJILLAS", expand: ["lavavajillas"] },
+  "forno":               { categoryHint: "HORNOS", expand: ["horno"] }, // también catalán/portugués
+
+  // ── Euskera (vasco) ──────────────────────────────────────────────────
+  "hozkailu":            { categoryHint: "FRIGORIFICOS", expand: ["frigorifico", "nevera"] },
+  "izozkailu":           { categoryHint: "FRIGORIFICOS", expand: ["congelador"] },
+  "telebista":           { categoryHint: "TELEVISORES", expand: ["televisor", "tv"] },
+  "garbigailu":          { categoryHint: "LAVADORAS", expand: ["lavadora"] },
+  "lehorgailu":          { categoryHint: "SECADORAS", expand: ["secadora"] },
+  "ontzi garbigailu":    { categoryHint: "LAVAVAJILLAS", expand: ["lavavajillas"] },
+  "labe":                { categoryHint: "HORNOS", expand: ["horno"] },
+  "mikrouhin":           { categoryHint: "MICROONDAS", expand: ["microondas"] },
+  "xurgagailu":          { categoryHint: "ASPIRADORAS", expand: ["aspiradora"] },
+  "kafe makina":         { categoryHint: "CAFETERAS", expand: ["cafetera"] },
+  "aire girotu":         { categoryHint: "AIRES_ACONDICIONADOS", expand: ["aire acondicionado"] },
 
   // ── Erratas comunes de marca ─────────────────────────────────────────
   "samnsung":            { expand: ["samsung"] },

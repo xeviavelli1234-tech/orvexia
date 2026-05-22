@@ -50,6 +50,76 @@ describe("expandQuery", () => {
     assert.equal(eq.expandedTerms.length, 0);
     assert.equal(eq.categoryHints.length, 0);
   });
+
+  // ── Multi-idioma ────────────────────────────────────────────────────────
+  it("catalán: 'rentadora' → lavadora", () => {
+    const eq = expandQuery("rentadora");
+    assert.deepEqual(eq.categoryHints, ["LAVADORAS"]);
+    assert.ok(eq.expandedTerms.includes("lavadora"));
+  });
+
+  it("catalán: 'rentaplats' y 'rentavaixella' → lavavajillas", () => {
+    assert.deepEqual(expandQuery("rentaplats").categoryHints, ["LAVAVAJILLAS"]);
+    assert.deepEqual(expandQuery("rentavaixella").categoryHints, ["LAVAVAJILLAS"]);
+  });
+
+  it("catalán: 'assecadora' → secadora", () => {
+    const eq = expandQuery("assecadora");
+    assert.deepEqual(eq.categoryHints, ["SECADORAS"]);
+    assert.ok(eq.expandedTerms.includes("secadora"));
+  });
+
+  it("catalán: 'microones' y 'forn'", () => {
+    assert.deepEqual(expandQuery("microones").categoryHints, ["MICROONDAS"]);
+    assert.deepEqual(expandQuery("forn").categoryHints, ["HORNOS"]);
+  });
+
+  it("catalán: 'televisió' con tilde se normaliza y matchea", () => {
+    const eq = expandQuery("televisió");
+    assert.deepEqual(eq.categoryHints, ["TELEVISORES"]);
+    assert.ok(eq.expandedTerms.includes("televisor"));
+  });
+
+  it("catalán: bigrama 'aire condicionat'", () => {
+    const eq = expandQuery("aire condicionat");
+    assert.deepEqual(eq.categoryHints, ["AIRES_ACONDICIONADOS"]);
+    assert.ok(eq.expandedTerms.includes("aire acondicionado"));
+  });
+
+  it("inglés: 'fridge', 'washing machine', 'dishwasher'", () => {
+    assert.deepEqual(expandQuery("fridge").categoryHints, ["FRIGORIFICOS"]);
+    assert.deepEqual(expandQuery("washing machine").categoryHints, ["LAVADORAS"]);
+    assert.deepEqual(expandQuery("dishwasher").categoryHints, ["LAVAVAJILLAS"]);
+  });
+
+  it("inglés: 'oven', 'microwave', 'vacuum'", () => {
+    assert.deepEqual(expandQuery("oven").categoryHints, ["HORNOS"]);
+    assert.deepEqual(expandQuery("microwave").categoryHints, ["MICROONDAS"]);
+    assert.deepEqual(expandQuery("vacuum").categoryHints, ["ASPIRADORAS"]);
+  });
+
+  it("inglés: combina marca + categoría → 'samsung fridge'", () => {
+    const eq = expandQuery("samsung fridge");
+    assert.ok(eq.tokens.includes("samsung"));
+    assert.deepEqual(eq.categoryHints, ["FRIGORIFICOS"]);
+    assert.ok(eq.expandedTerms.includes("frigorifico"));
+  });
+
+  it("gallego: 'neveira' y 'lavalouza'", () => {
+    assert.deepEqual(expandQuery("neveira").categoryHints, ["FRIGORIFICOS"]);
+    assert.deepEqual(expandQuery("lavalouza").categoryHints, ["LAVAVAJILLAS"]);
+  });
+
+  it("euskera: 'hozkailu' (frigorífico) y 'garbigailu' (lavadora)", () => {
+    assert.deepEqual(expandQuery("hozkailu").categoryHints, ["FRIGORIFICOS"]);
+    assert.deepEqual(expandQuery("garbigailu").categoryHints, ["LAVADORAS"]);
+  });
+
+  it("euskera: bigrama 'kafe makina' → cafetera", () => {
+    const eq = expandQuery("kafe makina");
+    assert.deepEqual(eq.categoryHints, ["CAFETERAS"]);
+    assert.ok(eq.expandedTerms.includes("cafetera"));
+  });
 });
 
 describe("scoreProduct", () => {
