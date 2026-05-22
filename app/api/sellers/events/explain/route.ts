@@ -9,8 +9,8 @@ export const maxDuration = 30;
  * Body: { eventId: string }
  *
  * Devuelve narrativa humana del por qué se aplicó (o no) este cambio de
- * precio. Cacheado en EventExplanation para no pagar tokens dos veces.
- * Si no hay ANTHROPIC_API_KEY usa una explicación heurística decente.
+ * precio. Cacheado en EventExplanation. Generación 100% local mediante
+ * heurística determinística — sin servicios cloud.
  */
 export async function POST(req: Request) {
   const session = await getSession();
@@ -50,67 +50,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, narrative: cached.narrative, source: cached.source });
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  const heuristic = buildHeuristic(event);
-
-  if (!apiKey) {
-    const saved = await prisma.eventExplanation.create({
-      data: { eventId, narrative: heuristic, source: "heuristic" },
-    });
-    return NextResponse.json({ ok: true, narrative: saved.narrative, source: "heuristic" });
-  }
-
-  // Llama a Claude para narrativa rica
-  try {
-    const model = process.env.ASSISTANT_MODEL ?? "claude-3-5-haiku-latest";
-    const system = `Eres un analista senior de pricing. Recibes datos de UN cambio de precio y produces una EXPLICACIÓN BREVE (2-3 frases, español, profesional). Menciona el motivo concreto (Buy Box, mínimo, error...), el delta numérico y un consejo accionable si aplica. NO inventes datos.`;
-    const userMessage = JSON.stringify(buildEventForModel(event), null, 2);
-    const r = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        max_tokens: 300,
-        system,
-        messages: [{ role: "user", content: userMessage }],
-      }),
-    });
-    if (!r.ok) throw new Error(`anthropic_${r.status}`);
-    const data = (await r.json()) as {
-      content?: Array<{ type: string; text?: string }>;
-      usage?: { input_tokens?: number; output_tokens?: number };
-    };
-    const text = (data.content ?? [])
-      .filter((b) => b.type === "text" && b.text)
-      .map((b) => b.text)
-      .join("\n")
-      .trim();
-    const narrative = text || heuristic;
-    const saved = await prisma.eventExplanation.create({
-      data: {
-        eventId,
-        narrative,
-        source: text ? "ai" : "heuristic",
-        tokensIn: data.usage?.input_tokens ?? 0,
-        tokensOut: data.usage?.output_tokens ?? 0,
-      },
-    });
-    return NextResponse.json({ ok: true, narrative: saved.narrative, source: saved.source });
-  } catch (e) {
-    const saved = await prisma.eventExplanation.create({
-      data: { eventId, narrative: heuristic, source: "heuristic" },
-    });
-    return NextResponse.json({
-      ok: true,
-      narrative: saved.narrative,
-      source: "heuristic",
-      hint: e instanceof Error ? e.message.slice(0, 80) : "",
-    });
-  }
+  const narrative = buildHeuristic(event);
+  const saved = await prisma.eventExplanation.create({
+    data: { eventId, narrative, source: "heuristic" },
+  });
+  return NextResponse.json({ ok: true, narrative: saved.narrative, source: "heuristic" });
 }
 
 interface EventLike {
@@ -133,30 +77,6 @@ interface EventLike {
     targetMargin: number | null;
     buyBoxStatus: "WON" | "LOST" | "UNKNOWN";
   } | null;
-}
-
-function buildEventForModel(e: EventLike) {
-  return {
-    sku: e.listing?.sku,
-    product: e.listing?.title,
-    price_before: e.priceBefore,
-    price_after: e.priceAfter,
-    delta: Math.round((e.priceAfter - e.priceBefore) * 100) / 100,
-    delta_percent:
-      e.priceBefore > 0 ? Math.round(((e.priceAfter - e.priceBefore) / e.priceBefore) * 10000) / 100 : null,
-    currency: e.listing?.currency,
-    reason: e.reason,
-    success: e.success,
-    simulated: e.simulated,
-    buy_box: e.buyBox,
-    competitor_price: e.competitorPrice ?? "no disponible",
-    strategy: e.listing?.strategy,
-    cost: e.listing?.cost ?? "no disponible",
-    target_margin: e.listing?.targetMargin ?? "no disponible",
-    price_min: e.listing?.priceMin ?? "no disponible",
-    price_max: e.listing?.priceMax ?? "no disponible",
-    error: e.errorMessage ?? null,
-  };
 }
 
 function buildHeuristic(e: EventLike): string {

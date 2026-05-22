@@ -4,18 +4,17 @@ import { getSession } from "@/lib/session";
 /**
  * GET /api/sellers/assistant/status
  *
- * Devuelve el estado del asistente: si hay clave de IA (Anthropic), si
- * hay topics aprobados aprendidos, y si la BD de feedback responde. Lo
- * usa el chat para mostrar un badge "IA activa" vs "Respuestas locales".
+ * Estado del asistente. Tras la migración a IA 100% local (NLU determinístico
+ * + KB + tools), siempre devolvemos mode="local" — sin dependencia de cloud,
+ * sin coste por token, sin latencia de red.
  */
 export async function GET() {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  const aiEnabled = !!process.env.ANTHROPIC_API_KEY;
   return NextResponse.json({
     ok: true,
-    aiEnabled,
-    mode: aiEnabled ? "ai" : "local",
-    model: aiEnabled ? (process.env.ASSISTANT_MODEL ?? "claude-3-5-haiku-latest") : null,
+    aiEnabled: true,
+    mode: "local",
+    model: "orvexia-local-nlu",
   });
 }

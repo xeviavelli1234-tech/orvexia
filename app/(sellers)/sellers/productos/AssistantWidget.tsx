@@ -338,20 +338,12 @@ export default function AssistantWidget() {
               <span className="text-sm font-bold text-white/90">
                 Asistente <span className="text-gradient-neon">Orvexia</span>
               </span>
-              {aiMode === "ai" && (
+              {(aiMode === "ai" || aiMode === "local") && (
                 <span
-                  title="IA activa (Claude)"
+                  title="IA Orvexia local: comprensión de lenguaje natural y ejecución de acciones, sin servicios cloud."
                   className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-400/15 text-emerald-300 border border-emerald-400/30"
                 >
-                  IA
-                </span>
-              )}
-              {aiMode === "local" && (
-                <span
-                  title="Modo respuestas locales. Configura ANTHROPIC_API_KEY para activar IA."
-                  className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-400/15 text-amber-300 border border-amber-400/30"
-                >
-                  Local
+                  IA local
                 </span>
               )}
             </div>

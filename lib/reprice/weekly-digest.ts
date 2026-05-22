@@ -66,44 +66,9 @@ export async function generateAndSendWeeklyDigest(
     quotaRateLimited: quota.reduce((s, q) => s + q.rateLimitedCount, 0),
   };
 
-  // Narrativa IA si hay key
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  let narrative = heuristicNarrative(summary);
-  let aiUsed = false;
-  if (apiKey) {
-    try {
-      const model = process.env.ASSISTANT_MODEL ?? "claude-3-5-haiku-latest";
-      const system = `Eres un analista senior de e-commerce. Recibes métricas semanales del repricer de un vendedor de Amazon y produces un RESUMEN EJECUTIVO en español (máx 6 frases). Empieza con el dato más importante, menciona 1-2 alertas accionables y termina con UNA recomendación concreta. Profesional, directo, sin frases de relleno.`;
-      const r = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          model,
-          max_tokens: 400,
-          system,
-          messages: [{ role: "user", content: JSON.stringify(summary, null, 2) }],
-        }),
-      });
-      if (r.ok) {
-        const data = (await r.json()) as { content?: Array<{ type: string; text?: string }> };
-        const text = (data.content ?? [])
-          .filter((b) => b.type === "text" && b.text)
-          .map((b) => b.text)
-          .join("\n")
-          .trim();
-        if (text) {
-          narrative = text;
-          aiUsed = true;
-        }
-      }
-    } catch (e) {
-      console.warn("[weekly-digest] AI failed:", e);
-    }
-  }
+  // Narrativa 100% local: la heurística enriquecida (`heuristicNarrative`)
+  // genera un resumen ejecutivo a partir de las métricas, sin cloud.
+  const narrative = heuristicNarrative(summary);
 
   // Envío email
   const to = (acc.alertEmail && acc.alertEmail.trim()) || acc.user.email;
@@ -112,7 +77,7 @@ export async function generateAndSendWeeklyDigest(
     name: acc.user.name,
     narrative,
     summary,
-    aiUsed,
+    aiUsed: false,
   }).catch((e) => console.warn("[weekly-digest] email failed:", e));
 
   // Notificación externa (resumen acortado)
