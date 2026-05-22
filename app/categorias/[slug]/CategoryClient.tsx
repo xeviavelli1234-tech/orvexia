@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
 import { FuturisticFX } from "@/components/FuturisticFX";
+import type { ProductSpecs } from "@/lib/specs/extractor";
 
 interface Offer {
   store: string;
@@ -24,6 +25,7 @@ interface Product {
   images: string[];
   rating: number | null;
   reviewCount: number | null;
+  specs: Record<string, unknown>;
   offers: Offer[];
 }
 
@@ -44,26 +46,14 @@ interface Content {
 
 type SortKey = "relevancia" | "precio_asc" | "precio_desc" | "descuento" | "valoracion";
 
-function extractTech(text: string): string | null {
-  if (/OLED/i.test(text)) return "OLED";
-  if (/QLED/i.test(text)) return "QLED";
-  if (/AMOLED/i.test(text)) return "AMOLED";
-  if (/LED/i.test(text)) return "LED";
-  return null;
-}
-function extractOS(text: string): string | null {
-  if (/Google\s*TV/i.test(text)) return "Google TV";
-  if (/Fire\s*TV|Fire\s*OS/i.test(text)) return "Fire TV";
-  if (/Android\s*TV/i.test(text)) return "Android TV";
-  if (/Tizen/i.test(text)) return "Tizen";
-  if (/webOS/i.test(text)) return "webOS";
-  return null;
+// Las specs vienen estructuradas desde Product.specs (lib/specs/extractor.ts).
+// Lectura tolerante porque el campo es JSON y puede tener formas variadas.
+function readSpecs(p: Product): ProductSpecs {
+  return (p.specs ?? {}) as ProductSpecs;
 }
 
-function getSpecs(p: Product) {
-  const full = `${p.name} ${p.description ?? ""}`;
-  return { tech: extractTech(full), os: extractOS(full) };
-}
+// Clase energética: orden A+++ → G para la barra de filtros.
+const ENERGY_ORDER = ["A+++", "A++", "A+", "A", "B", "C", "D", "E", "F", "G"] as const;
 
 export default function CategoryClient({ products, meta, content }: { products: Product[]; meta: Meta; content: Content | null }) {
   const [search, setSearch] = useState("");
@@ -71,17 +61,33 @@ export default function CategoryClient({ products, meta, content }: { products: 
   const [selectedTechs, setSelectedTechs] = useState<string[]>([]);
   const [selectedOS, setSelectedOS] = useState<string[]>([]);
   const [selectedStores, setSelectedStores] = useState<string[]>([]);
+  const [selectedEnergy, setSelectedEnergy] = useState<string[]>([]);
   const [maxPrice, setMaxPrice] = useState<number>(9999);
   const [minRating, setMinRating] = useState<number>(0);
   const [onlyDiscount, setOnlyDiscount] = useState(false);
   const [sort, setSort] = useState<SortKey>("relevancia");
   const [showFilters, setShowFilters] = useState(false);
 
-  const enriched = useMemo(() => products.map((p) => ({ ...p, specs: getSpecs(p) })), [products]);
+  const enriched = useMemo(
+    () => products.map((p) => ({ ...p, specs: readSpecs(p) })),
+    [products]
+  );
 
   const brands = useMemo(() => [...new Set(enriched.map((p) => p.brand))].sort(), [enriched]);
-  const techs = useMemo(() => [...new Set(enriched.map((p) => p.specs.tech).filter(Boolean))] as string[], [enriched]);
-  const osList = useMemo(() => [...new Set(enriched.map((p) => p.specs.os).filter(Boolean))] as string[], [enriched]);
+  const techs = useMemo(
+    () => [...new Set(enriched.map((p) => p.specs.tech).filter((v): v is NonNullable<typeof v> => Boolean(v)))],
+    [enriched]
+  );
+  const osList = useMemo(
+    () => [...new Set(enriched.map((p) => p.specs.os).filter((v): v is NonNullable<typeof v> => Boolean(v)))],
+    [enriched]
+  );
+  const energyClasses = useMemo(() => {
+    const present = new Set(
+      enriched.map((p) => p.specs.energyClass).filter((v): v is string => Boolean(v))
+    );
+    return ENERGY_ORDER.filter((e) => present.has(e));
+  }, [enriched]);
   const stores = useMemo(() => [...new Set(enriched.flatMap((p) => p.offers.map((o) => o.store)))].sort(), [enriched]);
 
   const prices = enriched.flatMap((p) => p.offers.map((o) => o.priceCurrent)).filter(Boolean);
@@ -96,6 +102,7 @@ export default function CategoryClient({ products, meta, content }: { products: 
       if (selectedBrands.length && !selectedBrands.includes(p.brand)) return false;
       if (selectedTechs.length && !selectedTechs.includes(p.specs.tech ?? "")) return false;
       if (selectedOS.length && !selectedOS.includes(p.specs.os ?? "")) return false;
+      if (selectedEnergy.length && !selectedEnergy.includes(p.specs.energyClass ?? "")) return false;
       if (selectedStores.length && !p.offers.some((o) => selectedStores.includes(o.store))) return false;
       if (maxPrice < globalMax && price > maxPrice) return false;
       if (minRating > 0 && (p.rating ?? 0) < minRating) return false;
@@ -111,7 +118,7 @@ export default function CategoryClient({ products, meta, content }: { products: 
       if (sort === "valoracion") return (b.rating ?? 0) - (a.rating ?? 0);
       return 0;
     });
-  }, [enriched, search, selectedBrands, selectedTechs, selectedOS, selectedStores, maxPrice, minRating, onlyDiscount, sort, globalMax]);
+  }, [enriched, search, selectedBrands, selectedTechs, selectedOS, selectedEnergy, selectedStores, maxPrice, minRating, onlyDiscount, sort, globalMax]);
 
   function toggle<T>(arr: T[], val: T, set: (v: T[]) => void) {
     set(arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val]);
@@ -119,10 +126,12 @@ export default function CategoryClient({ products, meta, content }: { products: 
 
   function clearAll() {
     setSearch(""); setSelectedBrands([]); setSelectedTechs([]);
-    setSelectedOS([]); setSelectedStores([]); setMaxPrice(9999); setMinRating(0); setOnlyDiscount(false);
+    setSelectedOS([]); setSelectedEnergy([]); setSelectedStores([]);
+    setMaxPrice(9999); setMinRating(0); setOnlyDiscount(false);
   }
 
-  const activeCount = selectedBrands.length + selectedTechs.length + selectedOS.length + selectedStores.length +
+  const activeCount = selectedBrands.length + selectedTechs.length + selectedOS.length +
+    selectedEnergy.length + selectedStores.length +
     (maxPrice < globalMax ? 1 : 0) + (minRating > 0 ? 1 : 0) + (onlyDiscount ? 1 : 0);
 
   // Active filter chips for top of results
@@ -130,6 +139,7 @@ export default function CategoryClient({ products, meta, content }: { products: 
     ...selectedBrands.map((b) => ({ label: b, clear: () => setSelectedBrands(selectedBrands.filter((x) => x !== b)) })),
     ...selectedTechs.map((t) => ({ label: t, clear: () => setSelectedTechs(selectedTechs.filter((x) => x !== t)) })),
     ...selectedOS.map((o) => ({ label: o, clear: () => setSelectedOS(selectedOS.filter((x) => x !== o)) })),
+    ...selectedEnergy.map((e) => ({ label: `Clase ${e}`, clear: () => setSelectedEnergy(selectedEnergy.filter((x) => x !== e)) })),
     ...selectedStores.map((s) => ({ label: s, clear: () => setSelectedStores(selectedStores.filter((x) => x !== s)) })),
     ...(maxPrice < globalMax ? [{ label: `≤ ${maxPrice} €`, clear: () => setMaxPrice(9999) }] : []),
     ...(minRating > 0 ? [{ label: `★${minRating}+`, clear: () => setMinRating(0) }] : []),
@@ -299,6 +309,28 @@ export default function CategoryClient({ products, meta, content }: { products: 
                 }`}
               >
                 {os}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Clase energética */}
+      {energyClasses.length > 0 && (
+        <section>
+          <p className="text-[10px] font-bold text-fg-subtle uppercase tracking-[0.18em] mb-3">Clase energética</p>
+          <div className="flex flex-wrap gap-2">
+            {energyClasses.map((e) => (
+              <button
+                key={e}
+                onClick={() => toggle(selectedEnergy, e, setSelectedEnergy)}
+                className={`px-3.5 h-9 rounded-lg text-xs font-bold border transition-all tabular ${
+                  selectedEnergy.includes(e)
+                    ? "bg-emerald-400/15 text-emerald-200 border-emerald-400/50"
+                    : "border-white/10 text-fg-muted hover:text-fg hover:border-white/25"
+                }`}
+              >
+                {e}
               </button>
             ))}
           </div>

@@ -1,7 +1,8 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import type { GroupedProduct } from "./csv-import";
-import type { Category } from "@/app/generated/prisma/client";
+import type { Category, Prisma } from "@/app/generated/prisma/client";
+import { extractSpecs } from "@/lib/specs/extractor";
 
 export interface ApplyResult {
   productsCreated: number;
@@ -45,6 +46,15 @@ export async function applyCsvProducts(
         image: p.imageUrl,
         description: p.description,
       };
+      // Specs estructuradas desde name+description. Se recomputan en cada
+      // upsert para que reflejen lo que ahora dice el CSV. Cast porque
+      // Prisma exige InputJsonValue para columnas Json.
+      const specs = extractSpecs({
+        name: productData.name,
+        description: productData.description ?? null,
+        category: productData.category,
+      }) as unknown as Prisma.InputJsonValue;
+
       let productId: string;
       if (existing) {
         await prisma.product.update({
@@ -54,6 +64,7 @@ export async function applyCsvProducts(
             category: productData.category,
             brand: productData.brand,
             model: productData.model,
+            specs,
             // No machacar la imagen si la fila no trae una nueva
             ...(productData.image ? { image: productData.image } : {}),
             ...(productData.description ? { description: productData.description } : {}),
@@ -66,6 +77,7 @@ export async function applyCsvProducts(
           data: {
             ...productData,
             images: [],
+            specs,
           },
           select: { id: true },
         });

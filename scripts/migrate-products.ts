@@ -1,4 +1,4 @@
-import { PrismaClient as PrismaLocal } from "../app/generated/prisma/client";
+import { PrismaClient as PrismaLocal, type Prisma } from "../app/generated/prisma/client";
 import { PrismaClient as PrismaProd } from "../app/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
@@ -14,13 +14,15 @@ async function main() {
   console.log(`✅ ${products.length} productos encontrados`);
 
   for (const product of products) {
-    const { offers, id, ...productData } = product;
+    const { offers, id, specs, ...productData } = product;
+    const specsJson = (specs ?? {}) as unknown as Prisma.InputJsonValue;
     try {
       await prod.product.upsert({
         where: { slug: product.slug },
-        update: { ...productData },
+        update: { ...productData, specs: specsJson },
         create: {
           ...productData,
+          specs: specsJson,
           offers: {
             create: offers.map(({ id, productId, ...offer }) => offer),
           },
