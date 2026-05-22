@@ -1,10 +1,10 @@
 export const dynamic = "force-dynamic";
 
 import { Suspense } from "react";
-import { prisma } from "@/lib/prisma";
 import ProductCard from "@/components/ProductCard";
 import Link from "next/link";
 import { FuturisticFX } from "@/components/FuturisticFX";
+import { searchProducts as runSearch } from "@/lib/search";
 
 const CATEGORY_LABELS: Record<string, string> = {
   TELEVISORES: "Televisores", LAVADORAS: "Lavadoras", FRIGORIFICOS: "Frigoríficos",
@@ -18,26 +18,6 @@ const TRENDING_TERMS = [
   "Cafetera Nespresso", "Aspiradora Roomba",
 ];
 
-async function searchProducts(q: string) {
-  if (!q || q.trim().length < 2) return [];
-
-  const term = q.trim();
-  return prisma.product.findMany({
-    where: {
-      offers: { some: {} },
-      OR: [
-        { name: { contains: term, mode: "insensitive" } },
-        { brand: { contains: term, mode: "insensitive" } },
-        { description: { contains: term, mode: "insensitive" } },
-        { model: { contains: term, mode: "insensitive" } },
-      ],
-    },
-    include: { offers: { orderBy: { priceCurrent: "asc" } } },
-    orderBy: { updatedAt: "desc" },
-    take: 24,
-  });
-}
-
 export default async function BuscarPage({
   searchParams,
 }: {
@@ -45,7 +25,7 @@ export default async function BuscarPage({
 }) {
   const sp = await searchParams;
   const q = String(sp.q ?? "").trim();
-  const results = await searchProducts(q);
+  const results = q.length >= 2 ? await runSearch(q, { limit: 24 }) : [];
 
   return (
     <main className="min-h-screen">
