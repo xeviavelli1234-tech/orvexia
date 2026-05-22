@@ -1,77 +1,28 @@
 ﻿export const dynamic = "force-dynamic";
 
-import Link from "next/link";
 import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
 import ProductCard from "@/components/ProductCard";
 import { SortBar } from "./SortBar";
-import type { Product, Offer } from "@/app/generated/prisma/client";
+import { getRealDeals, type DealOrder, type DealProduct } from "@/lib/deals";
 
-type ProductWithOffers = Product & { offers: Offer[] };
-
-function realDiscountPercent(p: ProductWithOffers): number {
+function realDiscountPercent(p: DealProduct): number {
   const o = p.offers[0];
   if (!o?.priceOld || o.priceCurrent >= o.priceOld) return 0;
   return Math.round((1 - o.priceCurrent / o.priceOld) * 100);
 }
 
-function isRealDeal(p: ProductWithOffers): boolean {
-  const o = p.offers[0];
-  if (!o?.priceOld) return false;
-  const savings = o.priceOld - o.priceCurrent;
-  const ratio   = o.priceOld / o.priceCurrent;
-  return (
-    o.priceCurrent < o.priceOld &&
-    ratio <= 2.5 &&
-    savings >= 3 &&
-    savings / o.priceOld >= 0.03
-  );
-}
+const VALID_ORDERS: Record<string, DealOrder> = {
+  price_asc:     "price_asc",
+  price_desc:    "price_desc",
+  savings_desc:  "savings_desc",
+  most_stores:   "most_stores",
+  discount_desc: "discount_desc",
+};
 
-async function getFeaturedDeals(orden: string): Promise<ProductWithOffers[]> {
-  const products = await prisma.product.findMany({
-    include: { offers: { orderBy: { priceCurrent: "asc" } } },
-    where: { offers: { some: {} } },
-    orderBy: { createdAt: "desc" },
-  });
-
-  // Solo mostrar productos con descuento verificado (ratio <= 2.5)
-  const realDeals = products.filter(isRealDeal);
-  const realDealIds = new Set(realDeals.map((p) => p.id));
-
-  const recentPcTv = products.filter(
-    (p) =>
-      !realDealIds.has(p.id) &&
-      p.category === "TELEVISORES" &&
-      p.offers.some((o) => o.store.toLowerCase().includes("pccomponente"))
-  );
-
-  const list = [...realDeals, ...recentPcTv];
-
-  switch (orden) {
-    case "price_asc":
-      list.sort((a, b) => (a.offers[0]?.priceCurrent ?? 0) - (b.offers[0]?.priceCurrent ?? 0));
-      break;
-    case "price_desc":
-      list.sort((a, b) => (b.offers[0]?.priceCurrent ?? 0) - (a.offers[0]?.priceCurrent ?? 0));
-      break;
-    case "savings_desc":
-      list.sort((a, b) => {
-        const sav = (p: ProductWithOffers) => {
-          const o = p.offers[0];
-          return o?.priceOld && o.priceCurrent < o.priceOld ? o.priceOld - o.priceCurrent : 0;
-        };
-        return sav(b) - sav(a);
-      });
-      break;
-    case "most_stores":
-      list.sort((a, b) => b.offers.length - a.offers.length);
-      break;
-    default: // discount_desc
-      list.sort((a, b) => realDiscountPercent(b) - realDiscountPercent(a));
-  }
-
-  return list;
+async function getFeaturedDeals(orden: string): Promise<DealProduct[]> {
+  const order = VALID_ORDERS[orden] ?? "discount_desc";
+  return getRealDeals({ order, limit: 60 });
 }
 
 async function getStats() {

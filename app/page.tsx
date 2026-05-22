@@ -5,57 +5,14 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import ProductCard from "@/components/ProductCard";
 import { HeroSearch } from "@/components/HeroSearch";
+import { getRealDeals } from "@/lib/deals";
 
 async function getTopDeals() {
-  const products = await prisma.product.findMany({
-    where: { offers: { some: { priceOld: { not: null }, inStock: true } } },
-    include: { offers: { orderBy: { priceCurrent: "asc" } } },
-  });
-
-  const sorted = products
-    .filter((p) => {
-      const o = p.offers[0];
-      if (!o?.priceOld || !o.inStock) return false;
-      const savings = o.priceOld - o.priceCurrent;
-      const ratio = o.priceOld / o.priceCurrent;
-      return (
-        o.priceCurrent < o.priceOld &&
-        ratio <= 2.5 &&
-        savings >= 3 &&
-        savings / o.priceOld >= 0.03
-      );
-    })
-    .sort((a, b) => {
-      const savA = (a.offers[0].priceOld ?? 0) - a.offers[0].priceCurrent;
-      const savB = (b.offers[0].priceOld ?? 0) - b.offers[0].priceCurrent;
-      return savB - savA;
-    });
-
-  // Diversificar por categoría: máximo 2 por categoría en el top 8.
-  // Sin esto el grid lo monopolizan TVs OLED premium porque su ahorro
-  // absoluto en € siempre vence al de electrodomésticos pequeños.
-  const MAX_PER_CATEGORY = 2;
-  const counts: Record<string, number> = {};
-  const diversified: typeof sorted = [];
-  for (const p of sorted) {
-    if ((counts[p.category] ?? 0) >= MAX_PER_CATEGORY) continue;
-    counts[p.category] = (counts[p.category] ?? 0) + 1;
-    diversified.push(p);
-    if (diversified.length >= 8) break;
-  }
-
-  // Si por la diversificación no se llenan los 8 huecos (poca oferta),
-  // rellenar con el resto sorted respetando el orden por ahorro.
-  if (diversified.length < 8) {
-    const seen = new Set(diversified.map((p) => p.id));
-    for (const p of sorted) {
-      if (seen.has(p.id)) continue;
-      diversified.push(p);
-      if (diversified.length >= 8) break;
-    }
-  }
-
-  return diversified;
+  // Diversificar por categoría (máx 2). Sin esto el grid lo monopolizan
+  // TVs OLED premium porque su ahorro absoluto en € siempre vence al
+  // de electrodomésticos pequeños.
+  const deals = await getRealDeals({ limit: 50, maxPerCategory: 2 });
+  return deals.slice(0, 8);
 }
 
 async function getStats() {
