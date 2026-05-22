@@ -62,3 +62,24 @@ export const affiliateClickSchema = z.object({
 });
 
 export type AffiliateClickInput = z.infer<typeof affiliateClickSchema>;
+
+// Postback Awin (también sirve para redes compatibles). Awin envía parámetros
+// por query string en un GET; los nombres siguen su convención clásica.
+// Mapeamos a nuestro modelo en el handler.
+const numericLike = z.preprocess(
+  (v) => (typeof v === "string" ? Number(v.replace(",", ".")) : v),
+  z.number().nonnegative(),
+);
+
+export const affiliatePostbackSchema = z.object({
+  network:       z.string().trim().min(1).max(40).default("awin"),
+  transactionId: z.string().trim().min(1).max(120),
+  store:         z.string().trim().min(1).max(120),
+  amount:        numericLike,
+  commission:    numericLike,
+  currency:      z.string().trim().length(3).default("EUR"),
+  status:        z.enum(["pending", "approved", "declined", "rejected"]).default("pending"),
+  clickref:      z.string().trim().max(64).optional(),
+});
+
+export type AffiliatePostbackInput = z.infer<typeof affiliatePostbackSchema>;

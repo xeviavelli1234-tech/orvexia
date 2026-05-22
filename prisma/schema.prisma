@@ -808,10 +808,44 @@ model AffiliateClickEvent {
   placement        String?
   clickedAt        DateTime @default(now())
 
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  product     Product               @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user        User?                 @relation(fields: [userId], references: [id], onDelete: SetNull)
+  conversions AffiliateConversion[]
 
   @@index([productId, clickedAt])
   @@index([selectedRetailer, clickedAt])
   @@index([userId, clickedAt])
+}
+
+// ─── Conversión de afiliación (postback Awin u otra red) ──────────────────────
+// Llega por server-to-server. transactionId del proveedor es único para
+// idempotencia (Awin reenvía postbacks ante cambios de estado: pending →
+// approved/rejected). Cuando el click se etiquetó con &clickref={id}, el
+// proveedor lo devuelve y enlazamos con AffiliateClickEvent.
+enum AffiliateConversionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model AffiliateConversion {
+  id            String                    @id @default(cuid())
+  network       String                    // "awin", "tradedoubler", etc.
+  transactionId String                    // id del proveedor (único por red)
+  store         String                    // merchant name / id
+  amount        Float                     // total de la venta en €
+  commission    Float                     // comisión bruta en €
+  currency      String                    @default("EUR")
+  status        AffiliateConversionStatus @default(PENDING)
+  clickEventId  String?                   // si vino clickref
+  rawPayload    Json                      // postback original (auditoría)
+  receivedAt    DateTime                  @default(now())
+  updatedAt     DateTime                  @updatedAt
+
+  clickEvent AffiliateClickEvent? @relation(fields: [clickEventId], references: [id], onDelete: SetNull)
+
+  @@unique([network, transactionId])
+  @@index([store, receivedAt])
+  @@index([status])
+  @@index([clickEventId])
 }
