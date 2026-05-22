@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { BuySignalPanel } from "./BuySignalBadge";
 import { SaveButton } from "./SaveButton";
 import { StockBadge } from "./StockBadge";
@@ -158,16 +158,65 @@ export default function ProductModal({ product, onClose }: Props) {
   const formatEuro = (value: number) =>
     new Intl.NumberFormat("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
 
-  // Construir array de imágenes de forma segura
-  const rawImages = Array.isArray(product.images) ? product.images : [];
-  const all = rawImages.length > 0 ? rawImages : product.image ? [product.image] : [];
+  // URLs que han fallado al cargar — se filtran de la galería (no se muestran ni en
+  // carrusel ni en miniaturas, evitando huecos vacíos).
+  const [failedSrcs, setFailedSrcs] = useState<Set<string>>(() => new Set());
+
+  // Construir array de imágenes de forma segura (dentro del useMemo para
+  // que su identidad no cambie en cada render).
+  const all = useMemo(() => {
+    const rawImages = Array.isArray(product.images) ? product.images : [];
+    const candidates =
+      rawImages.length > 0 ? rawImages : product.image ? [product.image] : [];
+    return candidates.filter((src) => src && !failedSrcs.has(src));
+  }, [product.images, product.image, failedSrcs]);
+
+  const markFailed = useCallback((src: string) => {
+    setFailedSrcs((prev) => {
+      if (prev.has(src)) return prev;
+      const next = new Set(prev);
+      next.add(src);
+      return next;
+    });
+  }, []);
+
+  // Detecta imágenes que cargan OK pero son placeholders/proxies basura:
+  // p.ej. productserve.com devuelve "No image available" en 200x200 con 200 OK.
+  // Las fotos reales de producto siempre son >= 300px. Umbral conservador 250.
+  const MIN_REAL_IMAGE_PX = 250;
+  const handleImgLoad = useCallback(
+    (src: string, e: React.SyntheticEvent<HTMLImageElement>) => {
+      const img = e.currentTarget;
+      if (
+        img.naturalWidth > 0 &&
+        img.naturalWidth < MIN_REAL_IMAGE_PX &&
+        img.naturalHeight < MIN_REAL_IMAGE_PX
+      ) {
+        markFailed(src);
+      }
+    },
+    [markFailed],
+  );
 
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
   const thumbsRef = useRef<HTMLDivElement>(null);
 
-  const prev = useCallback(() => setActive((i) => (i - 1 + all.length) % all.length), [all.length]);
-  const next = useCallback(() => setActive((i) => (i + 1) % all.length), [all.length]);
+  // Si el índice activo queda fuera de rango (porque la imagen activa falló),
+  // saltamos a la primera viva.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (active >= all.length && all.length > 0) setActive(0);
+  }, [active, all.length]);
+
+  const prev = useCallback(
+    () => setActive((i) => (all.length === 0 ? 0 : (i - 1 + all.length) % all.length)),
+    [all.length],
+  );
+  const next = useCallback(
+    () => setActive((i) => (all.length === 0 ? 0 : (i + 1) % all.length)),
+    [all.length],
+  );
 
   // Auto-slide
   useEffect(() => {
@@ -211,7 +260,7 @@ export default function ProductModal({ product, onClose }: Props) {
       onClick={onClose}
     >
       <div
-        className="modal-card relative w-full h-[95vh] md:h-[58vh] max-h-[95vh] md:max-h-[820px] bg-bg-elevated rounded-t-3xl md:rounded-3xl shadow-[0_32px_80px_-12px_rgba(0,0,0,0.35)] overflow-hidden flex flex-col md:flex-row"
+        className="modal-card relative w-full h-[88vh] md:h-[58vh] max-h-[88vh] md:max-h-[820px] bg-bg-elevated rounded-t-3xl md:rounded-3xl shadow-[0_32px_80px_-12px_rgba(0,0,0,0.35)] overflow-hidden flex flex-col md:flex-row"
         style={{ maxWidth: "min(1100px, 100vw)" }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -227,7 +276,7 @@ export default function ProductModal({ product, onClose }: Props) {
 
         {/* ── Columna izquierda: carrusel ── */}
         <div
-          className="h-[40vh] min-h-[260px] md:h-auto md:min-h-0 md:w-1/2 bg-white flex flex-col"
+          className="h-[30vh] min-h-[200px] md:h-auto md:min-h-0 md:w-1/2 bg-white flex flex-col"
           onMouseEnter={() => setPaused(true)}
           onMouseLeave={() => setPaused(false)}
         >
@@ -259,10 +308,8 @@ export default function ProductModal({ product, onClose }: Props) {
                       className="absolute inset-0 w-full h-full object-contain p-6"
                       loading={i === 0 ? "eager" : "lazy"}
                       referrerPolicy="no-referrer"
-                      onError={(e) => {
-                        const el = e.currentTarget;
-                        el.style.opacity = "0";
-                      }}
+                      onError={() => markFailed(src)}
+                      onLoad={(e) => handleImgLoad(src, e)}
                     />
                   </div>
                 ))}
@@ -318,10 +365,8 @@ export default function ProductModal({ product, onClose }: Props) {
                     className="object-contain w-full h-full p-1"
                     loading="lazy"
                     referrerPolicy="no-referrer"
-                    onError={(e) => {
-                      const el = e.currentTarget;
-                      el.style.opacity = "0.2";
-                    }}
+                    onError={() => markFailed(src)}
+                    onLoad={(e) => handleImgLoad(src, e)}
                   />
                 </button>
               ))}

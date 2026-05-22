@@ -140,6 +140,7 @@ function SearchInput({ onNavigate }: { onNavigate?: () => void }) {
             aria-autocomplete="list"
             aria-expanded={open}
             aria-haspopup="listbox"
+            role="combobox"
             className="flex-1 min-w-0 bg-transparent text-sm outline-none text-fg placeholder:text-fg-faint"
           />
           <kbd className="hidden lg:inline-flex h-5 px-1.5 rounded border border-border text-[10px] font-semibold text-fg-subtle bg-bg-elevated tabular">

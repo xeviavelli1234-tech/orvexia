@@ -4,6 +4,7 @@ import React from "react";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useProfile } from "@/components/ProfileProvider";
+import { FuturisticFX } from "@/components/FuturisticFX";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -460,21 +461,28 @@ export function ProfileClient() {
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <main className="min-h-screen bg-bg-subtle">
+    <main className="min-h-screen">
 
-      {/* Profile header — avatar + name inside the banner */}
-      <div className="w-full" style={{ background: "linear-gradient(135deg, #0F172A 0%, #1E3A5F 50%, #2563EB 100%)" }}>
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 flex items-center gap-5">
-          <div className="rounded-full shrink-0" style={{ boxShadow: "0 0 0 3px rgba(255,255,255,0.25), 0 4px 20px rgba(0,0,0,0.4)" }}>
+      {/* Profile header */}
+      <div className="relative w-full overflow-hidden border-b border-white/[0.06]">
+        <div className="absolute inset-0 bg-grid-cyber opacity-50 pointer-events-none" />
+        <div className="absolute inset-0 pointer-events-none">
+          <FuturisticFX particleCount={4} streamCount={2} beam={false} seed={profile.name.length} />
+        </div>
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[900px] h-[400px] rounded-full halo-breathe pointer-events-none"
+             style={{ background: "radial-gradient(ellipse, rgba(129,140,248,0.20), transparent 65%)" }} />
+        <div className="relative max-w-3xl mx-auto px-4 sm:px-6 py-10 flex items-center gap-5">
+          <div className="rounded-full shrink-0" style={{ boxShadow: "0 0 0 2px rgba(94,234,212,0.35), 0 0 40px -6px rgba(94,234,212,0.5)" }}>
             <Avatar name={profile.name} color={profile.avatarColor} emoji={profile.avatarEmoji} avatarUrl={avatarUrl} size={80} />
           </div>
           <div className="min-w-0">
+            <p className="font-mono-ui text-[10px] uppercase tracking-wider text-cyan-300/80 mb-1">▸ /profile</p>
             <h1 className="text-[22px] font-extrabold text-white leading-tight truncate">{profile.name}</h1>
-            <div className="flex items-center gap-2 mt-1 flex-wrap">
-              <span className="text-[12px] text-blue-200">Miembro desde {joinedDate}</span>
-              <span className="w-1 h-1 rounded-full bg-blue-400/50" />
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-white/10 text-white">
-                {profile.isGoogleUser ? "🔗 Google" : "✉ Email"}
+            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+              <span className="font-mono-ui text-[10px] uppercase tracking-wider text-white/45">since · {joinedDate}</span>
+              <span className="w-1 h-1 rounded-full bg-white/25" />
+              <span className="inline-flex items-center gap-1 font-mono-ui text-[10px] font-semibold px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.10] text-white/65">
+                {profile.isGoogleUser ? "🔗 google" : "✉ email"}
               </span>
             </div>
           </div>

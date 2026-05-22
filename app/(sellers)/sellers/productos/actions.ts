@@ -1,0 +1,1002 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
+import { getSession } from "@/lib/session";
+import { recordAudit, listAudit, type AuditEntry } from "@/lib/db/audit";
+import {
+  setListingEnabled,
+  setListingRange,
+  setListingStrategy,
+  setListingCompetition,
+  pauseAllForUser,
+  bulkSetEnabled,
+  bulkSetUseDefaults,
+  setListingTags,
+  bulkApplyTag,
+  setListingParent,
+  importListingConfig,
+  getListingForUser,
+  type ImportRow,
+} from "@/lib/db/sellerListing";
+import {
+  setAccountSettings,
+  exportSellerData,
+  deleteSellerAccount,
+} from "@/lib/db/sellerAccount";
+import { prisma } from "@/lib/prisma";
+
+const rangeSchema = z
+  .object({
+    listingId: z.string().min(1),
+    priceMin: z.number().positive().max(99999).nullable(),
+    priceMax: z.number().positive().max(99999).nullable(),
+  })
+  .refine(
+    (v) => v.priceMin == null || v.priceMax == null || v.priceMax >= v.priceMin,
+    { message: "price_max_must_be_greater_or_equal_to_min" },
+  );
+
+export type ActionResult =
+  | { ok: true }
+  | { ok: false; error: string };
+
+function toNullableFloat(v: FormDataEntryValue | null): number | null {
+  if (v == null) return null;
+  const s = String(v).trim().replace(",", ".");
+  if (s === "") return null;
+  const n = Number.parseFloat(s);
+  return Number.isFinite(n) ? Math.round(n * 100) / 100 : null;
+}
+
+export async function updateListingRangeAction(formData: FormData): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+
+  const parsed = rangeSchema.safeParse({
+    listingId: String(formData.get("listingId") ?? ""),
+    priceMin: toNullableFloat(formData.get("priceMin")),
+    priceMax: toNullableFloat(formData.get("priceMax")),
+  });
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "validation_failed" };
+  }
+
+  try {
+    await setListingRange({
+      listingId: parsed.data.listingId,
+      userId: session.userId,
+      priceMin: parsed.data.priceMin,
+      priceMax: parsed.data.priceMax,
+    });
+    await recordAudit(
+      session.userId,
+      "listing.range",
+      `Rango ${parsed.data.priceMin ?? "—"}–${parsed.data.priceMax ?? "—"}`,
+    );
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "db_failed" };
+  }
+
+  revalidatePath("/sellers/productos");
+  return { ok: true };
+}
+
+const strategySchema = z.object({
+  listingId: z.string().min(1),
+  strategy: z.enum(["BUYBOX", "MATCH", "FIXED", "MARGIN"]),
+  undercutType: z.enum(["AMOUNT", "PERCENT"]),
+  undercutValue: z.number().min(0).max(99999),
+  fixedPrice: z.number().positive().max(99999).nullable(),
+  cost: z.number().positive().max(99999).nullable(),
+  shippingCost: z.number().min(0).max(99999).nullable(),
+  fbaFee: z.number().min(0).max(99999).nullable(),
+  vatRate: z.number().min(0).max(100).nullable(),
+  feePercent: z.number().min(0).max(100).nullable(),
+  targetMargin: z.number().min(0).max(95).nullable(),
+  noCompetition: z.enum(["MAX", "HOLD", "STEP_UP"]),
+  stepUpType: z.enum(["AMOUNT", "PERCENT"]),
+  stepUpValue: z.number().min(0).max(99999),
+});
+
+export async function updateListingStrategyAction(
+  formData: FormData,
+): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+
+  const num = (k: string) => {
+    const v = formData.get(k);
+    if (v == null) return null;
+    const s = String(v).trim().replace(",", ".");
+    if (s === "") return null;
+    const n = Number.parseFloat(s);
+    return Number.isFinite(n) ? Math.round(n * 100) / 100 : null;
+  };
+
+  const parsed = strategySchema.safeParse({
+    listingId: String(formData.get("listingId") ?? ""),
+    strategy: String(formData.get("strategy") ?? "BUYBOX"),
+    undercutType: String(formData.get("undercutType") ?? "AMOUNT"),
+    undercutValue: num("undercutValue") ?? 0.01,
+    fixedPrice: num("fixedPrice"),
+    cost: num("cost"),
+    shippingCost: num("shippingCost"),
+    fbaFee: num("fbaFee"),
+    vatRate: num("vatRate"),
+    feePercent: num("feePercent"),
+    targetMargin: num("targetMargin"),
+    noCompetition: String(formData.get("noCompetition") ?? "MAX"),
+    stepUpType: String(formData.get("stepUpType") ?? "AMOUNT"),
+    stepUpValue: num("stepUpValue") ?? 0.05,
+  });
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "validation_failed" };
+  }
+
+  try {
+    await setListingStrategy({ userId: session.userId, ...parsed.data });
+    await recordAudit(
+      session.userId,
+      "listing.strategy",
+      `Estrategia ${parsed.data.strategy}`,
+    );
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "db_failed" };
+  }
+
+  revalidatePath("/sellers/productos");
+  return { ok: true };
+}
+
+const toggleSchema = z.object({
+  listingId: z.string().min(1),
+  enabled: z.boolean(),
+});
+
+export async function toggleListingAction(formData: FormData): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+
+  const parsed = toggleSchema.safeParse({
+    listingId: String(formData.get("listingId") ?? ""),
+    enabled: formData.get("enabled") === "true",
+  });
+  if (!parsed.success) {
+    return { ok: false, error: "validation_failed" };
+  }
+
+  try {
+    await setListingEnabled({
+      listingId: parsed.data.listingId,
+      userId: session.userId,
+      enabled: parsed.data.enabled,
+    });
+    await recordAudit(
+      session.userId,
+      "listing.toggle",
+      parsed.data.enabled ? "Reprecio activado" : "Reprecio pausado",
+    );
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "db_failed" };
+  }
+
+  revalidatePath("/sellers/productos");
+  return { ok: true };
+}
+
+const competitionSchema = z.object({
+  listingId: z.string().min(1),
+  useAccountDefaults: z.boolean(),
+  ignoreAmazon: z.boolean(),
+  fulfillmentFilter: z.enum(["ANY", "FBA", "FBM"]),
+  minSellerRating: z.number().min(0).max(5).nullable(),
+  excludeSellers: z.string().max(600),
+  onlySellers: z.string().max(600),
+});
+
+export async function updateListingCompetitionAction(
+  formData: FormData,
+): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+
+  const ratingRaw = formData.get("minSellerRating");
+  const ratingStr = ratingRaw == null ? "" : String(ratingRaw).trim().replace(",", ".");
+  const minSellerRating = ratingStr === "" ? null : Number.parseFloat(ratingStr);
+
+  const parsed = competitionSchema.safeParse({
+    listingId: String(formData.get("listingId") ?? ""),
+    useAccountDefaults: formData.get("useAccountDefaults") === "true",
+    ignoreAmazon: formData.get("ignoreAmazon") === "true",
+    fulfillmentFilter: String(formData.get("fulfillmentFilter") ?? "ANY"),
+    minSellerRating: minSellerRating != null && Number.isFinite(minSellerRating)
+      ? minSellerRating
+      : null,
+    excludeSellers: String(formData.get("excludeSellers") ?? ""),
+    onlySellers: String(formData.get("onlySellers") ?? ""),
+  });
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "validation_failed" };
+  }
+
+  try {
+    await setListingCompetition({ userId: session.userId, ...parsed.data });
+    await recordAudit(
+      session.userId,
+      "listing.competition",
+      "Filtros de competencia actualizados",
+    );
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "db_failed" };
+  }
+  revalidatePath("/sellers/productos");
+  return { ok: true };
+}
+
+const settingsSchema = z.object({
+  marketplaceId: z.string().min(5).max(20),
+  scheduleEnabled: z.boolean(),
+  scheduleStartHour: z.number().int().min(0).max(23),
+  scheduleEndHour: z.number().int().min(1).max(24),
+  dryRun: z.boolean(),
+  patchDelayMs: z.number().int().min(0).max(10000),
+  autoSyncHours: z.number().int().min(0).max(168),
+  defaultStrategy: z.enum(["BUYBOX", "MATCH", "FIXED", "MARGIN"]),
+  defaultUndercutType: z.enum(["AMOUNT", "PERCENT"]),
+  defaultUndercutValue: z.number().min(0).max(99999),
+  defaultNoCompetition: z.enum(["MAX", "HOLD", "STEP_UP"]),
+  defaultStepUpType: z.enum(["AMOUNT", "PERCENT"]),
+  defaultStepUpValue: z.number().min(0).max(99999),
+  alertsEnabled: z.boolean(),
+  alertEmail: z.string().max(200).nullable(),
+  alertOnBuyBoxLost: z.boolean(),
+  alertOnPriceFloor: z.boolean(),
+  alertOnError: z.boolean(),
+});
+
+export async function updateAccountSettingsAction(
+  formData: FormData,
+): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+
+  const numI = (k: string, d: number) => {
+    const v = formData.get(k);
+    const n = v == null ? d : parseInt(String(v), 10);
+    return Number.isFinite(n) ? n : d;
+  };
+  const numF = (k: string, d: number) => {
+    const v = formData.get(k);
+    const n = v == null ? d : Number.parseFloat(String(v).replace(",", "."));
+    return Number.isFinite(n) ? n : d;
+  };
+
+  const parsed = settingsSchema.safeParse({
+    marketplaceId: String(formData.get("marketplaceId") ?? ""),
+    scheduleEnabled: formData.get("scheduleEnabled") === "true",
+    scheduleStartHour: numI("scheduleStartHour", 0),
+    scheduleEndHour: numI("scheduleEndHour", 24),
+    dryRun: formData.get("dryRun") === "true",
+    patchDelayMs: numI("patchDelayMs", 0),
+    autoSyncHours: numI("autoSyncHours", 0),
+    defaultStrategy: String(formData.get("defaultStrategy") ?? "BUYBOX"),
+    defaultUndercutType: String(formData.get("defaultUndercutType") ?? "AMOUNT"),
+    defaultUndercutValue: numF("defaultUndercutValue", 0.01),
+    defaultNoCompetition: String(formData.get("defaultNoCompetition") ?? "MAX"),
+    defaultStepUpType: String(formData.get("defaultStepUpType") ?? "AMOUNT"),
+    defaultStepUpValue: numF("defaultStepUpValue", 0.05),
+    alertsEnabled: formData.get("alertsEnabled") === "true",
+    alertEmail: ((): string | null => {
+      const v = formData.get("alertEmail");
+      const s = v == null ? "" : String(v).trim();
+      return s === "" ? null : s;
+    })(),
+    alertOnBuyBoxLost: formData.get("alertOnBuyBoxLost") === "true",
+    alertOnPriceFloor: formData.get("alertOnPriceFloor") === "true",
+    alertOnError: formData.get("alertOnError") === "true",
+  });
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "validation_failed" };
+  }
+
+  try {
+    await setAccountSettings({ userId: session.userId, ...parsed.data });
+    await recordAudit(
+      session.userId,
+      "account.settings",
+      "Ajustes de cuenta actualizados",
+    );
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "db_failed" };
+  }
+  revalidatePath("/sellers/productos");
+  return { ok: true };
+}
+
+/**
+ * Actualiza la allowlist de IPs de la cuenta. Vacío = sin restricción.
+ * Acepta IPs (1.2.3.4 / IPv6) o CIDR (1.2.3.0/24, 2001:db8::/32),
+ * separadas por coma, espacios o saltos de línea.
+ */
+export async function updateIpAllowlistAction(
+  formData: FormData,
+): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+
+  const raw = String(formData.get("ipAllowlist") ?? "").trim();
+  // Normaliza: quita espacios extra, repite con comas.
+  const items = raw
+    .split(/[,\n\s]+/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 50);
+  // Validación somera: cada item debe parecer IP/CIDR.
+  const re = /^[0-9a-fA-F:.]+(?:\/\d{1,3})?$/;
+  for (const it of items) {
+    if (!re.test(it)) {
+      return { ok: false, error: `Entrada inválida: "${it}". Usa IP o CIDR.` };
+    }
+  }
+  const value = items.join(",");
+  try {
+    const acc = await prisma.sellerAccount.findUnique({
+      where: { userId: session.userId },
+      select: { id: true },
+    });
+    if (!acc) return { ok: false, error: "no_account" };
+    await prisma.sellerAccount.update({
+      where: { id: acc.id },
+      data: { ipAllowlist: value },
+    });
+    await recordAudit(
+      session.userId,
+      "account.ip_allowlist",
+      value ? `Allowlist actualizada (${items.length} entradas)` : "Allowlist desactivada",
+    );
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "db_failed" };
+  }
+  revalidatePath("/sellers/productos");
+  return { ok: true };
+}
+
+// ─── Canales externos de notificación ─────────────────────────────────────
+export async function addNotificationChannelAction(formData: FormData): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+  const acc = await prisma.sellerAccount.findUnique({
+    where: { userId: session.userId },
+    select: { id: true },
+  });
+  if (!acc) return { ok: false, error: "no_account" };
+  const kind = String(formData.get("kind") ?? "");
+  const label = String(formData.get("label") ?? "").trim();
+  const webhookUrl = String(formData.get("webhookUrl") ?? "").trim();
+  const extraTarget = String(formData.get("extraTarget") ?? "").trim();
+  if (!["slack", "telegram", "discord", "webhook"].includes(kind)) {
+    return { ok: false, error: "kind_invalido" };
+  }
+  if (!/^https?:\/\//i.test(webhookUrl)) {
+    return { ok: false, error: "url_invalida" };
+  }
+  if (kind === "telegram" && !extraTarget) {
+    return { ok: false, error: "telegram_requiere_chat_id" };
+  }
+  await prisma.notificationChannel.create({
+    data: {
+      sellerAccountId: acc.id,
+      kind,
+      label: label || kind,
+      webhookUrl,
+      extraTarget,
+    },
+  });
+  await recordAudit(session.userId, "notify.channel_added", `Canal ${kind} (${label || kind})`);
+  revalidatePath("/sellers/productos");
+  return { ok: true };
+}
+
+export async function deleteNotificationChannelAction(formData: FormData): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+  const id = String(formData.get("id") ?? "");
+  if (!id) return { ok: false, error: "bad_input" };
+  // ownership
+  const ch = await prisma.notificationChannel.findUnique({
+    where: { id },
+    select: { sellerAccountId: true },
+  });
+  if (!ch) return { ok: false, error: "not_found" };
+  const acc = await prisma.sellerAccount.findUnique({
+    where: { id: ch.sellerAccountId },
+    select: { userId: true },
+  });
+  if (!acc || acc.userId !== session.userId) return { ok: false, error: "not_found" };
+  await prisma.notificationChannel.delete({ where: { id } });
+  await recordAudit(session.userId, "notify.channel_deleted", `Canal ${id}`);
+  revalidatePath("/sellers/productos");
+  return { ok: true };
+}
+
+export async function testNotificationChannelAction(formData: FormData): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+  const id = String(formData.get("id") ?? "");
+  if (!id) return { ok: false, error: "bad_input" };
+  const ch = await prisma.notificationChannel.findUnique({
+    where: { id },
+    select: { sellerAccountId: true },
+  });
+  if (!ch) return { ok: false, error: "not_found" };
+  const acc = await prisma.sellerAccount.findUnique({
+    where: { id: ch.sellerAccountId },
+    select: { userId: true },
+  });
+  if (!acc || acc.userId !== session.userId) return { ok: false, error: "not_found" };
+  try {
+    const { testChannel } = await import("@/lib/reprice/notify-external");
+    await testChannel(id);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message.slice(0, 120) : "send_failed" };
+  }
+}
+
+/**
+ * Añade una nota interna a un listing (memoria del equipo).
+ */
+export async function addListingNoteAction(formData: FormData): Promise<ActionResult & { id?: string }> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+  const listingId = String(formData.get("listingId") ?? "");
+  const content = String(formData.get("content") ?? "").trim().slice(0, 2000);
+  if (!listingId || !content) return { ok: false, error: "bad_input" };
+  const listing = await getListingForUser({ listingId, userId: session.userId });
+  if (!listing) return { ok: false, error: "not_found" };
+  const created = await prisma.listingNote.create({
+    data: { listingId, userId: session.userId, content },
+    select: { id: true },
+  });
+  revalidatePath("/sellers/productos");
+  return { ok: true, id: created.id };
+}
+
+export async function deleteListingNoteAction(formData: FormData): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+  const id = String(formData.get("id") ?? "");
+  if (!id) return { ok: false, error: "bad_input" };
+  // Solo el autor puede borrar
+  const note = await prisma.listingNote.findUnique({
+    where: { id },
+    select: { userId: true },
+  });
+  if (!note || note.userId !== session.userId) return { ok: false, error: "not_owner" };
+  await prisma.listingNote.delete({ where: { id } });
+  revalidatePath("/sellers/productos");
+  return { ok: true };
+}
+
+export async function listListingNotesAction(listingId: string) {
+  const session = await getSession();
+  if (!session) return [];
+  const listing = await getListingForUser({ listingId, userId: session.userId });
+  if (!listing) return [];
+  const notes = await prisma.listingNote.findMany({
+    where: { listingId },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+  });
+  return notes.map((n) => ({
+    id: n.id,
+    content: n.content,
+    createdAt: n.createdAt.toISOString(),
+    isMine: n.userId === session.userId,
+  }));
+}
+
+/**
+ * Clona la configuración (estrategia, rango, costes, competencia, etiquetas)
+ * de un listing origen a uno o varios destinos. NO clona el precio actual
+ * ni el toggle activo: el usuario activa cada destino cuando esté listo.
+ */
+export async function cloneListingConfigAction(formData: FormData): Promise<ActionResult & { applied?: number }> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+  const sourceId = String(formData.get("sourceId") ?? "");
+  const targetIdsRaw = String(formData.get("targetIds") ?? "");
+  if (!sourceId || !targetIdsRaw) return { ok: false, error: "bad_input" };
+  const targetIds = targetIdsRaw.split(",").map((s) => s.trim()).filter(Boolean);
+  if (targetIds.length === 0) return { ok: false, error: "no_targets" };
+
+  const source = await getListingForUser({ listingId: sourceId, userId: session.userId });
+  if (!source) return { ok: false, error: "source_not_found" };
+
+  // Verifica ownership de todos los destinos
+  const targets = await prisma.sellerListing.findMany({
+    where: {
+      id: { in: targetIds },
+      sellerAccount: { userId: session.userId },
+    },
+    select: { id: true, sku: true },
+  });
+  if (targets.length === 0) return { ok: false, error: "no_valid_targets" };
+
+  const payload = {
+    priceMin: source.priceMin,
+    priceMax: source.priceMax,
+    strategy: source.strategy,
+    undercutType: source.undercutType,
+    undercutValue: source.undercutValue,
+    fixedPrice: source.fixedPrice,
+    cost: source.cost,
+    shippingCost: source.shippingCost,
+    fbaFee: source.fbaFee,
+    vatRate: source.vatRate,
+    feePercent: source.feePercent,
+    targetMargin: source.targetMargin,
+    noCompetition: source.noCompetition,
+    stepUpType: source.stepUpType,
+    stepUpValue: source.stepUpValue,
+    useAccountDefaults: source.useAccountDefaults,
+    ignoreAmazon: source.ignoreAmazon,
+    fulfillmentFilter: source.fulfillmentFilter,
+    minSellerRating: source.minSellerRating,
+    excludeSellers: source.excludeSellers,
+    onlySellers: source.onlySellers,
+    tags: source.tags,
+  };
+  const r = await prisma.sellerListing.updateMany({
+    where: { id: { in: targets.map((t) => t.id) } },
+    data: payload,
+  });
+  await recordAudit(
+    session.userId,
+    "listing.config_cloned",
+    `Configuración de ${source.sku} clonada a ${targets.length} SKU(s): ${targets.map((t) => t.sku).join(", ").slice(0, 200)}`,
+  );
+  revalidatePath("/sellers/productos");
+  return { ok: true, applied: r.count };
+}
+
+/**
+ * Activa el modo vacaciones: el motor no reprecia entre las fechas dadas.
+ * Vacío = desactivar.
+ */
+export async function setVacationModeAction(formData: FormData): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+  const fromRaw = String(formData.get("vacationFrom") ?? "").trim();
+  const toRaw = String(formData.get("vacationTo") ?? "").trim();
+  const note = String(formData.get("vacationNote") ?? "").trim().slice(0, 200);
+
+  let vacationFrom: Date | null = null;
+  let vacationTo: Date | null = null;
+  if (fromRaw && toRaw) {
+    const f = new Date(fromRaw);
+    const t = new Date(toRaw);
+    if (!Number.isFinite(f.getTime()) || !Number.isFinite(t.getTime())) {
+      return { ok: false, error: "fechas_invalidas" };
+    }
+    if (t.getTime() <= f.getTime()) {
+      return { ok: false, error: "rango_invalido" };
+    }
+    vacationFrom = f;
+    vacationTo = t;
+  }
+
+  const acc = await prisma.sellerAccount.findUnique({
+    where: { userId: session.userId },
+    select: { id: true },
+  });
+  if (!acc) return { ok: false, error: "no_account" };
+  await prisma.sellerAccount.update({
+    where: { id: acc.id },
+    data: { vacationFrom, vacationTo, vacationNote: note },
+  });
+  await recordAudit(
+    session.userId,
+    "account.vacation_mode",
+    vacationFrom && vacationTo
+      ? `Modo vacaciones ${vacationFrom.toISOString().slice(0, 10)} → ${vacationTo.toISOString().slice(0, 10)}`
+      : "Modo vacaciones desactivado",
+  );
+  revalidatePath("/sellers/productos");
+  return { ok: true };
+}
+
+/**
+ * Borra todos los SellerListing del seller (datos demo). Se usa cuando el
+ * usuario está esperando aprobación de Amazon y prefiere ver el panel
+ * vacío en vez de los fixtures. No toca la cuenta ni el token: al hacer
+ * Sincronizar de nuevo, vuelven a sembrarse (mientras siga modo demo) o
+ * llegan los reales (si ya está en producción).
+ */
+export async function clearDemoListingsAction(): Promise<ActionResult & { deleted?: number }> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+  const acc = await prisma.sellerAccount.findUnique({
+    where: { userId: session.userId },
+    select: { id: true },
+  });
+  if (!acc) return { ok: false, error: "no_account" };
+  const res = await prisma.sellerListing.deleteMany({
+    where: { sellerAccountId: acc.id },
+  });
+  await recordAudit(
+    session.userId,
+    "listings.demo_cleared",
+    `Borrados ${res.count} productos demo`,
+  );
+  revalidatePath("/sellers/productos");
+  return { ok: true, deleted: res.count };
+}
+
+/**
+ * Sincroniza los pedidos SP-API de la cuenta del usuario. Best-effort:
+ * si la app no tiene rol Orders, devuelve ok con 0 pedidos.
+ */
+export async function syncOrdersAction(): Promise<ActionResult & { imported?: number }> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+  try {
+    const { syncAllAccountsOrders } = await import("@/lib/reprice/orders-sync");
+    const result = await syncAllAccountsOrders({ sinceDays: 30 });
+    await recordAudit(
+      session.userId,
+      "orders.sync",
+      `Sincronizados ${result.ordersImported} pedidos (${result.itemsImported} items)`,
+    );
+    revalidatePath("/sellers/productos");
+    return { ok: true, imported: result.ordersImported };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "sync_failed" };
+  }
+}
+
+/**
+ * Reconoce un cambio de precio manual detectado: limpia la bandera para que
+ * el aviso desaparezca del inspector. No modifica el precio.
+ */
+export async function ackManualPriceAction(formData: FormData): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+  const listingId = String(formData.get("listingId") ?? "");
+  if (!listingId) return { ok: false, error: "bad_input" };
+  const listing = await getListingForUser({ listingId, userId: session.userId });
+  if (!listing) return { ok: false, error: "not_found" };
+  await prisma.sellerListing.update({
+    where: { id: listing.id },
+    data: {
+      manualPriceDetected: false,
+      manualPriceAt: null,
+      manualPriceBefore: null,
+      manualPriceAfter: null,
+    },
+  });
+  await recordAudit(
+    session.userId,
+    "listing.manual_price_ack",
+    `SKU ${listing.sku}: aceptado cambio manual de precio`,
+  );
+  revalidatePath("/sellers/productos");
+  return { ok: true };
+}
+
+/**
+ * Reanuda un listing autopausado. Borra el sello autoPausedAt/Reason y
+ * resetea consecutiveErrors a 0 para empezar limpio.
+ */
+export async function resumeAutoPausedAction(formData: FormData): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+  const listingId = String(formData.get("listingId") ?? "");
+  if (!listingId) return { ok: false, error: "bad_input" };
+  const listing = await getListingForUser({ listingId, userId: session.userId });
+  if (!listing) return { ok: false, error: "not_found" };
+  await prisma.sellerListing.update({
+    where: { id: listing.id },
+    data: {
+      repricingEnabled: true,
+      autoPausedAt: null,
+      autoPausedReason: null,
+      consecutiveErrors: 0,
+    },
+  });
+  await recordAudit(
+    session.userId,
+    "listing.auto_paused_resumed",
+    `SKU ${listing.sku}: reanudado tras autopausa`,
+  );
+  revalidatePath("/sellers/productos");
+  return { ok: true };
+}
+
+export async function pauseAllAction(): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+  try {
+    await pauseAllForUser(session.userId);
+    await recordAudit(
+      session.userId,
+      "pause_all",
+      "Pausado el reprecio de TODOS los productos",
+    );
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "db_failed" };
+  }
+  revalidatePath("/sellers/productos");
+  return { ok: true };
+}
+
+const bulkSchema = z.object({
+  ids: z.array(z.string().min(1)).min(1).max(2000),
+  action: z.enum(["enable", "disable", "defaultsOn", "defaultsOff"]),
+});
+
+export async function bulkListingsAction(
+  ids: string[],
+  action: string,
+): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+  const parsed = bulkSchema.safeParse({ ids, action });
+  if (!parsed.success) return { ok: false, error: "validation_failed" };
+  try {
+    if (parsed.data.action === "enable")
+      await bulkSetEnabled(session.userId, parsed.data.ids, true);
+    else if (parsed.data.action === "disable")
+      await bulkSetEnabled(session.userId, parsed.data.ids, false);
+    else if (parsed.data.action === "defaultsOn")
+      await bulkSetUseDefaults(session.userId, parsed.data.ids, true);
+    else await bulkSetUseDefaults(session.userId, parsed.data.ids, false);
+    await recordAudit(
+      session.userId,
+      "bulk",
+      `Acción masiva «${parsed.data.action}» en ${parsed.data.ids.length} producto(s)`,
+    );
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "db_failed" };
+  }
+  revalidatePath("/sellers/productos");
+  return { ok: true };
+}
+
+const tagsSchema = z.object({
+  listingId: z.string().min(1),
+  tags: z.string().max(600),
+});
+
+export async function updateListingTagsAction(
+  formData: FormData,
+): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+  const parsed = tagsSchema.safeParse({
+    listingId: String(formData.get("listingId") ?? ""),
+    tags: String(formData.get("tags") ?? ""),
+  });
+  if (!parsed.success) return { ok: false, error: "validation_failed" };
+  try {
+    await setListingTags({ userId: session.userId, ...parsed.data });
+    await recordAudit(
+      session.userId,
+      "listing.tags",
+      `Etiquetas: ${parsed.data.tags || "(vacío)"}`,
+    );
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "db_failed" };
+  }
+  revalidatePath("/sellers/productos");
+  return { ok: true };
+}
+
+const parentSchema = z.object({
+  listingId: z.string().min(1),
+  parentAsin: z.string().max(20),
+});
+
+export async function updateListingParentAction(
+  formData: FormData,
+): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+  const parsed = parentSchema.safeParse({
+    listingId: String(formData.get("listingId") ?? ""),
+    parentAsin: String(formData.get("parentAsin") ?? ""),
+  });
+  if (!parsed.success) return { ok: false, error: "validation_failed" };
+  try {
+    await setListingParent({ userId: session.userId, ...parsed.data });
+    await recordAudit(
+      session.userId,
+      "listing.parent",
+      `ASIN padre: ${parsed.data.parentAsin || "(ninguno)"}`,
+    );
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "db_failed" };
+  }
+  revalidatePath("/sellers/productos");
+  return { ok: true };
+}
+
+export async function getAuditLogAction(): Promise<
+  { ok: true; entries: AuditEntry[] } | { ok: false; error: string }
+> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+  try {
+    return { ok: true, entries: await listAudit(session.userId, 200) };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "db_failed" };
+  }
+}
+
+const bulkTagSchema = z.object({
+  ids: z.array(z.string().min(1)).min(1).max(2000),
+  tag: z.string().min(1).max(24),
+  mode: z.enum(["add", "remove"]),
+});
+
+export async function bulkTagAction(
+  ids: string[],
+  tag: string,
+  mode: string,
+): Promise<ActionResult & { count?: number }> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+  const parsed = bulkTagSchema.safeParse({ ids, tag: tag.trim(), mode });
+  if (!parsed.success) return { ok: false, error: "validation_failed" };
+  try {
+    const r = await bulkApplyTag(
+      session.userId,
+      parsed.data.ids,
+      parsed.data.tag,
+      parsed.data.mode,
+    );
+    await recordAudit(
+      session.userId,
+      "bulk.tag",
+      `Etiqueta «${parsed.data.tag}» ${
+        parsed.data.mode === "add" ? "añadida a" : "quitada de"
+      } ${r.count} producto(s)`,
+    );
+    revalidatePath("/sellers/productos");
+    return { ok: true, count: r.count };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "db_failed" };
+  }
+}
+
+/** Importa configuración desde el texto de un CSV (cabecera + filas). */
+export async function importConfigAction(
+  csv: string,
+): Promise<ActionResult & { updated?: number; skipped?: number }> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+
+  const lines = csv.split(/\r?\n/).filter((l) => l.trim() !== "");
+  if (lines.length < 2) return { ok: false, error: "csv_vacio" };
+
+  const parseLine = (l: string): string[] => {
+    const out: string[] = [];
+    let cur = "";
+    let q = false;
+    for (let i = 0; i < l.length; i++) {
+      const c = l[i];
+      if (q) {
+        if (c === '"' && l[i + 1] === '"') {
+          cur += '"';
+          i++;
+        } else if (c === '"') q = false;
+        else cur += c;
+      } else if (c === '"') q = true;
+      else if (c === ",") {
+        out.push(cur);
+        cur = "";
+      } else cur += c;
+    }
+    out.push(cur);
+    return out.map((s) => s.trim());
+  };
+
+  const header = parseLine(lines[0]).map((h) => h.toLowerCase());
+  const idx = (name: string) => header.indexOf(name);
+  const skuI = idx("sku");
+  if (skuI < 0) return { ok: false, error: "falta_columna_sku" };
+
+  const num = (s: string | undefined): number | null | undefined => {
+    if (s === undefined) return undefined;
+    if (s === "") return null;
+    const n = Number.parseFloat(s.replace(",", "."));
+    return Number.isFinite(n) ? n : undefined;
+  };
+  const bool = (s: string | undefined): boolean | undefined => {
+    if (s === undefined || s === "") return undefined;
+    return s === "1" || s.toLowerCase() === "true" || s.toLowerCase() === "sí";
+  };
+  const enumOf = <T extends string>(s: string | undefined, allowed: T[]): T | undefined =>
+    s && (allowed as string[]).includes(s) ? (s as T) : undefined;
+
+  const rows: ImportRow[] = [];
+  for (let i = 1; i < lines.length; i++) {
+    const c = parseLine(lines[i]);
+    const sku = c[skuI];
+    if (!sku) continue;
+    const get = (n: string) => (idx(n) >= 0 ? c[idx(n)] : undefined);
+    rows.push({
+      sku,
+      tags: get("tags"),
+      parentAsin: get("parentasin"),
+      priceMin: num(get("pricemin")),
+      priceMax: num(get("pricemax")),
+      strategy: enumOf(get("strategy"), ["BUYBOX", "MATCH", "FIXED", "MARGIN"]),
+      undercutType: enumOf(get("undercuttype"), ["AMOUNT", "PERCENT"]),
+      undercutValue: num(get("undercutvalue")) ?? undefined,
+      fixedPrice: num(get("fixedprice")),
+      cost: num(get("cost")),
+      shippingCost: num(get("shippingcost")),
+      fbaFee: num(get("fbafee")),
+      vatRate: num(get("vatrate")),
+      feePercent: num(get("feepercent")),
+      targetMargin: num(get("targetmargin")),
+      noCompetition: enumOf(get("nocompetition"), ["MAX", "HOLD", "STEP_UP"]),
+      stepUpType: enumOf(get("stepuptype"), ["AMOUNT", "PERCENT"]),
+      stepUpValue: num(get("stepupvalue")) ?? undefined,
+      ignoreAmazon: bool(get("ignoreamazon")),
+      fulfillmentFilter: enumOf(get("fulfillmentfilter"), ["ANY", "FBA", "FBM"]),
+      minSellerRating: num(get("minsellerrating")),
+      excludeSellers: get("excludesellers"),
+      onlySellers: get("onlysellers"),
+      useAccountDefaults: bool(get("useaccountdefaults")),
+    });
+  }
+  if (rows.length === 0) return { ok: false, error: "sin_filas" };
+
+  try {
+    const r = await importListingConfig(session.userId, rows);
+    await recordAudit(
+      session.userId,
+      "import",
+      `Import CSV: ${r.updated} actualizados, ${r.skipped} ignorados`,
+    );
+    revalidatePath("/sellers/productos");
+    return { ok: true, updated: r.updated, skipped: r.skipped };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "db_failed" };
+  }
+}
+
+/** RGPD — exporta los datos del repricer del usuario (JSON string). */
+export async function exportMyDataAction(): Promise<
+  (ActionResult & { json?: string }) 
+> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+  try {
+    const data = await exportSellerData(session.userId);
+    if (!data) return { ok: false, error: "no_account" };
+    return { ok: true, json: JSON.stringify(data, null, 2) };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "db_failed" };
+  }
+}
+
+/** RGPD — borrado total de la cuenta de repricer y sus datos. */
+export async function deleteMyAccountAction(
+  confirm: string,
+): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "unauthorized" };
+  if (confirm !== "ELIMINAR") return { ok: false, error: "confirm_required" };
+  try {
+    await deleteSellerAccount(session.userId);
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "db_failed" };
+  }
+  revalidatePath("/sellers/productos");
+  revalidatePath("/dashboard");
+  return { ok: true };
+}

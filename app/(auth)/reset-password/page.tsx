@@ -88,13 +88,13 @@ function ResetPasswordForm() {
   return (
     <AuthShell accent="green">
       <div className={`space-y-1 text-center mb-6 ${inter.className}`}>
-        <p className="text-xs font-semibold text-accent-500 uppercase tracking-widest mb-2">
-          Casi listo
+        <p className="font-mono-ui text-[10px] font-bold text-lime-300 uppercase tracking-[0.2em] mb-3">
+          ▸ /auth · reset
         </p>
-        <h1 className="text-2xl font-extrabold text-fg tracking-tight">
+        <h1 className="text-2xl font-extrabold text-white tracking-tight">
           Nueva contraseña
         </h1>
-        <p className="text-sm text-fg-muted">
+        <p className="text-sm text-white/55">
           Usa el enlace que recibiste en tu correo. Si expiró, solicita uno nuevo.
         </p>
       </div>

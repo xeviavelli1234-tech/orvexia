@@ -152,7 +152,28 @@ export async function getCategoryPicks(category: Category): Promise<Pick[]> {
   return picks;
 }
 
-function serialize(hint: Pick["hint"], e: { product: any; offer: any; rating: number }): Pick {
+interface PickSourceProduct {
+  id: string;
+  slug: string;
+  name: string;
+  brand: string;
+  image: string | null;
+  reviews?: unknown[];
+  reviewCount?: number | null;
+}
+interface PickSourceOffer {
+  store: string;
+  priceCurrent: number;
+  priceOld: number | null;
+  discountPercent: number | null;
+  externalUrl: string;
+  inStock: boolean;
+}
+
+function serialize(
+  hint: Pick["hint"],
+  e: { product: PickSourceProduct; offer: PickSourceOffer; rating: number },
+): Pick {
   return {
     hint,
     product: {

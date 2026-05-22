@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
 import { CategoryTabs } from "./CategoryTabs";
 import { PopularCard } from "./PopularCard";
+import { FuturisticFX } from "@/components/FuturisticFX";
 import type { Product, Offer } from "@/app/generated/prisma/client";
 
 type ProductWithOffers = Product & { offers: Offer[] };
@@ -85,81 +86,87 @@ export default async function PopularidadPage({
     : null;
 
   return (
-    <main className="min-h-screen bg-bg-subtle">
+    <main className="min-h-screen">
 
-      {/* ── Hero ──────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden pt-20 pb-24 px-6 text-center"
-        style={{ background: "linear-gradient(150deg,#1E1B4B 0%,#4C1D95 50%,#7C3AED 100%)" }}>
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-20 -left-20 w-80 h-80 rounded-full bg-purple-400 opacity-10 blur-3xl" />
-          <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-violet-300 opacity-10 blur-3xl" />
-          <div className="absolute -bottom-16 left-0 right-0 h-24 bg-bg-subtle rounded-t-[32px]" />
+      {/* Hero */}
+      <section className="relative overflow-hidden border-b border-white/[0.06]">
+        <div className="absolute inset-0 bg-grid-cyber opacity-50 pointer-events-none" />
+        <div className="absolute inset-0 pointer-events-none">
+          <FuturisticFX particleCount={6} streamCount={2} beam seed={11} />
         </div>
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[1200px] h-[600px] rounded-full halo-breathe pointer-events-none"
+             style={{ background: "radial-gradient(ellipse at center, rgba(168,85,247,0.22), transparent 65%)" }} />
+        <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-50 pointer-events-none"
+             style={{ background: "radial-gradient(circle, rgba(251,191,36,0.16), transparent 65%)" }} />
 
-        <div className="relative max-w-4xl mx-auto">
-          <div className="inline-flex items-center gap-2 mb-5 px-4 py-1.5 rounded-full border border-white/20 bg-white/10 text-xs font-semibold text-white/90">
-            <span className="text-base">🏆</span>
-            Ranking basado en valoraciones reales
+        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 pt-16 sm:pt-24 pb-16 sm:pb-24 text-center">
+          <div className="inline-flex items-center gap-2 mb-6 px-3 h-7 rounded-full bg-white/[0.04] border border-white/[0.10] font-mono-ui">
+            <span className="text-sm" style={{ filter: "drop-shadow(0 0 6px rgba(251,191,36,0.6))" }}>🏆</span>
+            <span className="text-[10px] uppercase tracking-wider text-white/65">
+              ▸ /leaderboard · valoraciones reales
+            </span>
           </div>
 
-          <h1 className="text-4xl sm:text-5xl font-extrabold text-white mb-4 tracking-tight">
-            Popularidad
+          <h1 className="font-extrabold tracking-tight text-white mb-5"
+              style={{ fontSize: "clamp(2.4rem, 6vw, 4.5rem)", lineHeight: 1, letterSpacing: "-0.045em" }}>
+            <span className="text-gradient-neon">Popularidad</span>
           </h1>
-          <p className="text-purple-200 text-lg max-w-xl mx-auto mb-8 leading-relaxed">
+          <p className="text-white/55 text-base max-w-xl mx-auto mb-9 leading-relaxed">
             Los electrodomésticos más valorados por compradores reales. Ordenados por reseñas y puntuación.
           </p>
 
-          {/* Stats */}
-          <div className="flex flex-wrap justify-center gap-3 text-sm text-white/80">
-            <span className="px-3 py-2 rounded-full bg-white/10 border border-white/15">
-              🏅 {stats.total} productos monitorizados
-            </span>
+          <div className="grid grid-cols-3 gap-2 sm:gap-3 max-w-2xl mx-auto">
+            <div className="rounded-xl bg-white/[0.025] border border-white/[0.10] p-3 sm:p-4 backdrop-blur-sm">
+              <p className="font-mono-ui text-[9px] uppercase text-fuchsia-300 mb-1">▸ db.tracked</p>
+              <p className="tabular font-extrabold text-xl sm:text-2xl text-white">{stats.total.toLocaleString("es-ES")}</p>
+              <p className="text-[10px] sm:text-xs text-white/45 mt-0.5">productos</p>
+            </div>
             {avgRating && (
-              <span className="px-3 py-2 rounded-full bg-white/10 border border-white/15">
-                ⭐ Media {avgRating} estrellas
-              </span>
+              <div className="rounded-xl bg-white/[0.025] border border-white/[0.10] p-3 sm:p-4 backdrop-blur-sm">
+                <p className="font-mono-ui text-[9px] uppercase text-amber-300 mb-1">▸ avg.rating</p>
+                <p className="tabular font-extrabold text-xl sm:text-2xl text-white">{avgRating}<span className="text-amber-300 ml-1">★</span></p>
+                <p className="text-[10px] sm:text-xs text-white/45 mt-0.5">media</p>
+              </div>
             )}
             {totalReviews > 0 && (
-              <span className="px-3 py-2 rounded-full bg-white/10 border border-white/15">
-                💬 {totalReviews.toLocaleString("es-ES")} reseñas analizadas
-              </span>
+              <div className="rounded-xl bg-white/[0.025] border border-white/[0.10] p-3 sm:p-4 backdrop-blur-sm">
+                <p className="font-mono-ui text-[9px] uppercase text-cyan-300 mb-1">▸ db.reviews</p>
+                <p className="tabular font-extrabold text-xl sm:text-2xl text-white">{(totalReviews / 1000).toFixed(1)}k</p>
+                <p className="text-[10px] sm:text-xs text-white/45 mt-0.5">analizadas</p>
+              </div>
             )}
           </div>
         </div>
       </section>
 
-      {/* ── Category tabs + grid ──────────────────────────────────────── */}
-      <div className="max-w-6xl mx-auto px-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
 
-        {/* Tabs */}
-        <div className="relative z-10 -mt-12 mb-8 bg-bg-elevated rounded-2xl border border-border
-                        shadow-[0_18px_48px_-24px_rgba(15,23,42,0.2)] p-4">
+        <div className="relative z-10 -mt-8 mb-8 bg-bg-elevated rounded-2xl border border-white/[0.10]
+                        shadow-[0_24px_60px_-24px_rgba(0,0,0,0.5)] p-4">
           <Suspense>
             <CategoryTabs categories={categories} />
           </Suspense>
         </div>
 
-        {/* Section header */}
         <div className="flex items-end justify-between mb-6">
           <div>
-            <p className="text-xs font-bold text-[#7C3AED] uppercase tracking-widest mb-1">
-              Ranking de popularidad
+            <p className="font-mono-ui text-[10px] uppercase tracking-wider text-fuchsia-300 mb-1">
+              ▸ /ranking/{(categoria || "all").toLowerCase()}
             </p>
-            <h2 className="text-2xl font-bold text-fg">
+            <h2 className="text-2xl font-bold text-white">
               {categoria ? `${CATEGORY_LABELS[categoria] ?? categoria} más valorados` : "Los más valorados"}
             </h2>
           </div>
-          <span className="text-sm text-fg-subtle hidden sm:block">
-            {products.length} producto{products.length !== 1 ? "s" : ""}
+          <span className="font-mono-ui text-[11px] uppercase tracking-wider text-white/45 hidden sm:block">
+            top {products.length.toString().padStart(2, "0")}
           </span>
         </div>
 
-        {/* Grid */}
         {products.length === 0 ? (
-          <div className="text-center py-24 bg-bg-elevated rounded-3xl border border-border">
+          <div className="text-center py-24 bg-bg-elevated rounded-3xl border border-white/[0.08]">
             <span className="text-5xl block mb-4">📭</span>
-            <p className="text-fg-subtle text-sm font-medium">
-              No hay productos con valoraciones en esta categoría todavía.
+            <p className="font-mono-ui text-[11px] uppercase tracking-wider text-white/45">
+              no_data · stand_by
             </p>
           </div>
         ) : (

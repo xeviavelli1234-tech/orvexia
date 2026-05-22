@@ -65,10 +65,11 @@ function Stars({ rating }: { rating: number }) {
 }
 
 function RankBadge({ rank }: { rank: number }) {
-  if (rank === 1) return <span className="absolute top-3 left-3 w-8 h-8 rounded-full bg-yellow-400 text-xs font-black flex items-center justify-center shadow-md">🥇</span>;
-  if (rank === 2) return <span className="absolute top-3 left-3 w-8 h-8 rounded-full bg-slate-300 text-xs font-black flex items-center justify-center shadow-md">🥈</span>;
-  if (rank === 3) return <span className="absolute top-3 left-3 w-8 h-8 rounded-full bg-orange-400 text-xs font-black flex items-center justify-center shadow-md">🥉</span>;
-  return <span className="absolute top-3 left-3 w-7 h-7 rounded-full bg-bg-elevated border border-border text-fg-muted text-xs font-bold flex items-center justify-center shadow-sm">{rank}</span>;
+  const base = "absolute top-3 left-3 font-mono-ui text-[10px] font-black px-2 h-7 rounded-md inline-flex items-center gap-1 backdrop-blur-sm";
+  if (rank === 1) return <span className={base} style={{ background: "rgba(5,6,15,0.92)", color: "#FBBF24", border: "1px solid rgba(251,191,36,0.5)", boxShadow: "0 0 14px -2px rgba(251,191,36,0.6)" }}>🥇 #01</span>;
+  if (rank === 2) return <span className={base} style={{ background: "rgba(5,6,15,0.92)", color: "#CBD5E1", border: "1px solid rgba(203,213,225,0.4)", boxShadow: "0 0 12px -2px rgba(203,213,225,0.5)" }}>🥈 #02</span>;
+  if (rank === 3) return <span className={base} style={{ background: "rgba(5,6,15,0.92)", color: "#FB923C", border: "1px solid rgba(251,146,60,0.45)", boxShadow: "0 0 12px -2px rgba(251,146,60,0.55)" }}>🥉 #03</span>;
+  return <span className={base} style={{ background: "rgba(5,6,15,0.85)", color: "rgba(255,255,255,0.75)", border: "1px solid rgba(255,255,255,0.15)" }}>#{String(rank).padStart(2, "0")}</span>;
 }
 
 export function PopularCard({ product, rank }: { product: Product; rank: number }) {
@@ -89,8 +90,8 @@ export function PopularCard({ product, rank }: { product: Product; rank: number 
     <>
       <div
         onClick={() => setOpen(true)}
-        className="group flex flex-col bg-bg-elevated rounded-2xl border border-border overflow-hidden
-                   hover:shadow-xl hover:border-[#7C3AED]/20 transition-all duration-200 cursor-pointer"
+        className="group flex flex-col bg-bg-elevated rounded-2xl border border-white/[0.08] overflow-hidden
+                   hover:border-fuchsia-400/30 hover:shadow-[0_0_24px_-6px_rgba(240,171,252,0.35)] hover:-translate-y-0.5 transition-all duration-200 cursor-pointer"
       >
         {/* Image */}
         <div className="relative h-52 bg-white flex items-center justify-center">
@@ -102,7 +103,15 @@ export function PopularCard({ product, rank }: { product: Product; rank: number 
           )}
           <RankBadge rank={rank} />
           {realDiscount > 0 && (
-            <span className="absolute top-3 right-3 bg-danger-500 text-white text-xs font-bold px-2 py-0.5 rounded-lg">
+            <span
+              className="absolute top-3 right-3 font-mono-ui text-[10px] font-bold px-1.5 py-0.5 rounded-md backdrop-blur-sm"
+              style={{
+                background: "rgba(5,6,15,0.92)",
+                color: "#A3E635",
+                border: "1px solid rgba(163,230,53,0.4)",
+                boxShadow: "0 0 12px -2px rgba(163,230,53,0.4)",
+              }}
+            >
               -{realDiscount}%
             </span>
           )}
@@ -111,11 +120,11 @@ export function PopularCard({ product, rank }: { product: Product; rank: number 
         {/* Body */}
         <div className="flex flex-col flex-1 p-5">
           <p className="text-xs mb-1">
-            <span className="font-semibold text-[#7C3AED]">{product.brand}</span>
+            <span className="font-semibold text-fuchsia-300">{product.brand}</span>
             <span className="text-fg-subtle"> · {catLabel}</span>
           </p>
           <h3 className="text-sm font-bold text-fg leading-snug line-clamp-2 mb-3 flex-1
-                         group-hover:text-[#7C3AED] transition-colors">
+                         group-hover:text-fuchsia-300 transition-colors">
             {product.name}
           </h3>
 
@@ -140,13 +149,13 @@ export function PopularCard({ product, rank }: { product: Product; rank: number 
                 )}
               </div>
               {savings && savings > 0 && (
-                <p className="text-xs font-semibold text-emerald-600 mb-3">Ahorras {savings.toFixed(2)} €</p>
+                <p className="text-xs font-semibold text-emerald-400 mb-3">Ahorras {savings.toFixed(2)} €</p>
               )}
-              <div className="flex items-center justify-between mt-auto pt-3 border-t border-border-subtle">
+              <div className="flex items-center justify-between mt-auto pt-3 border-t border-white/[0.08]">
                 <span className="text-xs text-fg-subtle">en {best.store}</span>
                 <button
                   onClick={(e) => { e.stopPropagation(); window.open(best.externalUrl, "_blank", "noopener,noreferrer"); }}
-                  className="text-xs font-bold text-white bg-[#7C3AED] hover:bg-[#6D28D9] px-4 py-2 rounded-xl transition-colors"
+                  className="text-xs font-bold text-fuchsia-200 bg-fuchsia-400/15 hover:bg-fuchsia-400/25 border border-fuchsia-400/40 hover:border-fuchsia-400/60 px-4 py-2 rounded-xl transition-colors shadow-[0_0_14px_-4px_rgba(240,171,252,0.5)]"
                 >
                   Ver en {best.store} →
                 </button>

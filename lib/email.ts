@@ -1,4 +1,9 @@
 import { Resend } from "resend";
+import {
+  type RepriceAlert,
+  alertSubject,
+  ALERT_LABEL,
+} from "@/lib/reprice/alerts";
 
 function baseUrl() {
   return process.env.NEXTAUTH_URL || "http://localhost:3000";
@@ -288,6 +293,356 @@ export async function sendPasswordResetEmail(options: {
   } catch (err) {
     console.warn("[email] Resend falló o no está configurado:", err);
     console.warn(`[email] Token manual para ${options.to}: ${options.token}`);
+    return { emailSent: false };
+  }
+}
+
+/**
+ * Aviso de inicio de sesión desde una ubicación / dispositivo nuevo.
+ * Reglas de seguridad: solo notificamos; no bloqueamos la sesión (eso lo
+ * cubre TOTP + bloqueo manual del usuario desde /perfil).
+ */
+export async function sendNewLocationEmail(options: {
+  to: string;
+  name: string;
+  ip: string | null;
+  country: string | null;
+  userAgent: string | null;
+  when: Date;
+}): Promise<{ emailSent: boolean }> {
+  const appName = process.env.NEXT_PUBLIC_APP_NAME || "Orvexia";
+  const subject = `Inicio de sesión desde una nueva ubicación · ${appName}`;
+  const profileUrl = `${baseUrl()}/perfil`;
+  const when = new Intl.DateTimeFormat("es-ES", {
+    dateStyle: "long",
+    timeStyle: "short",
+    timeZone: "Europe/Madrid",
+  }).format(options.when);
+  const ua = options.userAgent ? options.userAgent.slice(0, 200) : "navegador desconocido";
+  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"/></head>
+  <body style="margin:0;padding:0;background:#0b1220;font-family:'Segoe UI',Arial,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:28px 0;"><tr><td align="center">
+      <table role="presentation" width="520" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 18px 35px rgba(0,0,0,0.18);">
+        <tr><td style="background:linear-gradient(135deg,#1e293b,#0ea5e9);color:#e2f3ff;padding:28px;">
+          <div style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;opacity:.9;">${appName} · Seguridad</div>
+          <div style="font-size:22px;font-weight:700;margin-top:6px;">Hola ${escapeHtml(options.name)}, alguien ha iniciado sesión</div>
+        </td></tr>
+        <tr><td style="padding:24px 28px;color:#0f172a;font-size:14px;line-height:1.6;">
+          Se ha detectado un inicio de sesión desde una <strong>ubicación o dispositivo nuevo</strong>:
+          <table role="presentation" width="100%" style="margin-top:14px;font-size:13px;">
+            <tr><td style="color:#64748b;width:120px;">Fecha</td><td>${when}</td></tr>
+            <tr><td style="color:#64748b;">IP</td><td>${escapeHtml(options.ip ?? "desconocida")}</td></tr>
+            <tr><td style="color:#64748b;">País</td><td>${escapeHtml(options.country ?? "desconocido")}</td></tr>
+            <tr><td style="color:#64748b;">Navegador</td><td style="word-break:break-all;">${escapeHtml(ua)}</td></tr>
+          </table>
+          <p style="margin-top:18px;">
+            Si fuiste tú, no hace falta hacer nada — esta ubicación queda guardada y no
+            volverás a recibir el aviso desde ella.
+          </p>
+          <p style="margin-top:6px;">
+            <strong>Si no reconoces este acceso</strong>: cambia tu contraseña y revisa
+            tus dispositivos en tu perfil.
+          </p>
+          <div style="margin-top:20px;">
+            <a href="${profileUrl}" style="display:inline-block;background:#dc2626;color:#fff;text-decoration:none;padding:12px 18px;border-radius:12px;font-weight:700;font-size:14px;">Revisar mi cuenta</a>
+          </div>
+        </td></tr>
+        <tr><td style="background:#f1f5f9;color:#475569;padding:16px 28px;font-size:12px;">Aviso de seguridad de ${appName}. Si no esperabas este correo, actúa ya.</td></tr>
+      </table>
+    </td></tr></table>
+  </body></html>`;
+  const text = `Inicio de sesión desde una nueva ubicación.
+Fecha: ${when}
+IP: ${options.ip ?? "desconocida"}
+País: ${options.country ?? "desconocido"}
+Navegador: ${ua}
+
+Si no fuiste tú, cambia tu contraseña ya: ${profileUrl}`;
+  try {
+    await tryResend(options.to, subject, html, text);
+    return { emailSent: true };
+  } catch (err) {
+    console.warn("[email] aviso de nueva ubicación no enviado:", err);
+    return { emailSent: false };
+  }
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/[&<>"']/g, (c) => {
+    switch (c) {
+      case "&": return "&amp;";
+      case "<": return "&lt;";
+      case ">": return "&gt;";
+      case '"': return "&quot;";
+      case "'": return "&#39;";
+      default: return c;
+    }
+  });
+}
+
+/**
+ * Email con enlace mágico de inicio de sesión sin contraseña.
+ * Token de un solo uso, caduca en 10 minutos.
+ */
+export async function sendMagicLinkEmail(options: {
+  to: string;
+  name: string;
+  url: string;
+}): Promise<{ emailSent: boolean }> {
+  const appName = process.env.NEXT_PUBLIC_APP_NAME || "Orvexia";
+  const subject = `Tu enlace de acceso a ${appName}`;
+  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"/></head>
+  <body style="margin:0;padding:0;background:#0b1220;font-family:'Segoe UI',Arial,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:28px 0;"><tr><td align="center">
+      <table role="presentation" width="520" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 18px 35px rgba(0,0,0,0.18);">
+        <tr><td style="background:linear-gradient(135deg,#1e293b,#0ea5e9);color:#e2f3ff;padding:28px;">
+          <div style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;opacity:.9;">${appName}</div>
+          <div style="font-size:22px;font-weight:700;margin-top:6px;">Hola ${escapeHtml(options.name)}, entra sin contraseña</div>
+        </td></tr>
+        <tr><td style="padding:24px 28px;color:#0f172a;font-size:14px;line-height:1.6;">
+          Pulsa el botón para iniciar sesión en ${appName}. El enlace caduca en
+          <strong>10 minutos</strong> y solo funciona una vez.
+          <div style="margin-top:20px;text-align:center;">
+            <a href="${options.url}" style="display:inline-block;background:#2563EB;color:#fff;text-decoration:none;padding:14px 22px;border-radius:12px;font-weight:700;font-size:15px;">Entrar a ${appName}</a>
+          </div>
+          <p style="margin-top:18px;color:#64748b;font-size:12px;">
+            Si no pediste este correo, ignóralo. No se accederá a tu cuenta a menos
+            que abras el enlace.
+          </p>
+        </td></tr>
+      </table>
+    </td></tr></table>
+  </body></html>`;
+  const text = `Entra a ${appName} sin contraseña: ${options.url}\nEl enlace caduca en 10 minutos.`;
+  try {
+    await tryResend(options.to, subject, html, text);
+    return { emailSent: true };
+  } catch (err) {
+    console.warn("[email] magic link no enviado:", err);
+    return { emailSent: false };
+  }
+}
+
+/**
+ * Resumen ejecutivo semanal con métricas + narrativa IA.
+ */
+export async function sendRepricerWeeklyDigestEmail(options: {
+  to: string;
+  name: string;
+  narrative: string;
+  summary: {
+    healthScore: number;
+    healthLetter: string;
+    suggestionsCount: number;
+    topSuggestions: string[];
+    eventsCount: number;
+    errorsCount: number;
+    ordersCount: number;
+    revenueTotal: number;
+    bestHour: number | null;
+    quotaPatch: number;
+    quotaRateLimited: number;
+  };
+  aiUsed: boolean;
+}): Promise<{ emailSent: boolean }> {
+  const appName = process.env.NEXT_PUBLIC_APP_NAME || "Orvexia";
+  const subject = `Resumen semanal · ${appName} Repricer (${options.summary.healthLetter} · ${options.summary.healthScore}/100)`;
+  const dashUrl = `${baseUrl()}/sellers/productos`;
+  const sugList = options.summary.topSuggestions.length
+    ? `<ul style="margin:8px 0 0 0;padding-left:20px;color:#475569;font-size:13px;line-height:1.5;">${options.summary.topSuggestions
+        .map((s) => `<li>${escapeHtml(s)}</li>`)
+        .join("")}</ul>`
+    : "";
+  const bestHour =
+    options.summary.bestHour != null
+      ? `${String(options.summary.bestHour).padStart(2, "0")}:00`
+      : "—";
+  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"/></head>
+  <body style="margin:0;padding:0;background:#0b1220;font-family:'Segoe UI',Arial,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:28px 0;"><tr><td align="center">
+      <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 18px 35px rgba(0,0,0,0.18);">
+        <tr><td style="background:linear-gradient(135deg,#1e293b,#0ea5e9);color:#e2f3ff;padding:28px;">
+          <div style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;opacity:.9;">${appName} Repricer · Resumen semanal</div>
+          <div style="font-size:24px;font-weight:700;margin-top:6px;">Hola ${escapeHtml(options.name)},</div>
+          <div style="font-size:14px;margin-top:6px;opacity:.85;">Salud del catálogo: <strong style="font-size:18px;">${options.summary.healthLetter} (${options.summary.healthScore}/100)</strong></div>
+        </td></tr>
+        <tr><td style="padding:24px 28px;color:#0f172a;font-size:14px;line-height:1.6;">
+          <div style="background:#f8fafc;border-left:3px solid #0ea5e9;padding:14px 16px;border-radius:6px;">
+            ${escapeHtml(options.narrative).replace(/\n/g, "<br/>")}
+          </div>
+          ${
+            options.aiUsed
+              ? `<div style="font-size:11px;color:#94a3b8;margin-top:4px;">↑ Narrativa generada por IA</div>`
+              : ""
+          }
+
+          <h3 style="margin-top:22px;margin-bottom:8px;font-size:13px;color:#475569;text-transform:uppercase;letter-spacing:.06em;">Métricas (últimos 7 días)</h3>
+          <table role="presentation" width="100%" style="font-size:13px;border-collapse:collapse;">
+            <tr><td style="padding:6px 0;color:#64748b;">Eventos exitosos</td><td style="text-align:right;font-weight:600;">${options.summary.eventsCount}</td></tr>
+            <tr><td style="padding:6px 0;color:#64748b;">Errores</td><td style="text-align:right;font-weight:600;color:${options.summary.errorsCount > 0 ? "#dc2626" : "#0f172a"};">${options.summary.errorsCount}</td></tr>
+            <tr><td style="padding:6px 0;color:#64748b;">Pedidos</td><td style="text-align:right;font-weight:600;">${options.summary.ordersCount}</td></tr>
+            <tr><td style="padding:6px 0;color:#64748b;">Facturación</td><td style="text-align:right;font-weight:600;">${options.summary.revenueTotal.toFixed(2)} €</td></tr>
+            <tr><td style="padding:6px 0;color:#64748b;">Mejor hora de venta</td><td style="text-align:right;font-weight:600;">${bestHour}</td></tr>
+            <tr><td style="padding:6px 0;color:#64748b;">PATCH a Amazon</td><td style="text-align:right;font-weight:600;">${options.summary.quotaPatch}</td></tr>
+            ${options.summary.quotaRateLimited > 0 ? `<tr><td style="padding:6px 0;color:#64748b;">Rate-limited</td><td style="text-align:right;font-weight:600;color:#d97706;">${options.summary.quotaRateLimited}</td></tr>` : ""}
+          </table>
+
+          ${
+            options.summary.suggestionsCount > 0
+              ? `<h3 style="margin-top:22px;margin-bottom:8px;font-size:13px;color:#475569;text-transform:uppercase;letter-spacing:.06em;">${options.summary.suggestionsCount} sugerencia(s) accionables</h3>${sugList}`
+              : ""
+          }
+
+          <div style="margin-top:24px;text-align:center;">
+            <a href="${dashUrl}" style="display:inline-block;background:#2563EB;color:#fff;text-decoration:none;padding:12px 22px;border-radius:12px;font-weight:700;font-size:14px;">Ir al panel</a>
+          </div>
+        </td></tr>
+        <tr><td style="background:#f1f5f9;color:#475569;padding:16px 28px;font-size:12px;">
+          Resumen automático de ${appName}. Para dejar de recibirlo, desactiva las alertas semanales en tus canales de notificación.
+        </td></tr>
+      </table>
+    </td></tr></table>
+  </body></html>`;
+  const text = `${subject}\n\n${options.narrative}\n\nIr al panel: ${dashUrl}`;
+  try {
+    await tryResend(options.to, subject, html, text);
+    return { emailSent: true };
+  } catch (err) {
+    console.warn("[email] resumen semanal no enviado:", err);
+    return { emailSent: false };
+  }
+}
+
+/** Aviso de que la prueba gratuita está por terminar. */
+export async function sendTrialEndingEmail(options: {
+  to: string;
+  daysLeft: number;
+}): Promise<{ emailSent: boolean }> {
+  const appName = process.env.NEXT_PUBLIC_APP_NAME || "Orvexia";
+  const url = `${baseUrl()}/sellers/facturacion`;
+  const d = Math.max(0, options.daysLeft);
+  const subject =
+    d <= 0
+      ? "Tu prueba de Orvexia Repricer termina hoy"
+      : `Tu prueba de Orvexia Repricer termina en ${d} día${d === 1 ? "" : "s"}`;
+  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"/></head>
+  <body style="margin:0;padding:0;background:#0b1220;font-family:'Segoe UI',Arial,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:28px 0;"><tr><td align="center">
+      <table role="presentation" width="520" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 18px 35px rgba(0,0,0,0.18);">
+        <tr><td style="background:linear-gradient(135deg,#1e293b,#0ea5e9);color:#e2f3ff;padding:28px;">
+          <div style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;opacity:.9;">${appName} Repricer</div>
+          <div style="font-size:22px;font-weight:700;margin-top:6px;">${subject}</div>
+        </td></tr>
+        <tr><td style="padding:24px 28px;color:#0f172a;font-size:14px;line-height:1.6;">
+          Para que tu reprecio no se pause, pasa a Pro antes de que acabe la
+          prueba. El precio se ajusta a tu volumen de productos y puedes
+          cancelar cuando quieras.
+          <div style="margin-top:20px;">
+            <a href="${url}" style="display:inline-block;background:#2563EB;color:#fff;text-decoration:none;padding:12px 18px;border-radius:12px;font-weight:700;font-size:14px;">Ver planes y pasar a Pro</a>
+          </div>
+        </td></tr>
+        <tr><td style="background:#f1f5f9;color:#475569;padding:16px 28px;font-size:12px;">Enviado por ${appName}.</td></tr>
+      </table>
+    </td></tr></table>
+  </body></html>`;
+  const text = `${subject}. Pasa a Pro para no perder el reprecio: ${url}`;
+  try {
+    await tryResend(options.to, subject, html, text);
+    return { emailSent: true };
+  } catch (err) {
+    console.warn("[email] aviso fin de prueba no enviado:", err);
+    return { emailSent: false };
+  }
+}
+
+/**
+ * Correo resumen de alertas del repricer (un único email por ciclo).
+ * Agrupa Buy Box perdidas, productos en precio mínimo y errores.
+ */
+export async function sendRepricerAlertEmail(options: {
+  to: string;
+  alerts: RepriceAlert[];
+}): Promise<{ emailSent: boolean }> {
+  if (options.alerts.length === 0) return { emailSent: false };
+
+  const appName = process.env.NEXT_PUBLIC_APP_NAME || "Orvexia";
+  const panelUrl = `${baseUrl()}/sellers/productos`;
+  const MAX_ROWS = 25;
+  const subject = alertSubject(options.alerts);
+
+  const tone: Record<RepriceAlert["kind"], string> = {
+    buybox_lost: "#dc2626",
+    price_floor: "#d97706",
+    error: "#dc2626",
+  };
+
+  const shown = options.alerts.slice(0, MAX_ROWS);
+  const rest = options.alerts.length - shown.length;
+
+  const rowsHtml = shown
+    .map(
+      (a) => `<tr>
+        <td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;font-size:12px;color:${tone[a.kind]};font-weight:700;white-space:nowrap;">${ALERT_LABEL[a.kind]}</td>
+        <td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;font-size:13px;color:#0f172a;">
+          <div style="font-weight:600;">${a.title}</div>
+          <div style="font-size:11px;color:#64748b;">SKU ${a.sku} · ${a.detail}</div>
+        </td></tr>`,
+    )
+    .join("");
+
+  const restHtml = rest > 0
+    ? `<p style="margin:12px 0 0 0;font-size:12px;color:#64748b;">…y ${rest} alerta${rest === 1 ? "" : "s"} más. Revisa el panel para el detalle completo.</p>`
+    : "";
+
+  const html = `<!DOCTYPE html>
+  <html lang="es">
+    <head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /></head>
+    <body style="margin:0;padding:0;background:#0b1220;font-family:'Segoe UI',Arial,sans-serif;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:28px 0;">
+        <tr><td align="center">
+          <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:18px;overflow:hidden;box-shadow:0 18px 35px rgba(0,0,0,0.18);">
+            <tr>
+              <td style="background:linear-gradient(135deg,#1e293b,#0ea5e9);color:#e2f3ff;padding:28px 28px 18px 28px;">
+                <div style="font-size:13px;letter-spacing:0.08em;text-transform:uppercase;opacity:.9;font-weight:600;">${appName} Repricer</div>
+                <div style="font-size:22px;font-weight:700;margin-top:6px;">Alertas de tu cuenta</div>
+                <div style="margin-top:6px;font-size:14px;line-height:1.5;color:#cfe9ff;">Resumen del último ciclo de reprecio.</div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:24px 28px 18px 28px;color:#0f172a;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
+                  ${rowsHtml}
+                </table>
+                ${restHtml}
+                <div style="margin-top:20px;">
+                  <a href="${panelUrl}" style="display:inline-block;background:#2563EB;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:12px;font-weight:700;font-size:14px;">Abrir centro de control →</a>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style="background:#f1f5f9;color:#475569;padding:16px 28px;font-size:12px;">
+                Puedes desactivar estas alertas en Ajustes de cuenta · Enviado por ${appName}.
+              </td>
+            </tr>
+          </table>
+        </td></tr>
+      </table>
+    </body>
+  </html>`;
+
+  const text =
+    `${subject}\n\n` +
+    shown
+      .map((a) => `- [${ALERT_LABEL[a.kind]}] ${a.title} (SKU ${a.sku}): ${a.detail}`)
+      .join("\n") +
+    (rest > 0 ? `\n…y ${rest} más.` : "") +
+    `\n\nPanel: ${panelUrl}`;
+
+  try {
+    await tryResend(options.to, subject, html, text);
+    return { emailSent: true };
+  } catch (err) {
+    console.warn("[email] Alerta repricer no enviada:", err);
     return { emailSent: false };
   }
 }

@@ -418,37 +418,37 @@ export default function ProductPageClient({ product, specs, description, catLabe
                       rel="nofollow noopener noreferrer sponsored"
                       className={`flex items-center justify-between gap-2 rounded-xl px-4 h-12 transition-all group border ${
                         isBest
-                          ? "bg-brand-50 border-brand-200 hover:border-brand-300 hover:bg-brand-100"
-                          : "bg-bg-elevated border-border hover:border-border-strong hover:bg-bg-subtle"
+                          ? "bg-cyan-400/[0.08] border-cyan-400/40 hover:bg-cyan-400/[0.12] hover:border-cyan-400/60 shadow-[0_0_18px_-6px_rgba(94,234,212,0.4)]"
+                          : "bg-white/[0.025] border-white/[0.10] hover:border-white/25 hover:bg-white/[0.05]"
                       }`}
                     >
                       <div className="flex items-center gap-2 min-w-0">
                         {isBest && (
-                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-brand-600 text-white" aria-hidden>
+                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-cyan-400/20 border border-cyan-400/50 text-cyan-200" aria-hidden>
                             <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
                               <polyline points="20 6 9 17 4 12" />
                             </svg>
                           </span>
                         )}
-                        <span className={`text-sm font-bold truncate ${isBest ? "text-brand-700" : "text-fg"}`}>
+                        <span className={`text-sm font-bold truncate ${isBest ? "text-cyan-200" : "text-fg"}`}>
                           {o.store}
                         </span>
                         {isBest && (
-                          <span className="hidden sm:inline-flex text-[10px] font-bold uppercase tracking-wider text-brand-600">
-                            Mejor precio
+                          <span className="hidden sm:inline-flex font-mono-ui text-[10px] font-bold uppercase tracking-wider text-cyan-300">
+                            best.price
                           </span>
                         )}
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         {o.discountPercent && (
-                          <span className="text-[11px] font-bold text-accent-700 bg-accent-50 border border-accent-100 px-2 py-0.5 rounded-md">
+                          <span className="font-mono-ui text-[11px] font-bold text-lime-300 bg-lime-400/10 border border-lime-400/30 px-2 py-0.5 rounded-md">
                             -{o.discountPercent}%
                           </span>
                         )}
-                        <span className={`font-extrabold tabular ${isBest ? "text-brand-700" : "text-fg"}`}>
+                        <span className={`font-extrabold tabular ${isBest ? "text-cyan-200" : "text-fg"}`}>
                           {formatPrice(o.priceCurrent)}
                         </span>
-                        <svg className={`w-4 h-4 transition-transform group-hover:translate-x-0.5 ${isBest ? "text-brand-500" : "text-fg-faint group-hover:text-fg-muted"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <svg className={`w-4 h-4 transition-transform group-hover:translate-x-0.5 ${isBest ? "text-cyan-300" : "text-fg-faint group-hover:text-fg-muted"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                         </svg>
                       </div>
@@ -462,10 +462,10 @@ export default function ProductPageClient({ product, specs, description, catLabe
       </div>
 
       {/* ANÁLISIS Y DESCRIPCIÓN */}
-      <section className="bg-bg-elevated rounded-2xl border border-border p-5 sm:p-8 space-y-6">
+      <section className="bg-bg-elevated rounded-2xl border border-white/[0.08] p-5 sm:p-8 space-y-6">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] mb-1 text-brand-600">Análisis</p>
+            <p className="font-mono-ui text-[10px] font-bold uppercase tracking-[0.2em] mb-1 text-cyan-300">▸ /analysis</p>
             <h2 className="text-lg sm:text-xl font-extrabold text-fg tracking-tight">Análisis y descripción</h2>
           </div>
 
@@ -676,12 +676,12 @@ export default function ProductPageClient({ product, specs, description, catLabe
         <section>
           <div className="flex items-end justify-between mb-5">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] mb-1 text-brand-600">Más opciones</p>
+              <p className="font-mono-ui text-[10px] font-bold uppercase tracking-[0.2em] mb-1 text-cyan-300">▸ /related</p>
               <h2 className="text-lg sm:text-xl font-extrabold text-fg tracking-tight">También te puede interesar</h2>
             </div>
             <Link
               href={`/categorias/${catSlug}`}
-              className="inline-flex items-center gap-1 text-xs font-bold px-4 h-9 rounded-full text-brand-700 border border-brand-100 bg-brand-50 hover:bg-brand-100 transition-all"
+              className="inline-flex items-center gap-2 font-mono-ui text-[11px] uppercase font-bold px-4 h-9 rounded-full text-cyan-200 border border-cyan-400/30 bg-cyan-400/[0.08] hover:bg-cyan-400/[0.15] hover:border-cyan-400/60 transition-all"
             >
               Ver todos
               <span aria-hidden>→</span>
@@ -694,7 +694,7 @@ export default function ProductPageClient({ product, specs, description, catLabe
                 <Link
                   key={p.id}
                   href={`/productos/${p.slug}`}
-                  className="group bg-bg-elevated rounded-2xl border border-border overflow-hidden hover:border-border-strong hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+                  className="group bg-bg-elevated rounded-2xl border border-white/[0.08] overflow-hidden hover:border-cyan-400/35 hover:shadow-[0_0_18px_-6px_rgba(94,234,212,0.35)] hover:-translate-y-0.5 transition-all duration-200"
                 >
                   <div className="aspect-square relative bg-white">
                     {thumb ? (
@@ -704,8 +704,8 @@ export default function ProductPageClient({ product, specs, description, catLabe
                     )}
                   </div>
                   <div className="p-3">
-                    <p className="text-[11px] font-bold text-brand-600 mb-1">{p.brand}</p>
-                    <p className="text-xs font-bold text-fg line-clamp-2 leading-snug group-hover:text-brand-600 transition-colors min-h-[2.4em]">
+                    <p className="text-[11px] font-bold text-cyan-300 mb-1">{p.brand}</p>
+                    <p className="text-xs font-bold text-fg line-clamp-2 leading-snug group-hover:text-cyan-300 transition-colors min-h-[2.4em]">
                       {p.name}
                     </p>
                     {p.offer && (

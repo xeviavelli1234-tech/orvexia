@@ -1,14 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { THEME_COOKIE } from "@/lib/theme";
+
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 year
 
 export function ThemeToggle() {
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     const t = (document.documentElement.getAttribute("data-theme") as "light" | "dark") ?? "light";
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTheme(t);
   }, []);
 
@@ -20,9 +25,7 @@ export function ThemeToggle() {
     } else {
       document.documentElement.removeAttribute("data-theme");
     }
-    try {
-      localStorage.setItem("theme", next);
-    } catch {}
+    document.cookie = `${THEME_COOKIE}=${next}; Path=/; Max-Age=${COOKIE_MAX_AGE}; SameSite=Lax`;
   }
 
   if (!mounted) {

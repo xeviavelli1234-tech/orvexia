@@ -73,7 +73,7 @@ export function RecomendadosClient({ initialProducts }: { initialProducts: Produ
           Actualizando…
         </div>
       )}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-5">
         {products.map((p, i) => (
           <ProductCard key={p.id} product={{ ...p, brand: p.brand ?? "", offers: p.offers.map(o => ({ ...o, externalUrl: o.externalUrl ?? "" })) }} priority={i === 0} />
         ))}

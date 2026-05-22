@@ -43,15 +43,15 @@ export function CategoryTabs({ categories }: { categories: string[] }) {
             disabled={pending}
             className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
               active
-                ? "bg-[#059669] text-white border-[#059669] shadow-sm"
-                : "bg-bg-elevated text-fg-muted border-border hover:border-[#059669]/40 hover:text-accent-600"
+                ? "bg-emerald-400/15 text-emerald-200 border-emerald-400/50 shadow-[0_0_14px_-4px_rgba(16,185,129,0.5)]"
+                : "bg-white/[0.025] text-white/65 border-white/[0.10] hover:border-white/30 hover:text-white"
             } disabled:opacity-60`}
           >
             {label}
           </button>
         );
       })}
-      {pending && <span className="ml-1 text-xs text-accent-600 self-center animate-pulse">Cargando…</span>}
+      {pending && <span className="ml-1 font-mono-ui text-[10px] uppercase tracking-wider text-emerald-300 self-center animate-pulse">loading…</span>}
     </div>
   );
 }

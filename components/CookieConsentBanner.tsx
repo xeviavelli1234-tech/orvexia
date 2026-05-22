@@ -27,6 +27,7 @@ export function CookieConsentBanner({ initialConsent }: CookieConsentBannerProps
     const stored = readCookieConsent();
     if (!stored) return; // No consent stored anywhere — banner correctly showing
     // Restore state from localStorage and re-write the HTTP cookie so SSR is correct next time
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setAnalytics(stored.analytics);
     setAdvertising(stored.advertising);
     setShowBanner(false);

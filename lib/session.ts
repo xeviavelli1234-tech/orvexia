@@ -60,3 +60,53 @@ export async function deleteSession(): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.delete(SESSION_COOKIE);
 }
+
+// ── Reto 2FA pendiente entre paso 1 (contraseña) y paso 2 (código) ──
+const PENDING_2FA_COOKIE = "auth-2fa";
+
+export interface Pending2fa {
+  userId: string;
+  rememberMe: boolean;
+  next: string | null;
+}
+
+export async function createPending2fa(p: Pending2fa): Promise<void> {
+  const token = await new SignJWT({
+    userId: p.userId,
+    rememberMe: p.rememberMe,
+    next: p.next ?? "",
+  })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("10m")
+    .sign(secret);
+  const cookieStore = await cookies();
+  cookieStore.set(PENDING_2FA_COOKIE, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 600,
+  });
+}
+
+export async function getPending2fa(): Promise<Pending2fa | null> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(PENDING_2FA_COOKIE)?.value;
+  if (!token) return null;
+  try {
+    const { payload } = await jwtVerify(token, secret);
+    return {
+      userId: payload.userId as string,
+      rememberMe: !!payload.rememberMe,
+      next: (payload.next as string) || null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function clearPending2fa(): Promise<void> {
+  const cookieStore = await cookies();
+  cookieStore.delete(PENDING_2FA_COOKIE);
+}
