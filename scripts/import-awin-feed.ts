@@ -215,12 +215,24 @@ async function importStore(cfg: FeedConfig) {
         continue;
       }
 
-      // Precio antiguo: rrp_price > product_price_old > was_price (Fnac usa was_price)
-      let priceOld: number | null =
-        parsePrice(row.rrp_price) ??
-        parsePrice(row.product_price_old) ??
-        parsePrice(row.was_price);
+      // Precio antiguo: priorizamos el "tachado" real del store
+      // (was_price / product_price_old) sobre rrp_price (PVP de fabricante,
+      // que con frecuencia es el de lanzamiento y ya no refleja lo que
+      // la tienda lleva meses cobrando — produce descuentos falsos).
+      const wasPrice = parsePrice(row.was_price);
+      const oldFromStore = wasPrice ?? parsePrice(row.product_price_old);
+      const rrpPrice = parsePrice(row.rrp_price);
+
+      let priceOld: number | null = oldFromStore ?? rrpPrice;
       if (priceOld !== null && priceOld <= priceCurrent) priceOld = null;
+
+      // Sanidad: si el priceOld NO viene del store (es del rrp_price)
+      // y el descuento implícito supera el 25%, casi seguro es un PVP de
+      // lanzamiento inflado. Lo descartamos para no enseñar rebajas falsas.
+      if (priceOld !== null && oldFromStore === null && rrpPrice !== null) {
+        const implied = (priceOld - priceCurrent) / priceOld;
+        if (implied > 0.25) priceOld = null;
+      }
 
       // Descuento %: ECI usa savings_percent, Fnac usa saving_percent (sin 's')
       const savingsRaw = row.savings_percent ?? row.saving_percent ?? "0";
