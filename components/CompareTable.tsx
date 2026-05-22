@@ -180,18 +180,29 @@ export function CompareTable({ products }: { products: CompareProduct[] }) {
   const [category, setCategory] = useState<string | null>(() => eligibleCats[0] ?? null);
   const [aId, setAId] = useState<string | null>(null);
   const [bId, setBId] = useState<string | null>(null);
-  const [picker, setPicker] = useState<"A" | "B" | null>(null);
-  const [pickerSearch, setPickerSearch] = useState("");
 
-  // Al cambiar de categoría, autoescoger los 2 primeros y cerrar picker
+  // Al cambiar de categoría, autoescoger los 2 primeros
   useEffect(() => {
     if (!category) { setAId(null); setBId(null); return; }
     const list = byCategory[category] ?? [];
     setAId(list[0] ? productKey(list[0]) : null);
     setBId(list[1] ? productKey(list[1]) : null);
-    setPicker(null);
-    setPickerSearch("");
   }, [category, byCategory]);
+
+  // Toggle FIFO: tap en uno seleccionado lo quita; en uno nuevo, llena el
+  // hueco vacío o desplaza A si los dos están llenos.
+  const toggleSelect = useCallback((key: string) => {
+    setAId((prevA) => {
+      if (key === prevA) return null;
+      if (key === bId) { setBId(null); return prevA; }
+      if (!prevA) return key;
+      if (!bId) { setBId(key); return prevA; }
+      // Ambos llenos → A se descarta, B pasa a A, key pasa a B.
+      const newA = bId;
+      setBId(key);
+      return newA;
+    });
+  }, [bId]);
 
   // Detalle: fetch al /api/compare cuando hay A y B
   const [detail, setDetail] = useState<CompareApiResponse | null>(null);
@@ -298,48 +309,26 @@ export function CompareTable({ products }: { products: CompareProduct[] }) {
         </div>
       </div>
 
-      {/* ── Paso 2: selección A vs B ───────────────────────────────────────── */}
+      {/* ── Paso 2: tarjetas seleccionables ───────────────────────────────── */}
       <div className="px-4 sm:px-5 py-4 border-b border-border-subtle">
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-fg-subtle mb-2">
-          2 · Productos
-        </p>
-        <div className="grid grid-cols-[1fr_auto_1fr] gap-2 sm:gap-3 items-stretch">
-          <Slot
-            label="A"
-            product={currentPool.find((p) => productKey(p) === aId) ?? null}
-            isPicking={picker === "A"}
-            onPick={() => { setPicker(picker === "A" ? null : "A"); setPickerSearch(""); }}
-          />
-          <div className="flex items-center justify-center">
-            <span className="font-mono-ui text-[11px] font-bold uppercase tracking-wider text-fg-subtle px-2 py-1 rounded-full bg-bg-subtle border border-border-subtle">
-              vs
-            </span>
-          </div>
-          <Slot
-            label="B"
-            product={currentPool.find((p) => productKey(p) === bId) ?? null}
-            isPicking={picker === "B"}
-            onPick={() => { setPicker(picker === "B" ? null : "B"); setPickerSearch(""); }}
-          />
+        <div className="flex items-baseline justify-between gap-2 mb-3">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-fg-subtle">
+            2 · Toca 2 productos
+          </p>
+          <p className="text-[11px] text-fg-muted">
+            {aId && bId
+              ? <><span className="inline-block w-1.5 h-1.5 rounded-full bg-cyan-400 mr-1 align-middle" /><span className="font-semibold text-cyan-300">A</span> vs <span className="inline-block w-1.5 h-1.5 rounded-full bg-fuchsia-400 mr-1 ml-1 align-middle" /><span className="font-semibold text-fuchsia-300">B</span></>
+              : aId
+                ? "Falta el segundo (B)"
+                : "Ninguno seleccionado"}
+          </p>
         </div>
-
-        {/* Picker inline */}
-        {picker && (
-          <PickerPanel
-            slot={picker}
-            pool={currentPool}
-            excludeKey={picker === "A" ? bId : aId}
-            currentKey={picker === "A" ? aId : bId}
-            search={pickerSearch}
-            onSearchChange={setPickerSearch}
-            onSelect={(key) => {
-              if (picker === "A") setAId(key); else setBId(key);
-              setPicker(null);
-              setPickerSearch("");
-            }}
-            onClose={() => { setPicker(null); setPickerSearch(""); }}
-          />
-        )}
+        <PickerGrid
+          pool={currentPool}
+          aId={aId}
+          bId={bId}
+          onToggle={toggleSelect}
+        />
       </div>
 
       {/* ── Tabla comparativa ──────────────────────────────────────────────── */}
@@ -392,167 +381,76 @@ function Header({ onSwap }: { onSwap?: () => void }) {
   );
 }
 
-function Slot({
-  label, product, isPicking, onPick,
+function PickerGrid({
+  pool, aId, bId, onToggle,
 }: {
-  label: "A" | "B";
-  product: CompareProduct | null;
-  isPicking: boolean;
-  onPick: () => void;
+  pool: CompareProduct[];
+  aId: string | null;
+  bId: string | null;
+  onToggle: (key: string) => void;
 }) {
-  if (!product) {
+  if (pool.length === 0) {
     return (
-      <button
-        type="button"
-        onClick={onPick}
-        className={`flex flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed p-3 sm:p-4 min-h-[120px] sm:min-h-[140px] transition-all ${
-          isPicking
-            ? "border-cyan-400/60 bg-cyan-400/[0.05]"
-            : "border-border hover:border-cyan-400/40 hover:bg-cyan-400/[0.04]"
-        }`}
-      >
-        <span className="w-9 h-9 rounded-full bg-bg-subtle border border-border flex items-center justify-center text-fg-muted text-lg" aria-hidden>+</span>
-        <span className="text-[11px] font-bold uppercase tracking-wider text-fg-subtle">Producto {label}</span>
-        <span className="text-[11px] text-fg-muted">Toca para elegir</span>
-      </button>
+      <p className="py-6 text-center text-[12px] text-fg-subtle">
+        No hay productos en esta categoría.
+      </p>
     );
   }
-  const offer = bestOffer(product.offers);
   return (
-    <div
-      className={`relative rounded-2xl border bg-bg-elevated p-2.5 sm:p-3 flex flex-col gap-2 min-h-[120px] sm:min-h-[140px] ${
-        isPicking ? "border-cyan-400/60 shadow-[0_0_18px_-6px_rgba(94,234,212,0.5)]" : "border-border"
-      }`}
-    >
-      <span className="absolute top-2 left-2 inline-flex items-center justify-center w-5 h-5 rounded-full bg-fg-strong text-bg text-[10px] font-extrabold" aria-hidden>
-        {label}
-      </span>
-      <div className="aspect-square w-full max-w-[120px] mx-auto bg-white rounded-xl border border-border overflow-hidden relative">
-        {product.image || product.images?.[0] ? (
-          <Image
-            src={product.images?.[0] ?? product.image ?? ""}
-            alt={product.name}
-            fill
-            className="object-contain p-1.5"
-            sizes="(max-width: 640px) 30vw, 120px"
-          />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center text-3xl opacity-25">📦</div>
-        )}
-      </div>
-      <div className="min-w-0 text-center">
-        <p className="text-[10px] font-bold text-cyan-300 mb-0.5 truncate">{product.brand}</p>
-        <p className="text-[11px] sm:text-[12px] font-bold text-fg line-clamp-2 leading-tight break-words">
-          {product.name}
-        </p>
-        {offer && (
-          <p className="text-[13px] sm:text-[14px] font-extrabold text-fg tabular mt-1">
-            {formatPrice(offer.priceCurrent)}
-          </p>
-        )}
-      </div>
-      <button
-        type="button"
-        onClick={onPick}
-        className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-fg-muted hover:text-cyan-300 transition-colors px-2 py-1 rounded-full border border-border-subtle hover:border-cyan-400/40 self-center"
-      >
-        Cambiar
-      </button>
-    </div>
-  );
-}
-
-function PickerPanel({
-  slot, pool, excludeKey, currentKey, search, onSearchChange, onSelect, onClose,
-}: {
-  slot: "A" | "B";
-  pool: CompareProduct[];
-  excludeKey: string | null;
-  currentKey: string | null;
-  search: string;
-  onSearchChange: (v: string) => void;
-  onSelect: (key: string) => void;
-  onClose: () => void;
-}) {
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return pool.filter((p) => {
-      if (q && !`${p.brand} ${p.name}`.toLowerCase().includes(q)) return false;
-      return true;
-    });
-  }, [pool, search]);
-
-  return (
-    <div className="mt-3 rounded-2xl border border-cyan-400/30 bg-bg-subtle/60 overflow-hidden">
-      <div className="px-3 py-2.5 sm:px-4 sm:py-3 border-b border-border-subtle flex items-center justify-between gap-2">
-        <p className="text-[11px] font-bold uppercase tracking-wider text-cyan-200">
-          Elige el producto {slot}
-        </p>
-        <button
-          type="button"
-          onClick={onClose}
-          className="text-[11px] font-bold text-fg-subtle hover:text-fg px-2 h-7 rounded-full"
-          aria-label="Cerrar selector"
-        >
-          ✕
-        </button>
-      </div>
-      <div className="px-3 pt-3 sm:px-4">
-        <input
-          type="search"
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Buscar por nombre o marca…"
-          className="w-full bg-bg-elevated border border-border rounded-xl px-3 h-9 text-[13px] text-fg placeholder:text-fg-subtle focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20 outline-none transition"
-          autoFocus
-        />
-      </div>
-      <ul className="px-2 sm:px-3 py-2 max-h-[280px] overflow-y-auto divide-y divide-border-subtle">
-        {filtered.length === 0 ? (
-          <li className="py-6 text-center text-[12px] text-fg-subtle">Sin coincidencias.</li>
-        ) : filtered.map((p) => {
-          const k = productKey(p);
-          const disabled = k === excludeKey;
-          const selected = k === currentKey;
-          const off = bestOffer(p.offers);
-          return (
-            <li key={k}>
-              <button
-                type="button"
-                disabled={disabled}
-                onClick={() => onSelect(k)}
-                className={`w-full flex items-center gap-3 px-2 py-2.5 rounded-xl transition-colors text-left ${
-                  disabled
-                    ? "opacity-40 cursor-not-allowed"
-                    : selected
-                      ? "bg-cyan-400/10 border border-cyan-400/40"
-                      : "hover:bg-bg-elevated"
-                }`}
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
+      {pool.map((p) => {
+        const k = productKey(p);
+        const isA = k === aId;
+        const isB = k === bId;
+        const offer = bestOffer(p.offers);
+        const ringClass = isA
+          ? "border-cyan-400/70 bg-cyan-400/[0.06] shadow-[0_0_18px_-6px_rgba(94,234,212,0.45)]"
+          : isB
+            ? "border-fuchsia-400/70 bg-fuchsia-400/[0.06] shadow-[0_0_18px_-6px_rgba(232,121,249,0.45)]"
+            : "border-border bg-bg-elevated hover:border-border-strong";
+        const badgeClass = isA ? "bg-cyan-500" : "bg-fuchsia-500";
+        return (
+          <button
+            key={k}
+            type="button"
+            onClick={() => onToggle(k)}
+            className={`relative rounded-xl border-2 p-2 sm:p-2.5 flex flex-col gap-1.5 text-left transition-all ${ringClass}`}
+            aria-pressed={isA || isB}
+            aria-label={`${isA ? "Quitar de A" : isB ? "Quitar de B" : "Seleccionar"} ${p.brand} ${p.name}`}
+          >
+            {(isA || isB) && (
+              <span
+                className={`absolute top-1.5 left-1.5 inline-flex items-center justify-center w-6 h-6 rounded-full text-white text-[11px] font-extrabold shadow-md z-10 ${badgeClass}`}
+                aria-hidden
               >
-                <div className="w-12 h-12 rounded-lg bg-white border border-border overflow-hidden relative shrink-0">
-                  {p.image || p.images?.[0] ? (
-                    <Image src={p.images?.[0] ?? p.image ?? ""} alt={p.name} fill className="object-contain p-1" sizes="48px" />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-lg opacity-25">📦</div>
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-bold text-cyan-300 truncate">{p.brand}</p>
-                  <p className="text-[12px] font-semibold text-fg line-clamp-2 leading-snug">{p.name}</p>
-                </div>
-                {off && (
-                  <span className="text-[13px] font-extrabold text-fg tabular shrink-0">
-                    {formatPrice(off.priceCurrent)}
-                  </span>
-                )}
-                {disabled && (
-                  <span className="text-[10px] font-bold uppercase text-fg-subtle shrink-0">ya elegido</span>
-                )}
-              </button>
-            </li>
-          );
-        })}
-      </ul>
+                {isA ? "A" : "B"}
+              </span>
+            )}
+            <div className="aspect-square w-full bg-white rounded-lg border border-border overflow-hidden relative">
+              {p.image || p.images?.[0] ? (
+                <Image
+                  src={p.images?.[0] ?? p.image ?? ""}
+                  alt=""
+                  fill
+                  className="object-contain p-1 sm:p-1.5"
+                  sizes="(max-width: 640px) 45vw, 200px"
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center text-3xl opacity-25">📦</div>
+              )}
+            </div>
+            <p className="text-[10px] font-bold text-cyan-300 truncate">{p.brand}</p>
+            <p className="text-[11px] sm:text-[12px] font-bold text-fg line-clamp-2 leading-tight break-words flex-1 min-h-[2.2em]">
+              {p.name}
+            </p>
+            {offer && (
+              <p className="text-[12px] sm:text-[13px] font-extrabold text-fg tabular">
+                {formatPrice(offer.priceCurrent)}
+              </p>
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 }
