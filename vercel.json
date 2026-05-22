@@ -19,6 +19,18 @@
     {
       "path": "/api/cron/weekly-digest",
       "schedule": "0 8 * * 1"
+    },
+    {
+      "path": "/api/cron/import-awin-feed?store=fnac",
+      "schedule": "15 */4 * * *"
+    },
+    {
+      "path": "/api/cron/import-awin-feed?store=eci",
+      "schedule": "30 */4 * * *"
+    },
+    {
+      "path": "/api/cron/import-awin-feed?store=lg",
+      "schedule": "45 */4 * * *"
     }
   ]
 }

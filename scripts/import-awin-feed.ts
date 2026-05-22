@@ -3,6 +3,10 @@
  * Sincroniza precios, descuento y stock de las ofertas afiliadas a Awin
  * (típicamente El Corte Inglés y Fnac) descargando los datafeeds oficiales.
  *
+ * Toda la lógica vive en `lib/import/awin.ts`; este fichero es sólo un
+ * wrapper CLI para uso manual / debugging local. En producción el cron
+ * `/api/cron/import-awin-feed` reusa el mismo módulo.
+ *
  * Variables de entorno requeridas:
  *   - DATABASE_URL              → conexión a Postgres
  *   - AWIN_FEED_URL_ECI         → URL completa del feed de ECI (con apikey)
@@ -16,11 +20,6 @@
  *   npx tsx scripts/import-awin-feed.ts lg       # solo LG
  *   npx tsx scripts/import-awin-feed.ts --dry-run
  */
-import { PrismaClient } from "../app/generated/prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { parse } from "csv-parse";
-import { createGunzip } from "node:zlib";
-import { Readable } from "node:stream";
 import * as dotenv from "dotenv";
 
 dotenv.config({ path: ".env.local" });
@@ -31,334 +30,30 @@ if (!process.env.DATABASE_URL) {
   process.exit(0);
 }
 
-const prisma = new PrismaClient({
-  adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
-});
+// Importamos después de cargar el env para que el singleton de Prisma
+// lo lea con todas las variables ya disponibles.
+import { prisma } from "../lib/prisma";
+import { getFeeds, importStore, resolveFeed } from "../lib/import/awin";
 
 const DRY_RUN = process.argv.includes("--dry-run");
 const STORE_FILTER = process.argv.slice(2).find((a) => !a.startsWith("--"))?.toLowerCase();
 
-type FeedConfig = {
-  /** Nombre canónico del store en BD (ej. "El Corte Inglés", "Fnac") */
-  storeName: string;
-  /** Patrón para `Offer.store` (case-insensitive) */
-  storeMatcher: RegExp;
-  /** URL del feed con apikey */
-  url: string | undefined;
-};
-
-const FEEDS: FeedConfig[] = [
-  {
-    storeName: "El Corte Inglés",
-    storeMatcher: /corte\s*ingl[eé]s|elcorteingles|\beci\b/i,
-    url: process.env.AWIN_FEED_URL_ECI,
-  },
-  {
-    storeName: "Fnac",
-    storeMatcher: /\bfnac\b/i,
-    // Acepta AWIN_FEED_URL_FNAC explícito o AWIN_FEED_URL (multi-feed
-    // configurado por el usuario en su .env con los 4 FIDs de Fnac).
-    url: process.env.AWIN_FEED_URL_FNAC ?? process.env.AWIN_FEED_URL,
-  },
-  {
-    storeName: "LG",
-    storeMatcher: /\blg\b/i,
-    url: process.env.AWIN_FEED_URL_LG,
-  },
-];
-
-// ── Utilidades ──────────────────────────────────────────────────────────────
-
-function parsePrice(s: string | undefined): number | null {
-  if (!s) return null;
-  // El feed Awin trae números con punto decimal y a veces vienen como strings vacíos
-  const n = parseFloat(s.replace(",", ".").replace(/[^\d.-]/g, ""));
-  return Number.isFinite(n) && n > 0 ? Math.round(n * 100) / 100 : null;
-}
-
-function parseInStock(row: Record<string, string>): boolean {
-  // Awin trae varios campos relacionados — los consultamos en orden de fiabilidad
-  const inStock = row.in_stock?.trim();
-  const isForSale = row.is_for_sale?.trim();
-  const stockStatus = row.stock_status?.trim().toLowerCase();
-  const stockQty = parseInt(row.stock_quantity ?? "0", 10);
-
-  if (inStock === "0") return false;
-  if (isForSale === "0") return false;
-  if (stockStatus && /agotad|sin stock|no disponible|out\s*of\s*stock/i.test(stockStatus)) return false;
-  if (stockQty < 0) return false;
-
-  // Si in_stock es "1" o presente en cualquier forma positiva
-  return inStock === "1" || stockStatus === "" || /disponib|in\s*stock|available/i.test(stockStatus ?? "");
-}
-
-function extractAwProductId(externalUrl: string): string | null {
-  // Awin URL: https://www.awin1.com/pclick.php?p=44372459927&a=2854543&m=77630
-  const m = externalUrl.match(/[?&]p=([^&]+)/);
-  return m ? decodeURIComponent(m[1]) : null;
-}
-
-// Extrae imágenes válidas de la fila del feed, deduplicadas y en orden
-// (principal primero, alternativas después). Excluye thumbs porque son
-// recortes pequeños y nuestro front renderiza con object-fit el original.
-function extractImages(row: Record<string, string>): string[] {
-  const candidates = [
-    row.merchant_image_url,
-    row.large_image,
-    row.aw_image_url,
-    row.alternate_image,
-    row.alternate_image_two,
-    row.alternate_image_three,
-    row.alternate_image_four,
-  ];
-  const seen = new Set<string>();
-  const out: string[] = [];
-  for (const raw of candidates) {
-    const v = raw?.trim();
-    if (!v) continue;
-    if (!/^https?:\/\//i.test(v)) continue;
-    if (seen.has(v)) continue;
-    seen.add(v);
-    out.push(v);
-  }
-  return out.slice(0, 8);
-}
-
-function arraysEqualOrdered(a: readonly string[], b: readonly string[]): boolean {
-  if (a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
-  return true;
-}
-
-// ── Importador por tienda ───────────────────────────────────────────────────
-
-async function importStore(cfg: FeedConfig) {
-  if (!cfg.url) {
-    console.log(`⏭️  ${cfg.storeName}: no URL en env, saltando`);
-    return;
-  }
-
-  console.log(`\n📡 ${cfg.storeName}: descargando feed...`);
-
-  // 1. Cargar nuestras ofertas de esa tienda y mapearlas por aw_product_id
-  const ourOffers = await prisma.offer.findMany({
-    where: { store: { contains: cfg.storeName.split(" ")[0], mode: "insensitive" } },
-    include: { product: { select: { id: true, name: true, image: true, images: true } } },
-  });
-
-  const offersByAwId = new Map<string, (typeof ourOffers)[number]>();
-  let urlMissing = 0;
-  for (const o of ourOffers) {
-    if (!cfg.storeMatcher.test(o.store)) continue;
-    const id = extractAwProductId(o.externalUrl);
-    if (!id) { urlMissing++; continue; }
-    offersByAwId.set(id, o);
-  }
-  console.log(`   📦 ${offersByAwId.size} ofertas en BD (${urlMissing} sin aw_product_id en URL)`);
-
-  if (offersByAwId.size === 0) {
-    console.log(`   ⚠️  No hay ofertas con URL de Awin para ${cfg.storeName}; nada que actualizar`);
-    return;
-  }
-
-  // 2. Streaming del feed
-  const res = await fetch(cfg.url);
-  if (!res.ok) {
-    console.error(`❌ ${cfg.storeName}: feed HTTP ${res.status}`);
-    return;
-  }
-  if (!res.body) {
-    console.error(`❌ ${cfg.storeName}: feed sin body`);
-    return;
-  }
-
-  const stream = Readable.fromWeb(res.body as any)
-    .pipe(createGunzip())
-    .pipe(parse({
-      columns: true,
-      skip_empty_lines: true,
-      relax_quotes: true,
-      relax_column_count: true,
-      trim: true,
-    }));
-
-  let rowsRead = 0;
-  let matched = 0;
-  let updated = 0;
-  let unchanged = 0;
-  let stockChanged = 0;
-  let priceChanged = 0;
-  let imagesUpdated = 0;
-  let errors = 0;
-
-  for await (const rowRaw of stream) {
-    rowsRead++;
-    if (rowsRead % 50000 === 0) console.log(`   …${rowsRead} filas leídas, ${matched} matches`);
-
-    const row = rowRaw as Record<string, string>;
-    const awId = row.aw_product_id?.trim();
-    if (!awId) continue;
-
-    const offer = offersByAwId.get(awId);
-    if (!offer) continue;
-    matched++;
-
-    try {
-      // Precio actual: search_price > store_price > display_price
-      const priceCurrent =
-        parsePrice(row.search_price) ??
-        parsePrice(row.store_price) ??
-        parsePrice(row.display_price);
-
-      if (priceCurrent === null) {
-        // No tenemos precio fiable — saltamos sin cambiar
-        continue;
-      }
-
-      // Precio antiguo: priorizamos el "tachado" real del store
-      // (was_price / product_price_old) sobre rrp_price (PVP de fabricante,
-      // que con frecuencia es el de lanzamiento y ya no refleja lo que
-      // la tienda lleva meses cobrando — produce descuentos falsos).
-      const wasPrice = parsePrice(row.was_price);
-      const oldFromStore = wasPrice ?? parsePrice(row.product_price_old);
-      const rrpPrice = parsePrice(row.rrp_price);
-
-      let priceOld: number | null = oldFromStore ?? rrpPrice;
-      if (priceOld !== null && priceOld <= priceCurrent) priceOld = null;
-
-      // Sanidad: si el priceOld NO viene del store (es del rrp_price)
-      // y el descuento implícito supera el 25%, casi seguro es un PVP de
-      // lanzamiento inflado. Lo descartamos para no enseñar rebajas falsas.
-      if (priceOld !== null && oldFromStore === null && rrpPrice !== null) {
-        const implied = (priceOld - priceCurrent) / priceOld;
-        if (implied > 0.25) priceOld = null;
-      }
-
-      // Descuento %: ECI usa savings_percent, Fnac usa saving_percent (sin 's')
-      const savingsRaw = row.savings_percent ?? row.saving_percent ?? "0";
-      const savingsPct = parseInt(savingsRaw, 10);
-      let discountPercent: number | null = Number.isFinite(savingsPct) && savingsPct > 0 ? savingsPct : null;
-      if (!discountPercent && priceOld) {
-        discountPercent = Math.round((1 - priceCurrent / priceOld) * 100);
-      }
-      // Sanidad: si no hay priceOld, no tiene sentido un %
-      if (!priceOld) discountPercent = null;
-
-      const inStock = parseInStock(row);
-
-      // Imágenes nuevas del feed (puede estar vacío si no las trae)
-      const feedImages = extractImages(row);
-      const currentImages = (offer.product.images ?? []) as string[];
-      // Merge con orden: feed primero (más actuales), luego las que ya
-      // teníamos que no estén en el feed. Limitar a 8.
-      const mergedImages = feedImages.length > 0
-        ? [...feedImages, ...currentImages.filter((u) => !feedImages.includes(u))].slice(0, 8)
-        : currentImages;
-      const imagesChanged =
-        feedImages.length > 0 && !arraysEqualOrdered(currentImages, mergedImages);
-
-      // Compara con BD
-      const before = {
-        priceCurrent: offer.priceCurrent,
-        priceOld: offer.priceOld,
-        discountPercent: offer.discountPercent ?? null,
-        inStock: offer.inStock,
-      };
-      const after = { priceCurrent, priceOld, discountPercent, inStock };
-
-      const sameAll =
-        before.priceCurrent === after.priceCurrent &&
-        before.priceOld === after.priceOld &&
-        (before.discountPercent ?? null) === (after.discountPercent ?? null) &&
-        before.inStock === after.inStock &&
-        !imagesChanged;
-
-      if (sameAll) {
-        unchanged++;
-        continue;
-      }
-
-      const priceMoved = before.priceCurrent !== after.priceCurrent;
-      const stockMoved = before.inStock !== after.inStock;
-
-      if (DRY_RUN) {
-        console.log(
-          `🔎 ${offer.product.name.slice(0, 60)} :: ${before.priceCurrent}€ → ${priceCurrent}€` +
-          `${priceOld ? ` (antes ${priceOld}€, -${discountPercent}%)` : ""}` +
-          `${stockMoved ? ` · stock ${before.inStock}→${inStock}` : ""}` +
-          `${imagesChanged ? ` · imgs ${currentImages.length}→${mergedImages.length}` : ""}`
-        );
-      } else {
-        // Si cambia el precio, log en priceHistory (precio anterior si no estaba ya)
-        if (priceMoved) {
-          const alreadyLogged = await prisma.priceHistory.findFirst({
-            where: { productId: offer.productId, store: offer.store, price: before.priceCurrent },
-          });
-          if (!alreadyLogged) {
-            await prisma.priceHistory.create({
-              data: { productId: offer.productId, store: offer.store, price: before.priceCurrent },
-            });
-          }
-        }
-
-        await prisma.offer.update({
-          where: { id: offer.id },
-          data: { priceCurrent, priceOld, discountPercent, inStock },
-        });
-
-        // Actualizar imágenes en el Product (compartido entre todas las
-        // ofertas del producto, así que solo escribimos si han cambiado).
-        if (imagesChanged) {
-          await prisma.product.update({
-            where: { id: offer.productId },
-            data: {
-              images: mergedImages,
-              // Si el producto no tenía imagen principal, ponemos la nueva
-              ...(offer.product.image ? {} : { image: mergedImages[0] }),
-            },
-          });
-          imagesUpdated++;
-        }
-
-        if (priceMoved) {
-          await prisma.priceHistory.create({
-            data: { productId: offer.productId, store: offer.store, price: priceCurrent },
-          });
-          priceChanged++;
-        }
-        if (stockMoved) stockChanged++;
-      }
-
-      updated++;
-    } catch (e: unknown) {
-      errors++;
-      const msg = e instanceof Error ? e.message : String(e);
-      console.error(`   ❌ ${offer.product.name.slice(0, 50)}: ${msg}`);
-    }
-  }
-
-  console.log(`\n📊 ${cfg.storeName}:`);
-  console.log(`   filas leídas:       ${rowsRead}`);
-  console.log(`   matches:            ${matched}`);
-  console.log(`   ${DRY_RUN ? "habrían cambiado" : "actualizadas"}: ${updated}`);
-  console.log(`   sin cambios:        ${unchanged}`);
-  console.log(`   precio cambió:      ${priceChanged}`);
-  console.log(`   stock cambió:       ${stockChanged}`);
-  console.log(`   imágenes actualiz.: ${imagesUpdated}`);
-  if (errors) console.log(`   errores:            ${errors}`);
-}
-
-// ── Main ────────────────────────────────────────────────────────────────────
-
 async function main() {
-  for (const cfg of FEEDS) {
-    if (STORE_FILTER) {
-      const target = cfg.storeName.toLowerCase();
-      if (!target.includes(STORE_FILTER) && !target.split(" ").join("").includes(STORE_FILTER)) continue;
-    }
-    await importStore(cfg);
+  const feeds = STORE_FILTER
+    ? [resolveFeed(STORE_FILTER)].filter((f): f is NonNullable<typeof f> => f !== null)
+    : getFeeds();
+
+  if (STORE_FILTER && feeds.length === 0) {
+    console.log(`⚠️  Tienda "${STORE_FILTER}" no reconocida`);
+    process.exit(1);
+  }
+
+  for (const cfg of feeds) {
+    await importStore(cfg, { dryRun: DRY_RUN, log: (m) => console.log(m) });
   }
   console.log("\n✅ Sincronización terminada");
 }
 
-main().catch((e) => { console.error("❌ fatal:", e); process.exit(1); }).finally(() => prisma.$disconnect());
+main()
+  .catch((e) => { console.error("❌ fatal:", e); process.exit(1); })
+  .finally(() => prisma.$disconnect());
