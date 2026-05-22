@@ -39,6 +39,7 @@ model User {
   magicLinks        MagicLink[]
   loginAttempts     LoginAttempt[]
   trustedLocations  TrustedLocation[]
+  affiliateClicks   AffiliateClickEvent[]
 }
 
 // ─── Seguridad: passkeys, magic links, intentos de inicio, ubicaciones ──────
@@ -151,13 +152,14 @@ model Product {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  offers        Offer[]
-  priceHistory  PriceHistory[]
-  buySignals    BuySignal[]
-  savedBy       SavedProduct[]
-  priceAlerts   PriceAlert[]
-  communityPosts CommunityPost[]
-  reviews       Review[]
+  offers          Offer[]
+  priceHistory    PriceHistory[]
+  buySignals      BuySignal[]
+  savedBy         SavedProduct[]
+  priceAlerts     PriceAlert[]
+  communityPosts  CommunityPost[]
+  reviews         Review[]
+  affiliateClicks AffiliateClickEvent[]
 
   @@index([category])
   @@index([brand])
@@ -789,4 +791,27 @@ model RepriceOrderItem {
   @@index([listingId, createdAt])
   @@index([asin])
   @@index([sku])
+}
+
+// ─── Tracking de clicks de afiliación ─────────────────────────────────────────
+// Registra cada salida del usuario hacia la tienda. La conversión llegará
+// luego por postback del afiliado (Awin, etc.) — esta tabla cubre solo
+// el evento de click. retailerPosition empieza en 0 (0=primaria).
+model AffiliateClickEvent {
+  id               String   @id @default(cuid())
+  productId        String
+  userId           String?
+  selectedRetailer String
+  retailerPosition Int
+  isPrimary        Boolean  @default(false)
+  pageContext      String?
+  placement        String?
+  clickedAt        DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([productId, clickedAt])
+  @@index([selectedRetailer, clickedAt])
+  @@index([userId, clickedAt])
 }

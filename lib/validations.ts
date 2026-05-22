@@ -48,3 +48,17 @@ export const communityCommentSchema = z.object({
 
 export type CommunityPostInput = z.infer<typeof communityPostSchema>;
 export type CommunityCommentInput = z.infer<typeof communityCommentSchema>;
+
+// CUID: 'c' + 24 chars base36. Acepta también CUIDs largos por compatibilidad.
+const cuidLike = z.string().regex(/^c[a-z0-9]{20,}$/i, "ID inválido");
+
+export const affiliateClickSchema = z.object({
+  productId:        cuidLike,
+  selectedRetailer: z.string().trim().min(1).max(80),
+  retailerPosition: z.number().int().min(0).max(50),
+  isPrimary:        z.boolean(),
+  pageContext:      z.string().trim().max(120).optional(),
+  placement:        z.string().trim().max(60).optional(),
+});
+
+export type AffiliateClickInput = z.infer<typeof affiliateClickSchema>;

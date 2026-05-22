@@ -7,6 +7,7 @@ import ProductModal from "./ProductModal";
 import { BuySignalBadge } from "./BuySignalBadge";
 import { SaveButton } from "./SaveButton";
 import { StockBadge } from "./StockBadge";
+import { trackAffiliateClick } from "@/lib/affiliate-track";
 
 const CATEGORY_LABELS: Record<string, string> = {
   TELEVISORES: "Televisores", LAVADORAS: "Lavadoras", FRIGORIFICOS: "Frigoríficos",
@@ -300,7 +301,16 @@ export default function ProductCard({ product, priority = false }: Props) {
                   href={mejorOferta.externalUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    trackAffiliateClick({
+                      productId: product.id,
+                      selectedRetailer: mejorOferta.store,
+                      retailerPosition: 0,
+                      isPrimary: true,
+                      placement: "product_card",
+                    });
+                  }}
                   className="sm:ml-auto inline-flex items-center justify-center gap-1 w-full sm:w-auto text-[10px] sm:text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 active:scale-[0.97] px-2 sm:px-3.5 h-7 sm:h-9 rounded-md sm:rounded-lg transition-all shadow-sm shadow-brand-600/20"
                 >
                   <span className="sm:hidden">Ver oferta</span>
