@@ -157,37 +157,86 @@ function productKey(p: CompareProduct): string {
 
 // ─── Componente principal ────────────────────────────────────────────────────
 
+// Todas las categorías disponibles, en el orden en que se muestran. Mantengo
+// "OTROS" fuera porque no tiene sentido comparar un cajón de sastre.
+const ALL_CATEGORIES: string[] = [
+  "TELEVISORES", "FRIGORIFICOS", "LAVADORAS", "SECADORAS",
+  "LAVAVAJILLAS", "HORNOS", "MICROONDAS", "ASPIRADORAS",
+  "CAFETERAS", "AIRES_ACONDICIONADOS",
+];
+
 export function CompareTable({ products }: { products: CompareProduct[] }) {
-  // Dedupe + agrupar por categoría
-  const { byCategory, eligibleCats } = useMemo(() => {
+  // Guardados agrupados por categoría — sirven como atajo dentro del picker.
+  const savedByCategory = useMemo(() => {
     const seen = new Set<string>();
-    const list: CompareProduct[] = [];
+    const out: Record<string, CompareProduct[]> = {};
     for (const p of products) {
       const k = productKey(p);
       if (seen.has(k)) continue;
       seen.add(k);
-      list.push(p);
+      (out[p.category] ??= []).push(p);
     }
-    const byCategory: Record<string, CompareProduct[]> = {};
-    for (const p of list) {
-      (byCategory[p.category] ??= []).push(p);
-    }
-    const eligibleCats = Object.keys(byCategory).filter((c) => byCategory[c].length >= 2);
-    eligibleCats.sort((a, b) => byCategory[b].length - byCategory[a].length);
-    return { byCategory, eligibleCats };
+    return out;
   }, [products]);
 
-  const [category, setCategory] = useState<string | null>(() => eligibleCats[0] ?? null);
+  // Categoría inicial: la que más guardados tenga, o TELEVISORES si no hay.
+  const [category, setCategory] = useState<string>(() => {
+    const sorted = ALL_CATEGORIES
+      .slice()
+      .sort((a, b) => (savedByCategory[b]?.length ?? 0) - (savedByCategory[a]?.length ?? 0));
+    return sorted[0] ?? "TELEVISORES";
+  });
+  const [query, setQuery] = useState("");
   const [aId, setAId] = useState<string | null>(null);
   const [bId, setBId] = useState<string | null>(null);
 
-  // Al cambiar de categoría, autoescoger los 2 primeros
+  // Productos del catálogo en la categoría actual (con filtro de búsqueda).
+  // Se refetchea con debounce al cambiar categoría o query.
+  const [catalogPool, setCatalogPool] = useState<CompareProduct[]>([]);
+  const [loadingCatalog, setLoadingCatalog] = useState(false);
   useEffect(() => {
-    if (!category) { setAId(null); setBId(null); return; }
-    const list = byCategory[category] ?? [];
+    let cancelled = false;
+    const handle = setTimeout(() => {
+      setLoadingCatalog(true);
+      const url = `/api/compare/picker?category=${encodeURIComponent(category)}${query ? `&q=${encodeURIComponent(query)}` : ""}`;
+      fetch(url)
+        .then((r) => r.ok ? r.json() : { products: [] })
+        .then((d: { products: CompareProduct[] }) => {
+          if (!cancelled) setCatalogPool(d.products ?? []);
+        })
+        .catch(() => { if (!cancelled) setCatalogPool([]); })
+        .finally(() => { if (!cancelled) setLoadingCatalog(false); });
+    }, query ? 250 : 0); // pequeño debounce solo cuando se está tecleando
+    return () => { cancelled = true; clearTimeout(handle); };
+  }, [category, query]);
+
+  // Pool combinado: guardados de la categoría primero, luego catálogo (dedupe por id).
+  const currentPool = useMemo(() => {
+    const saved = savedByCategory[category] ?? [];
+    const ids = new Set(saved.map(productKey));
+    const merged: CompareProduct[] = [...saved];
+    for (const p of catalogPool) {
+      const k = productKey(p);
+      if (!ids.has(k)) { ids.add(k); merged.push(p); }
+    }
+    return merged;
+  }, [savedByCategory, category, catalogPool]);
+
+  // Conjunto de ids guardados (para marcar el chip ♥ en el picker).
+  const savedIds = useMemo(() => {
+    const s = new Set<string>();
+    for (const p of products) s.add(productKey(p));
+    return s;
+  }, [products]);
+
+  // Al cambiar de categoría, deselecciona A y B (eran de otra categoría).
+  // Si hay guardados en la nueva, autoescoge los 2 primeros como en la versión anterior.
+  useEffect(() => {
+    setQuery("");
+    const list = savedByCategory[category] ?? [];
     setAId(list[0] ? productKey(list[0]) : null);
     setBId(list[1] ? productKey(list[1]) : null);
-  }, [category, byCategory]);
+  }, [category, savedByCategory]);
 
   // Toggle FIFO: tap en uno seleccionado lo quita; en uno nuevo, llena el
   // hueco vacío o desplaza A si los dos están llenos.
@@ -244,48 +293,19 @@ export function CompareTable({ products }: { products: CompareProduct[] }) {
     });
   }, []);
 
-  // ── Empty state global ──────────────────────────────────────────────────────
-  if (eligibleCats.length === 0) {
-    return (
-      <section className="bg-bg-elevated rounded-2xl border border-white/[0.08] overflow-hidden">
-        <Header />
-        <div className="py-10 px-6 flex flex-col items-center text-center gap-3">
-          <span className="text-4xl" aria-hidden>⚖️</span>
-          <div>
-            <p className="text-[15px] font-semibold text-fg">
-              Necesitas al menos 2 productos de la misma categoría
-            </p>
-            <p className="text-[13px] text-fg-subtle mt-1 max-w-sm">
-              Guarda dos televisores, dos lavadoras… y vuelve aquí para enfrentarlos
-              lado a lado.
-            </p>
-          </div>
-          <Link
-            href="/categorias"
-            className="mt-1 text-sm font-semibold text-white px-5 py-2 rounded-full"
-            style={{ background: "linear-gradient(135deg,#2563EB,#7C3AED)" }}
-          >
-            Explorar categorías
-          </Link>
-        </div>
-      </section>
-    );
-  }
-
-  const currentPool = category ? (byCategory[category] ?? []) : [];
-
   return (
     <section className="bg-bg-elevated rounded-2xl border border-white/[0.08] overflow-hidden">
       <Header onSwap={aId && bId ? swap : undefined} />
 
-      {/* ── Paso 1: categoría ──────────────────────────────────────────────── */}
+      {/* ── Paso 1: categoría (todas, restringe el comparado a misma cat.) ── */}
       <div className="px-4 sm:px-5 py-3 border-b border-border-subtle bg-bg-subtle/40">
         <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-fg-subtle mb-2">
-          1 · Categoría
+          1 · Categoría <span className="text-fg-subtle/70 font-normal normal-case tracking-normal">— se compara sólo dentro de la misma</span>
         </p>
         <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 snap-x">
-          {eligibleCats.map((c) => {
+          {ALL_CATEGORIES.map((c) => {
             const active = c === category;
+            const savedCount = savedByCategory[c]?.length ?? 0;
             return (
               <button
                 key={c}
@@ -300,16 +320,21 @@ export function CompareTable({ products }: { products: CompareProduct[] }) {
               >
                 <span aria-hidden>{categoryIcon(c)}</span>
                 <span>{categoryLabel(c)}</span>
-                <span className={`text-[10px] tabular ${active ? "text-cyan-300" : "text-fg-subtle"}`}>
-                  {byCategory[c].length}
-                </span>
+                {savedCount > 0 && (
+                  <span
+                    className={`inline-flex items-center gap-0.5 text-[10px] tabular ${active ? "text-cyan-300" : "text-fg-subtle"}`}
+                    title={`${savedCount} guardado${savedCount === 1 ? "" : "s"}`}
+                  >
+                    ♥{savedCount}
+                  </span>
+                )}
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* ── Paso 2: tarjetas seleccionables ───────────────────────────────── */}
+      {/* ── Paso 2: buscar + tarjetas seleccionables ──────────────────────── */}
       <div className="px-4 sm:px-5 py-4 border-b border-border-subtle">
         <div className="flex items-baseline justify-between gap-2 mb-3">
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-fg-subtle">
@@ -323,11 +348,35 @@ export function CompareTable({ products }: { products: CompareProduct[] }) {
                 : "Ninguno seleccionado"}
           </p>
         </div>
+
+        <div className="relative mb-3">
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={`Buscar ${categoryLabel(category).toLowerCase()} por marca, modelo…`}
+            className="w-full h-10 pl-9 pr-3 rounded-xl bg-bg-subtle border border-border text-[13px] text-fg placeholder:text-fg-subtle focus:outline-none focus:border-cyan-400/50 focus:bg-bg-elevated transition-colors"
+            aria-label="Buscar producto del catálogo"
+          />
+          <svg
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-fg-subtle pointer-events-none"
+            viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}
+            strokeLinecap="round" strokeLinejoin="round" aria-hidden
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path d="m21 21-4.3-4.3" />
+          </svg>
+        </div>
+
         <PickerGrid
           pool={currentPool}
           aId={aId}
           bId={bId}
           onToggle={toggleSelect}
+          savedIds={savedIds}
+          loading={loadingCatalog}
+          query={query}
+          categoryLabel={categoryLabel(category)}
         />
       </div>
 
@@ -382,17 +431,36 @@ function Header({ onSwap }: { onSwap?: () => void }) {
 }
 
 function PickerGrid({
-  pool, aId, bId, onToggle,
+  pool, aId, bId, onToggle, savedIds, loading, query, categoryLabel,
 }: {
   pool: CompareProduct[];
   aId: string | null;
   bId: string | null;
   onToggle: (key: string) => void;
+  savedIds: Set<string>;
+  loading: boolean;
+  query: string;
+  categoryLabel: string;
 }) {
   if (pool.length === 0) {
+    if (loading) {
+      return (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3" aria-busy>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="rounded-xl border-2 border-border p-2 sm:p-2.5 animate-pulse">
+              <div className="aspect-square w-full bg-bg-subtle rounded-lg mb-2" />
+              <div className="h-3 bg-bg-subtle rounded w-1/3 mb-1" />
+              <div className="h-3 bg-bg-subtle rounded w-4/5" />
+            </div>
+          ))}
+        </div>
+      );
+    }
     return (
       <p className="py-6 text-center text-[12px] text-fg-subtle">
-        No hay productos en esta categoría.
+        {query
+          ? `No hay ${categoryLabel.toLowerCase()} que coincidan con "${query}".`
+          : `No hay ${categoryLabel.toLowerCase()} en el catálogo todavía.`}
       </p>
     );
   }
@@ -402,6 +470,7 @@ function PickerGrid({
         const k = productKey(p);
         const isA = k === aId;
         const isB = k === bId;
+        const isSaved = savedIds.has(k);
         const offer = bestOffer(p.offers);
         const ringClass = isA
           ? "border-cyan-400/70 bg-cyan-400/[0.06] shadow-[0_0_18px_-6px_rgba(94,234,212,0.45)]"
@@ -424,6 +493,15 @@ function PickerGrid({
                 aria-hidden
               >
                 {isA ? "A" : "B"}
+              </span>
+            )}
+            {isSaved && !isA && !isB && (
+              <span
+                className="absolute top-1.5 right-1.5 inline-flex items-center justify-center w-5 h-5 rounded-full bg-rose-500/90 text-white text-[10px] z-10 shadow"
+                title="Producto guardado"
+                aria-label="Guardado"
+              >
+                ♥
               </span>
             )}
             <div className="aspect-square w-full bg-white rounded-lg border border-border overflow-hidden relative">
