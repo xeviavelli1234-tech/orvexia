@@ -149,6 +149,9 @@ model Product {
   description String?
   rating      Float?                      // ej: 4.4
   reviewCount Int?                        // ej: 4471
+  // Specs estructuradas extraídas de name+description por lib/specs/extractor.ts
+  // Formato JSON flexible: { sizeInches: 55, tech: "OLED", energyClass: "A++", ... }
+  specs       Json      @default("{}")
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 

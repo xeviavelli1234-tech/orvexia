@@ -161,6 +161,7 @@ export default async function CategoryPage({
     images: p.images as string[],
     rating: p.rating,
     reviewCount: p.reviewCount,
+    specs: (p.specs ?? {}) as Record<string, unknown>,
     offers: p.offers.map((o) => ({
       store: o.store,
       priceCurrent: o.priceCurrent,
