@@ -708,23 +708,6 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
               offers: sp.offers,
             });
           }
-          for (const r of (data?.recommended ?? [])) {
-            if (seen.has(r.id)) continue;
-            seen.add(r.id);
-            pool.push({
-              id: r.id,
-              slug: r.slug,
-              name: r.name,
-              brand: r.brand,
-              category: r.category,
-              description: r.description,
-              image: r.image,
-              images: r.images,
-              rating: r.rating,
-              reviewCount: r.reviewCount,
-              offers: r.offers,
-            });
-          }
           return <CompareTable products={pool} />;
         })()}
 
