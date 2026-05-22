@@ -35,7 +35,7 @@ async function fetchProduct(id: string) {
   return prisma.product.findUnique({
     where: { id },
     include: {
-      offers: { orderBy: { priceCurrent: "asc" } },
+      offers: { orderBy: [{ inStock: "desc" }, { priceCurrent: "asc" }] },
       priceHistory: { orderBy: { recordedAt: "asc" }, take: 30 },
       reviews: { select: { rating: true } },
     },

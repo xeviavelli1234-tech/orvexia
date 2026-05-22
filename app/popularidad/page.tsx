@@ -32,7 +32,7 @@ async function getProducts(categoria: string): Promise<ProductWithOffers[]> {
       ...(categoria ? { category: categoria as never } : {}),
       offers: { some: {} },
     },
-    include: { offers: { orderBy: { priceCurrent: "asc" } } },
+    include: { offers: { orderBy: [{ inStock: "desc" }, { priceCurrent: "asc" }] } },
     orderBy: [{ reviewCount: "desc" }, { rating: "desc" }],
     take: 9,
   });

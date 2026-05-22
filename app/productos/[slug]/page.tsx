@@ -87,7 +87,7 @@ async function getProduct(slug: string) {
   return prisma.product.findUnique({
     where: { slug },
     include: {
-      offers: { orderBy: { priceCurrent: "asc" } },
+      offers: { orderBy: [{ inStock: "desc" }, { priceCurrent: "asc" }] },
       priceHistory: { orderBy: { recordedAt: "asc" }, take: 30 },
       reviews: { select: { rating: true } },
     },
@@ -97,7 +97,7 @@ async function getProduct(slug: string) {
 async function getRelated(category: string, excludeId: string) {
   return prisma.product.findMany({
     where: { category: category as Category, id: { not: excludeId } },
-    include: { offers: { orderBy: { priceCurrent: "asc" }, take: 1 } },
+    include: { offers: { orderBy: [{ inStock: "desc" }, { priceCurrent: "asc" }], take: 1 } },
     orderBy: { rating: "desc" },
     take: 4,
   });

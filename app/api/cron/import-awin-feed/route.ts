@@ -57,7 +57,7 @@ export async function GET(req: NextRequest) {
         store: cfg.storeName,
         skipped: `fatal: ${msg}`,
         rowsRead: 0, matched: 0, updated: 0, unchanged: 0,
-        priceChanged: 0, stockChanged: 0, imagesUpdated: 0, errors: 1,
+        priceChanged: 0, stockChanged: 0, imagesUpdated: 0, markedOutOfStock: 0, errors: 1,
       });
     }
   }

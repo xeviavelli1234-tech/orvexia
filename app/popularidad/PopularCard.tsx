@@ -23,6 +23,7 @@ interface Offer {
   priceOld: number | null;
   discountPercent: number | null;
   externalUrl: string;
+  inStock?: boolean;
 }
 
 interface Product {
@@ -75,8 +76,9 @@ function RankBadge({ rank }: { rank: number }) {
 export function PopularCard({ product, rank }: { product: Product; rank: number }) {
   const [open, setOpen] = useState(false);
   const best = product.offers[0];
-  const savings  = best?.priceOld && best.priceCurrent < best.priceOld ? best.priceOld - best.priceCurrent : null;
-  const realDiscount = best?.priceOld != null &&
+  const isOutOfStock = best?.inStock === false;
+  const savings = !isOutOfStock && best?.priceOld && best.priceCurrent < best.priceOld ? best.priceOld - best.priceCurrent : null;
+  const realDiscount = !isOutOfStock && best?.priceOld != null &&
     best.priceCurrent < best.priceOld &&
     best.priceOld / best.priceCurrent <= 1.40
     ? Math.round((1 - best.priceCurrent / best.priceOld) * 100)
@@ -143,9 +145,17 @@ export function PopularCard({ product, rank }: { product: Product; rank: number 
           {best ? (
             <>
               <div className="flex items-end gap-2 mb-1">
-                <span className="text-xl font-extrabold text-fg">{best.priceCurrent.toFixed(2)} €</span>
-                {best.priceOld && (
+                <span
+                  className={`text-xl font-extrabold ${isOutOfStock ? "text-fg-faint line-through" : "text-fg"}`}
+                  title={isOutOfStock ? "Último precio visto (agotado)" : undefined}
+                >
+                  {best.priceCurrent.toFixed(2)} €
+                </span>
+                {!isOutOfStock && best.priceOld && (
                   <span className="text-sm text-fg-subtle line-through mb-0.5">{best.priceOld.toFixed(2)} €</span>
+                )}
+                {isOutOfStock && (
+                  <span className="text-[10px] font-bold text-fg-muted uppercase tracking-wide mb-1">Agotado</span>
                 )}
               </div>
               {savings && savings > 0 && (

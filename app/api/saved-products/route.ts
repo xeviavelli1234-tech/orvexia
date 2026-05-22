@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   const product = await prisma.product.findUnique({
     where: { id: productId },
     include: {
-      offers: { orderBy: { priceCurrent: "asc" } },
+      offers: { orderBy: [{ inStock: "desc" }, { priceCurrent: "asc" }] },
     },
   });
   const discountedOffers = product?.offers.filter(o => (o.discountPercent ?? 0) > 0 && o.priceOld != null) ?? [];

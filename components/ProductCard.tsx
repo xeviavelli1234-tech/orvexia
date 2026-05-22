@@ -94,6 +94,7 @@ export default function ProductCard({ product, priority = false }: Props) {
   );
 
   const mejorOferta = product.offers[0];
+  const isOutOfStock = mejorOferta?.inStock === false;
   const ctaStoreName =
     mejorOferta?.store?.toLowerCase().includes("pccomponente")
       ? "PcComp."
@@ -103,15 +104,17 @@ export default function ProductCard({ product, priority = false }: Props) {
     ? /^(LG|El Corte Inglés|Fnac)$/i.test(mejorOferta.store) ||
       mejorOferta.store.toLowerCase().includes("corte ingl")
     : false;
+  // Si está agotada, no anunciamos descuento/ahorro: el precio es histórico,
+  // no una oferta activa.
   const realDiscount =
-    mejorOferta?.priceOld != null && mejorOferta.priceCurrent < mejorOferta.priceOld
+    !isOutOfStock && mejorOferta?.priceOld != null && mejorOferta.priceCurrent < mejorOferta.priceOld
       ? trustedStore
         ? Math.round((1 - mejorOferta.priceCurrent / mejorOferta.priceOld) * 100)
         : mejorOferta.priceOld / mejorOferta.priceCurrent <= 2.5
         ? Math.round((1 - mejorOferta.priceCurrent / mejorOferta.priceOld) * 100)
         : 0
       : 0;
-  const savingsAmount = mejorOferta?.priceOld && mejorOferta.priceOld > mejorOferta.priceCurrent
+  const savingsAmount = !isOutOfStock && mejorOferta?.priceOld && mejorOferta.priceOld > mejorOferta.priceCurrent
     ? mejorOferta.priceOld - mejorOferta.priceCurrent
     : 0;
 
@@ -263,11 +266,16 @@ export default function ProductCard({ product, priority = false }: Props) {
           {mejorOferta ? (
             <>
               <div className="flex items-baseline gap-1 sm:gap-2 mb-1 tabular flex-wrap">
-                <span className="text-base sm:text-2xl font-extrabold text-fg leading-none tracking-tight">
+                <span
+                  className={`text-base sm:text-2xl font-extrabold leading-none tracking-tight ${
+                    isOutOfStock ? "text-fg-faint line-through" : "text-fg"
+                  }`}
+                  title={isOutOfStock ? "Último precio visto (agotado)" : undefined}
+                >
                   {formatEuro(mejorOferta.priceCurrent)}
                   <span className="text-xs sm:text-base font-bold text-fg-muted ml-0.5">€</span>
                 </span>
-                {mejorOferta.priceOld && mejorOferta.priceOld > mejorOferta.priceCurrent && (
+                {!isOutOfStock && mejorOferta.priceOld && mejorOferta.priceOld > mejorOferta.priceCurrent && (
                   <span className="hidden sm:inline text-sm text-fg-faint line-through">{formatEuro(mejorOferta.priceOld)} €</span>
                 )}
               </div>

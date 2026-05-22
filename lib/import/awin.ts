@@ -39,14 +39,19 @@ export interface ImportStats {
   priceChanged: number;
   stockChanged: number;
   imagesUpdated: number;
+  /** Ofertas que llevaban >STALE_DAYS sin verse en el feed y se marcaron agotadas. */
+  markedOutOfStock: number;
   errors: number;
 }
 
 const EMPTY_STATS = (store: string): ImportStats => ({
   store,
   rowsRead: 0, matched: 0, updated: 0, unchanged: 0,
-  priceChanged: 0, stockChanged: 0, imagesUpdated: 0, errors: 0,
+  priceChanged: 0, stockChanged: 0, imagesUpdated: 0, markedOutOfStock: 0, errors: 0,
 });
+
+/** Días sin verse en el feed tras los que una oferta se marca agotada. */
+const STALE_DAYS = 14;
 
 // ── Utilidades de parseo ─────────────────────────────────────────────────────
 
@@ -206,6 +211,10 @@ export async function importStore(
       trim: true,
     }));
 
+  // aw_product_ids vistos en este run del feed (de cualquier producto, no solo
+  // los que hacen match con nuestras ofertas) → para detectar ofertas zombi.
+  const seenAwIds = new Set<string>();
+
   for await (const rowRaw of stream) {
     stats.rowsRead++;
     if (stats.rowsRead % 50000 === 0) {
@@ -215,6 +224,7 @@ export async function importStore(
     const row = rowRaw as Record<string, string>;
     const awId = row.aw_product_id?.trim();
     if (!awId) continue;
+    seenAwIds.add(awId);
 
     const offer = offersByAwId.get(awId);
     if (!offer) continue;
@@ -339,6 +349,45 @@ export async function importStore(
     }
   }
 
+  // ── Barrido de ofertas zombi ────────────────────────────────────────────
+  // Si una oferta lleva >STALE_DAYS sin verse en el feed y aún figura como
+  // inStock=true, la marcamos agotada. Conservamos priceCurrent/priceOld
+  // para historial; la UI debe atenuarlos cuando inStock es false.
+  // Solo aplica si el feed nos llegó con un volumen razonable: un feed
+  // truncado nos haría marcar zombies a todo el catálogo por error.
+  const MIN_FEED_ROWS_FOR_SWEEP = 1000;
+  if (stats.rowsRead >= MIN_FEED_ROWS_FOR_SWEEP) {
+    const staleCutoff = new Date(Date.now() - STALE_DAYS * 24 * 60 * 60 * 1000);
+    const candidates: typeof ourOffers = [];
+    for (const o of ourOffers) {
+      if (!cfg.storeMatcher.test(o.store)) continue;
+      const id = extractAwProductId(o.externalUrl);
+      if (!id) continue;
+      if (seenAwIds.has(id)) continue;
+      if (!o.inStock) continue;
+      if (o.updatedAt >= staleCutoff) continue;
+      candidates.push(o);
+    }
+
+    if (candidates.length > 0) {
+      if (dryRun) {
+        log(`\n🧟 ${candidates.length} ofertas zombi (>${STALE_DAYS}d sin verse) — se marcarían agotadas:`);
+        for (const c of candidates.slice(0, 10)) {
+          log(`   - ${c.product.name.slice(0, 60)} (último visto ${c.updatedAt.toISOString().slice(0, 10)})`);
+        }
+        if (candidates.length > 10) log(`   …y ${candidates.length - 10} más`);
+      } else {
+        await prisma.offer.updateMany({
+          where: { id: { in: candidates.map((c) => c.id) } },
+          data: { inStock: false },
+        });
+      }
+      stats.markedOutOfStock = candidates.length;
+    }
+  } else if (stats.rowsRead > 0) {
+    log(`   ⚠️  feed con solo ${stats.rowsRead} filas (<${MIN_FEED_ROWS_FOR_SWEEP}): salto barrido de zombies por seguridad`);
+  }
+
   log(`\n📊 ${cfg.storeName}:`);
   log(`   filas leídas:       ${stats.rowsRead}`);
   log(`   matches:            ${stats.matched}`);
@@ -347,6 +396,7 @@ export async function importStore(
   log(`   precio cambió:      ${stats.priceChanged}`);
   log(`   stock cambió:       ${stats.stockChanged}`);
   log(`   imágenes actualiz.: ${stats.imagesUpdated}`);
+  if (stats.markedOutOfStock) log(`   zombies → agotadas: ${stats.markedOutOfStock}`);
   if (stats.errors) log(`   errores:            ${stats.errors}`);
 
   return stats;

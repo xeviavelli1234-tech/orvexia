@@ -347,20 +347,32 @@ export default function ProductPageClient({ product, specs, description, catLabe
           )}
 
           {/* Tarjeta de precio + CTA */}
-          {bestOffer && (
+          {bestOffer && (() => {
+            const bestOutOfStock = bestOffer.inStock === false;
+            return (
             <div className="bg-bg-elevated rounded-2xl border-2 border-border-strong p-5 space-y-4 shadow-sm">
               <div className="flex items-baseline gap-3 flex-wrap">
-                <span className="text-3xl sm:text-4xl font-extrabold text-fg tabular tracking-tight leading-none">
+                <span
+                  className={`text-3xl sm:text-4xl font-extrabold tabular tracking-tight leading-none ${
+                    bestOutOfStock ? "text-fg-faint line-through" : "text-fg"
+                  }`}
+                  title={bestOutOfStock ? "Último precio visto (agotado)" : undefined}
+                >
                   {formatPrice(bestOffer.priceCurrent)}
                 </span>
-                {bestOffer.priceOld && bestOffer.priceOld > bestOffer.priceCurrent && (
+                {!bestOutOfStock && bestOffer.priceOld && bestOffer.priceOld > bestOffer.priceCurrent && (
                   <span className="text-base text-fg-faint line-through tabular">
                     {formatPrice(bestOffer.priceOld)}
                   </span>
                 )}
-                {bestOffer.discountPercent && (
+                {!bestOutOfStock && bestOffer.discountPercent && (
                   <span className="inline-flex items-center gap-1 text-xs font-bold text-accent-700 bg-accent-50 border border-accent-100 px-2.5 h-6 rounded-md">
                     Ahorras {bestOffer.discountPercent}%
+                  </span>
+                )}
+                {bestOutOfStock && (
+                  <span className="inline-flex items-center gap-1 text-xs font-bold text-fg-muted bg-fg-muted/10 px-2.5 h-6 rounded-md uppercase tracking-wide">
+                    Último precio visto
                   </span>
                 )}
               </div>
@@ -394,7 +406,8 @@ export default function ProductPageClient({ product, specs, description, catLabe
                 Precios actualizados en tiempo real · Enlace de afiliado
               </p>
             </div>
-          )}
+            );
+          })()}
 
           {/* Comparativa de tiendas */}
           {product.offers.length > 1 && (

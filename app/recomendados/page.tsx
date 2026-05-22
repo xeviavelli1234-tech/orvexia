@@ -42,7 +42,7 @@ async function getRecommendations(userId?: string) {
         reviewCount: { gte: 100 },
         offers: { some: {} },
       },
-      include: { offers: { orderBy: { priceCurrent: "asc" } } },
+      include: { offers: { orderBy: [{ inStock: "desc" }, { priceCurrent: "asc" }] } },
       orderBy: { rating: "desc" },
       take: 12,
     });
@@ -88,7 +88,7 @@ async function getRecommendations(userId?: string) {
         offers: { some: {} },
         id: { notIn: [...savedIds] },
       },
-      include: { offers: { orderBy: { priceCurrent: "asc" } } },
+      include: { offers: { orderBy: [{ inStock: "desc" }, { priceCurrent: "asc" }] } },
       orderBy: [{ rating: "desc" }, { reviewCount: "desc" }],
       take: 8,
     });
@@ -102,7 +102,7 @@ async function getRecommendations(userId?: string) {
         offers: { some: {} },
         id: { notIn: [...savedIds, ...recommended.map((r) => r.id)] },
       },
-      include: { offers: { orderBy: { priceCurrent: "asc" } } },
+      include: { offers: { orderBy: [{ inStock: "desc" }, { priceCurrent: "asc" }] } },
       orderBy: [{ rating: "desc" }, { reviewCount: "desc" }],
       take: 12 - recommended.length,
     });

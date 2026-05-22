@@ -14,7 +14,7 @@ export async function GET() {
       where: { userId },
       include: {
         product: {
-          include: { offers: { orderBy: { priceCurrent: "asc" } } },
+          include: { offers: { orderBy: [{ inStock: "desc" }, { priceCurrent: "asc" }] } },
         },
       },
       orderBy: { savedAt: "desc" },
@@ -23,7 +23,7 @@ export async function GET() {
       where: { userId, active: true },
       include: {
         product: {
-          include: { offers: { orderBy: { priceCurrent: "asc" } } },
+          include: { offers: { orderBy: [{ inStock: "desc" }, { priceCurrent: "asc" }] } },
         },
       },
       orderBy: { createdAt: "desc" },
@@ -165,7 +165,7 @@ export async function GET() {
   const skipNoDiscount = Math.max(0, Math.floor(Math.random() * Math.max(1, totalNoDiscount - 6)));
   const noDiscountProducts = await prisma.product.findMany({
     where: { offers: { some: { discountPercent: null, priceOld: null } } },
-    include: { offers: { orderBy: { priceCurrent: "asc" } } },
+    include: { offers: { orderBy: [{ inStock: "desc" }, { priceCurrent: "asc" }] } },
     take: 6,
     skip: skipNoDiscount,
   });

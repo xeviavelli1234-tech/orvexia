@@ -249,8 +249,11 @@ export default function ProductModal({ product, onClose }: Props) {
   }, []);
 
   const mejorOferta = product.offers[0];
+  const isOutOfStock = mejorOferta?.inStock === false;
   const storeLogo = mejorOferta ? getStoreLogo(mejorOferta.store) : null;
-  const realDiscount = mejorOferta
+  // Si está agotada, no anunciamos descuento: el precio es histórico, no
+  // una oferta activa.
+  const realDiscount = mejorOferta && !isOutOfStock
     ? getRealDiscountPercent(mejorOferta.priceCurrent, mejorOferta.priceOld)
     : 0;
 
@@ -422,8 +425,15 @@ export default function ProductModal({ product, onClose }: Props) {
 
             {mejorOferta && (
               <div className="flex items-end gap-2 md:gap-3 flex-wrap py-3 border-t border-b border-border">
-                <span className="text-2xl md:text-3xl font-bold text-fg">{formatEuro(mejorOferta.priceCurrent)} €</span>
-                {mejorOferta.priceOld != null && mejorOferta.priceOld > mejorOferta.priceCurrent &&
+                <span
+                  className={`text-2xl md:text-3xl font-bold ${
+                    isOutOfStock ? "text-fg-faint line-through" : "text-fg"
+                  }`}
+                  title={isOutOfStock ? "Último precio visto (agotado)" : undefined}
+                >
+                  {formatEuro(mejorOferta.priceCurrent)} €
+                </span>
+                {!isOutOfStock && mejorOferta.priceOld != null && mejorOferta.priceOld > mejorOferta.priceCurrent &&
                   mejorOferta.priceOld / mejorOferta.priceCurrent <= 2.5 && (
                   <span className="text-base text-fg-subtle line-through mb-0.5">{formatEuro(mejorOferta.priceOld)} €</span>
                 )}
@@ -431,6 +441,11 @@ export default function ProductModal({ product, onClose }: Props) {
                   mejorOferta.priceOld != null && (
                   <span className="mb-0.5 px-2 py-0.5 bg-brand-50 text-brand-600 text-xs font-bold rounded-lg">
                     -{realDiscount}%
+                  </span>
+                )}
+                {isOutOfStock && (
+                  <span className="mb-0.5 px-2 py-0.5 bg-fg-muted/10 text-fg-muted text-xs font-bold rounded-lg uppercase tracking-wide">
+                    Último precio visto
                   </span>
                 )}
               </div>

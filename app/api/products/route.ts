@@ -37,7 +37,7 @@ export async function GET(req: Request) {
               externalUrl: true,
               inStock: true,
             },
-            orderBy: { priceCurrent: "asc" },
+            orderBy: [{ inStock: "desc" }, { priceCurrent: "asc" }],
           },
         },
       });

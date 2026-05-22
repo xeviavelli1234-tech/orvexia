@@ -132,7 +132,7 @@ async function getProducts(category: Category) {
     include: {
       offers: {
         where: { priceCurrent: { gte: MIN_REASONABLE_PRICE, lte: MAX_REASONABLE_PRICE } },
-        orderBy: { priceCurrent: "asc" },
+        orderBy: [{ inStock: "desc" }, { priceCurrent: "asc" }],
       },
     },
     orderBy: { createdAt: "desc" },
