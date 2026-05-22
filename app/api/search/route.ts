@@ -1,35 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { searchProducts } from "@/lib/search";
 
+/**
+ * GET /api/search?q=<query>
+ *
+ * Autocompletar del header / hero. Devuelve hasta 6 productos ordenados
+ * por relevancia (ver `lib/search/index.ts`: sinónimos, sin tildes,
+ * correcciones de marca, scoring por relevancia).
+ */
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("q")?.trim() ?? "";
   if (q.length < 2) return NextResponse.json({ results: [] });
 
-  const products = await prisma.product.findMany({
-    where: {
-      offers: { some: {} },
-      OR: [
-        { name: { contains: q, mode: "insensitive" } },
-        { brand: { contains: q, mode: "insensitive" } },
-        { model: { contains: q, mode: "insensitive" } },
-      ],
-    },
-    select: {
-      id: true,
-      slug: true,
-      name: true,
-      brand: true,
-      category: true,
-      image: true,
-      offers: {
-        orderBy: { priceCurrent: "asc" },
-        take: 1,
-        select: { priceCurrent: true, discountPercent: true },
-      },
-    },
-    take: 6,
-    orderBy: { updatedAt: "desc" },
-  });
+  const hits = await searchProducts(q, { limit: 6 });
 
-  return NextResponse.json({ results: products });
+  return NextResponse.json({
+    results: hits.map((p) => ({
+      id: p.id,
+      slug: p.slug,
+      name: p.name,
+      brand: p.brand,
+      category: p.category,
+      image: p.image ?? p.images[0] ?? null,
+      offers: p.offers.slice(0, 1).map((o) => ({
+        priceCurrent: o.priceCurrent,
+        discountPercent: o.discountPercent,
+      })),
+    })),
+  });
 }
