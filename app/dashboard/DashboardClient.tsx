@@ -7,6 +7,7 @@ import ProductModal from "@/components/ProductModal";
 import { SaveButton } from "@/components/SaveButton";
 import { useProfile } from "@/components/ProfileProvider";
 import { useSaved } from "@/components/SavedProvider";
+import { CompareTable, type CompareProduct } from "@/components/CompareTable";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -684,6 +685,48 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
             accent="#7C3AED"
           />
         </div>
+
+        {/* ── COMPARADORA ──────────────────────────────────────────────────── */}
+        {!isNew && (() => {
+          const seen = new Set<string>();
+          const pool: CompareProduct[] = [];
+          for (const sp of (data?.savedProducts ?? [])) {
+            if (seen.has(sp.productId)) continue;
+            seen.add(sp.productId);
+            pool.push({
+              id: sp.productId,
+              productId: sp.productId,
+              slug: sp.slug,
+              name: sp.name,
+              brand: sp.brand,
+              category: sp.category,
+              description: sp.description,
+              image: sp.image,
+              images: sp.images,
+              rating: sp.rating,
+              reviewCount: sp.reviewCount,
+              offers: sp.offers,
+            });
+          }
+          for (const r of (data?.recommended ?? [])) {
+            if (seen.has(r.id)) continue;
+            seen.add(r.id);
+            pool.push({
+              id: r.id,
+              slug: r.slug,
+              name: r.name,
+              brand: r.brand,
+              category: r.category,
+              description: r.description,
+              image: r.image,
+              images: r.images,
+              rating: r.rating,
+              reviewCount: r.reviewCount,
+              offers: r.offers,
+            });
+          }
+          return <CompareTable products={pool} />;
+        })()}
 
         {/* ── NEW USER ONBOARDING ───────────────────────────────────────────── */}
         {isNew && (
