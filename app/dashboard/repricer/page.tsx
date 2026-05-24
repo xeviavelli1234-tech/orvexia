@@ -18,6 +18,10 @@ export const dynamic = "force-dynamic";
 const STATUS_MSG: Record<string, { kind: "ok" | "err" | "info"; text: string }> = {
   connected: { kind: "ok", text: "Cuenta de Amazon conectada correctamente." },
   demo_connected: { kind: "ok", text: "Modo demo activado. Datos de prueba, sin tocar Amazon real." },
+  manual_connected: {
+    kind: "ok",
+    text: "Modo manual activado. Sube tu catálogo en CSV para empezar.",
+  },
   disconnected: { kind: "info", text: "Cuenta de Amazon desconectada." },
   error_state_mismatch: { kind: "err", text: "Verificación CSRF fallida. Reintenta la conexión." },
   error_token_exchange: { kind: "err", text: "No pudimos canjear el código con Amazon." },
@@ -105,8 +109,8 @@ export default async function RepricerPage({
                   Activa tu repricer
                 </h2>
                 <p className="mt-3 text-white/55 text-sm max-w-md mx-auto leading-relaxed">
-                  Pruébalo con datos de prueba (sin conectar nada) o conecta tu cuenta de
-                  Amazon Seller real.
+                  Conecta tu cuenta de Amazon Seller, sube tu propio catálogo en CSV,
+                  o pruébalo con datos de demo.
                 </p>
                 <div className="mt-7 flex flex-wrap gap-3 justify-center">
                   {/* OAuth multi-cliente: SOLO cuando la app SP-API está
@@ -119,6 +123,14 @@ export default async function RepricerPage({
                       Conectar mi cuenta de Amazon
                     </a>
                   )}
+                  <form action="/api/sellers/manual/connect" method="post">
+                    <button
+                      type="submit"
+                      className="rounded-xl border border-cyan-400/40 bg-cyan-400/10 text-cyan-100 px-6 py-3 text-sm font-semibold hover:bg-cyan-400/20 hover:border-cyan-400/60 transition-colors shadow-[0_0_18px_-8px_rgba(34,211,238,0.7)]"
+                    >
+                      Empezar sin Amazon
+                    </button>
+                  </form>
                   <form action="/api/sellers/demo/connect" method="post">
                     <button
                       type="submit"
@@ -128,11 +140,18 @@ export default async function RepricerPage({
                     </button>
                   </form>
                 </div>
+                <p className="mt-4 text-xs text-white/45 max-w-lg mx-auto leading-relaxed">
+                  <strong className="text-cyan-200/90">Modo sin Amazon:</strong>{" "}
+                  Sube tu catálogo en CSV (Shopify, WooCommerce, tienda propia, físico…) y nuestro
+                  motor te devuelve un plan de precios sugerido para cada SKU. Tú decides cuándo y
+                  dónde aplicarlo. Nunca escribimos en Amazon ni en ninguna tienda externa.
+                </p>
                 {process.env.SP_API_APP_PUBLISHED !== "true" && (
-                  <p className="mt-4 text-xs text-white/40 max-w-md mx-auto">
+                  <p className="mt-3 text-xs text-white/40 max-w-md mx-auto">
                     La conexión de tu cuenta de Amazon estará disponible en
                     cuanto Amazon apruebe la publicación de la app. Mientras
-                    tanto puedes probarlo todo en <strong>modo demo</strong>.
+                    tanto puedes usar el <strong>modo sin Amazon</strong> o el
+                    <strong> modo demo</strong>.
                   </p>
                 )}
                 {process.env.SP_API_ENV === "production" && (

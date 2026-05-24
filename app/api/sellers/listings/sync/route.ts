@@ -19,6 +19,15 @@ export async function POST() {
   if (!account || !account.active) {
     return NextResponse.json({ error: "no_active_seller_account" }, { status: 400 });
   }
+  // Modo manual no usa SP-API: el sync se hace subiendo CSV en
+  // /api/sellers/manual/import. Rechazamos aquí para no llamar a Amazon con
+  // credenciales sintéticas.
+  if (account.mode === "manual") {
+    return NextResponse.json(
+      { error: "manual_mode_no_sync", detail: "Sube tu catálogo en CSV." },
+      { status: 400 },
+    );
+  }
 
   // En modo demo/fixtures el token es el placeholder sin cifrar y no se usa
   // (fetchAllListings devuelve fixtures). Solo exigimos descifrado real en

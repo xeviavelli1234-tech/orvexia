@@ -4,6 +4,8 @@ import { getSession } from "@/lib/session";
 import { getSellerAccountByUserId } from "@/lib/db/sellerAccount";
 import { listListingsByAccount } from "@/lib/db/sellerListing";
 import { SyncButton } from "./SyncButton";
+import { UploadCsvButton } from "./UploadCsvButton";
+import { GeneratePlanButton, ExportPlanButton } from "./PlanButtons";
 import ProductNetwork, { type NetNode } from "./ProductNetwork";
 import AssistantWidget from "./AssistantWidget";
 import AnalyticsOverlay, { type OvEvent, type OvProduct } from "./AnalyticsOverlay";
@@ -64,6 +66,13 @@ export default async function ProductosPage() {
   const withPrice = listings.filter((l) => l.priceCurrent > 0).length;
   const active = listings.filter((l) => l.repricingEnabled).length;
   const catalogValue = listings.reduce((s, l) => s + (l.priceCurrent || 0), 0);
+  const isManualMode = account.mode === "manual";
+  const planGeneratedCount = listings.filter((l) => l.suggestedPrice != null).length;
+  const planLastGeneratedAt = listings
+    .map((l) => l.suggestedAt)
+    .filter((d): d is Date => d != null)
+    .sort((a, b) => b.getTime() - a.getTime())[0]
+    ?? null;
 
   const billing = getBillingState(account.plan as SellerPlan, account.trialEndsAt);
   const [lastRun, runCount, rawEvents] = await Promise.all([
@@ -226,12 +235,37 @@ export default async function ProductosPage() {
           className="px-5 py-5 flex flex-col gap-3 border-b border-white/10"
         >
           <Eyebrow>Acciones</Eyebrow>
-          <div id="tour-sync">
-            <SyncButton lastSyncAt={account.lastSyncAt} />
-          </div>
-          <div id="tour-run">
-            <RunNowButton />
-          </div>
+          {isManualMode ? (
+            <>
+              <div id="tour-sync">
+                <UploadCsvButton lastSyncAt={account.lastSyncAt} />
+              </div>
+              <div id="tour-run">
+                <GeneratePlanButton hasListings={hasListings} />
+              </div>
+              <div>
+                <ExportPlanButton enabled={planGeneratedCount > 0} />
+                {planGeneratedCount > 0 && planLastGeneratedAt && (
+                  <span className="mt-1 block text-[11px] text-white/40">
+                    Plan: {planGeneratedCount} precios ·{" "}
+                    {new Intl.DateTimeFormat("es-ES", {
+                      dateStyle: "short",
+                      timeStyle: "short",
+                    }).format(planLastGeneratedAt)}
+                  </span>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              <div id="tour-sync">
+                <SyncButton lastSyncAt={account.lastSyncAt} />
+              </div>
+              <div id="tour-run">
+                <RunNowButton />
+              </div>
+            </>
+          )}
         </div>
 
         <div
@@ -288,14 +322,36 @@ export default async function ProductosPage() {
 
   const envIsProduction = process.env.SP_API_ENV === "production";
   const accountInProd = account.spApiEnv === "production";
-  const isDemoMode = !envIsProduction || !accountInProd;
+  // Modo manual no depende de SP-API → nunca mostrar el banner de demo.
+  const isDemoMode = !isManualMode && (!envIsProduction || !accountInProd);
 
   const canvas = hasListings ? (
     <ProductNetwork nodes={nodes} activeCount={active} />
   ) : (
     <div className="absolute inset-0 grid place-items-center text-center px-6">
       <div className="max-w-md">
-        {isDemoMode ? (
+        {isManualMode ? (
+          <>
+            <div className="font-mono-ui text-[10px] uppercase tracking-wider text-cyan-300 mb-2">
+              ▸ modo manual · sin amazon
+            </div>
+            <div className="text-2xl font-extrabold tracking-tight text-gradient-neon">
+              Sube tu catálogo
+            </div>
+            <p className="mt-3 text-white/70">
+              Pulsa{" "}
+              <strong className="text-white">&ldquo;Subir catálogo CSV&rdquo;</strong>{" "}
+              <span className="hidden lg:inline">en la barra de la izquierda</span>
+              <span className="lg:hidden">en el menú</span>{" "}
+              para importar tus productos.
+            </p>
+            <p className="mt-2 text-xs text-white/40">
+              Formato mínimo: <code className="text-cyan-300">sku, title, price</code>. Opcionales:{" "}
+              <code className="text-white/70">min, max, cost</code>. Luego &laquo;Generar plan de
+              precios&raquo; y &laquo;Exportar plan CSV&raquo; para aplicarlo donde vendas.
+            </p>
+          </>
+        ) : isDemoMode ? (
           <>
             <div className="font-mono-ui text-[10px] uppercase tracking-wider text-amber-300 mb-2">
               ▸ app sp-api · pendiente de aprobación

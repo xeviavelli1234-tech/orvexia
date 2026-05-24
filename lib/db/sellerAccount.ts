@@ -56,6 +56,38 @@ export async function deactivateSellerAccount(userId: string) {
   });
 }
 
+/**
+ * Modo MANUAL: el vendedor no está en Amazon. Crea (o reactiva) una
+ * SellerAccount sin OAuth, con un `amazonSellerId` sintético para satisfacer
+ * el UNIQUE. Se usa para que vendedores de Shopify, web propia, tiendas
+ * físicas, etc. puedan subir su catálogo vía CSV y recibir un plan de precios
+ * sugerido por la misma IA, sin escribir nunca en Amazon.
+ */
+export async function upsertManualSellerAccount(userId: string) {
+  const now = new Date();
+  const trialEndsAt = new Date(now.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
+  const syntheticSellerId = `MANUAL-${userId.slice(0, 12)}`;
+  return prisma.sellerAccount.upsert({
+    where: { userId },
+    create: {
+      userId,
+      amazonSellerId: syntheticSellerId,
+      marketplaceId: MARKETPLACE_IDS.ES,
+      refreshToken: "MANUAL_NO_TOKEN",
+      spApiEnv: "sandbox",
+      mode: "manual",
+      plan: "TRIAL",
+      trialEndsAt,
+      intervalSeconds: DEFAULT_INTERVAL_SECONDS,
+      active: true,
+    },
+    update: {
+      mode: "manual",
+      active: true,
+    },
+  });
+}
+
 /** Datos fiscales del cliente para la factura. */
 export async function setBillingProfile(params: {
   userId: string;

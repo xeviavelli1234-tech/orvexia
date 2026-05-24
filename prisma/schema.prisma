@@ -18,7 +18,7 @@ model User {
   verificationTokenExpires DateTime?
   resetPasswordToken       String?   @unique
   resetPasswordExpires     DateTime?
-  totpSecret               String?   // base32 cifrado (AES-GCM)
+  totpSecret               String? // base32 cifrado (AES-GCM)
   totpEnabled              Boolean   @default(false)
   totpRecovery             String?   @db.Text // JSON: hashes bcrypt de códigos
   avatarColor              String    @default("#2563EB")
@@ -28,8 +28,8 @@ model User {
   createdAt                DateTime  @default(now())
   updatedAt                DateTime  @updatedAt
 
-  savedProducts SavedProduct[]
-  priceAlerts   PriceAlert[]
+  savedProducts     SavedProduct[]
+  priceAlerts       PriceAlert[]
   communityPosts    CommunityPost[]
   communityComments CommunityComment[]
   communityVotes    CommunityVote[]
@@ -44,17 +44,17 @@ model User {
 
 // ─── Seguridad: passkeys, magic links, intentos de inicio, ubicaciones ──────
 model Passkey {
-  id              String   @id @default(cuid())
-  userId          String
-  credentialId    String   @unique // base64url del id de la credencial
-  publicKey       String   @db.Text // base64url de la public key
-  counter         Int      @default(0)
-  transports      String   @default("") // "internal,hybrid" etc, CSV
-  deviceType      String   @default("singleDevice") // singleDevice | multiDevice
-  backedUp        Boolean  @default(false)
-  name            String   @default("Mi llave") // alias para el usuario
-  createdAt       DateTime @default(now())
-  lastUsedAt      DateTime?
+  id           String    @id @default(cuid())
+  userId       String
+  credentialId String    @unique // base64url del id de la credencial
+  publicKey    String    @db.Text // base64url de la public key
+  counter      Int       @default(0)
+  transports   String    @default("") // "internal,hybrid" etc, CSV
+  deviceType   String    @default("singleDevice") // singleDevice | multiDevice
+  backedUp     Boolean   @default(false)
+  name         String    @default("Mi llave") // alias para el usuario
+  createdAt    DateTime  @default(now())
+  lastUsedAt   DateTime?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -62,13 +62,13 @@ model Passkey {
 }
 
 model MagicLink {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   userId      String
-  tokenHash   String   @unique // bcrypt del token enviado (no se guarda en claro)
+  tokenHash   String    @unique // bcrypt del token enviado (no se guarda en claro)
   expiresAt   DateTime
   usedAt      DateTime?
   ipAtRequest String?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -84,7 +84,7 @@ model LoginAttempt {
   userAgent String?  @db.Text
   method    String   @default("password") // password | passkey | magic | totp_verify | google
   success   Boolean
-  reason    String?  // "bad_password" | "totp_failed" | "new_location" | "ok"
+  reason    String? // "bad_password" | "totp_failed" | "new_location" | "ok"
   createdAt DateTime @default(now())
 
   user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -94,12 +94,12 @@ model LoginAttempt {
 }
 
 model TrustedLocation {
-  id        String   @id @default(cuid())
-  userId    String
-  ip        String   // recordamos la /24 (IPv4) o /64 (IPv6) para tolerar cambios menores
-  country   String?
-  label     String   @default("Sin etiqueta") // p. ej. "Casa", "Oficina"
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  userId     String
+  ip         String // recordamos la /24 (IPv4) o /64 (IPv6) para tolerar cambios menores
+  country    String?
+  label      String   @default("Sin etiqueta") // p. ej. "Casa", "Oficina"
+  createdAt  DateTime @default(now())
   lastSeenAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -110,9 +110,9 @@ model TrustedLocation {
 
 model WebAuthnChallenge {
   id        String   @id @default(cuid())
-  userId    String?  // null durante el registro guest (no soportado aquí)
+  userId    String? // null durante el registro guest (no soportado aquí)
   challenge String   @unique
-  type      String   // "registration" | "authentication"
+  type      String // "registration" | "authentication"
   expiresAt DateTime
   createdAt DateTime @default(now())
 
@@ -138,22 +138,22 @@ enum Category {
 // Representa un electrodoméstico genérico (independiente de tienda o precio).
 // Un mismo producto puede tener ofertas en varias tiendas.
 model Product {
-  id          String    @id @default(cuid())
-  slug        String    @unique           // ej: "samsung-galaxy-qled-55-2024"
-  name        String                      // ej: "Samsung QLED 55\" 4K Q80C"
+  id          String   @id @default(cuid())
+  slug        String   @unique // ej: "samsung-galaxy-qled-55-2024"
+  name        String // ej: "Samsung QLED 55\" 4K Q80C"
   category    Category
-  brand       String                      // ej: "Samsung"
-  model       String                      // ej: "QE55Q80CATXXC"
-  image       String?                     // URL de imagen principal
-  images      String[]                    // galería de imágenes
+  brand       String // ej: "Samsung"
+  model       String // ej: "QE55Q80CATXXC"
+  image       String? // URL de imagen principal
+  images      String[] // galería de imágenes
   description String?
-  rating      Float?                      // ej: 4.4
-  reviewCount Int?                        // ej: 4471
+  rating      Float? // ej: 4.4
+  reviewCount Int? // ej: 4471
   // Specs estructuradas extraídas de name+description por lib/specs/extractor.ts
   // Formato JSON flexible: { sizeInches: 55, tech: "OLED", energyClass: "A++", ... }
-  specs       Json      @default("{}")
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  specs       Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   offers          Offer[]
   priceHistory    PriceHistory[]
@@ -175,17 +175,17 @@ model Product {
 model Offer {
   id              String   @id @default(cuid())
   productId       String
-  store           String                   // ej: "Amazon", "MediaMarkt", "PcComponentes"
-  priceCurrent    Float                    // precio actual en euros
-  priceOld        Float?                   // precio anterior (para mostrar tachado)
-  discountPercent Int?                     // % de descuento calculado
-  externalUrl     String                   // enlace directo al producto en la tienda
+  store           String // ej: "Amazon", "MediaMarkt", "PcComponentes"
+  priceCurrent    Float // precio actual en euros
+  priceOld        Float? // precio anterior (para mostrar tachado)
+  discountPercent Int? // % de descuento calculado
+  externalUrl     String // enlace directo al producto en la tienda
   inStock         Boolean  @default(true)
   updatedAt       DateTime @updatedAt
 
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  @@unique([productId, store])             // un producto solo tiene una oferta por tienda
+  @@unique([productId, store]) // un producto solo tiene una oferta por tienda
   @@index([productId])
   @@index([store])
   @@index([priceCurrent])
@@ -195,10 +195,10 @@ model Offer {
 // Registro histórico de cada cambio de precio por producto y tienda.
 // Permite mostrar "precio mínimo histórico" y gráficas de evolución.
 model PriceHistory {
-  id        String   @id @default(cuid())
-  productId String
-  store     String
-  price     Float
+  id         String   @id @default(cuid())
+  productId  String
+  store      String
+  price      Float
   recordedAt DateTime @default(now())
 
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
@@ -210,13 +210,13 @@ model PriceHistory {
 
 // ─── Producto guardado ────────────────────────────────────────────────────────
 model SavedProduct {
-  id        String   @id @default(cuid())
-  userId    String
-  productId String
-  savedAt   DateTime @default(now())
-  notifyOnDiscount    Boolean   @default(false)
-  discountAlertSentAt DateTime?
-  savedPriceCurrent   Float?
+  id                    String    @id @default(cuid())
+  userId                String
+  productId             String
+  savedAt               DateTime  @default(now())
+  notifyOnDiscount      Boolean   @default(false)
+  discountAlertSentAt   DateTime?
+  savedPriceCurrent     Float?
   betterDealAlertSentAt DateTime?
 
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -248,23 +248,23 @@ model PriceAlert {
 
 // ─── Señal de Compra ──────────────────────────────────────────────────────────
 model BuySignal {
-  id           String   @id @default(cuid())
-  productId    String
-  store        String
+  id        String @id @default(cuid())
+  productId String
+  store     String
 
-  score        Int      // 0-100
-  label        String   // "Compra ahora" | "Buen momento" | etc.
+  score Int // 0-100
+  label String // "Compra ahora" | "Buen momento" | etc.
 
-  priceScore   Int      // 0-40
-  trendScore   Int      // 0-25
-  storeScore   Int      // 0-20
-  dealScore    Int      // 0-15
+  priceScore Int // 0-40
+  trendScore Int // 0-25
+  storeScore Int // 0-20
+  dealScore  Int // 0-15
 
-  priceMin90d  Float
-  priceMax90d  Float
-  priceAvg90d  Float
-  trendSlope   Float    // €/día
-  isFakeDeal   Boolean
+  priceMin90d Float
+  priceMax90d Float
+  priceAvg90d Float
+  trendSlope  Float // €/día
+  isFakeDeal  Boolean
 
   calculatedAt DateTime @default(now())
 
@@ -347,7 +347,7 @@ model Review {
   id        String   @id @default(cuid())
   productId String
   userId    String
-  rating    Int      // 1-5
+  rating    Int // 1-5
   title     String?
   content   String   @db.Text
   createdAt DateTime @default(now())
@@ -401,12 +401,20 @@ enum BuyBoxStatus {
 }
 
 model SellerAccount {
-  id              String     @id @default(cuid())
-  userId          String     @unique
-  amazonSellerId  String     @unique
-  marketplaceId   String     @default("A1RKKUPIHCS9HS")
-  refreshToken    String     @db.Text
-  spApiEnv        String     @default("sandbox")
+  id             String @id @default(cuid())
+  userId         String @unique
+  amazonSellerId String @unique
+  marketplaceId  String @default("A1RKKUPIHCS9HS")
+  refreshToken   String @db.Text
+  spApiEnv       String @default("sandbox")
+
+  // ── Modo de operación ────────────────────────────────────────────────
+  // "amazon": cuenta conectada vía SP-API (flujo histórico).
+  // "manual": el vendedor no es de Amazon; gestiona su catálogo subiendo
+  //   CSV y exporta planes de precios sugeridos. Para satisfacer el
+  //   unique de `amazonSellerId` usamos un id sintético `manual_<cuid>`
+  //   y `refreshToken` queda vacío.
+  mode String @default("amazon")
 
   plan                 SellerPlan @default(TRIAL)
   trialEndsAt          DateTime?
@@ -414,10 +422,10 @@ model SellerAccount {
   stripeCustomerId     String?    @unique
   stripeSubscriptionId String?    @unique
 
-  active          Boolean    @default(true)
-  lastSyncAt      DateTime?
-  lastRunAt       DateTime?
-  lockedAt        DateTime?                            // lock de ciclo (evita solapamientos)
+  active     Boolean   @default(true)
+  lastSyncAt DateTime?
+  lastRunAt  DateTime?
+  lockedAt   DateTime? // lock de ciclo (evita solapamientos)
 
   // ── Estrategia por defecto de la cuenta (productos con useAccountDefaults) ──
   defaultStrategy      RepriceStrategy   @default(BUYBOX)
@@ -428,45 +436,45 @@ model SellerAccount {
   defaultStepUpValue   Float             @default(0.05)
 
   // ── Programación horaria, simulación y throttling ──
-  scheduleEnabled  Boolean @default(false)
-  scheduleStartHour Int    @default(0)   // hora local Europe/Madrid (0-23)
-  scheduleEndHour   Int    @default(24)  // exclusivo (24 = fin de día)
-  dryRun           Boolean @default(false) // calcula pero NO aplica en Amazon
-  patchDelayMs     Int     @default(0)     // retardo entre PATCHes (anti QuotaExceeded)
-  autoSyncHours    Int     @default(0)     // sincroniza catálogo cada N h (0 = manual)
+  scheduleEnabled   Boolean @default(false)
+  scheduleStartHour Int     @default(0) // hora local Europe/Madrid (0-23)
+  scheduleEndHour   Int     @default(24) // exclusivo (24 = fin de día)
+  dryRun            Boolean @default(false) // calcula pero NO aplica en Amazon
+  patchDelayMs      Int     @default(0) // retardo entre PATCHes (anti QuotaExceeded)
+  autoSyncHours     Int     @default(0) // sincroniza catálogo cada N h (0 = manual)
 
   // ── Alertas por email ──
-  alertsEnabled     Boolean @default(true)
-  alertEmail        String?                 // destino (vacío = email de la cuenta)
-  alertOnBuyBoxLost Boolean @default(true)  // avisar al perder la Buy Box
-  alertOnPriceFloor Boolean @default(true)  // avisar al tocar el precio mínimo
-  alertOnError      Boolean @default(true)  // avisar ante errores de reprecio
-  lastAlertAt       DateTime?               // cooldown anti-spam de correos
-  trialReminderSent Boolean @default(false) // aviso de fin de prueba enviado
+  alertsEnabled     Boolean   @default(true)
+  alertEmail        String? // destino (vacío = email de la cuenta)
+  alertOnBuyBoxLost Boolean   @default(true) // avisar al perder la Buy Box
+  alertOnPriceFloor Boolean   @default(true) // avisar al tocar el precio mínimo
+  alertOnError      Boolean   @default(true) // avisar ante errores de reprecio
+  lastAlertAt       DateTime? // cooldown anti-spam de correos
+  trialReminderSent Boolean   @default(false) // aviso de fin de prueba enviado
 
   // ── Datos fiscales del cliente (para la factura) ──
-  billingName     String @default("") // razón social / nombre fiscal
-  billingTaxId    String @default("") // NIF / CIF / VAT
-  billingAddress  String @default("") // dirección fiscal
-  billingCountry  String @default("ES")
+  billingName    String @default("") // razón social / nombre fiscal
+  billingTaxId   String @default("") // NIF / CIF / VAT
+  billingAddress String @default("") // dirección fiscal
+  billingCountry String @default("ES")
 
   // ── Seguridad: allowlist de IPs (CSV; vacío = sin restricción) ──
-  ipAllowlist     String @default("") @db.Text
+  ipAllowlist String @default("") @db.Text
 
   // ── Modo vacaciones: rango de pausa total ──
-  vacationFrom    DateTime?
-  vacationTo      DateTime?
-  vacationNote    String   @default("")
+  vacationFrom DateTime?
+  vacationTo   DateTime?
+  vacationNote String    @default("")
 
   // ── Resumen semanal IA (cooldown) ──
   weeklyDigestSentAt DateTime?
 
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  listings SellerListing[]
-  runs     RepricingRun[]
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listings  SellerListing[]
+  runs      RepricingRun[]
   auditLogs AuditLog[]
 
   @@index([active, lastRunAt])
@@ -475,7 +483,7 @@ model SellerAccount {
 model AuditLog {
   id              String   @id @default(cuid())
   sellerAccountId String
-  action          String   // clave: listing.strategy, account.settings…
+  action          String // clave: listing.strategy, account.settings…
   detail          String   @db.Text
   createdAt       DateTime @default(now())
 
@@ -485,68 +493,80 @@ model AuditLog {
 }
 
 model SellerListing {
-  id              String   @id @default(cuid())
+  id              String @id @default(cuid())
   sellerAccountId String
 
-  asin            String
-  parentAsin      String   @default("") // ASIN padre (variación talla/color)
-  sku             String
-  title           String
-  imageUrl        String?
-  productType     String?                            // SP-API productType (TELEVISION, etc), required for PATCH
+  asin        String
+  parentAsin  String  @default("") // ASIN padre (variación talla/color)
+  sku         String
+  title       String
+  imageUrl    String?
+  productType String? // SP-API productType (TELEVISION, etc), required for PATCH
 
-  priceCurrent    Float
-  priceMin        Float?
-  priceMax        Float?
-  currency        String   @default("EUR")
+  // "amazon" si vino del SP-API sync; "manual" si vino de un CSV (modo manual).
+  source String @default("amazon")
 
-  repricingEnabled Boolean  @default(false)
+  priceCurrent Float
+  priceMin     Float?
+  priceMax     Float?
+  currency     String @default("EUR")
+
+  repricingEnabled Boolean   @default(false)
   lastRepricedAt   DateTime?
-  tags             String   @default("") // etiquetas/grupos, separadas por comas
+  tags             String    @default("") // etiquetas/grupos, separadas por comas
 
   // ── Estrategia de reprecio ──
   strategy      RepriceStrategy   @default(BUYBOX)
   undercutType  UndercutType      @default(AMOUNT)
   undercutValue Float             @default(0.01)
-  fixedPrice    Float?            // estrategia FIXED
-  cost          Float?            // coste del producto (estrategia MARGIN)
-  shippingCost  Float?            // envío / logística propia por ud (€)
-  fbaFee        Float?            // tarifa fija FBA / gestión por ud (€)
+  fixedPrice    Float? // estrategia FIXED
+  cost          Float? // coste del producto (estrategia MARGIN)
+  shippingCost  Float? // envío / logística propia por ud (€)
+  fbaFee        Float? // tarifa fija FBA / gestión por ud (€)
   vatRate       Float?            @default(21) // % IVA del PVP (ES 21)
   feePercent    Float?            @default(15) // % comisión Amazon
   targetMargin  Float?            @default(10) // % margen objetivo (MARGIN)
   noCompetition NoCompetitionMode @default(MAX)
   stepUpType    UndercutType      @default(AMOUNT) // STEP_UP: paso € o %
-  stepUpValue   Float             @default(0.05)   // STEP_UP: tamaño del paso
+  stepUpValue   Float             @default(0.05) // STEP_UP: tamaño del paso
 
   // ── Filtros de competencia ──
   useAccountDefaults Boolean           @default(false) // hereda estrategia de la cuenta
-  ignoreAmazon       Boolean           @default(true)  // ignorar al propio Amazon (retail)
+  ignoreAmazon       Boolean           @default(true) // ignorar al propio Amazon (retail)
   fulfillmentFilter  FulfillmentFilter @default(ANY)
-  minSellerRating    Float?            // ignorar vendedores por debajo (0-5)
+  minSellerRating    Float? // ignorar vendedores por debajo (0-5)
   excludeSellers     String            @default("") // seller IDs a ignorar (lista negra)
   onlySellers        String            @default("") // si hay: solo estos (lista blanca)
 
   // ── Estado Buy Box ──
-  buyBoxStatus  BuyBoxStatus @default(UNKNOWN)
-  buyBoxPrice   Float?
-  buyBoxAt      DateTime?
+  buyBoxStatus BuyBoxStatus @default(UNKNOWN)
+  buyBoxPrice  Float?
+  buyBoxAt     DateTime?
 
   // ── Resiliencia / sync inverso ──
-  consecutiveErrors    Int       @default(0)   // se incrementa en cada error, se resetea al primer éxito
-  autoPausedAt         DateTime?               // sello de pausado automático por errores
-  autoPausedReason     String?                 // motivo legible del autopausa
-  lastExpectedPrice    Float?                  // último precio que NOSOTROS aplicamos
-  lastExpectedAt       DateTime?               // cuándo lo aplicamos (para no comparar contra valores viejos)
-  manualPriceDetected  Boolean   @default(false) // se enciende al detectar cambio manual en Seller Central
-  manualPriceAt        DateTime?               // cuándo lo detectamos
-  manualPriceBefore    Float?                  // precio que esperábamos
-  manualPriceAfter     Float?                  // precio que encontramos
+  consecutiveErrors   Int       @default(0) // se incrementa en cada error, se resetea al primer éxito
+  autoPausedAt        DateTime? // sello de pausado automático por errores
+  autoPausedReason    String? // motivo legible del autopausa
+  lastExpectedPrice   Float? // último precio que NOSOTROS aplicamos
+  lastExpectedAt      DateTime? // cuándo lo aplicamos (para no comparar contra valores viejos)
+  manualPriceDetected Boolean   @default(false) // se enciende al detectar cambio manual en Seller Central
+  manualPriceAt       DateTime? // cuándo lo detectamos
+  manualPriceBefore   Float? // precio que esperábamos
+  manualPriceAfter    Float? // precio que encontramos
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  // ── Plan de precios sugerido (modo manual) ──
+  // Cache del último resultado de "Generar plan" para no recalcular cada vez
+  // que el vendedor exporta CSV. Se invalida regenerando el plan.
+  suggestedPrice      Float?
+  suggestedAt         DateTime?
+  suggestedConfidence Float? // 0-100
+  suggestedStrategy   String? // free-form etiqueta del motor
+  suggestedReason     String?   @db.Text // explicación breve
 
-  sellerAccount SellerAccount    @relation(fields: [sellerAccountId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sellerAccount SellerAccount      @relation(fields: [sellerAccountId], references: [id], onDelete: Cascade)
   events        RepricingEvent[]
   orderItems    RepriceOrderItem[]
   notes         ListingNote[]
@@ -559,7 +579,7 @@ model SellerListing {
 model ListingNote {
   id        String   @id @default(cuid())
   listingId String
-  userId    String   // autor
+  userId    String // autor
   content   String   @db.Text
   createdAt DateTime @default(now())
 
@@ -570,23 +590,23 @@ model ListingNote {
 
 // ─── Canales externos de notificación (Slack/Telegram/Discord/Webhook) ────
 model NotificationChannel {
-  id              String   @id @default(cuid())
+  id              String    @id @default(cuid())
   sellerAccountId String
-  kind            String   // "slack" | "telegram" | "discord" | "webhook"
-  label           String   @default("Canal")
-  webhookUrl      String   @db.Text
+  kind            String // "slack" | "telegram" | "discord" | "webhook"
+  label           String    @default("Canal")
+  webhookUrl      String    @db.Text
   // Para Telegram: chat_id (se concatena al URL en formato bot/sendMessage)
-  extraTarget     String   @default("")
-  enabled         Boolean  @default(true)
-  alertBuyBoxLost Boolean  @default(true)
-  alertPriceFloor Boolean  @default(true)
-  alertError      Boolean  @default(true)
-  alertAutoPause  Boolean  @default(true)
-  alertWeekly     Boolean  @default(true)
+  extraTarget     String    @default("")
+  enabled         Boolean   @default(true)
+  alertBuyBoxLost Boolean   @default(true)
+  alertPriceFloor Boolean   @default(true)
+  alertError      Boolean   @default(true)
+  alertAutoPause  Boolean   @default(true)
+  alertWeekly     Boolean   @default(true)
   lastSentAt      DateTime?
-  lastError       String?  @db.Text
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  lastError       String?   @db.Text
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   @@index([sellerAccountId, enabled])
 }
@@ -613,7 +633,7 @@ model EventExplanation {
 model DetectedDumper {
   id              String   @id @default(cuid())
   sellerAccountId String
-  amazonSellerId  String   // ID del vendedor que dumpea
+  amazonSellerId  String // ID del vendedor que dumpea
   occurrences     Int      @default(1)
   lastDetectedAt  DateTime @default(now())
   acknowledged    Boolean  @default(false) // el usuario lo marcó como visto
@@ -642,20 +662,20 @@ model RepricingRun {
 }
 
 model RepricingEvent {
-  id              String   @id @default(cuid())
-  runId           String
-  listingId       String
+  id        String @id @default(cuid())
+  runId     String
+  listingId String
 
   priceBefore     Float
   priceAfter      Float
   competitorPrice Float?
   reason          String
-  success         Boolean  @default(true)
-  simulated       Boolean  @default(false) // dry-run: calculado pero no aplicado
+  success         Boolean      @default(true)
+  simulated       Boolean      @default(false) // dry-run: calculado pero no aplicado
   buyBox          BuyBoxStatus @default(UNKNOWN) // estado Buy Box en ese ciclo
-  errorMessage    String?  @db.Text
+  errorMessage    String?      @db.Text
 
-  createdAt       DateTime @default(now())
+  createdAt DateTime @default(now())
 
   run     RepricingRun  @relation(fields: [runId], references: [id], onDelete: Cascade)
   listing SellerListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
@@ -692,16 +712,16 @@ model RepricingEvent {
 // Registramos cada Q&A y el feedback del usuario. Un cron agrupa preguntas
 // con baja confianza o feedback negativo y propone topics nuevos a aprobar.
 model AssistantInteraction {
-  id            String   @id @default(cuid())
-  userId        String?
-  question      String   @db.Text
-  answer        String   @db.Text
-  matchedKind   String   @default("none") // "static" | "learned" | "model" | "none"
-  matchedKey    String?
-  matchedScore  Int      @default(0)
-  helpful       Boolean?
-  clusterId     String?  // se setea cuando el motor de aprendizaje lo agrupa
-  createdAt     DateTime @default(now())
+  id           String   @id @default(cuid())
+  userId       String?
+  question     String   @db.Text
+  answer       String   @db.Text
+  matchedKind  String   @default("none") // "static" | "learned" | "model" | "none"
+  matchedKey   String?
+  matchedScore Int      @default(0)
+  helpful      Boolean?
+  clusterId    String? // se setea cuando el motor de aprendizaje lo agrupa
+  createdAt    DateTime @default(now())
 
   cluster AssistantLearnedTopic? @relation(fields: [clusterId], references: [id], onDelete: SetNull)
 
@@ -713,20 +733,20 @@ model AssistantInteraction {
 // Topic aprendido automáticamente (candidato) o aprobado manualmente.
 // Cuando approved=true entra al runtime del asistente y refuerza por uso.
 model AssistantLearnedTopic {
-  id            String   @id @default(cuid())
-  keywords      String   @db.Text // separadas por coma (normalizadas, sin acentos)
-  sampleQuestion String  @db.Text // pregunta representativa del cluster
-  answer        String   @db.Text
-  followUps     String   @default("") // "preg1|preg2|preg3"
-  source        String   @default("auto") // "auto" | "manual"
-  approved      Boolean  @default(false)
-  approvedAt    DateTime?
-  usageCount    Int      @default(0)
-  helpfulCount  Int      @default(0)
-  unhelpfulCount Int     @default(0)
-  occurrences   Int      @default(1) // cuántas preguntas se agruparon aquí
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id             String    @id @default(cuid())
+  keywords       String    @db.Text // separadas por coma (normalizadas, sin acentos)
+  sampleQuestion String    @db.Text // pregunta representativa del cluster
+  answer         String    @db.Text
+  followUps      String    @default("") // "preg1|preg2|preg3"
+  source         String    @default("auto") // "auto" | "manual"
+  approved       Boolean   @default(false)
+  approvedAt     DateTime?
+  usageCount     Int       @default(0)
+  helpfulCount   Int       @default(0)
+  unhelpfulCount Int       @default(0)
+  occurrences    Int       @default(1) // cuántas preguntas se agruparon aquí
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   interactions AssistantInteraction[]
 
@@ -738,15 +758,15 @@ model AssistantLearnedTopic {
 // Una fila por cuenta y día. Incrementamos PATCHes y errores en cada ciclo
 // para mostrar al usuario "1.243 de 100k PATCHes hoy" y detectar abusos.
 model RepriceQuotaUsage {
-  id              String   @id @default(cuid())
-  sellerAccountId String
-  day             DateTime @db.Date
-  patchCount      Int      @default(0)
-  patchRetries   Int      @default(0)
-  errorCount      Int      @default(0)
-  rateLimitedCount Int     @default(0)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id               String   @id @default(cuid())
+  sellerAccountId  String
+  day              DateTime @db.Date
+  patchCount       Int      @default(0)
+  patchRetries     Int      @default(0)
+  errorCount       Int      @default(0)
+  rateLimitedCount Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   @@unique([sellerAccountId, day])
   @@index([sellerAccountId, day])
@@ -758,14 +778,14 @@ model RepriceQuotaUsage {
 model RepriceOrder {
   id              String   @id @default(cuid())
   sellerAccountId String
-  amazonOrderId   String                          // ej: 123-1234567-1234567
+  amazonOrderId   String // ej: 123-1234567-1234567
   purchaseDate    DateTime
-  orderStatus     String                          // Pending|Unshipped|Shipped|Canceled|...
-  totalAmount     Float?                          // bruto en divisa local
+  orderStatus     String // Pending|Unshipped|Shipped|Canceled|...
+  totalAmount     Float? // bruto en divisa local
   currency        String   @default("EUR")
   marketplaceId   String   @default("A1RKKUPIHCS9HS")
-  buyerEmail      String?                         // hash o pseudonimizado
-  fulfillment     String?                         // AFN (FBA) | MFN (FBM)
+  buyerEmail      String? // hash o pseudonimizado
+  fulfillment     String? // AFN (FBA) | MFN (FBM)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -776,16 +796,16 @@ model RepriceOrder {
 }
 
 model RepriceOrderItem {
-  id           String   @id @default(cuid())
-  orderId      String
-  listingId    String?                         // join con SellerListing por SKU si existe
-  asin         String
-  sku          String
-  title        String
-  quantity     Int      @default(1)
-  unitPrice    Float?                          // precio unitario neto si está disponible
-  itemPrice    Float?                          // total línea bruto
-  createdAt    DateTime @default(now())
+  id        String   @id @default(cuid())
+  orderId   String
+  listingId String? // join con SellerListing por SKU si existe
+  asin      String
+  sku       String
+  title     String
+  quantity  Int      @default(1)
+  unitPrice Float? // precio unitario neto si está disponible
+  itemPrice Float? // total línea bruto
+  createdAt DateTime @default(now())
 
   order   RepriceOrder   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   listing SellerListing? @relation(fields: [listingId], references: [id], onDelete: SetNull)
@@ -833,15 +853,15 @@ enum AffiliateConversionStatus {
 
 model AffiliateConversion {
   id            String                    @id @default(cuid())
-  network       String                    // "awin", "tradedoubler", etc.
-  transactionId String                    // id del proveedor (único por red)
-  store         String                    // merchant name / id
-  amount        Float                     // total de la venta en €
-  commission    Float                     // comisión bruta en €
+  network       String // "awin", "tradedoubler", etc.
+  transactionId String // id del proveedor (único por red)
+  store         String // merchant name / id
+  amount        Float // total de la venta en €
+  commission    Float // comisión bruta en €
   currency      String                    @default("EUR")
   status        AffiliateConversionStatus @default(PENDING)
-  clickEventId  String?                   // si vino clickref
-  rawPayload    Json                      // postback original (auditoría)
+  clickEventId  String? // si vino clickref
+  rawPayload    Json // postback original (auditoría)
   receivedAt    DateTime                  @default(now())
   updatedAt     DateTime                  @updatedAt
 

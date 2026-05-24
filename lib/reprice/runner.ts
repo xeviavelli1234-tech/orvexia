@@ -118,8 +118,11 @@ export async function runRepricer(
     errors: 0,
   };
 
+  // Excluimos cuentas en modo manual: no tienen credenciales SP-API y su
+  // flujo de "reprecio" es bajo demanda (botón "Generar plan") y nunca
+  // escribe en Amazon ni en ninguna tienda externa.
   const accounts = await prisma.sellerAccount.findMany({
-    where: { active: true },
+    where: { active: true, mode: { not: "manual" } },
     include: { user: { select: { email: true } } },
   });
 
