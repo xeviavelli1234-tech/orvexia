@@ -1469,9 +1469,10 @@ export default function ProductNetwork({
             );
           })()}
 
-          {/* Opciones del producto seleccionado: mini-dock de iconos
-              (igual concepto que el hub). Antes de los nodos para que
-              los productos queden por encima y no roben el clic. */}
+          {/* Opciones del producto seleccionado: mini-dock de iconos.
+              Se renderiza DESPUÉS de los nodos (más abajo) para que el
+              dock quede por encima de cualquier producto que pudiera
+              quedar bajo su trayectoria. */}
           {(() => {
             if (!selId) return null;
             const p = layout.pos.find((q) => q.id === selId);
@@ -1488,7 +1489,17 @@ export default function ProductNetwork({
             const px = -uy; // perpendicular
             const py = ux;
             const SR = 21;
-            const OUT = 138; // distancia del producto al centro del dock
+            // Distancia adaptativa: el dock siempre queda CLARAMENTE más
+            // allá del anillo exterior de su hub (con margen R + SR + 50px
+            // de aire). Para nodos del anillo interior eso significa saltar
+            // por encima del anillo exterior; para nodos del anillo
+            // exterior el salto es menor pero igual evita pisar a otros.
+            const hubRadii = layout.pos
+              .filter((q) => q.hubId === p.hubId)
+              .map((q) => Math.hypot(q.x - hb.x, q.y - hb.y));
+            const maxRingR = hubRadii.length > 0 ? Math.max(...hubRadii) : len;
+            const dockR = maxRingR + SR + R + 50; // 109 px de colchón
+            const OUT = Math.max(130, dockR - len);
             const STEP = 92; // separación entre opciones
             const Cx = p.x + ux * OUT;
             const Cy = p.y + uy * OUT;
