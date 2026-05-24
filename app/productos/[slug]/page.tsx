@@ -211,6 +211,39 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const priceValidUntil = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
     .toISOString().slice(0, 10);
 
+  // Specs estructuradas. GTIN se emitirá automáticamente cuando empecemos a
+  // capturarlo del feed (campo `ean` en Awin) — sin GTIN, Google se conforma
+  // con `mpn` que ya emitimos.
+  const productSpecs = (product.specs ?? {}) as {
+    energyClass?: string;
+    gtin?: string;
+    ean?: string;
+  };
+  const energyClassRaw = productSpecs.energyClass;
+  // Detecta GTIN-13 (EAN) o GTIN-8 según longitud. Solo si son dígitos válidos.
+  const rawGtin = (productSpecs.gtin || productSpecs.ean || "").replace(/\D/g, "");
+  const gtinField =
+    rawGtin.length === 13 ? { gtin13: rawGtin } :
+    rawGtin.length === 12 ? { gtin12: rawGtin } :
+    rawGtin.length === 8  ? { gtin8: rawGtin } :
+    rawGtin.length === 14 ? { gtin14: rawGtin } :
+    {};
+  // Schema.org/EUEnergyEfficiencyEnumeration acepta valores tipo EUEnergyEfficiencyCategoryA, A1, A2, A3 (A+, A++, A+++).
+  // Mapeamos nuestras clases internas al enumerado oficial.
+  const ENERGY_MAP: Record<string, string> = {
+    "A+++": "EUEnergyEfficiencyCategoryA3",
+    "A++":  "EUEnergyEfficiencyCategoryA2",
+    "A+":   "EUEnergyEfficiencyCategoryA1",
+    "A":    "EUEnergyEfficiencyCategoryA",
+    "B":    "EUEnergyEfficiencyCategoryB",
+    "C":    "EUEnergyEfficiencyCategoryC",
+    "D":    "EUEnergyEfficiencyCategoryD",
+    "E":    "EUEnergyEfficiencyCategoryE",
+    "F":    "EUEnergyEfficiencyCategoryF",
+    "G":    "EUEnergyEfficiencyCategoryG",
+  };
+  const energyEnum = energyClassRaw ? ENERGY_MAP[energyClassRaw] : null;
+
   const productJsonLd = inStockOffers.length > 0 ? {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -220,6 +253,13 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     brand: { "@type": "Brand", name: product.brand },
     sku: product.model || undefined,
     mpn: product.model || undefined,
+    ...gtinField,
+    ...(energyEnum ? {
+      hasEnergyConsumptionDetails: {
+        "@type": "EnergyConsumptionDetails",
+        hasEnergyEfficiencyCategory: `https://schema.org/${energyEnum}`,
+      },
+    } : {}),
     ...(reviewsAvg !== null && product.reviews.length > 0 ? {
       aggregateRating: {
         "@type": "AggregateRating",

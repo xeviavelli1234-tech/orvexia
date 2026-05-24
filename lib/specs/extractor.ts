@@ -78,8 +78,22 @@ function intInRange(s: string | undefined, min: number, max: number): number | u
 // ── Extractores por categoría ───────────────────────────────────────────────
 
 function commonSpecs(text: string, out: ProductSpecs): void {
-  const eMatch = text.match(/Clase\s*([A-D][+]*)/i);
-  if (eMatch) out.energyClass = eMatch[1].toUpperCase();
+  // Acepta variantes habituales en feeds ES: "Clase A+", "Clasificación energética A",
+  // "Eficiencia A++", "Etiqueta A", "Energética A++", o "más eficiente que A" (= A).
+  // Cubre nueva escala UE 2021 (A-G) además del histórico A+++/A++/A+.
+  // Sufijo (?![A-Za-z+]) en vez de \b porque [+] no genera word boundary.
+  const ENERGY_PATTERNS: RegExp[] = [
+    /\b(?:Clase|Clasificación|Eficiencia|Etiqueta|Energética|Energy\s*Class)[^A-Ga-g\n]{0,30}?([A-G][+]{0,3})(?![A-Za-z+])/i,
+    /\bmás\s+eficiente\s+que\s+([A-G])(?![A-Za-z+])/i,
+    /\b(?:label|grade|rating)\s*[:\-]?\s*([A-G][+]{0,3})(?![A-Za-z+])/i,
+  ];
+  for (const re of ENERGY_PATTERNS) {
+    const m = text.match(re);
+    if (m) {
+      out.energyClass = m[1].toUpperCase();
+      break;
+    }
+  }
 
   if (/\bWi[- ]?Fi\b/i.test(text)) out.wifi = true;
   if (/\bBluetooth\b/i.test(text)) out.bluetooth = true;
