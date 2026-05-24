@@ -149,6 +149,11 @@ export default async function ProductosPage() {
       buyBoxPrice: l.buyBoxPrice,
       lastReason: le?.reason ?? null,
       lastSuccess: le ? le.success : null,
+      suggestedPrice: l.suggestedPrice ?? null,
+      suggestedAt: l.suggestedAt ? l.suggestedAt.toISOString() : null,
+      suggestedConfidence: l.suggestedConfidence ?? null,
+      suggestedStrategy: l.suggestedStrategy ?? null,
+      suggestedReason: l.suggestedReason ?? null,
     };
   });
 

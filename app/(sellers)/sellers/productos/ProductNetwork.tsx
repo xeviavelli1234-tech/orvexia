@@ -76,6 +76,12 @@ export interface NetNode {
   stepUpValue: number;
   lastReason: string | null;
   lastSuccess: boolean | null;
+  /** Plan de precios cacheado (sólo aplica a productos del modo manual). */
+  suggestedPrice: number | null;
+  suggestedAt: string | null;
+  suggestedConfidence: number | null;
+  suggestedStrategy: string | null;
+  suggestedReason: string | null;
 }
 
 const VB_W = 1400;
@@ -175,7 +181,10 @@ type State =
 
 /** Estado del nodo por prioridad: error/Buy Box perdida es lo más urgente. */
 function nodeState(n: NetNode): State {
-  if (n.priceCurrent <= 0 || !n.asin) return "noprice";
+  const isManual = n.source === "manual";
+  // Para productos manuales NO requerimos ASIN (no tienen porque vienen
+  // de un CSV propio del vendedor). Sólo nos importa que tengan precio.
+  if (n.priceCurrent <= 0 || (!isManual && !n.asin)) return "noprice";
   if (!n.repricingEnabled) return "paused";
   if (n.lastSuccess === false) return "error";
   if (n.buyBoxStatus === "LOST") return "lost";
@@ -921,6 +930,7 @@ export default function ProductNetwork({
 
   if (nodes.length === 0) return null;
   const selState = sel ? nodeState(sel) : "paused";
+  const selIsManual = sel?.source === "manual";
 
   return (
     <div className="absolute inset-0">
@@ -2075,8 +2085,16 @@ export default function ProductNetwork({
               <h3 className="text-sm font-bold text-white/90 leading-snug line-clamp-2">
                 {sel.title}
               </h3>
-              <div className="mt-0.5 font-mono text-[10px] text-white/35 truncate">
-                {sel.asin || "sin ASIN"} · {sel.sku}
+              <div className="mt-0.5 flex items-center gap-1.5 font-mono text-[10px] text-white/35 truncate">
+                {selIsManual ? (
+                  <span className="inline-flex items-center gap-1 rounded-sm border border-cyan-400/30 bg-cyan-400/[0.08] px-1 py-px text-cyan-200/85 text-[9px] uppercase tracking-wider">
+                    Tu tienda
+                  </span>
+                ) : (
+                  <span className="truncate">{sel.asin || "sin ASIN"}</span>
+                )}
+                <span className="text-white/25">·</span>
+                <span className="truncate">{sel.sku}</span>
               </div>
             </div>
             <button
@@ -2102,22 +2120,24 @@ export default function ProductNetwork({
                     Rango {fmt(sel.priceMin)}–{fmt(sel.priceMax)} {sym(sel.currency)}
                   </span>
                 )}
-                <span
-                  className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
-                    sel.buyBoxStatus === "WON"
-                      ? "text-emerald-300 bg-emerald-400/10 border-emerald-400/25"
+                {!selIsManual && (
+                  <span
+                    className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                      sel.buyBoxStatus === "WON"
+                        ? "text-emerald-300 bg-emerald-400/10 border-emerald-400/25"
+                        : sel.buyBoxStatus === "LOST"
+                          ? "text-red-300 bg-red-500/10 border-red-400/25"
+                          : "text-white/45 bg-white/[0.05] border-white/10"
+                    }`}
+                  >
+                    Buy Box:{" "}
+                    {sel.buyBoxStatus === "WON"
+                      ? "ganada"
                       : sel.buyBoxStatus === "LOST"
-                        ? "text-red-300 bg-red-500/10 border-red-400/25"
-                        : "text-white/45 bg-white/[0.05] border-white/10"
-                  }`}
-                >
-                  Buy Box:{" "}
-                  {sel.buyBoxStatus === "WON"
-                    ? "ganada"
-                    : sel.buyBoxStatus === "LOST"
-                      ? "perdida"
-                      : "—"}
-                </span>
+                        ? "perdida"
+                        : "—"}
+                  </span>
+                )}
               </div>
             </div>
 
@@ -2142,10 +2162,72 @@ export default function ProductNetwork({
             );
           })()}
 
+          {/* Tarjeta de precio sugerido (modo manual con plan generado) */}
+          {selIsManual && sel.suggestedPrice != null && sel.suggestedPrice > 0 && (
+            <div className="mt-4 rounded-xl border border-cyan-400/25 bg-[linear-gradient(135deg,rgba(34,211,238,0.10),rgba(99,102,241,0.06))] p-4">
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="text-[10px] uppercase tracking-[0.16em] text-cyan-200/80">
+                  Precio sugerido
+                  {sel.suggestedStrategy ? ` · ${sel.suggestedStrategy}` : ""}
+                </span>
+                {sel.suggestedConfidence != null && (
+                  <span className="text-[11px] text-white/55">
+                    Confianza{" "}
+                    <strong
+                      className={
+                        sel.suggestedConfidence >= 75
+                          ? "text-emerald-300"
+                          : sel.suggestedConfidence >= 50
+                            ? "text-amber-300"
+                            : "text-rose-300"
+                      }
+                    >
+                      {Math.round(sel.suggestedConfidence)}%
+                    </strong>
+                  </span>
+                )}
+              </div>
+              <div className="mt-1 flex items-baseline gap-2">
+                <span className="text-2xl font-extrabold text-cyan-200 tabular-nums">
+                  {fmt(sel.suggestedPrice)} {sym(sel.currency)}
+                </span>
+                {sel.priceCurrent > 0 && (
+                  <span
+                    className={`text-xs font-semibold ${
+                      sel.suggestedPrice > sel.priceCurrent
+                        ? "text-emerald-300"
+                        : sel.suggestedPrice < sel.priceCurrent
+                          ? "text-amber-300"
+                          : "text-white/50"
+                    }`}
+                  >
+                    {sel.suggestedPrice > sel.priceCurrent ? "+" : ""}
+                    {((sel.suggestedPrice - sel.priceCurrent) / sel.priceCurrent * 100).toFixed(1)}%
+                  </span>
+                )}
+              </div>
+              {sel.suggestedReason && (
+                <p className="mt-2 text-[11px] text-white/55 leading-relaxed">
+                  {sel.suggestedReason}
+                </p>
+              )}
+              {sel.suggestedAt && (
+                <p className="mt-2 text-[10px] text-white/35">
+                  Generado:{" "}
+                  {new Intl.DateTimeFormat("es-ES", {
+                    dateStyle: "short",
+                    timeStyle: "short",
+                  }).format(new Date(sel.suggestedAt))}
+                </p>
+              )}
+            </div>
+          )}
+
           {selState === "noprice" ? (
             <p className="mt-4 text-xs text-amber-300/80 rounded-lg border border-amber-400/20 bg-amber-400/5 p-3">
-              Este producto no tiene oferta/precio activo en Amazon (o le falta ASIN). No se
-              puede repreciar hasta que tenga una oferta válida.
+              {selIsManual
+                ? "Este producto no tiene precio actual en el CSV. Edita el archivo y vuelve a subirlo."
+                : "Este producto no tiene oferta/precio activo en Amazon (o le falta ASIN). No se puede repreciar hasta que tenga una oferta válida."}
             </p>
           ) : (
             <>
@@ -2168,23 +2250,29 @@ export default function ProductNetwork({
                 {pending ? "Guardando…" : "Guardar rango"}
               </button>
 
-              <PricingSuggest
-                listingId={sel.id}
-                currency={sel.currency}
-                onApplyMin={(v) => setMin(String(v).replace(".", ","))}
-                onApplyMax={(v) => setMax(String(v).replace(".", ","))}
-                onApplyFixed={(v) => {
-                  setStrategy("FIXED");
-                  setFixedP(String(v).replace(".", ","));
-                }}
-              />
-              <p className="mt-1 text-[10px] text-white/30 text-center">
-                IA analiza histórico, competencia y márgenes
-              </p>
+              {!selIsManual && (
+                <>
+                  <PricingSuggest
+                    listingId={sel.id}
+                    currency={sel.currency}
+                    onApplyMin={(v) => setMin(String(v).replace(".", ","))}
+                    onApplyMax={(v) => setMax(String(v).replace(".", ","))}
+                    onApplyFixed={(v) => {
+                      setStrategy("FIXED");
+                      setFixedP(String(v).replace(".", ","));
+                    }}
+                  />
+                  <p className="mt-1 text-[10px] text-white/30 text-center">
+                    IA analiza histórico, competencia y márgenes
+                  </p>
+                </>
+              )}
 
               <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3.5">
                 <div className="min-w-0">
-                  <div className="text-sm font-semibold text-white/90">Reprecio automático</div>
+                  <div className="text-sm font-semibold text-white/90">
+                    {selIsManual ? "Incluir en el plan" : "Reprecio automático"}
+                  </div>
                   <div className="mt-0.5 flex items-center gap-1.5 text-[11px]">
                     <span
                       className={`h-1.5 w-1.5 rounded-full ${
@@ -2192,7 +2280,13 @@ export default function ProductNetwork({
                       }`}
                     />
                     <span className={sel.repricingEnabled ? "text-emerald-300" : "text-white/45"}>
-                      {sel.repricingEnabled ? "Activo" : "Pausado"}
+                      {sel.repricingEnabled
+                        ? selIsManual
+                          ? "Incluido"
+                          : "Activo"
+                        : selIsManual
+                          ? "Excluido"
+                          : "Pausado"}
                     </span>
                   </div>
                 </div>
@@ -2210,13 +2304,17 @@ export default function ProductNetwork({
                   disabled={pending}
                   className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
                 >
-                  <option value="BUYBOX">Ganar Buy Box (bajar del competidor)</option>
-                  <option value="MATCH">Igualar al competidor</option>
+                  {!selIsManual && (
+                    <option value="BUYBOX">Ganar Buy Box (bajar del competidor)</option>
+                  )}
+                  {!selIsManual && (
+                    <option value="MATCH">Igualar al competidor</option>
+                  )}
                   <option value="FIXED">Precio fijo</option>
                   <option value="MARGIN">Por margen (coste + beneficio)</option>
                 </select>
 
-                {(strategy === "BUYBOX" || strategy === "MARGIN") && (
+                {!selIsManual && (strategy === "BUYBOX" || strategy === "MARGIN") && (
                   <div className="mt-3 grid grid-cols-2 gap-3">
                     <label className="block">
                       <span className="text-[10px] uppercase tracking-wider text-white/40">
@@ -2329,7 +2427,7 @@ export default function ProductNetwork({
                   </div>
                 )}
 
-                {strategy !== "FIXED" && (
+                {!selIsManual && strategy !== "FIXED" && (
                   <>
                     <label className="mt-3 block">
                       <span className="text-[10px] uppercase tracking-wider text-white/40">
@@ -2446,33 +2544,35 @@ export default function ProductNetwork({
                   {pending ? "Guardando…" : "Guardar etiquetas"}
                 </button>
 
-                <div className="mt-4 border-t border-white/10 pt-3">
-                  <span className="text-[10px] uppercase tracking-wider text-white/40">
-                    Variación · ASIN padre
-                  </span>
-                  <input
-                    value={parentA}
-                    onChange={(e) => setParentA(e.target.value)}
-                    placeholder="B0XXXXXXXX (vacío = producto único)"
-                    disabled={pending}
-                    className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-cyan-400/60 focus:outline-none"
-                  />
-                  <p className="mt-1 text-[10px] text-white/35">
-                    Agrupa tallas/colores bajo el mismo ASIN padre para
-                    filtrarlos y gestionarlos como familia.
-                  </p>
-                  <button
-                    onClick={saveParent}
-                    disabled={pending}
-                    className="mt-2 w-full rounded-lg border border-cyan-400/40 text-cyan-200 py-2 text-sm font-semibold hover:bg-cyan-400/10 transition-colors disabled:opacity-50"
-                  >
-                    {pending ? "Guardando…" : "Guardar variación"}
-                  </button>
-                </div>
+                {!selIsManual && (
+                  <div className="mt-4 border-t border-white/10 pt-3">
+                    <span className="text-[10px] uppercase tracking-wider text-white/40">
+                      Variación · ASIN padre
+                    </span>
+                    <input
+                      value={parentA}
+                      onChange={(e) => setParentA(e.target.value)}
+                      placeholder="B0XXXXXXXX (vacío = producto único)"
+                      disabled={pending}
+                      className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-cyan-400/60 focus:outline-none"
+                    />
+                    <p className="mt-1 text-[10px] text-white/35">
+                      Agrupa tallas/colores bajo el mismo ASIN padre para
+                      filtrarlos y gestionarlos como familia.
+                    </p>
+                    <button
+                      onClick={saveParent}
+                      disabled={pending}
+                      className="mt-2 w-full rounded-lg border border-cyan-400/40 text-cyan-200 py-2 text-sm font-semibold hover:bg-cyan-400/10 transition-colors disabled:opacity-50"
+                    >
+                      {pending ? "Guardando…" : "Guardar variación"}
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* ── Competencia ── */}
-              <div className="mt-5 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+              {!selIsManual && (<div className="mt-5 rounded-xl border border-white/10 bg-white/[0.03] p-3">
                 <div className="text-[10px] uppercase tracking-wider text-white/40">
                   Competencia
                 </div>
@@ -2560,7 +2660,7 @@ export default function ProductNetwork({
                 >
                   {pending ? "Guardando…" : "Guardar competencia"}
                 </button>
-              </div>
+              </div>)}
             </>
           )}
 
