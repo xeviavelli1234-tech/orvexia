@@ -534,13 +534,14 @@ export default function ProductNetwork({
     const G = groups.length;
 
     // ── Constantes del layout en anillos concéntricos ────────────────────
-    // El primer anillo deja sitio para el icono central del hub.
-    // RING_GAP > altura de la etiqueta (~90 px con título+precio) para que
-    // dos anillos consecutivos no superpongan textos verticalmente.
-    // MIN_ARC controla cuántos nodos caben en cada anillo (perímetro/MIN_ARC).
-    const R0 = 135;
-    const RING_GAP = 118;
-    const MIN_ARC = 118;
+    // R0:       radio del primer anillo (deja sitio para el icono del hub).
+    // RING_GAP: distancia radial entre anillos (> altura del label ~90 px).
+    // MIN_ARC:  separación de arco mínima entre nodos del mismo anillo.
+    // Calibrados para dejar ~50 px libres edge-to-edge en cualquier
+    // dirección (radial y tangencial), entre esferas de R=38.
+    const R0 = 145;
+    const RING_GAP = 125;
+    const MIN_ARC = 128;
     const HR = 54; // radio del icono central del hub
 
     /**
