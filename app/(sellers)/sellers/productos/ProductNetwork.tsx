@@ -141,14 +141,6 @@ function humanizeSource(source: string): string {
   return source.charAt(0).toUpperCase() + source.slice(1);
 }
 
-function hash(s: string): number {
-  let h = 2166136261;
-  for (let i = 0; i < s.length; i++) {
-    h ^= s.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return (h >>> 0) / 4294967295;
-}
 
 function hexPoints(cx: number, cy: number, r: number): string {
   const pts: string[] = [];
@@ -541,33 +533,105 @@ export default function ProductNetwork({
     }
     const G = groups.length;
 
-    // ── Definir el centro de cada hub según el número de grupos ──────────
-    // 1 hub → centrado. 2 → izquierda/derecha (bien separados). 3 → triángulo.
-    // 4 → 2×2. Los porcentajes dejan un "no man's land" claro entre hubs.
-    function hubCenters(count: number): { x: number; y: number }[] {
+    // ── Constantes del layout en anillos concéntricos ────────────────────
+    // El primer anillo deja sitio para el icono central del hub.
+    // RING_GAP > altura de la etiqueta (~90 px con título+precio) para que
+    // dos anillos consecutivos no superpongan textos verticalmente.
+    // MIN_ARC controla cuántos nodos caben en cada anillo (perímetro/MIN_ARC).
+    const R0 = 135;
+    const RING_GAP = 118;
+    const MIN_ARC = 118;
+    const HR = 54; // radio del icono central del hub
+
+    /**
+     * Distribuye `count` nodos en anillos concéntricos. Usa el mínimo número
+     * de anillos posible y reparte proporcionalmente a la capacidad de cada
+     * anillo, así nunca queda un anillo final con 1-2 nodos sueltos.
+     *
+     * Devuelve: array de tamaños por anillo (de dentro a fuera).
+     */
+    function distributeRings(count: number): number[] {
+      if (count <= 0) return [];
+      // 1. ¿Cuántos anillos hacen falta como mínimo?
+      const caps: number[] = [];
+      let cumulative = 0;
+      let ringIdx = 0;
+      while (cumulative < count) {
+        const r = R0 + ringIdx * RING_GAP;
+        const c = Math.max(3, Math.floor((2 * Math.PI * r) / MIN_ARC));
+        caps.push(c);
+        cumulative += c;
+        ringIdx++;
+        if (ringIdx > 20) break; // safety
+      }
+      // 2. Reparto proporcional a la capacidad de cada anillo.
+      const totalCap = caps.reduce((s, c) => s + c, 0);
+      const sizes = caps.map((c) => Math.max(1, Math.round((c * count) / totalCap)));
+      // Ajusta diferencia por redondeo añadiendo/quitando del último.
+      let diff = count - sizes.reduce((s, x) => s + x, 0);
+      let i = sizes.length - 1;
+      while (diff !== 0) {
+        if (diff > 0) {
+          sizes[i] += 1;
+          diff--;
+        } else if (sizes[i] > 1) {
+          sizes[i] -= 1;
+          diff++;
+        }
+        i = (i - 1 + sizes.length) % sizes.length;
+      }
+      return sizes;
+    }
+
+    /** Radio del último anillo dado un reparto de tamaños. */
+    function maxRadiusForCount(count: number): number {
+      const sizes = distributeRings(count);
+      if (sizes.length === 0) return 0;
+      return R0 + (sizes.length - 1) * RING_GAP;
+    }
+
+    // ── Posicionar hubs dinámicamente según su contenido ─────────────────
+    // En lugar de fijar centros %, los calculamos a partir del radio que
+    // necesita cada constelación. Así un hub con muchos productos recibe
+    // más espacio y nadie se solapa con el vecino.
+    function dynamicCenters(): { x: number; y: number }[] {
       const cx = VB_W / 2;
       const cy = VB_H / 2;
-      if (count <= 1) return [{ x: cx, y: cy }];
-      if (count === 2) {
+      if (G <= 1) return [{ x: cx, y: cy }];
+      const maxRs = groups.map((g) => maxRadiusForCount(g.nodes.length));
+      const PAD = 36; // margen entre el borde del territorio y el del canvas
+      const GAP_MIN = 90; // mínimo "no man's land" entre constelaciones
+
+      if (G === 2) {
+        const need = maxRs[0] + maxRs[1] + GAP_MIN + 2 * PAD;
+        if (need <= VB_W) {
+          const x0 = PAD + maxRs[0];
+          const x1 = VB_W - PAD - maxRs[1];
+          return [
+            { x: x0, y: cy },
+            { x: x1, y: cy },
+          ];
+        }
+        // No cabe: distribuye proporcionalmente.
         return [
-          { x: VB_W * 0.20, y: cy },
-          { x: VB_W * 0.80, y: cy },
+          { x: VB_W * 0.22, y: cy },
+          { x: VB_W * 0.78, y: cy },
         ];
       }
-      if (count === 3) {
+      if (G === 3) {
         return [
-          { x: VB_W * 0.22, y: VB_H * 0.35 },
-          { x: VB_W * 0.78, y: VB_H * 0.35 },
+          { x: VB_W * 0.24, y: VB_H * 0.34 },
+          { x: VB_W * 0.76, y: VB_H * 0.34 },
           { x: VB_W * 0.50, y: VB_H * 0.78 },
         ];
       }
-      // 4+ → 2×N grid simple
-      const cols = Math.ceil(Math.sqrt(count));
-      const rows = Math.ceil(count / cols);
+      // 4+ grid
+      const cols = Math.ceil(Math.sqrt(G));
+      const rows = Math.ceil(G / cols);
       const out: { x: number; y: number }[] = [];
-      for (let i = 0; i < count; i++) {
-        const r = Math.floor(i / cols);
-        const c = i % cols;
+      for (let k = 0; k < G; k++) {
+        const r = Math.floor(k / cols);
+        const c = k % cols;
         out.push({
           x: VB_W * ((c + 0.5) / cols),
           y: VB_H * ((r + 0.5) / rows),
@@ -575,17 +639,7 @@ export default function ProductNetwork({
       }
       return out;
     }
-    const centers = hubCenters(G);
-
-    // ── Layout por grupo ──────────────────────────────────────────────────
-    const HUB_GAP = G > 1 ? 120 : 165;
-    const MIN = 156; // distancia mínima entre centros de nodos
-    // El radio máximo dentro de un hub debe respetar el espacio disponible
-    // para no invadir al hub vecino. Con G>1 reducimos el "territorio".
-    function maxRadiusFor(count: number) {
-      const base = G === 1 ? 330 : G === 2 ? 260 : 220;
-      return Math.min(base, 100 + count * 14);
-    }
+    const centers = dynamicCenters();
 
     type Pos = { x: number; y: number; hubId: number };
     const P: Pos[] = new Array(nodes.length);
@@ -593,14 +647,13 @@ export default function ProductNetwork({
     const idxOf = new Map<string, number>();
     nodes.forEach((n, i) => idxOf.set(n.id, i));
 
-    // Dock de herramientas: solo aplica al hub primario (Amazon o el primero).
+    // Dock de herramientas: cuelga del hub primario.
     const primaryHub = centers[0];
-    const T_HR = 54;
     const T_SR = 22;
     const T_GAP = 160;
     const T_N = 4;
     const T_PADX = 48;
-    const T_SY = primaryHub.y + T_HR + 120;
+    const T_SY = primaryHub.y + HR + 120;
     const T_LEFT = primaryHub.x - ((T_N - 1) / 2) * T_GAP - T_SR - T_PADX;
     const T_W = (T_N - 1) * T_GAP + 2 * (T_SR + T_PADX);
     const T_TOP = T_SY - T_SR - 30;
@@ -617,122 +670,52 @@ export default function ProductNetwork({
       const c = centers[gi];
       const list = g.nodes;
       const n = list.length;
-      const maxR = maxRadiusFor(n);
+      if (n === 0) return;
 
-      // Ventana de cada grupo dentro del canvas. Con 2 hubs separados al 20%
-      // y 80%, cada uno ocupa un territorio ≤18% del ancho con un pasillo de
-      // ~24% sin nadie entre ellos.
-      const halfW = G === 1 ? VB_W * 0.37 : G === 2 ? VB_W * 0.18 : VB_W * 0.18;
-      const halfH = G === 1 ? VB_H * 0.38 : G === 2 ? VB_H * 0.42 : VB_H * 0.22;
-      const minX = c.x - halfW;
-      const maxX = c.x + halfW;
-      const minY = c.y - halfH;
-      const maxY = c.y + halfH;
-
-      // Espiral áurea inicial alrededor de este hub.
-      const local: Pos[] = list.map((node, i) => {
-        const ga = i * 2.39996323;
-        const rr = HUB_GAP + maxR * Math.sqrt((i + 0.4) / Math.max(n, 1));
-        const jx = (hash(node.id + "x") - 0.5) * 36;
-        const jy = (hash(node.id + "y") - 0.5) * 32;
-        return {
-          x: c.x + Math.cos(ga) * rr * 1.35 + jx,
-          y: c.y + Math.sin(ga) * rr + jy,
-          hubId: gi,
-        };
+      const sizes = distributeRings(n);
+      const local: Pos[] = new Array(n);
+      let nodeOffset = 0;
+      sizes.forEach((ringSize, ringIdx) => {
+        const r = R0 + ringIdx * RING_GAP;
+        const step = (2 * Math.PI) / ringSize;
+        // Empezamos el primer nodo arriba (-π/2 = 12 en punto) y
+        // escalonamos los anillos rotando media casilla para que los
+        // nodos exteriores no queden alineados con los interiores.
+        const phase = -Math.PI / 2 + ringIdx * (step / 2);
+        for (let k = 0; k < ringSize; k++) {
+          const a = phase + k * step;
+          local[nodeOffset + k] = {
+            x: c.x + Math.cos(a) * r,
+            y: c.y + Math.sin(a) * r,
+            hubId: gi,
+          };
+        }
+        nodeOffset += ringSize;
       });
 
-      const HUB_CLEAR = HUB_GAP + R + 14;
-      const ITER = n > 1 ? Math.min(180, 70 + n * 4) : 0;
-
-      for (let it = 0; it < ITER; it++) {
-        for (let a = 0; a < local.length; a++) {
-          const dx = local[a].x - c.x;
-          const dy = local[a].y - c.y;
-          const d = Math.hypot(dx, dy) || 1;
-          if (d < HUB_CLEAR) {
-            const f = HUB_CLEAR - d;
-            local[a].x += (dx / d) * f;
-            local[a].y += (dy / d) * f;
+      // ── Esquivar el dock de herramientas (solo hub primario) ───────────
+      // Si un nodo cae dentro del rectángulo del dock, lo "saltamos"
+      // empujándolo justo debajo. Mantiene la simetría del anillo: sólo
+      // se mueve el nodo afectado.
+      if (gi === 0) {
+        for (let i = 0; i < local.length; i++) {
+          const p = local[i];
+          if (
+            p.x > dockBox.x0 &&
+            p.x < dockBox.x1 &&
+            p.y > dockBox.y0 &&
+            p.y < dockBox.y1
+          ) {
+            p.y = dockBox.y1 + 6;
           }
-          // Solo el hub primario tiene el dock que esquivar.
-          if (gi === 0) {
-            if (
-              local[a].x > dockBox.x0 &&
-              local[a].x < dockBox.x1 &&
-              local[a].y > dockBox.y0 &&
-              local[a].y < dockBox.y1
-            ) {
-              const toL = local[a].x - dockBox.x0;
-              const toR = dockBox.x1 - local[a].x;
-              const toT = local[a].y - dockBox.y0;
-              const toB = dockBox.y1 - local[a].y;
-              const mn = Math.min(toL, toR, toT, toB);
-              if (mn === toL) local[a].x = dockBox.x0;
-              else if (mn === toR) local[a].x = dockBox.x1;
-              else if (mn === toT) local[a].y = dockBox.y0;
-              else local[a].y = dockBox.y1;
-            }
-          }
-          for (let b = a + 1; b < local.length; b++) {
-            const ex = local[b].x - local[a].x;
-            const ey = local[b].y - local[a].y;
-            const dd = Math.hypot(ex, ey) || 1;
-            if (dd < MIN) {
-              const f = (MIN - dd) / 2;
-              const ux = ex / dd;
-              const uy = ey / dd;
-              local[a].x -= ux * f;
-              local[a].y -= uy * f;
-              local[b].x += ux * f;
-              local[b].y += uy * f;
-            }
-          }
-          local[a].x = Math.max(minX, Math.min(maxX, local[a].x));
-          local[a].y = Math.max(minY, Math.min(maxY, local[a].y));
         }
       }
 
-      // Repulsión adicional entre nodos de distintos grupos (cross-hub):
-      // si alguien quedó en el límite de su territorio podría rozar al
-      // vecino. Una pasada global asegura la separación final.
       list.forEach((node, i) => {
         const globalIdx = idxOf.get(node.id)!;
         P[globalIdx] = local[i];
       });
     });
-
-    // Pasada global de no-overlap: garantiza que dos productos de hubs
-    // distintos tampoco se pisen. Usamos una distancia mínima MAYOR para
-    // marcar una frontera visual clara entre constelaciones.
-    if (G > 1) {
-      const MIN_CROSS = MIN + 40; // separación extra entre hubs distintos
-      const ITER_X = 60;
-      for (let it = 0; it < ITER_X; it++) {
-        for (let a = 0; a < P.length; a++) {
-          for (let b = a + 1; b < P.length; b++) {
-            if (P[a].hubId === P[b].hubId) continue;
-            const ex = P[b].x - P[a].x;
-            const ey = P[b].y - P[a].y;
-            const dd = Math.hypot(ex, ey) || 1;
-            if (dd < MIN_CROSS) {
-              const f = (MIN_CROSS - dd) / 2;
-              const ux = ex / dd;
-              const uy = ey / dd;
-              P[a].x -= ux * f;
-              P[a].y -= uy * f;
-              P[b].x += ux * f;
-              P[b].y += uy * f;
-            }
-          }
-        }
-      }
-      // Reclampeo final dentro de bounds del canvas.
-      for (let i = 0; i < P.length; i++) {
-        P[i].x = Math.max(VB_W * 0.04, Math.min(VB_W * 0.96, P[i].x));
-        P[i].y = Math.max(VB_H * 0.08, Math.min(VB_H * 0.92, P[i].y));
-      }
-    }
 
     const pos = nodes.map((node, i) => ({
       ...node,
