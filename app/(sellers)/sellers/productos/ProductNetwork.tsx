@@ -542,22 +542,23 @@ export default function ProductNetwork({
     const G = groups.length;
 
     // ── Definir el centro de cada hub según el número de grupos ──────────
-    // 1 hub → centrado. 2 → izquierda/derecha. 3 → triángulo. 4 → 2×2.
+    // 1 hub → centrado. 2 → izquierda/derecha (bien separados). 3 → triángulo.
+    // 4 → 2×2. Los porcentajes dejan un "no man's land" claro entre hubs.
     function hubCenters(count: number): { x: number; y: number }[] {
       const cx = VB_W / 2;
       const cy = VB_H / 2;
       if (count <= 1) return [{ x: cx, y: cy }];
       if (count === 2) {
         return [
-          { x: VB_W * 0.32, y: cy },
-          { x: VB_W * 0.68, y: cy },
+          { x: VB_W * 0.20, y: cy },
+          { x: VB_W * 0.80, y: cy },
         ];
       }
       if (count === 3) {
         return [
-          { x: VB_W * 0.30, y: VB_H * 0.38 },
-          { x: VB_W * 0.70, y: VB_H * 0.38 },
-          { x: VB_W * 0.50, y: VB_H * 0.72 },
+          { x: VB_W * 0.22, y: VB_H * 0.35 },
+          { x: VB_W * 0.78, y: VB_H * 0.35 },
+          { x: VB_W * 0.50, y: VB_H * 0.78 },
         ];
       }
       // 4+ → 2×N grid simple
@@ -577,12 +578,12 @@ export default function ProductNetwork({
     const centers = hubCenters(G);
 
     // ── Layout por grupo ──────────────────────────────────────────────────
-    const HUB_GAP = G > 1 ? 130 : 165;
+    const HUB_GAP = G > 1 ? 120 : 165;
     const MIN = 156; // distancia mínima entre centros de nodos
     // El radio máximo dentro de un hub debe respetar el espacio disponible
     // para no invadir al hub vecino. Con G>1 reducimos el "territorio".
     function maxRadiusFor(count: number) {
-      const base = G === 1 ? 330 : G === 2 ? 240 : 200;
+      const base = G === 1 ? 330 : G === 2 ? 260 : 220;
       return Math.min(base, 100 + count * 14);
     }
 
@@ -618,9 +619,11 @@ export default function ProductNetwork({
       const n = list.length;
       const maxR = maxRadiusFor(n);
 
-      // Ventana de cada grupo dentro del canvas (evita invadir otros hubs)
-      const halfW = G === 1 ? VB_W * 0.37 : G === 2 ? VB_W * 0.18 : VB_W * 0.20;
-      const halfH = G <= 2 ? VB_H * 0.38 : VB_H * 0.22;
+      // Ventana de cada grupo dentro del canvas. Con 2 hubs separados al 20%
+      // y 80%, cada uno ocupa un territorio ≤18% del ancho con un pasillo de
+      // ~24% sin nadie entre ellos.
+      const halfW = G === 1 ? VB_W * 0.37 : G === 2 ? VB_W * 0.18 : VB_W * 0.18;
+      const halfH = G === 1 ? VB_H * 0.38 : G === 2 ? VB_H * 0.42 : VB_H * 0.22;
       const minX = c.x - halfW;
       const maxX = c.x + halfW;
       const minY = c.y - halfH;
@@ -700,9 +703,11 @@ export default function ProductNetwork({
     });
 
     // Pasada global de no-overlap: garantiza que dos productos de hubs
-    // distintos tampoco se pisen (caso de hubs próximos con muchas SKUs).
+    // distintos tampoco se pisen. Usamos una distancia mínima MAYOR para
+    // marcar una frontera visual clara entre constelaciones.
     if (G > 1) {
-      const ITER_X = 30;
+      const MIN_CROSS = MIN + 40; // separación extra entre hubs distintos
+      const ITER_X = 60;
       for (let it = 0; it < ITER_X; it++) {
         for (let a = 0; a < P.length; a++) {
           for (let b = a + 1; b < P.length; b++) {
@@ -710,8 +715,8 @@ export default function ProductNetwork({
             const ex = P[b].x - P[a].x;
             const ey = P[b].y - P[a].y;
             const dd = Math.hypot(ex, ey) || 1;
-            if (dd < MIN) {
-              const f = (MIN - dd) / 2;
+            if (dd < MIN_CROSS) {
+              const f = (MIN_CROSS - dd) / 2;
               const ux = ex / dd;
               const uy = ey / dd;
               P[a].x -= ux * f;
@@ -724,7 +729,7 @@ export default function ProductNetwork({
       }
       // Reclampeo final dentro de bounds del canvas.
       for (let i = 0; i < P.length; i++) {
-        P[i].x = Math.max(VB_W * 0.05, Math.min(VB_W * 0.95, P[i].x));
+        P[i].x = Math.max(VB_W * 0.04, Math.min(VB_W * 0.96, P[i].x));
         P[i].y = Math.max(VB_H * 0.08, Math.min(VB_H * 0.92, P[i].y));
       }
     }
