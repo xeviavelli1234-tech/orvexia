@@ -7,6 +7,11 @@ import { prisma } from "@/lib/prisma";
 import type { Category } from "@/app/generated/prisma/client";
 import ProductPageClient from "./ProductPageClient";
 import { buildAnalysis, getCategoryStats } from "@/lib/productAnalysis";
+import {
+  buildShippingDetails,
+  buildReturnPolicy,
+  detectItemCondition,
+} from "@/lib/seo/store-policies";
 
 const CATEGORY_LABELS: Record<string, string> = {
   TELEVISORES: "Televisores", LAVADORAS: "Lavadoras", FRIGORIFICOS: "Frigoríficos",
@@ -194,8 +199,84 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     rating: p.rating,
   }));
 
+  // ─── Structured data (Product + AggregateOffer + Offer enriquecido) ───────
+  // Necesario para AI Overviews, Google Shopping orgánico y merchant listings.
+  // Cada Offer incluye:
+  //   • priceSpecification con IVA → Google muestra precio con IVA en SERP
+  //   • priceValidUntil (+7d) → evita warning de Rich Results
+  //   • itemCondition → distingue outlet/reacondicionado
+  //   • shippingDetails + hasMerchantReturnPolicy → desbloquea badge envío/devolución
+  const inStockOffers = product.offers.filter((o) => o.inStock && o.priceCurrent > 0);
+  // Validez: los precios se sincronizan a diario, así que damos +7 días de margen.
+  const priceValidUntil = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+    .toISOString().slice(0, 10);
+
+  const productJsonLd = inStockOffers.length > 0 ? {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    image: product.image ?? undefined,
+    description: description,
+    brand: { "@type": "Brand", name: product.brand },
+    sku: product.model || undefined,
+    mpn: product.model || undefined,
+    ...(reviewsAvg !== null && product.reviews.length > 0 ? {
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: reviewsAvg.toFixed(2),
+        reviewCount: product.reviews.length,
+      },
+    } : {}),
+    offers: {
+      "@type": "AggregateOffer",
+      priceCurrency: "EUR",
+      lowPrice: Math.min(...inStockOffers.map((o) => o.priceCurrent)).toFixed(2),
+      highPrice: Math.max(...inStockOffers.map((o) => o.priceCurrent)).toFixed(2),
+      offerCount: inStockOffers.length,
+      availability: "https://schema.org/InStock",
+      offers: inStockOffers.map((o) => {
+        const condition = detectItemCondition(product.name, product.slug);
+        const shipping = buildShippingDetails(o.store, o.priceCurrent);
+        const returnPolicy = buildReturnPolicy(o.store);
+        return {
+          "@type": "Offer",
+          price: o.priceCurrent.toFixed(2),
+          priceCurrency: "EUR",
+          priceValidUntil,
+          priceSpecification: {
+            "@type": "PriceSpecification",
+            price: o.priceCurrent.toFixed(2),
+            priceCurrency: "EUR",
+            valueAddedTaxIncluded: true,
+          },
+          availability: "https://schema.org/InStock",
+          itemCondition: `https://schema.org/${condition}`,
+          seller: { "@type": "Organization", name: o.store },
+          url: `https://www.orvexia.es/productos/${product.slug}`,
+          ...(shipping ? { shippingDetails: shipping } : {}),
+          ...(returnPolicy ? { hasMerchantReturnPolicy: returnPolicy } : {}),
+        };
+      }),
+    },
+  } : null;
+
+  const breadcrumbsJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Inicio", item: "https://www.orvexia.es/" },
+      { "@type": "ListItem", position: 2, name: "Categorías", item: "https://www.orvexia.es/categorias" },
+      { "@type": "ListItem", position: 3, name: catLabel, item: `https://www.orvexia.es/categorias/${catSlug}` },
+      { "@type": "ListItem", position: 4, name: product.name, item: `https://www.orvexia.es/productos/${product.slug}` },
+    ],
+  };
+
   return (
     <main className="min-h-screen">
+      {productJsonLd && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }} />
+      )}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbsJsonLd) }} />
 
       {/* BREADCRUMB */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 pb-2">

@@ -1,7 +1,9 @@
 ﻿import { notFound } from "next/navigation";
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Category } from "@/app/generated/prisma/client";
 import CategoryClient from "./CategoryClient";
+import { PRICE_THRESHOLDS, brandToSlug, type CategorySlug } from "@/lib/catalog/categories";
 
 const MIN_REASONABLE_PRICE = 20;
 const MAX_REASONABLE_PRICE = 5000;
@@ -174,5 +176,67 @@ export default async function CategoryPage({
 
   const content = CATEGORY_CONTENT[slug.toLowerCase()] ?? null;
 
-  return <CategoryClient products={serialized} meta={meta} content={content} />;
+  // Cross-linking SEO: marcas con >=3 productos en stock + rangos de precio
+  // razonables para esta categoría. Render server-side para que Google los vea.
+  const brandCounts = new Map<string, number>();
+  for (const p of products) {
+    if (p.offers.some((o) => o.inStock)) {
+      brandCounts.set(p.brand, (brandCounts.get(p.brand) ?? 0) + 1);
+    }
+  }
+  const seoBrands = [...brandCounts.entries()]
+    .filter(([, n]) => n >= 3)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 12)
+    .map(([brand]) => brand);
+  const seoSlug = slug.toLowerCase() as CategorySlug;
+  const seoPrices = PRICE_THRESHOLDS[seoSlug] ?? [];
+
+  return (
+    <>
+      <CategoryClient products={serialized} meta={meta} content={content} />
+
+      {/* SEO cross-linking — invisible al filtro pero rastreable por Google */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-10 border-t border-white/10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div>
+            <h2 className="text-sm font-semibold text-white mb-3 uppercase tracking-wider">Por momento de compra</h2>
+            <ul className="space-y-2 text-sm">
+              <li><Link href={`/categorias/${slug}/ofertas-hoy`} className="text-cyan-300 hover:underline">{meta.label} en oferta hoy</Link></li>
+              <li><Link href={`/categorias/${slug}/mejor-precio`} className="text-cyan-300 hover:underline">{meta.label} al mejor precio</Link></li>
+              <li><Link href="/bajadas-recientes" className="text-cyan-300 hover:underline">Bajadas de precio recientes</Link></li>
+            </ul>
+          </div>
+          {seoPrices.length > 0 && (
+            <div>
+              <h2 className="text-sm font-semibold text-white mb-3 uppercase tracking-wider">Por precio</h2>
+              <ul className="space-y-2 text-sm">
+                {seoPrices.map((p) => (
+                  <li key={p}>
+                    <Link href={`/categorias/${slug}/menos-de-${p}`} className="text-cyan-300 hover:underline">
+                      {meta.label} por menos de {p}€
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {seoBrands.length > 0 && (
+            <div>
+              <h2 className="text-sm font-semibold text-white mb-3 uppercase tracking-wider">Por marca</h2>
+              <ul className="space-y-2 text-sm columns-2 gap-4">
+                {seoBrands.map((b) => (
+                  <li key={b}>
+                    <Link href={`/categorias/${slug}/${brandToSlug(b)}`} className="text-cyan-300 hover:underline">
+                      {meta.label} {b}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </section>
+    </>
+  );
 }
