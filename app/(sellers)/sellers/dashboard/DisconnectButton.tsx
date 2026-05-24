@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "@/components/ui/Button";
 
 export function DisconnectButton() {
   const [confirming, setConfirming] = useState(false);
@@ -18,18 +19,19 @@ export function DisconnectButton() {
   }
 
   return (
-    <form action="/api/sellers/amazon/disconnect" method="post" className="inline-flex items-center gap-3">
-      <span className="text-sm text-white/60">¿Seguro? Pararás el reprecio.</span>
-      <button
-        type="submit"
-        className="rounded-md bg-red-600 text-white px-3 py-1.5 text-sm font-semibold hover:bg-red-700"
-      >
+    <form
+      action="/api/sellers/amazon/disconnect"
+      method="post"
+      className="inline-flex flex-wrap items-center gap-3"
+    >
+      <span className="text-sm text-white/70">¿Seguro? Pararás el reprecio.</span>
+      <Button type="submit" variant="danger" size="sm">
         Sí, desconectar
-      </button>
+      </Button>
       <button
         type="button"
         onClick={() => setConfirming(false)}
-        className="text-sm text-white/45 hover:text-white/80"
+        className="text-sm text-white/45 hover:text-white/80 underline underline-offset-4 transition-colors"
       >
         Cancelar
       </button>

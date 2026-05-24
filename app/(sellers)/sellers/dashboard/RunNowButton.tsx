@@ -2,44 +2,69 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
+
+interface RunResponse {
+  ok?: boolean;
+  error?: string;
+  listingsProcessed?: number;
+  listingsRepriced?: number;
+  errors?: number;
+}
 
 export function RunNowButton() {
   const router = useRouter();
+  const { error: toastError, loading: toastLoading, update, dismiss } = useToast();
   const [isPending, startTransition] = useTransition();
-  const [msg, setMsg] = useState<string | null>(null);
-  const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   async function run() {
-    setMsg(null);
-    setErr(null);
+    if (busy) return;
+    setBusy(true);
+    const tid = toastLoading("Ejecutando ciclo de reprecio…", {
+      description: "Consultando precios en Amazon y aplicando estrategia.",
+    });
     try {
       const res = await fetch("/api/sellers/reprice/run", { method: "POST" });
-      const data = await res.json();
+      const data = (await res.json()) as RunResponse;
       if (!res.ok || !data.ok) {
-        setErr(data.error ?? `HTTP ${res.status}`);
+        update(tid, {
+          variant: "error",
+          message: "No se pudo ejecutar el ciclo",
+          description: data.error ?? `HTTP ${res.status}`,
+        });
         return;
       }
-      setMsg(
-        `Ciclo OK · ${data.listingsProcessed} procesados, ${data.listingsRepriced} reprecciados, ${data.errors} errores`,
-      );
+      update(tid, {
+        variant: "success",
+        message: "Ciclo de reprecio completado",
+        description: `${data.listingsProcessed ?? 0} procesados · ${data.listingsRepriced ?? 0} reprecidos · ${data.errors ?? 0} errores`,
+      });
       startTransition(() => router.refresh());
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "network_error");
+      dismiss(tid);
+      toastError("Error de red al ejecutar el ciclo", {
+        description: e instanceof Error ? e.message : "network_error",
+      });
+    } finally {
+      setBusy(false);
     }
   }
 
+  const loading = busy || isPending;
+
   return (
-    <div className="flex flex-col gap-2">
-      <button
-        type="button"
-        onClick={run}
-        disabled={isPending}
-        className="w-full rounded-xl border border-cyan-400/40 text-cyan-200 px-4 py-2.5 font-semibold hover:bg-cyan-400/10 transition-colors text-sm disabled:opacity-50"
-      >
-        {isPending ? "Repreciando…" : "Ejecutar reprecio ahora"}
-      </button>
-      {msg && <span className="text-[11px] text-emerald-300">{msg}</span>}
-      {err && <span className="text-[11px] text-red-300">Error: {err}</span>}
-    </div>
+    <Button
+      type="button"
+      onClick={run}
+      variant="neon"
+      size="md"
+      loading={loading}
+      loadingText="Repreciando…"
+      className="w-full"
+    >
+      Ejecutar reprecio ahora
+    </Button>
   );
 }

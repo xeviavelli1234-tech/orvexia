@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { Spinner } from "@/components/ui/Spinner";
 
 type Urgency = "low" | "normal" | "high";
 type Aggression = "conservative" | "balanced" | "aggressive";
@@ -193,15 +194,39 @@ export default function PricingSuggest({
                 type="button"
                 onClick={run}
                 disabled={loading}
-                className="w-full rounded-lg bg-cyan-500/90 px-3 py-2 text-sm font-semibold text-black hover:bg-cyan-400 transition-colors disabled:opacity-50"
+                aria-busy={loading || undefined}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-cyan-500/90 px-3 py-2 text-sm font-semibold text-black hover:bg-cyan-400 transition-colors disabled:opacity-50"
               >
-                {loading ? "Analizando…" : data ? "Recalcular" : "Generar recomendación"}
+                {loading ? (
+                  <>
+                    <Spinner size="sm" className="text-black" />
+                    <span>Analizando…</span>
+                  </>
+                ) : (
+                  <span>{data ? "Recalcular" : "Generar recomendación"}</span>
+                )}
               </button>
 
               {err && (
                 <p className="text-xs text-rose-300 rounded-lg border border-rose-400/30 bg-rose-500/10 px-3 py-2">
                   Error: {err}
                 </p>
+              )}
+
+              {loading && !data && (
+                <div
+                  role="status"
+                  aria-live="polite"
+                  className="rounded-xl border border-cyan-400/20 bg-cyan-400/[0.04] px-4 py-6 flex flex-col items-center justify-center gap-3"
+                >
+                  <Spinner size="lg" className="text-cyan-300" />
+                  <p className="font-mono-ui text-[10px] uppercase tracking-[0.18em] text-cyan-300">
+                    ▸ procesando señales
+                  </p>
+                  <p className="text-xs text-white/55 text-center max-w-[280px] leading-relaxed">
+                    Analizando histórico, competencia y tendencia para sugerir el mejor precio dentro de tu rango.
+                  </p>
+                </div>
               )}
 
               {data && !loading && (

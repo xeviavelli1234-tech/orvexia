@@ -2,42 +2,76 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
+
+interface SyncResponse {
+  count?: number;
+  inserted?: number;
+  updated?: number;
+  deleted?: number;
+  error?: string;
+  detail?: string;
+}
 
 export function SyncButton({ lastSyncAt }: { lastSyncAt: Date | null }) {
   const router = useRouter();
+  const { loading: toastLoading, error: toastError, update, dismiss } = useToast();
   const [isPending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
-  const [lastResult, setLastResult] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   async function handleSync() {
-    setError(null);
-    setLastResult(null);
+    if (busy) return;
+    setBusy(true);
+    const tid = toastLoading("Sincronizando con Amazon…", {
+      description: "Importando tus listings via SP-API.",
+    });
     try {
       const res = await fetch("/api/sellers/listings/sync", { method: "POST" });
-      const data = await res.json();
+      const data = (await res.json()) as SyncResponse;
       if (!res.ok) {
-        setError(data.detail ?? data.error ?? `HTTP ${res.status}`);
+        update(tid, {
+          variant: "error",
+          message: "Error sincronizando con Amazon",
+          description: data.detail ?? data.error ?? `HTTP ${res.status}`,
+        });
         return;
       }
-      setLastResult(
-        `Sincronización OK · ${data.count} productos (${data.inserted} nuevos, ${data.updated} actualizados${data.deleted ? `, ${data.deleted} eliminados` : ""})`,
-      );
+      const parts: string[] = [];
+      if (data.inserted) parts.push(`${data.inserted} nuevos`);
+      if (data.updated) parts.push(`${data.updated} actualizados`);
+      if (data.deleted) parts.push(`${data.deleted} eliminados`);
+      update(tid, {
+        variant: "success",
+        message: `${data.count ?? 0} productos sincronizados`,
+        description: parts.length ? parts.join(" · ") : "Sin cambios detectados",
+      });
       startTransition(() => router.refresh());
     } catch (e) {
-      setError(e instanceof Error ? e.message : "network_error");
+      dismiss(tid);
+      toastError("Error de red al sincronizar", {
+        description: e instanceof Error ? e.message : "network_error",
+      });
+    } finally {
+      setBusy(false);
     }
   }
 
+  const loading = busy || isPending;
+
   return (
     <div className="flex flex-col gap-2">
-      <button
+      <Button
         type="button"
         onClick={handleSync}
-        disabled={isPending}
-        className="w-full rounded-xl bg-[var(--brand-600)] text-white px-4 py-2.5 text-sm font-semibold hover:bg-[var(--brand-700)] transition-colors disabled:opacity-50 shadow-[0_0_18px_-6px_rgba(99,102,241,0.7)]"
+        variant="primary"
+        size="md"
+        loading={loading}
+        loadingText="Sincronizando…"
+        className="w-full shadow-[0_0_18px_-6px_rgba(99,102,241,0.7)]"
       >
-        {isPending ? "Sincronizando…" : "Sincronizar con Amazon"}
-      </button>
+        Sincronizar con Amazon
+      </Button>
       {lastSyncAt && (
         <span className="text-[11px] text-white/40">
           Última sync:{" "}
@@ -47,8 +81,6 @@ export function SyncButton({ lastSyncAt }: { lastSyncAt: Date | null }) {
           }).format(lastSyncAt)}
         </span>
       )}
-      {lastResult && <span className="text-[11px] text-emerald-300">{lastResult}</span>}
-      {error && <span className="text-[11px] text-red-300">Error: {error}</span>}
     </div>
   );
 }

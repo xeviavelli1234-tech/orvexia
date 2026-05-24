@@ -1,8 +1,17 @@
 import * as React from "react";
 import Link from "next/link";
 import { cn } from "./cn";
+import { Spinner } from "./Spinner";
 
-type Variant = "primary" | "secondary" | "ghost" | "outline" | "hot" | "dark";
+type Variant =
+  | "primary"
+  | "secondary"
+  | "ghost"
+  | "outline"
+  | "hot"
+  | "dark"
+  | "neon"
+  | "danger";
 type Size = "sm" | "md" | "lg";
 
 const base =
@@ -25,6 +34,10 @@ const variants: Record<Variant, string> = {
     "bg-hot-600 hover:bg-hot-700 text-white shadow-sm shadow-hot-600/20 hover:shadow-md hover:shadow-hot-600/30",
   dark:
     "bg-fg-strong hover:bg-fg text-bg shadow-sm",
+  neon:
+    "bg-transparent text-cyan-200 border border-cyan-400/40 hover:bg-cyan-400/10 hover:border-cyan-400/60 hover:text-cyan-100 shadow-[0_0_18px_-8px_rgba(34,211,238,0.6)] hover:shadow-[0_0_22px_-6px_rgba(34,211,238,0.8)]",
+  danger:
+    "bg-rose-500/90 hover:bg-rose-500 text-white shadow-sm shadow-rose-500/20 hover:shadow-md hover:shadow-rose-500/30",
 };
 
 const sizes: Record<Size, string> = {
@@ -37,6 +50,10 @@ type CommonProps = {
   variant?: Variant;
   size?: Size;
   className?: string;
+  /** When true, replaces the leading area with a spinner and disables the button. */
+  loading?: boolean;
+  /** Optional label shown next to the spinner while loading (defaults to children). */
+  loadingText?: React.ReactNode;
   children: React.ReactNode;
 };
 
@@ -44,19 +61,37 @@ type ButtonProps = CommonProps & React.ButtonHTMLAttributes<HTMLButtonElement>;
 type AnchorProps = CommonProps &
   React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string };
 
+const spinnerSizeFor: Record<Size, "xs" | "sm" | "md"> = {
+  sm: "xs",
+  md: "sm",
+  lg: "sm",
+};
+
 export function Button({
   variant = "primary",
   size = "md",
   className,
+  loading = false,
+  loadingText,
+  disabled,
   children,
   ...props
 }: ButtonProps) {
   return (
     <button
       className={cn(base, variants[variant], sizes[size], className)}
+      disabled={disabled || loading}
+      aria-busy={loading || undefined}
       {...props}
     >
-      {children}
+      {loading ? (
+        <>
+          <Spinner size={spinnerSizeFor[size]} />
+          <span>{loadingText ?? children}</span>
+        </>
+      ) : (
+        children
+      )}
     </button>
   );
 }
@@ -65,22 +100,38 @@ export function ButtonLink({
   variant = "primary",
   size = "md",
   className,
+  loading = false,
+  loadingText,
   href,
   children,
   ...props
 }: AnchorProps) {
   const isExternal = /^https?:\/\//i.test(href) || href.startsWith("mailto:") || href.startsWith("tel:");
-  const cls = cn(base, variants[variant], sizes[size], className);
+  const cls = cn(
+    base,
+    variants[variant],
+    sizes[size],
+    loading && "opacity-60 pointer-events-none",
+    className,
+  );
+  const content = loading ? (
+    <>
+      <Spinner size={spinnerSizeFor[size]} />
+      <span>{loadingText ?? children}</span>
+    </>
+  ) : (
+    children
+  );
   if (isExternal) {
     return (
       <a href={href} className={cls} {...props}>
-        {children}
+        {content}
       </a>
     );
   }
   return (
     <Link href={href} className={cls} {...(props as React.AnchorHTMLAttributes<HTMLAnchorElement>)}>
-      {children}
+      {content}
     </Link>
   );
 }

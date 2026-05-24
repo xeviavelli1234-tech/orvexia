@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { updateListingRangeAction, toggleListingAction } from "./actions";
+import { Input } from "@/components/ui/Input";
+import { useToast } from "@/components/ui/Toast";
 
 interface Props {
   listing: {
@@ -23,6 +25,7 @@ function fmtInput(v: number | null): string {
 }
 
 export function RangeRow({ listing }: Props) {
+  const { success: toastOk, error: toastErr } = useToast();
   const [min, setMin] = useState<string>(fmtInput(listing.priceMin));
   const [max, setMax] = useState<string>(fmtInput(listing.priceMax));
   const [enabled, setEnabled] = useState(listing.repricingEnabled);
@@ -44,10 +47,20 @@ export function RangeRow({ listing }: Props) {
     const res = await updateListingRangeAction(fd);
     setSaving(false);
     if (!res.ok) {
-      setError(translateError(res.error));
+      const msg = translateError(res.error);
+      setError(msg);
       // revert local state
       setMin(fmtInput(listing.priceMin));
       setMax(fmtInput(listing.priceMax));
+      toastErr("No se pudo guardar el rango", {
+        description: `${listing.sku} · ${msg}`,
+      });
+    } else {
+      const range = `${minStr || "—"} / ${maxStr || "—"} ${currencySymbol(listing.currency)}`;
+      toastOk("Rango guardado", {
+        description: `${listing.sku} · ${range}`,
+        duration: 2200,
+      });
     }
   }
 
@@ -62,7 +75,16 @@ export function RangeRow({ listing }: Props) {
       const res = await toggleListingAction(fd);
       if (!res.ok) {
         setEnabled(!next); // revert
-        setError(translateError(res.error));
+        const msg = translateError(res.error);
+        setError(msg);
+        toastErr("No se pudo cambiar el estado", {
+          description: `${listing.sku} · ${msg}`,
+        });
+      } else {
+        toastOk(next ? "Reprecio activado" : "Reprecio pausado", {
+          description: listing.sku,
+          duration: 2200,
+        });
       }
     });
   }
@@ -104,7 +126,7 @@ export function RangeRow({ listing }: Props) {
         )}
       </td>
       <td className="py-3 px-2">
-        <input
+        <Input
           type="number"
           inputMode="decimal"
           step="0.01"
@@ -114,11 +136,14 @@ export function RangeRow({ listing }: Props) {
           onBlur={saveRange}
           placeholder="0,00"
           disabled={saving}
-          className="w-24 rounded-md border border-fg/15 bg-bg px-2 py-1 text-sm focus:border-[var(--brand-600)] focus:outline-none"
+          inputSize="sm"
+          state={error ? "error" : "default"}
+          aria-label="Precio mínimo"
+          className="w-24"
         />
       </td>
       <td className="py-3 px-2">
-        <input
+        <Input
           type="number"
           inputMode="decimal"
           step="0.01"
@@ -128,7 +153,10 @@ export function RangeRow({ listing }: Props) {
           onBlur={saveRange}
           placeholder="0,00"
           disabled={saving}
-          className="w-24 rounded-md border border-fg/15 bg-bg px-2 py-1 text-sm focus:border-[var(--brand-600)] focus:outline-none"
+          inputSize="sm"
+          state={error ? "error" : "default"}
+          aria-label="Precio máximo"
+          className="w-24"
         />
       </td>
       <td className="py-3 px-2">

@@ -7,6 +7,7 @@ import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { readRequestMeta } from "@/lib/security/request";
 import { isIpAllowed } from "@/lib/security/ip-allowlist";
+import { ToastProvider } from "@/components/ui/Toast";
 
 export const metadata = {
   title: "Orvexia Repricer · Reprecio automático para Amazon ES",
@@ -72,27 +73,29 @@ export default async function SellersLayout({ children }: { children: React.Reac
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-bg text-fg">
-      <SellersHeader />
+    <ToastProvider>
+      <div className="min-h-screen flex flex-col bg-bg text-fg">
+        <SellersHeader />
 
-      <main className="flex-1">{children}</main>
+        <main className="flex-1">{children}</main>
 
-      <footer className="border-t border-black/5 dark:border-white/10 mt-20">
-        <div className="max-w-6xl mx-auto px-5 py-10 text-sm text-fg/60 flex flex-wrap items-center justify-between gap-4">
-          <div>© {new Date().getFullYear()} Orvexia. Todos los derechos reservados.</div>
-          <div className="flex gap-5">
-            <Link href="/aviso-legal" className="hover:text-fg">
-              Aviso legal
-            </Link>
-            <Link href="/politica-privacidad" className="hover:text-fg">
-              Privacidad
-            </Link>
-            <Link href="/" className="hover:text-fg">
-              Comparador
-            </Link>
+        <footer className="border-t border-black/5 dark:border-white/10 mt-20">
+          <div className="max-w-6xl mx-auto px-5 py-10 text-sm text-fg/60 flex flex-wrap items-center justify-between gap-4">
+            <div>© {new Date().getFullYear()} Orvexia. Todos los derechos reservados.</div>
+            <div className="flex gap-5">
+              <Link href="/aviso-legal" className="hover:text-fg">
+                Aviso legal
+              </Link>
+              <Link href="/politica-privacidad" className="hover:text-fg">
+                Privacidad
+              </Link>
+              <Link href="/" className="hover:text-fg">
+                Comparador
+              </Link>
+            </div>
           </div>
-        </div>
-      </footer>
-    </div>
+        </footer>
+      </div>
+    </ToastProvider>
   );
 }
