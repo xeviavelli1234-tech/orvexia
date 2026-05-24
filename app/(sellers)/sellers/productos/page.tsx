@@ -119,6 +119,7 @@ export default async function ProductosPage() {
       parentAsin: l.parentAsin,
       sku: l.sku,
       imageUrl: l.imageUrl,
+      source: l.source ?? "amazon",
       priceCurrent: l.priceCurrent,
       currency: l.currency,
       priceMin: l.priceMin,

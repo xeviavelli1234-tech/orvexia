@@ -41,6 +41,12 @@ export interface NetNode {
   parentAsin: string;
   sku: string;
   imageUrl: string | null;
+  /**
+   * Origen del listing — se usa para agrupar los nodos por hub en el grafo.
+   * "amazon" (vino de SP-API o demo) o "manual" (CSV de modo manual). Cada
+   * valor distinto crea su propio hub (constelación) en el canvas.
+   */
+  source: string;
   priceCurrent: number;
   currency: string;
   priceMin: number | null;
@@ -126,6 +132,13 @@ function clampView(v: { k: number; x: number; y: number }) {
     x: Math.min(xMax, Math.max(xMin, v.x)),
     y: Math.min(yMax, Math.max(yMin, v.y)),
   };
+}
+
+/** Convierte el código de origen en una etiqueta legible bajo el hub. */
+function humanizeSource(source: string): string {
+  if (source === "manual") return "Tu tienda";
+  if (source === "amazon") return "Amazon";
+  return source.charAt(0).toUpperCase() + source.slice(1);
 }
 
 function hash(s: string): number {
@@ -508,100 +521,231 @@ export default function ProductNetwork({
   }
 
   const layout = useMemo(() => {
-    const n = nodes.length;
-    const hx = VB_W / 2;
-    const hy = VB_H / 2;
-    const HUB_GAP = 165; // espacio libre alrededor del icono de Amazon
-    const maxR = Math.min(330, 110 + n * 16);
-    const minX = VB_W * 0.13,
-      maxX = VB_W * 0.87,
-      minY = VB_H * 0.15,
-      maxY = VB_H * 0.85;
+    // ── Agrupar por origen (source) → un hub por grupo ────────────────────
+    // Convención: "amazon" es siempre el hub principal (donde cuelga el
+    // dock de herramientas). Cualquier otro source (típicamente "manual")
+    // genera una constelación propia separada en el canvas.
+    type Group = { source: string; nodes: NetNode[] };
+    const byKey = new Map<string, NetNode[]>();
+    for (const n of nodes) {
+      const k = n.source || "amazon";
+      const arr = byKey.get(k);
+      if (arr) arr.push(n);
+      else byKey.set(k, [n]);
+    }
+    const groups: Group[] = [];
+    // Amazon primero si existe, luego el resto en orden estable de aparición.
+    if (byKey.has("amazon")) groups.push({ source: "amazon", nodes: byKey.get("amazon")! });
+    for (const [k, list] of byKey) {
+      if (k !== "amazon") groups.push({ source: k, nodes: list });
+    }
+    const G = groups.length;
 
-    // Colocación inicial: espiral áurea (reparte las ramas).
-    const P = nodes.map((node, i) => {
-      const g = i * 2.39996323;
-      const rr = HUB_GAP + maxR * Math.sqrt((i + 0.4) / Math.max(n, 1));
-      const jx = (hash(node.id + "x") - 0.5) * 44;
-      const jy = (hash(node.id + "y") - 0.5) * 40;
-      return {
-        x: hx + Math.cos(g) * rr * 1.5 + jx,
-        y: hy + Math.sin(g) * rr + jy,
-      };
-    });
+    // ── Definir el centro de cada hub según el número de grupos ──────────
+    // 1 hub → centrado. 2 → izquierda/derecha. 3 → triángulo. 4 → 2×2.
+    function hubCenters(count: number): { x: number; y: number }[] {
+      const cx = VB_W / 2;
+      const cy = VB_H / 2;
+      if (count <= 1) return [{ x: cx, y: cy }];
+      if (count === 2) {
+        return [
+          { x: VB_W * 0.32, y: cy },
+          { x: VB_W * 0.68, y: cy },
+        ];
+      }
+      if (count === 3) {
+        return [
+          { x: VB_W * 0.30, y: VB_H * 0.38 },
+          { x: VB_W * 0.70, y: VB_H * 0.38 },
+          { x: VB_W * 0.50, y: VB_H * 0.72 },
+        ];
+      }
+      // 4+ → 2×N grid simple
+      const cols = Math.ceil(Math.sqrt(count));
+      const rows = Math.ceil(count / cols);
+      const out: { x: number; y: number }[] = [];
+      for (let i = 0; i < count; i++) {
+        const r = Math.floor(i / cols);
+        const c = i % cols;
+        out.push({
+          x: VB_W * ((c + 0.5) / cols),
+          y: VB_H * ((r + 0.5) / rows),
+        });
+      }
+      return out;
+    }
+    const centers = hubCenters(G);
 
-    // Relajación: separa los nodos para que NUNCA se solapen entre sí
-    // ni invadan el icono central (repulsión por pares + empuje del hub).
-    const MIN = 156; // distancia mínima entre centros (nodo + holgura etiqueta)
-    const HUB_CLEAR = HUB_GAP + R + 14;
-    const ITER = n > 1 ? Math.min(160, 60 + n * 4) : 0;
+    // ── Layout por grupo ──────────────────────────────────────────────────
+    const HUB_GAP = G > 1 ? 130 : 165;
+    const MIN = 156; // distancia mínima entre centros de nodos
+    // El radio máximo dentro de un hub debe respetar el espacio disponible
+    // para no invadir al hub vecino. Con G>1 reducimos el "territorio".
+    function maxRadiusFor(count: number) {
+      const base = G === 1 ? 330 : G === 2 ? 240 : 200;
+      return Math.min(base, 100 + count * 14);
+    }
 
-    // Zona reservada bajo el hub para el dock de herramientas
-    // (mismas constantes que el bloque SVG → siempre sincronizado).
+    type Pos = { x: number; y: number; hubId: number };
+    const P: Pos[] = new Array(nodes.length);
+    // Index inverso: nodeId → su posición en `nodes` (para colocar el resultado).
+    const idxOf = new Map<string, number>();
+    nodes.forEach((n, i) => idxOf.set(n.id, i));
+
+    // Dock de herramientas: solo aplica al hub primario (Amazon o el primero).
+    const primaryHub = centers[0];
     const T_HR = 54;
     const T_SR = 22;
     const T_GAP = 160;
     const T_N = 4;
     const T_PADX = 48;
-    const T_SY = hy + T_HR + 120;
-    const T_LEFT = hx - ((T_N - 1) / 2) * T_GAP - T_SR - T_PADX;
+    const T_SY = primaryHub.y + T_HR + 120;
+    const T_LEFT = primaryHub.x - ((T_N - 1) / 2) * T_GAP - T_SR - T_PADX;
     const T_W = (T_N - 1) * T_GAP + 2 * (T_SR + T_PADX);
     const T_TOP = T_SY - T_SR - 30;
     const T_H = T_SR * 2 + 78;
     const T_MARGIN = R + 20;
-    const boxX0 = T_LEFT - T_MARGIN;
-    const boxX1 = T_LEFT + T_W + T_MARGIN;
-    const boxY0 = T_TOP - T_MARGIN;
-    const boxY1 = T_TOP + T_H + T_MARGIN;
+    const dockBox = {
+      x0: T_LEFT - T_MARGIN,
+      x1: T_LEFT + T_W + T_MARGIN,
+      y0: T_TOP - T_MARGIN,
+      y1: T_TOP + T_H + T_MARGIN,
+    };
 
-    for (let it = 0; it < ITER; it++) {
-      for (let a = 0; a < P.length; a++) {
-        const dx = P[a].x - hx;
-        const dy = P[a].y - hy;
-        const d = Math.hypot(dx, dy) || 1;
-        if (d < HUB_CLEAR) {
-          const f = HUB_CLEAR - d;
-          P[a].x += (dx / d) * f;
-          P[a].y += (dy / d) * f;
+    groups.forEach((g, gi) => {
+      const c = centers[gi];
+      const list = g.nodes;
+      const n = list.length;
+      const maxR = maxRadiusFor(n);
+
+      // Ventana de cada grupo dentro del canvas (evita invadir otros hubs)
+      const halfW = G === 1 ? VB_W * 0.37 : G === 2 ? VB_W * 0.18 : VB_W * 0.20;
+      const halfH = G <= 2 ? VB_H * 0.38 : VB_H * 0.22;
+      const minX = c.x - halfW;
+      const maxX = c.x + halfW;
+      const minY = c.y - halfH;
+      const maxY = c.y + halfH;
+
+      // Espiral áurea inicial alrededor de este hub.
+      const local: Pos[] = list.map((node, i) => {
+        const ga = i * 2.39996323;
+        const rr = HUB_GAP + maxR * Math.sqrt((i + 0.4) / Math.max(n, 1));
+        const jx = (hash(node.id + "x") - 0.5) * 36;
+        const jy = (hash(node.id + "y") - 0.5) * 32;
+        return {
+          x: c.x + Math.cos(ga) * rr * 1.35 + jx,
+          y: c.y + Math.sin(ga) * rr + jy,
+          hubId: gi,
+        };
+      });
+
+      const HUB_CLEAR = HUB_GAP + R + 14;
+      const ITER = n > 1 ? Math.min(180, 70 + n * 4) : 0;
+
+      for (let it = 0; it < ITER; it++) {
+        for (let a = 0; a < local.length; a++) {
+          const dx = local[a].x - c.x;
+          const dy = local[a].y - c.y;
+          const d = Math.hypot(dx, dy) || 1;
+          if (d < HUB_CLEAR) {
+            const f = HUB_CLEAR - d;
+            local[a].x += (dx / d) * f;
+            local[a].y += (dy / d) * f;
+          }
+          // Solo el hub primario tiene el dock que esquivar.
+          if (gi === 0) {
+            if (
+              local[a].x > dockBox.x0 &&
+              local[a].x < dockBox.x1 &&
+              local[a].y > dockBox.y0 &&
+              local[a].y < dockBox.y1
+            ) {
+              const toL = local[a].x - dockBox.x0;
+              const toR = dockBox.x1 - local[a].x;
+              const toT = local[a].y - dockBox.y0;
+              const toB = dockBox.y1 - local[a].y;
+              const mn = Math.min(toL, toR, toT, toB);
+              if (mn === toL) local[a].x = dockBox.x0;
+              else if (mn === toR) local[a].x = dockBox.x1;
+              else if (mn === toT) local[a].y = dockBox.y0;
+              else local[a].y = dockBox.y1;
+            }
+          }
+          for (let b = a + 1; b < local.length; b++) {
+            const ex = local[b].x - local[a].x;
+            const ey = local[b].y - local[a].y;
+            const dd = Math.hypot(ex, ey) || 1;
+            if (dd < MIN) {
+              const f = (MIN - dd) / 2;
+              const ux = ex / dd;
+              const uy = ey / dd;
+              local[a].x -= ux * f;
+              local[a].y -= uy * f;
+              local[b].x += ux * f;
+              local[b].y += uy * f;
+            }
+          }
+          local[a].x = Math.max(minX, Math.min(maxX, local[a].x));
+          local[a].y = Math.max(minY, Math.min(maxY, local[a].y));
         }
-        // Expulsa de la zona del dock por el borde más cercano.
-        if (
-          P[a].x > boxX0 &&
-          P[a].x < boxX1 &&
-          P[a].y > boxY0 &&
-          P[a].y < boxY1
-        ) {
-          const toL = P[a].x - boxX0;
-          const toR = boxX1 - P[a].x;
-          const toT = P[a].y - boxY0;
-          const toB = boxY1 - P[a].y;
-          const mn = Math.min(toL, toR, toT, toB);
-          if (mn === toL) P[a].x = boxX0;
-          else if (mn === toR) P[a].x = boxX1;
-          else if (mn === toT) P[a].y = boxY0;
-          else P[a].y = boxY1;
-        }
-        for (let b = a + 1; b < P.length; b++) {
-          const ex = P[b].x - P[a].x;
-          const ey = P[b].y - P[a].y;
-          const dd = Math.hypot(ex, ey) || 1;
-          if (dd < MIN) {
-            const f = (MIN - dd) / 2;
-            const ux = ex / dd;
-            const uy = ey / dd;
-            P[a].x -= ux * f;
-            P[a].y -= uy * f;
-            P[b].x += ux * f;
-            P[b].y += uy * f;
+      }
+
+      // Repulsión adicional entre nodos de distintos grupos (cross-hub):
+      // si alguien quedó en el límite de su territorio podría rozar al
+      // vecino. Una pasada global asegura la separación final.
+      list.forEach((node, i) => {
+        const globalIdx = idxOf.get(node.id)!;
+        P[globalIdx] = local[i];
+      });
+    });
+
+    // Pasada global de no-overlap: garantiza que dos productos de hubs
+    // distintos tampoco se pisen (caso de hubs próximos con muchas SKUs).
+    if (G > 1) {
+      const ITER_X = 30;
+      for (let it = 0; it < ITER_X; it++) {
+        for (let a = 0; a < P.length; a++) {
+          for (let b = a + 1; b < P.length; b++) {
+            if (P[a].hubId === P[b].hubId) continue;
+            const ex = P[b].x - P[a].x;
+            const ey = P[b].y - P[a].y;
+            const dd = Math.hypot(ex, ey) || 1;
+            if (dd < MIN) {
+              const f = (MIN - dd) / 2;
+              const ux = ex / dd;
+              const uy = ey / dd;
+              P[a].x -= ux * f;
+              P[a].y -= uy * f;
+              P[b].x += ux * f;
+              P[b].y += uy * f;
+            }
           }
         }
-        P[a].x = Math.max(minX, Math.min(maxX, P[a].x));
-        P[a].y = Math.max(minY, Math.min(maxY, P[a].y));
+      }
+      // Reclampeo final dentro de bounds del canvas.
+      for (let i = 0; i < P.length; i++) {
+        P[i].x = Math.max(VB_W * 0.05, Math.min(VB_W * 0.95, P[i].x));
+        P[i].y = Math.max(VB_H * 0.08, Math.min(VB_H * 0.92, P[i].y));
       }
     }
 
-    const pos = nodes.map((node, i) => ({ ...node, x: P[i].x, y: P[i].y }));
-    return { hub: { x: hx, y: hy }, pos };
+    const pos = nodes.map((node, i) => ({
+      ...node,
+      x: P[i].x,
+      y: P[i].y,
+      hubId: P[i].hubId,
+    }));
+
+    const hubs = groups.map((g, gi) => ({
+      id: gi,
+      source: g.source,
+      x: centers[gi].x,
+      y: centers[gi].y,
+      count: g.nodes.length,
+      primary: gi === 0,
+    }));
+
+    return { hubs, hub: hubs[0] ?? { id: 0, source: "amazon", x: VB_W / 2, y: VB_H / 2, count: 0, primary: true }, pos };
   }, [nodes]);
 
   const sel = nodes.find((x) => x.id === selId) ?? null;
@@ -912,80 +1056,112 @@ export default function ProductNetwork({
         </defs>
 
         <g transform={`translate(${view.x} ${view.y}) scale(${view.k})`}>
-          {/* Ramas: del icono de Amazon a cada producto */}
+          {/* Ramas: de cada hub a sus productos. Cada origen (amazon /
+              manual / …) colorea sus propias ramas. */}
           {(() => {
-            const h = layout.hub;
-            const spoke = (p: { x: number; y: number }) => {
+            const spoke = (h: { x: number; y: number }, p: { x: number; y: number }) => {
               const mx = (h.x + p.x) / 2,
                 my = (h.y + p.y) / 2;
               const dx = p.x - h.x,
                 dy = p.y - h.y;
               return `M${h.x},${h.y} Q${mx - dy * 0.08},${my + dx * 0.08} ${p.x},${p.y}`;
             };
+            const paletteOf = (source: string) =>
+              source === "amazon"
+                ? { faint: "rgba(255,153,0,0.18)", strong: "rgba(255,178,71,0.6)", dot: "#FFD08A" }
+                : { faint: "rgba(94,234,212,0.18)", strong: "rgba(110,231,219,0.6)", dot: "#5EEAD4" };
             return (
               <>
-                <g stroke="rgba(255,153,0,0.18)" strokeWidth="1.2" fill="none">
-                  {layout.pos.map((p) => (
-                    <path key={p.id} vectorEffect="non-scaling-stroke" d={spoke(p)} />
-                  ))}
-                </g>
-                <g
-                  stroke="rgba(255,178,71,0.6)"
-                  strokeWidth="1.5"
-                  fill="none"
-                  strokeLinecap="round"
-                >
-                  {layout.pos.map((p, i) => (
-                    <path
-                      key={p.id}
-                      className="net-flow"
-                      vectorEffect="non-scaling-stroke"
-                      style={{ animationDelay: `${(i % 7) * 0.18}s` }}
-                      d={spoke(p)}
-                    />
-                  ))}
-                </g>
-                {/* Punto de luz viajando por cada rama */}
-                <g>
-                  {layout.pos.map((p, i) => (
-                    <circle key={p.id} r="3.4" fill="#FFD08A" filter="url(#glow)">
-                      <animateMotion
-                        dur={`${3 + (i % 4) * 0.6}s`}
-                        begin={`${(i % 6) * 0.5}s`}
-                        repeatCount="indefinite"
-                        path={spoke(p)}
-                        keyPoints="1;0"
-                        keyTimes="0;1"
-                        calcMode="linear"
-                      />
-                    </circle>
-                  ))}
-                </g>
+                {layout.hubs.map((h) => {
+                  const items = layout.pos.filter((p) => p.hubId === h.id);
+                  const pal = paletteOf(h.source);
+                  return (
+                    <g key={`spokes-${h.id}`}>
+                      <g stroke={pal.faint} strokeWidth="1.2" fill="none">
+                        {items.map((p) => (
+                          <path
+                            key={`f-${p.id}`}
+                            vectorEffect="non-scaling-stroke"
+                            d={spoke(h, p)}
+                          />
+                        ))}
+                      </g>
+                      <g
+                        stroke={pal.strong}
+                        strokeWidth="1.5"
+                        fill="none"
+                        strokeLinecap="round"
+                      >
+                        {items.map((p, i) => (
+                          <path
+                            key={`s-${p.id}`}
+                            className="net-flow"
+                            vectorEffect="non-scaling-stroke"
+                            style={{ animationDelay: `${(i % 7) * 0.18}s` }}
+                            d={spoke(h, p)}
+                          />
+                        ))}
+                      </g>
+                      <g>
+                        {items.map((p, i) => (
+                          <circle key={`d-${p.id}`} r="3.4" fill={pal.dot} filter="url(#glow)">
+                            <animateMotion
+                              dur={`${3 + (i % 4) * 0.6}s`}
+                              begin={`${(i % 6) * 0.5}s`}
+                              repeatCount="indefinite"
+                              path={spoke(h, p)}
+                              keyPoints="1;0"
+                              keyTimes="0;1"
+                              calcMode="linear"
+                            />
+                          </circle>
+                        ))}
+                      </g>
+                    </g>
+                  );
+                })}
               </>
             );
           })()}
 
-          {/* Nodo central: icono de Amazon (clic → mostrar/ocultar tools) */}
-          {(() => {
-            const h = layout.hub;
+          {/* Nodos centrales: un hub por origen (Amazon, Manual…).
+              Sólo el hub primario abre el dock de herramientas; los demás
+              son informativos (mostrar count y nombre). */}
+          {layout.hubs.map((hubInfo) => {
+            const h = { x: hubInfo.x, y: hubInfo.y };
             const HR = 54;
             const w = HR * 1.15;
+            const isAmazon = hubInfo.source === "amazon";
+            const stroke = isAmazon ? "#FF9900" : "#5EEAD4";
+            const ringStroke = isAmazon ? "rgba(255,153,0,0.55)" : "rgba(94,234,212,0.55)";
+            const breatheStroke = isAmazon ? "rgba(255,153,0,0.45)" : "rgba(94,234,212,0.45)";
+            const labelColor = isAmazon ? "rgba(255,170,80,0.85)" : "rgba(110,231,219,0.85)";
+            const labelText = isAmazon
+              ? `Tu cuenta · ${hubInfo.count} producto${hubInfo.count === 1 ? "" : "s"}`
+              : `${humanizeSource(hubInfo.source)} · ${hubInfo.count} producto${hubInfo.count === 1 ? "" : "s"}`;
             return (
               <g
+                key={`hub-${hubInfo.id}`}
                 className="hex-node"
-                style={{ cursor: "pointer" }}
-                onClick={() => {
-                  if (suppressClick.current) {
-                    suppressClick.current = false;
-                    return;
-                  }
-                  setHubOpen((v) => !v);
-                }}
+                style={{ cursor: hubInfo.primary ? "pointer" : "default" }}
+                onClick={
+                  hubInfo.primary
+                    ? () => {
+                        if (suppressClick.current) {
+                          suppressClick.current = false;
+                          return;
+                        }
+                        setHubOpen((v) => !v);
+                      }
+                    : undefined
+                }
               >
                 <title>
-                  {hubOpen
-                    ? "Ocultar herramientas"
-                    : "Pulsa para ver las herramientas (Catálogo, Rentabilidad, Cuenta…)"}
+                  {hubInfo.primary
+                    ? hubOpen
+                      ? "Ocultar herramientas"
+                      : "Pulsa para ver las herramientas (Catálogo, Rentabilidad, Cuenta…)"
+                    : labelText}
                 </title>
                 <circle cx={h.x} cy={h.y} r={HR + 16} fill="transparent" />
                 <circle
@@ -994,7 +1170,7 @@ export default function ProductNetwork({
                   cy={h.y}
                   r={HR + 12}
                   fill="none"
-                  stroke="rgba(255,153,0,0.55)"
+                  stroke={ringStroke}
                   strokeWidth="1.6"
                   strokeDasharray="3 10"
                   strokeLinecap="round"
@@ -1005,7 +1181,7 @@ export default function ProductNetwork({
                   cy={h.y}
                   r={HR + 6}
                   fill="none"
-                  stroke="rgba(255,153,0,0.45)"
+                  stroke={breatheStroke}
                   strokeWidth="1.4"
                   filter="url(#glow)"
                 />
@@ -1014,69 +1190,100 @@ export default function ProductNetwork({
                   cy={h.y}
                   r={HR}
                   fill="rgba(10,9,16,0.92)"
-                  stroke="#FF9900"
+                  stroke={stroke}
                   strokeWidth="1.8"
                 />
-                {/* wordmark + sonrisa de Amazon */}
-                <text
-                  x={h.x}
-                  y={h.y - 4}
-                  textAnchor="middle"
-                  fontSize="20"
-                  fontWeight={800}
-                  fill="#ffffff"
-                  style={{ letterSpacing: "0.5px" }}
-                >
-                  amazon
-                </text>
-                <path
-                  d={`M${h.x - w / 2},${h.y + 10} Q${h.x},${h.y + 26} ${h.x + w / 2},${h.y + 9}`}
-                  fill="none"
-                  stroke="#FF9900"
-                  strokeWidth="3.2"
-                  strokeLinecap="round"
-                />
-                <path
-                  d={`M${h.x + w / 2 - 9},${h.y + 4} L${h.x + w / 2 + 1},${h.y + 9} L${h.x + w / 2 - 6},${h.y + 16} Z`}
-                  fill="#FF9900"
-                />
+                {isAmazon ? (
+                  <>
+                    {/* wordmark + sonrisa de Amazon */}
+                    <text
+                      x={h.x}
+                      y={h.y - 4}
+                      textAnchor="middle"
+                      fontSize="20"
+                      fontWeight={800}
+                      fill="#ffffff"
+                      style={{ letterSpacing: "0.5px" }}
+                    >
+                      amazon
+                    </text>
+                    <path
+                      d={`M${h.x - w / 2},${h.y + 10} Q${h.x},${h.y + 26} ${h.x + w / 2},${h.y + 9}`}
+                      fill="none"
+                      stroke="#FF9900"
+                      strokeWidth="3.2"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d={`M${h.x + w / 2 - 9},${h.y + 4} L${h.x + w / 2 + 1},${h.y + 9} L${h.x + w / 2 - 6},${h.y + 16} Z`}
+                      fill="#FF9900"
+                    />
+                  </>
+                ) : (
+                  <>
+                    {/* Icono de tienda personalizada (storefront) */}
+                    <g stroke="#5EEAD4" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none">
+                      {/* Awning / tejado */}
+                      <path d={`M${h.x - 22},${h.y - 10} L${h.x + 22},${h.y - 10} L${h.x + 18},${h.y - 18} L${h.x - 18},${h.y - 18} Z`} fill="rgba(94,234,212,0.12)" />
+                      {/* Cuerpo */}
+                      <path d={`M${h.x - 19},${h.y - 10} L${h.x - 19},${h.y + 18} L${h.x + 19},${h.y + 18} L${h.x + 19},${h.y - 10}`} />
+                      {/* Puerta */}
+                      <path d={`M${h.x - 5},${h.y + 18} L${h.x - 5},${h.y + 2} L${h.x + 5},${h.y + 2} L${h.x + 5},${h.y + 18}`} fill="rgba(94,234,212,0.18)" />
+                    </g>
+                    <text
+                      x={h.x}
+                      y={h.y + 32}
+                      textAnchor="middle"
+                      fontSize="9"
+                      fontWeight={700}
+                      letterSpacing="2"
+                      fill="rgba(110,231,219,0.6)"
+                    >
+                      TIENDA
+                    </text>
+                  </>
+                )}
                 <text
                   x={h.x}
                   y={h.y + HR + 20}
                   textAnchor="middle"
                   fontSize="12"
                   fontWeight={700}
-                  fill="rgba(255,170,80,0.85)"
+                  fill={labelColor}
                 >
-                  Tu cuenta · {layout.pos.length} productos
+                  {labelText}
                 </text>
 
-                {/* Indicador de que el icono es clicable → abre opciones */}
-                <g className={hubOpen ? undefined : "hub-breathe"}>
-                  <rect
-                    x={h.x - 74}
-                    y={h.y + HR + 30}
-                    width={148}
-                    height={24}
-                    rx={12}
-                    fill="rgba(255,153,0,0.10)"
-                    stroke="rgba(255,153,0,0.55)"
-                    strokeWidth="1"
-                  />
-                  <text
-                    x={h.x}
-                    y={h.y + HR + 46}
-                    textAnchor="middle"
-                    fontSize="11.5"
-                    fontWeight={700}
-                    fill="rgba(255,179,71,0.95)"
-                  >
-                    {hubOpen ? "▲  Ocultar opciones" : "▼  Pulsa: opciones"}
-                  </text>
-                </g>
+                {/* Indicador de que el icono es clicable → abre opciones.
+                    Sólo en el hub primario; los hubs secundarios no abren
+                    el dock de herramientas. */}
+                {hubInfo.primary && (
+                  <g className={hubOpen ? undefined : "hub-breathe"}>
+                    <rect
+                      x={h.x - 74}
+                      y={h.y + HR + 30}
+                      width={148}
+                      height={24}
+                      rx={12}
+                      fill={isAmazon ? "rgba(255,153,0,0.10)" : "rgba(94,234,212,0.10)"}
+                      stroke={isAmazon ? "rgba(255,153,0,0.55)" : "rgba(94,234,212,0.55)"}
+                      strokeWidth="1"
+                    />
+                    <text
+                      x={h.x}
+                      y={h.y + HR + 46}
+                      textAnchor="middle"
+                      fontSize="11.5"
+                      fontWeight={700}
+                      fill={isAmazon ? "rgba(255,179,71,0.95)" : "rgba(110,231,219,0.95)"}
+                    >
+                      {hubOpen ? "▲  Ocultar opciones" : "▼  Pulsa: opciones"}
+                    </text>
+                  </g>
+                )}
               </g>
             );
-          })()}
+          })}
 
 
           {/* Ramas del hub → herramientas (solo al pulsar el icono Amazon) */}
@@ -1281,7 +1488,10 @@ export default function ProductNetwork({
             if (!selId) return null;
             const p = layout.pos.find((q) => q.id === selId);
             if (!p) return null;
-            const hb = layout.hub;
+            // Usamos el hub al que pertenece el nodo seleccionado, no el
+            // primario, para que el mini-dock salga apuntando "hacia afuera"
+            // de su propia constelación.
+            const hb = layout.hubs.find((h) => h.id === p.hubId) ?? layout.hub;
             const dx = p.x - hb.x;
             const dy = p.y - hb.y;
             const len = Math.hypot(dx, dy) || 1;
