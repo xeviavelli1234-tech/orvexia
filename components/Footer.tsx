@@ -41,6 +41,7 @@ const NAV = [
       { label: "Aviso legal", href: "/aviso-legal" },
       { label: "Política de privacidad", href: "/politica-privacidad" },
       { label: "Política de cookies", href: "/politica-cookies" },
+      { label: "Datos Amazon (SP-API)", href: "/politica-datos-amazon" },
     ],
   },
 ];
@@ -106,9 +107,16 @@ export function Footer() {
             <p className="text-sm text-white/55 leading-relaxed max-w-xs mb-4">
               Compara precios de electrodomésticos en las principales tiendas de España y ahorra en cada compra.
             </p>
-            <div className="font-mono-ui text-[10px] text-white/35 space-y-0.5">
+            <div className="font-mono-ui text-[10px] text-white/35 space-y-0.5 mb-4">
               <div>▸ <span className="text-cyan-300/80">orvexiaesp@gmail.com</span></div>
               <div>▸ build <span className="text-white/55">stable</span></div>
+            </div>
+            <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3 max-w-xs">
+              <p className="font-mono-ui text-[9px] uppercase tracking-wider text-fuchsia-300/80 mb-1">▸ /amazon-seller</p>
+              <p className="text-xs text-white/70 leading-relaxed">
+                También vendemos en Amazon España como{" "}
+                <span className="font-semibold text-white">OrvexiaShop</span>.
+              </p>
             </div>
           </div>
 

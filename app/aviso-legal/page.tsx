@@ -18,7 +18,8 @@ const SECTIONS = [
             ["Denominación", "Orvexia"],
             ["Sitio web", "orvexia.es"],
             ["Correo electrónico de contacto", "orvexiaesp@gmail.com"],
-            ["Actividad", "Comparador de precios de electrodomésticos y tecnología de hogar"],
+            ["Actividad principal", "Comparador de precios de electrodomésticos y tecnología de hogar"],
+            ["Actividad secundaria", "Venta directa de electrodomésticos como vendedor en Amazon España bajo la marca OrvexiaShop"],
           ].map(([k, v]) => (
             <li key={k as string} className="flex gap-2 text-sm">
               <span className="font-semibold text-fg flex-shrink-0">{k}:</span>
@@ -126,7 +127,40 @@ const SECTIONS = [
     ),
   },
   {
-    title: "8. Exclusión de garantías y responsabilidad",
+    title: "8. Actividad como vendedor en Amazon (OrvexiaShop)",
+    content: (
+      <>
+        <p className="mb-3">
+          De forma separada e independiente al comparador, Orvexia opera una tienda propia en
+          Amazon España como vendedor bajo la marca <strong>OrvexiaShop</strong>. La gestión de
+          esta cuenta se realiza mediante la <strong>Amazon Selling Partner API (SP-API)</strong>,
+          de forma estrictamente privada y únicamente sobre nuestra propia cuenta de vendedor.
+        </p>
+        <ul className="space-y-2 list-none mb-3">
+          {[
+            "El comparador público de orvexia.es y la cuenta de vendedor OrvexiaShop son la misma entidad jurídica, pero operan de forma técnica y operativamente aislada.",
+            "Los datos obtenidos vía SP-API no se utilizan en el comparador público ni se comparten con terceros.",
+            "Los precios de Amazon que se muestran en el comparador público proceden del programa de afiliados (enlaces públicos / Product Advertising API), no de SP-API.",
+            "El tratamiento de datos de SP-API se realiza conforme a la Amazon Data Protection Policy y la Acceptable Use Policy.",
+          ].map((item) => (
+            <li key={item} className="flex gap-3 items-start text-sm">
+              <span className="mt-1 w-1.5 h-1.5 rounded-full bg-[#4F46E5] flex-shrink-0" />
+              <span className="text-fg-muted">{item}</span>
+            </li>
+          ))}
+        </ul>
+        <p>
+          Para más detalle consulta la{" "}
+          <Link href="/politica-datos-amazon" className="text-[#4F46E5] hover:underline font-medium">
+            Política de Protección de Datos de Amazon
+          </Link>
+          .
+        </p>
+      </>
+    ),
+  },
+  {
+    title: "9. Exclusión de garantías y responsabilidad",
     content: (
       <ul className="space-y-2 list-none">
         {[
@@ -144,7 +178,7 @@ const SECTIONS = [
     ),
   },
   {
-    title: "9. Privacidad y cookies",
+    title: "10. Privacidad y cookies",
     content: (
       <p>
         El tratamiento de datos personales se rige por nuestra{" "}
@@ -160,7 +194,7 @@ const SECTIONS = [
     ),
   },
   {
-    title: "10. Legislación aplicable y jurisdicción",
+    title: "11. Legislación aplicable y jurisdicción",
     content: (
       <p>
         El presente Aviso Legal se rige por la legislación española. Para la resolución de cualquier controversia
@@ -200,7 +234,7 @@ export default function AvisoLegalPage() {
             Aviso Legal y <span className="text-gradient-neon">Términos de Uso</span>
           </h1>
           <p className="text-sm text-white/55">
-            Última actualización: <strong className="text-white/85">18 de abril de 2026</strong>
+            Última actualización: <strong className="text-white/85">24 de mayo de 2026</strong>
           </p>
           <p className="mt-3 text-sm text-white/55 leading-relaxed max-w-2xl">
             Este documento establece las condiciones legales que rigen el acceso y uso de{" "}
@@ -251,7 +285,7 @@ export default function AvisoLegalPage() {
             </a>
           </p>
           <p className="font-mono-ui text-[10px] uppercase tracking-wider text-white/40 mt-1">
-            v1.0 · last_rev=2026-04-18
+            v1.1 · last_rev=2026-05-24
           </p>
         </div>
       </div>

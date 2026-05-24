@@ -140,7 +140,44 @@ const SECTIONS = [
     ),
   },
   {
-    title: "6. Tus derechos",
+    title: "6. Datos obtenidos de Amazon Selling Partner API",
+    content: (
+      <>
+        <p className="mb-3">
+          De forma <strong>separada e independiente</strong> al comparador público, Orvexia opera una
+          tienda propia en Amazon España bajo la marca <strong>OrvexiaShop</strong>. Para gestionar
+          únicamente esa cuenta de vendedor utilizamos la <strong>Amazon Selling Partner API (SP-API)</strong>.
+        </p>
+        <ul className="space-y-2 list-none mb-3">
+          {[
+            ["Naturaleza de los datos", "ASIN/SKU, título de producto, precio actual, precio competitivo y estado del listing de nuestra propia cuenta de vendedor. No se tratan datos personales de compradores."],
+            ["Finalidad", "Repricing automático y mantenimiento del catálogo dentro de un rango mín/máx definido manualmente por nosotros sobre nuestra propia cuenta."],
+            ["No se comparten con terceros", "Estos datos se utilizan exclusivamente de forma interna y nunca se exponen en el comparador público de orvexia.es."],
+            ["No se cruzan con datos de usuarios", "Los datos de SP-API están aislados técnica y operativamente de los datos de visitantes y cuentas de orvexia.es."],
+            ["Cifrado y conservación", "Los refresh tokens de OAuth se almacenan cifrados en reposo (AES-256-GCM) y las comunicaciones con Amazon se realizan sobre HTTPS/TLS. Se conservan únicamente mientras la autorización con Amazon esté vigente y se eliminan a los 30 días de revocada."],
+            ["Cumplimiento", "El tratamiento se realiza conforme a la Amazon Data Protection Policy (DPP) y la Acceptable Use Policy (AUP) de la SP-API."],
+          ].map(([k, v]) => (
+            <li key={k as string} className="flex gap-3 items-start">
+              <span className="mt-0.5 w-2 h-2 rounded-full bg-[#4F46E5] flex-shrink-0" />
+              <span>
+                <strong className="text-fg">{k}:</strong>{" "}
+                <span className="text-fg-muted">{v}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+        <p>
+          Para el detalle técnico completo consulta la{" "}
+          <Link href="/politica-datos-amazon" className="text-[#4F46E5] hover:underline font-medium">
+            Política de Protección de Datos de Amazon
+          </Link>
+          .
+        </p>
+      </>
+    ),
+  },
+  {
+    title: "7. Tus derechos",
     content: (
       <>
         <p className="mb-3">
@@ -175,7 +212,7 @@ const SECTIONS = [
     ),
   },
   {
-    title: "7. Seguridad",
+    title: "8. Seguridad",
     content: (
       <p>
         Aplicamos medidas técnicas y organizativas apropiadas para proteger tus datos frente a accesos no
@@ -186,7 +223,7 @@ const SECTIONS = [
     ),
   },
   {
-    title: "8. Menores de edad",
+    title: "9. Menores de edad",
     content: (
       <p>
         Orvexia no está dirigido a menores de 14 años. No recogemos conscientemente datos de menores.
@@ -199,7 +236,7 @@ const SECTIONS = [
     ),
   },
   {
-    title: "9. Cambios en esta política",
+    title: "10. Cambios en esta política",
     content: (
       <p>
         Podemos actualizar esta política para reflejar cambios en el servicio o en la normativa aplicable.
@@ -210,7 +247,7 @@ const SECTIONS = [
     ),
   },
   {
-    title: "10. Política de cookies",
+    title: "11. Política de cookies",
     content: (
       <p>
         Para más información sobre las cookies que utilizamos y cómo gestionarlas, consulta nuestra{" "}
@@ -242,7 +279,7 @@ export default function PrivacyPolicyPage() {
             Política de <span className="text-gradient-neon">Privacidad</span>
           </h1>
           <p className="text-sm text-white/55">
-            Última actualización: <strong className="text-white/85">18 de abril de 2026</strong>
+            Última actualización: <strong className="text-white/85">24 de mayo de 2026</strong>
           </p>
           <p className="mt-3 text-sm text-white/55 leading-relaxed max-w-2xl">
             En Orvexia nos tomamos muy en serio la privacidad de nuestros usuarios. Esta política explica
@@ -293,7 +330,7 @@ export default function PrivacyPolicyPage() {
             </a>
           </p>
           <p className="font-mono-ui text-[10px] uppercase tracking-wider text-white/40 mt-1">
-            v1.0 · last_rev=2026-04-18
+            v1.1 · last_rev=2026-05-24
           </p>
         </div>
       </div>

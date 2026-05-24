@@ -122,6 +122,54 @@ export default function SobreNosotrosPage() {
           </div>
         </section>
 
+        {/* Nuestras dos actividades */}
+        <section>
+          <h2 className="text-2xl font-extrabold text-fg mb-2">Nuestras dos actividades</h2>
+          <p className="text-fg-muted mb-6">
+            Orvexia opera dos actividades complementarias pero independientes entre sí.
+          </p>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="bg-bg-elevated rounded-2xl border border-border p-6">
+              <p className="font-mono-ui text-[10px] uppercase tracking-wider text-cyan-600 mb-2">▸ /public</p>
+              <p className="font-bold text-fg mb-2">Comparador público de precios</p>
+              <p className="text-sm text-fg-muted leading-relaxed">
+                <strong>orvexia.es</strong> — comparador independiente de electrodomésticos con enlaces de
+                afiliados a Amazon, PcComponentes, El Corte Inglés y Fnac. Cualquier visitante puede consultar
+                precios, guías y comparativas sin registro.
+              </p>
+            </div>
+            <div className="bg-bg-elevated rounded-2xl border border-border p-6">
+              <p className="font-mono-ui text-[10px] uppercase tracking-wider text-fuchsia-600 mb-2">▸ /private</p>
+              <p className="font-bold text-fg mb-2">Tienda propia en Amazon (OrvexiaShop)</p>
+              <p className="text-sm text-fg-muted leading-relaxed">
+                Vendemos electrodomésticos directamente como vendedor en Amazon España bajo la marca
+                <strong> OrvexiaShop</strong>. Para gestionar nuestro catálogo utilizamos la
+                <strong> Selling Partner API (SP-API) de Amazon</strong> de forma estrictamente privada y
+                únicamente sobre nuestra propia cuenta de vendedor: importamos nuestros listings,
+                consultamos el precio competitivo y ajustamos automáticamente el precio dentro de un rango
+                mín/máx que definimos manualmente.
+              </p>
+            </div>
+          </div>
+          <div className="mt-6 rounded-2xl p-5 bg-cyan-400/[0.06] border border-cyan-400/25">
+            <p className="font-mono-ui text-[10px] font-bold text-cyan-600 uppercase tracking-[0.2em] mb-2">▸ /isolation</p>
+            <p className="text-sm text-fg leading-relaxed">
+              Las dos actividades están <strong>aisladas técnica y operativamente</strong>. Los datos obtenidos
+              de Amazon SP-API <strong>nunca</strong> se utilizan en el comparador público, no se comparten con
+              terceros y no se cruzan con datos de usuarios. El comparador público no consume SP-API: los
+              precios de Amazon que se muestran ahí proceden del programa de afiliados (Product Advertising API
+              y enlaces públicos), no de SP-API.
+            </p>
+            <p className="mt-3 text-sm text-fg-muted leading-relaxed">
+              Para más detalle consulta nuestra{" "}
+              <Link href="/politica-datos-amazon" className="text-[#4F46E5] hover:underline font-medium">
+                Política de Protección de Datos de Amazon
+              </Link>
+              .
+            </p>
+          </div>
+        </section>
+
         {/* Stats */}
         <section className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {STATS.map((s) => (
