@@ -85,10 +85,10 @@ export interface NetNode {
   suggestedReason: string | null;
 }
 
-const VB_W = 1400;
-const VB_H = 900;
+const VB_W = 1700;
+const VB_H = 1050;
 const R = 38;
-const K_MIN = 0.75;
+const K_MIN = 0.65;
 const K_MAX = 4;
 
 /** Limita el paneo: solo se permite asomarse un poco a las esquinas. */
@@ -565,9 +565,11 @@ export default function ProductNetwork({
       }
     }
     // ── Constantes del layout en anillos concéntricos ────────────────────
-    const R0 = 145;
-    const RING_GAP = 125;
-    const MIN_ARC = 128;
+    // R0: radio del primer anillo. RING_GAP: separación entre anillos.
+    // MIN_ARC: arco mínimo entre nodos (más grande → más espacio angular).
+    const R0 = 175;
+    const RING_GAP = 155;
+    const MIN_ARC = 175;
     const HR = 54;
 
     function distributeRings(count: number): number[] {
@@ -612,8 +614,8 @@ export default function ProductNetwork({
       if (numSources === 1) {
         rowY.set(sourceOrder[0], cy);
       } else if (numSources === 2) {
-        rowY.set(sourceOrder[0], VB_H * 0.30);
-        rowY.set(sourceOrder[1], VB_H * 0.75);
+        rowY.set(sourceOrder[0], VB_H * 0.27);
+        rowY.set(sourceOrder[1], VB_H * 0.76);
       } else {
         sourceOrder.forEach((s, si) =>
           rowY.set(s, VB_H * ((si + 0.5) / numSources)),
@@ -622,9 +624,9 @@ export default function ProductNetwork({
 
       // Espacio entre centros: diámetro del radio máximo + gap.
       const hubR = maxRadiusForCount(CHUNK_SIZE);
-      const HUB_GAP = 60;
+      const HUB_GAP = 90;  // margen mínimo entre territorios adyacentes
       const hubSpacing = 2 * hubR + HUB_GAP;
-      const PAD = 80;
+      const PAD = 90;
       const maxSpread = VB_W - 2 * PAD - 2 * hubR;
 
       const centers: { x: number; y: number }[] = [];
@@ -1577,18 +1579,15 @@ export default function ProductNetwork({
             const px = -uy; // perpendicular
             const py = ux;
             const SR = 21;
-            // Distancia adaptativa: el dock siempre queda CLARAMENTE más
-            // allá del anillo exterior de su hub (con margen R + SR + 50px
-            // de aire). Para nodos del anillo interior eso significa saltar
-            // por encima del anillo exterior; para nodos del anillo
-            // exterior el salto es menor pero igual evita pisar a otros.
+            // El dock siempre queda MÁS ALLÁ del radio del anillo exterior
+            // de su hub + colchón de 130 px → nunca pisa nodos adyacentes.
             const hubRadii = layout.pos
               .filter((q) => q.hubId === p.hubId)
               .map((q) => Math.hypot(q.x - hb.x, q.y - hb.y));
             const maxRingR = hubRadii.length > 0 ? Math.max(...hubRadii) : len;
-            const dockR = maxRingR + SR + R + 50; // 109 px de colchón
-            const OUT = Math.max(130, dockR - len);
-            const STEP = 92; // separación entre opciones
+            const dockR = maxRingR + SR + R + 130; // colchón ampliado
+            const OUT = Math.max(160, dockR - len);
+            const STEP = 108; // separación entre opciones (más aire)
             const Cx = p.x + ux * OUT;
             const Cy = p.y + uy * OUT;
 
