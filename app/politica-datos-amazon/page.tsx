@@ -157,17 +157,63 @@ export default function PoliticaDatosAmazon() {
 
       <H>6. Subencargados (sub-procesadores)</H>
       <P>
-        La Aplicación se apoya en proveedores de infraestructura que actúan como encargados de
-        tratamiento, bajo acuerdos de protección de datos:
+        La Aplicación se apoya en los siguientes proveedores, que actúan como encargados de
+        tratamiento bajo acuerdos de protección de datos (DPA). Se indica la finalidad, la
+        categoría de datos a la que tienen acceso y la ubicación de tratamiento:
       </P>
       <ul className="mt-2 list-disc pl-5">
-        <LI>Alojamiento y ejecución de la aplicación (proveedor cloud).</LI>
-        <LI>Base de datos PostgreSQL gestionada (con cifrado en reposo).</LI>
-        <LI>Pasarela de pago para la suscripción (no recibe datos de Amazon).</LI>
+        <LI>
+          <strong>Vercel Inc. (EE.UU.)</strong> — alojamiento, ejecución serverless y CDN de la
+          Aplicación. Procesa, en tránsito, todos los datos que circulan por las peticiones HTTP
+          (incluidos los obtenidos de Amazon). Adherido al EU-US Data Privacy Framework. DPA
+          disponible en{" "}
+          <a className="underline" href="https://vercel.com/legal/dpa" target="_blank" rel="noopener noreferrer">
+            vercel.com/legal/dpa
+          </a>
+          .
+        </LI>
+        <LI>
+          <strong>Neon Inc. (PostgreSQL gestionada, región UE)</strong> — base de datos
+          principal con cifrado en reposo (AES-256) y en tránsito (TLS). Almacena los refresh
+          tokens cifrados, los listings, los ciclos de reprecio y la configuración del
+          vendedor. Datos alojados en la Unión Europea, sin transferencia internacional. DPA
+          disponible en{" "}
+          <a className="underline" href="https://neon.com/legal/dpa" target="_blank" rel="noopener noreferrer">
+            neon.com/legal/dpa
+          </a>
+          .
+        </LI>
+        <LI>
+          <strong>Stripe Payments Europe Ltd. (Irlanda)</strong> — pasarela de pago de la
+          suscripción. Procesa identificadores de cliente y datos de facturación;{" "}
+          <strong>no recibe datos obtenidos de Amazon</strong>. DPA disponible en{" "}
+          <a className="underline" href="https://stripe.com/legal/dpa" target="_blank" rel="noopener noreferrer">
+            stripe.com/legal/dpa
+          </a>
+          .
+        </LI>
+        <LI>
+          <strong>Resend Inc. (EE.UU.)</strong> — envío de correos transaccionales (alertas de
+          reprecio, verificación de cuenta, avisos de facturación). Procesa la dirección de
+          correo del destinatario y el contenido del mensaje;{" "}
+          <strong>no recibe datos obtenidos de Amazon</strong> más allá de los que el propio
+          vendedor elija incluir en sus alertas (p. ej. SKU o precio). Adherido al EU-US Data
+          Privacy Framework. DPA disponible en{" "}
+          <a className="underline" href="https://resend.com/legal/dpa" target="_blank" rel="noopener noreferrer">
+            resend.com/legal/dpa
+          </a>
+          .
+        </LI>
       </ul>
       <P>
-        Ningún subencargado recibe datos de Amazon salvo el alojamiento y la base de datos
-        estrictamente necesarios para operar el servicio.
+        Solo Vercel (en tránsito) y Neon (en reposo) procesan datos obtenidos de Amazon. El
+        resto de subencargados se limita a la finalidad descrita y opera bajo el principio de
+        minimización: ningún proveedor recibe más datos de los estrictamente necesarios para su
+        función.
+      </P>
+      <P>
+        Para solicitar una copia de cualquiera de los DPA firmados o consultar el detalle de
+        los flujos de datos, escribe a <a className="underline" href="mailto:orvexiaesp@gmail.com">orvexiaesp@gmail.com</a>.
       </P>
 
       <H>7. Registro y detección</H>
