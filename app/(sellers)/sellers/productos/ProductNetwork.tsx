@@ -1559,199 +1559,6 @@ export default function ProductNetwork({
             );
           })()}
 
-          {/* Opciones del producto seleccionado: mini-dock de iconos.
-              Se renderiza DESPUÉS de los nodos (más abajo) para que el
-              dock quede por encima de cualquier producto que pudiera
-              quedar bajo su trayectoria. */}
-          {(() => {
-            if (!selId) return null;
-            const p = layout.pos.find((q) => q.id === selId);
-            if (!p) return null;
-            // Usamos el hub al que pertenece el nodo seleccionado, no el
-            // primario, para que el mini-dock salga apuntando "hacia afuera"
-            // de su propia constelación.
-            const hb = layout.hubs.find((h) => h.id === p.hubId) ?? layout.hub;
-            const dx = p.x - hb.x;
-            const dy = p.y - hb.y;
-            const len = Math.hypot(dx, dy) || 1;
-            const ux = dx / len; // hacia afuera (alejándose del hub)
-            const uy = dy / len;
-            const px = -uy; // perpendicular
-            const py = ux;
-            const SR = 21;
-            // El dock siempre queda MÁS ALLÁ del radio del anillo exterior
-            // de su hub + colchón de 130 px → nunca pisa nodos adyacentes.
-            const hubRadii = layout.pos
-              .filter((q) => q.hubId === p.hubId)
-              .map((q) => Math.hypot(q.x - hb.x, q.y - hb.y));
-            const maxRingR = hubRadii.length > 0 ? Math.max(...hubRadii) : len;
-            const dockR = maxRingR + SR + R + 130; // colchón ampliado
-            const OUT = Math.max(160, dockR - len);
-            const STEP = 108; // separación entre opciones (más aire)
-            const Cx = p.x + ux * OUT;
-            const Cy = p.y + uy * OUT;
-
-            const opts: Array<{
-              key: string;
-              label: string;
-              rgb: string;
-              icon: "bars" | "coin" | "pause" | "play";
-              onClick: () => void;
-            }> = [
-              {
-                key: "ana",
-                label: "Analítica",
-                rgb: "125,211,252",
-                icon: "bars",
-                onClick: () =>
-                  window.dispatchEvent(
-                    new CustomEvent("orvexia:open-analytics", {
-                      detail: { productId: selId },
-                    }),
-                  ),
-              },
-              {
-                key: "prof",
-                label: "Rentabilidad",
-                rgb: "52,211,153",
-                icon: "coin",
-                onClick: () =>
-                  window.dispatchEvent(new CustomEvent("orvexia:open-profit")),
-              },
-              {
-                key: "tog",
-                label: p.repricingEnabled ? "Pausar" : "Activar",
-                rgb: p.repricingEnabled ? "251,191,36" : "52,211,153",
-                icon: p.repricingEnabled ? "pause" : "play",
-                onClick: () => toggle(),
-              },
-            ];
-            const m = opts.length;
-
-            return (
-              <g>
-                {opts.map((o, i) => {
-                  const off = (i - (m - 1) / 2) * STEP;
-                  const SX = Cx + px * off;
-                  const SY = Cy + py * off;
-                  const branch = `M${p.x},${p.y} Q${(p.x + SX) / 2},${
-                    (p.y + SY) / 2
-                  } ${SX},${SY}`;
-                  return (
-                    <g
-                      key={o.key}
-                      className="tool-in"
-                      style={{ "--td": `${0.04 + i * 0.06}s` } as CSSProperties}
-                    >
-                      <path
-                        d={branch}
-                        fill="none"
-                        stroke={`rgba(${o.rgb},0.26)`}
-                        strokeWidth="1.2"
-                        vectorEffect="non-scaling-stroke"
-                      />
-                      <path
-                        className="net-flow"
-                        d={branch}
-                        fill="none"
-                        stroke={`rgba(${o.rgb},0.62)`}
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        vectorEffect="non-scaling-stroke"
-                      />
-                      <g
-                        className="hex-node"
-                        style={{ cursor: "pointer" }}
-                        onClick={() => {
-                          if (suppressClick.current) {
-                            suppressClick.current = false;
-                            return;
-                          }
-                          o.onClick();
-                        }}
-                      >
-                        <circle cx={SX} cy={SY} r={SR + 13} fill="transparent" />
-                        <circle
-                          cx={SX}
-                          cy={SY}
-                          r={SR + 5}
-                          fill="none"
-                          stroke={`rgba(${o.rgb},0.45)`}
-                          strokeWidth="1.2"
-                          filter="url(#glow)"
-                        />
-                        <circle
-                          cx={SX}
-                          cy={SY}
-                          r={SR}
-                          fill="rgba(8,10,22,0.94)"
-                          stroke={`rgba(${o.rgb},0.7)`}
-                          strokeWidth="1.3"
-                        />
-                        {o.icon === "bars" && (
-                          <g
-                            stroke={`rgb(${o.rgb})`}
-                            strokeWidth="2.6"
-                            strokeLinecap="round"
-                          >
-                            <line x1={SX - 8} y1={SY + 6} x2={SX - 8} y2={SY + 1} />
-                            <line x1={SX} y1={SY + 6} x2={SX} y2={SY - 5} />
-                            <line x1={SX + 8} y1={SY + 6} x2={SX + 8} y2={SY - 2} />
-                          </g>
-                        )}
-                        {o.icon === "coin" && (
-                          <>
-                            <circle
-                              cx={SX}
-                              cy={SY}
-                              r={10}
-                              fill="none"
-                              stroke={`rgb(${o.rgb})`}
-                              strokeWidth="1.5"
-                            />
-                            <text
-                              x={SX}
-                              y={SY + 0.5}
-                              textAnchor="middle"
-                              dominantBaseline="central"
-                              fontSize="13"
-                              fontWeight={800}
-                              fill={`rgb(${o.rgb})`}
-                            >
-                              €
-                            </text>
-                          </>
-                        )}
-                        {o.icon === "pause" && (
-                          <g fill={`rgb(${o.rgb})`}>
-                            <rect x={SX - 7} y={SY - 8} width="4.5" height="16" rx="1.2" />
-                            <rect x={SX + 2.5} y={SY - 8} width="4.5" height="16" rx="1.2" />
-                          </g>
-                        )}
-                        {o.icon === "play" && (
-                          <path
-                            d={`M${SX - 6},${SY - 8} L${SX + 8},${SY} L${SX - 6},${SY + 8} Z`}
-                            fill={`rgb(${o.rgb})`}
-                          />
-                        )}
-                        <text
-                          x={SX}
-                          y={SY + SR + 15}
-                          textAnchor="middle"
-                          fontSize="11"
-                          fontWeight={700}
-                          fill={`rgba(${o.rgb},0.9)`}
-                        >
-                          {o.label}
-                        </text>
-                      </g>
-                    </g>
-                  );
-                })}
-              </g>
-            );
-          })()}
-
           {/* Nodos */}
           {layout.pos.map((p, i) => {
             const st = nodeState(p);
@@ -1820,6 +1627,155 @@ export default function ProductNetwork({
               </g>
             );
           })}
+
+          {/* ── Mini-dock de opciones: siempre encima de todo ──────────────
+               Renderizado AL FINAL del SVG → z-order garantizado sobre
+               nodos, aristas y hubs. */}
+          {(() => {
+            if (!selId) return null;
+            const pd = layout.pos.find((q) => q.id === selId);
+            if (!pd) return null;
+            const hb = layout.hubs.find((h) => h.id === pd.hubId) ?? layout.hub;
+            const dx = pd.x - hb.x, dy = pd.y - hb.y;
+            const len = Math.hypot(dx, dy) || 1;
+            const ux = dx / len, uy = dy / len;
+            const perp = { x: -uy, y: ux };
+            const SR = 21;
+            const hubRadii = layout.pos
+              .filter((q) => q.hubId === pd.hubId)
+              .map((q) => Math.hypot(q.x - hb.x, q.y - hb.y));
+            const maxRingR = hubRadii.length > 0 ? Math.max(...hubRadii) : len;
+            const dockR = maxRingR + SR + R + 130;
+            const OUT = Math.max(160, dockR - len);
+            const STEP = 108;
+            const Cx = pd.x + ux * OUT;
+            const Cy = pd.y + uy * OUT;
+
+            const opts: Array<{
+              key: string; label: string; rgb: string;
+              icon: "bars" | "coin" | "pause" | "play"; onClick: () => void;
+            }> = [
+              { key: "ana", label: "Analítica", rgb: "125,211,252", icon: "bars",
+                onClick: () => window.dispatchEvent(new CustomEvent("orvexia:open-analytics", { detail: { productId: selId } })) },
+              { key: "prof", label: "Rentabilidad", rgb: "52,211,153", icon: "coin",
+                onClick: () => window.dispatchEvent(new CustomEvent("orvexia:open-profit")) },
+              { key: "tog",
+                label: pd.repricingEnabled ? "Pausar" : "Activar",
+                rgb: pd.repricingEnabled ? "251,191,36" : "52,211,153",
+                icon: pd.repricingEnabled ? "pause" : "play",
+                onClick: () => toggle() },
+            ];
+            const m = opts.length;
+
+            // Bounding box de todos los iconos (base para el panel opaco)
+            const icoPos = opts.map((_, i) => ({
+              x: Cx + perp.x * (i - (m - 1) / 2) * STEP,
+              y: Cy + perp.y * (i - (m - 1) / 2) * STEP,
+            }));
+            const PX = SR + 32, PT = SR + 20, PB = SR + 38;
+            const bx0 = Math.min(...icoPos.map((q) => q.x)) - PX;
+            const bx1 = Math.max(...icoPos.map((q) => q.x)) + PX;
+            const by0 = Math.min(...icoPos.map((q) => q.y)) - PT;
+            const by1 = Math.max(...icoPos.map((q) => q.y)) + PB;
+            // Punto en la parte del panel más cercana al producto
+            // (para colocar la etiqueta del producto en ese lado)
+            const panelCx = (bx0 + bx1) / 2;
+            const panelCy = (by0 + by1) / 2;
+
+            return (
+              <g>
+                {/* Anillo pulsante sobre el nodo seleccionado */}
+                <circle cx={pd.x} cy={pd.y} r={R + 19}
+                  fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2.2"
+                  strokeDasharray="7 5" className="hub-ring" filter="url(#glow)" />
+
+                {/* Conector: del nodo al centro del dock */}
+                <line
+                  x1={pd.x + ux * (R + 7)} y1={pd.y + uy * (R + 7)}
+                  x2={panelCx} y2={panelCy}
+                  stroke="rgba(200,220,255,0.22)" strokeWidth="1.6"
+                  strokeDasharray="5 8" strokeLinecap="round"
+                  vectorEffect="non-scaling-stroke" />
+                <line
+                  x1={pd.x + ux * (R + 7)} y1={pd.y + uy * (R + 7)}
+                  x2={panelCx} y2={panelCy}
+                  stroke="rgba(200,220,255,0.55)" strokeWidth="1.2"
+                  strokeLinecap="round" className="net-flow"
+                  vectorEffect="non-scaling-stroke" />
+
+                {/* Panel opaco de fondo */}
+                <rect x={bx0} y={by0} width={bx1 - bx0} height={by1 - by0}
+                  rx={24}
+                  fill="rgba(6,7,18,0.96)"
+                  stroke="rgba(255,255,255,0.11)"
+                  strokeWidth="1" />
+
+                {/* Cabecera: título del producto */}
+                <text x={panelCx} y={by0 + 16}
+                  textAnchor="middle" fontSize="9" fontWeight={700}
+                  letterSpacing="2.2" fill="rgba(255,255,255,0.28)">
+                  OPCIONES
+                </text>
+                <text x={panelCx} y={by0 + 30}
+                  textAnchor="middle" fontSize="10.5" fontWeight={600}
+                  fill="rgba(200,220,255,0.65)">
+                  {clip(pd.title, 28)}
+                </text>
+
+                {/* Iconos de opciones */}
+                {opts.map((o, i) => {
+                  const SX = Cx + perp.x * (i - (m - 1) / 2) * STEP;
+                  const SY = Cy + perp.y * (i - (m - 1) / 2) * STEP;
+                  return (
+                    <g key={o.key} className="tool-in"
+                      style={{ "--td": `${0.04 + i * 0.06}s` } as CSSProperties}>
+                      <g className="hex-node" style={{ cursor: "pointer" }}
+                        onClick={() => {
+                          if (suppressClick.current) { suppressClick.current = false; return; }
+                          o.onClick();
+                        }}>
+                        <circle cx={SX} cy={SY} r={SR + 13} fill="transparent" />
+                        <circle cx={SX} cy={SY} r={SR + 5} fill="none"
+                          stroke={`rgba(${o.rgb},0.45)`} strokeWidth="1.2" filter="url(#glow)" />
+                        <circle cx={SX} cy={SY} r={SR}
+                          fill="rgba(8,10,22,0.94)" stroke={`rgba(${o.rgb},0.7)`} strokeWidth="1.3" />
+                        {o.icon === "bars" && (
+                          <g stroke={`rgb(${o.rgb})`} strokeWidth="2.6" strokeLinecap="round">
+                            <line x1={SX - 8} y1={SY + 6} x2={SX - 8} y2={SY + 1} />
+                            <line x1={SX} y1={SY + 6} x2={SX} y2={SY - 5} />
+                            <line x1={SX + 8} y1={SY + 6} x2={SX + 8} y2={SY - 2} />
+                          </g>
+                        )}
+                        {o.icon === "coin" && (
+                          <>
+                            <circle cx={SX} cy={SY} r={10} fill="none"
+                              stroke={`rgb(${o.rgb})`} strokeWidth="1.5" />
+                            <text x={SX} y={SY + 0.5} textAnchor="middle"
+                              dominantBaseline="central" fontSize="13" fontWeight={800}
+                              fill={`rgb(${o.rgb})`}>€</text>
+                          </>
+                        )}
+                        {o.icon === "pause" && (
+                          <g fill={`rgb(${o.rgb})`}>
+                            <rect x={SX - 7} y={SY - 8} width="4.5" height="16" rx="1.2" />
+                            <rect x={SX + 2.5} y={SY - 8} width="4.5" height="16" rx="1.2" />
+                          </g>
+                        )}
+                        {o.icon === "play" && (
+                          <path d={`M${SX - 6},${SY - 8} L${SX + 8},${SY} L${SX - 6},${SY + 8} Z`}
+                            fill={`rgb(${o.rgb})`} />
+                        )}
+                        <text x={SX} y={SY + SR + 15} textAnchor="middle"
+                          fontSize="11" fontWeight={700} fill={`rgba(${o.rgb},0.9)`}>
+                          {o.label}
+                        </text>
+                      </g>
+                    </g>
+                  );
+                })}
+              </g>
+            );
+          })()}
 
         </g>
       </svg>
