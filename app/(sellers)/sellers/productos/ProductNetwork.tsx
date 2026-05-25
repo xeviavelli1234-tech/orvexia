@@ -9,6 +9,7 @@ import {
   type CSSProperties,
 } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/ui/Toast";
 import WaveField from "./WaveField";
 import PricingSuggest from "./PricingSuggest";
 import {
@@ -385,6 +386,8 @@ export default function ProductNetwork({
   const [minRating, setMinRating] = useState("");
   const [exclSellers, setExclSellers] = useState("");
   const [onlySell, setOnlySell] = useState("");
+
+  const [repricing, setRepricing] = useState(false);
 
   // ── Viewport (pan / zoom) ──────────────────────────────────
   const svgRef = useRef<SVGSVGElement | null>(null);
@@ -796,6 +799,45 @@ export default function ProductNetwork({
   }, [cost, ship, fba, vat, feeP, tMargin, sel]);
 
   const fmtEur = (n: number) => n.toFixed(2).replace(".", ",") + " €";
+  const { loading: toastLoading, update, dismiss, error: toastError } = useToast();
+
+  async function repriceNow() {
+    if (!sel || repricing) return;
+    setRepricing(true);
+    const tid = toastLoading("Repreciando…", { description: `Consultando competencia para "${sel.title.slice(0, 40)}"…` });
+    try {
+      const res = await fetch("/api/sellers/reprice/run-one", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ listingId: sel.id }),
+      });
+      const data = await res.json() as {
+        ok?: boolean; error?: string; changed?: boolean; simulated?: boolean;
+        priceBefore?: number; priceAfter?: number; competitorPrice?: number | null; reason?: string;
+      };
+      if (!res.ok || !data.ok) {
+        update(tid, { variant: "error", message: "No se pudo repreciar", description: data.error ?? `HTTP ${res.status}` });
+        return;
+      }
+      if (!data.changed) {
+        update(tid, { variant: "info", message: "Precio ya óptimo", description: `Sin cambio · Razón: ${data.reason ?? "no_change"}` });
+      } else {
+        const arrow = data.priceAfter! > data.priceBefore! ? "↑" : "↓";
+        const diff = Math.abs(data.priceAfter! - data.priceBefore!).toFixed(2).replace(".", ",");
+        update(tid, {
+          variant: "success",
+          message: `${data.simulated ? "[simulado] " : ""}Precio actualizado ${arrow} ${diff} €`,
+          description: `${fmtEur(data.priceBefore!)} → ${fmtEur(data.priceAfter!)}${data.competitorPrice != null ? ` · Competidor: ${fmtEur(data.competitorPrice)}` : ""}`,
+        });
+      }
+      startTransition(() => router.refresh());
+    } catch (e) {
+      dismiss(tid);
+      toastError("Error de red", { description: e instanceof Error ? e.message : "network_error" });
+    } finally {
+      setRepricing(false);
+    }
+  }
 
   function open(n: NetNode) {
     if (suppressClick.current) {
@@ -2256,6 +2298,38 @@ export default function ProductNetwork({
                 </p>
               )}
             </div>
+          )}
+
+          {/* ── Botón de reprecio inmediato (solo Amazon, productos con precio) ── */}
+          {!selIsManual && selState !== "noprice" && (
+            <button
+              type="button"
+              onClick={repriceNow}
+              disabled={repricing || pending}
+              className={`mt-4 w-full rounded-xl py-2.5 text-sm font-semibold transition-all border flex items-center justify-center gap-2
+                ${repricing
+                  ? "border-cyan-400/30 bg-cyan-400/[0.06] text-cyan-300/60 cursor-not-allowed"
+                  : "border-cyan-400/50 bg-cyan-400/[0.08] text-cyan-200 hover:bg-cyan-400/[0.16] hover:border-cyan-400/70 hover:shadow-[0_0_16px_-4px_rgba(34,211,238,0.55)] active:scale-[0.98]"
+                }`}
+            >
+              {repricing ? (
+                <>
+                  <svg className="animate-spin h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.25" />
+                    <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                  </svg>
+                  Repreciando…
+                </>
+              ) : (
+                <>
+                  <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4 shrink-0" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 10a6 6 0 1 1 1.5 4" />
+                    <path d="M4 14v-4h4" />
+                  </svg>
+                  Repreciar ahora
+                </>
+              )}
+            </button>
           )}
 
           {selState === "noprice" ? (
