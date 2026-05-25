@@ -85,7 +85,7 @@ export interface NetNode {
   suggestedReason: string | null;
 }
 
-const VB_W = 1700;
+const VB_W = 1900;
 const VB_H = 1050;
 const R = 38;
 const K_MIN = 0.65;
@@ -624,7 +624,7 @@ export default function ProductNetwork({
 
       // Espacio entre centros: diámetro del radio máximo + gap.
       const hubR = maxRadiusForCount(CHUNK_SIZE);
-      const HUB_GAP = 90;  // margen mínimo entre territorios adyacentes
+      const HUB_GAP = 300;  // margen mínimo entre territorios adyacentes
       const hubSpacing = 2 * hubR + HUB_GAP;
       const PAD = 90;
       const maxSpread = VB_W - 2 * PAD - 2 * hubR;
@@ -1645,11 +1645,12 @@ export default function ProductNetwork({
               .filter((q) => q.hubId === pd.hubId)
               .map((q) => Math.hypot(q.x - hb.x, q.y - hb.y));
             const maxRingR = hubRadii.length > 0 ? Math.max(...hubRadii) : len;
-            const dockR = maxRingR + SR + R + 130;
-            const OUT = Math.max(160, dockR - len);
-            const STEP = 108;
-            const Cx = pd.x + ux * OUT;
-            const Cy = pd.y + uy * OUT;
+            // Dock anclado justo fuera del anillo exterior, desde el CENTRO del hub.
+            // Así la distancia al hub vecino es siempre > HUB_GAP/2, sin solapamiento.
+            const dockR = maxRingR + 90;
+            const STEP = 80;
+            const Cx = hb.x + ux * dockR;
+            const Cy = hb.y + uy * dockR;
 
             const opts: Array<{
               key: string; label: string; rgb: string;
@@ -1672,7 +1673,8 @@ export default function ProductNetwork({
               x: Cx + perp.x * (i - (m - 1) / 2) * STEP,
               y: Cy + perp.y * (i - (m - 1) / 2) * STEP,
             }));
-            const PX = SR + 32, PT = SR + 20, PB = SR + 38;
+            // PX grande para que el rect sea siempre lo bastante ancho para el título.
+            const PX = 100, PT = SR + 35, PB = SR + 38;
             const bx0 = Math.min(...icoPos.map((q) => q.x)) - PX;
             const bx1 = Math.max(...icoPos.map((q) => q.x)) + PX;
             const by0 = Math.min(...icoPos.map((q) => q.y)) - PT;
@@ -1719,7 +1721,7 @@ export default function ProductNetwork({
                 <text x={panelCx} y={by0 + 30}
                   textAnchor="middle" fontSize="10.5" fontWeight={600}
                   fill="rgba(200,220,255,0.65)">
-                  {clip(pd.title, 28)}
+                  {clip(pd.title, 20)}
                 </text>
 
                 {/* Iconos de opciones */}
