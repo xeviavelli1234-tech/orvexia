@@ -1628,9 +1628,9 @@ export default function ProductNetwork({
             );
           })}
 
-          {/* ── Mini-dock de opciones: siempre encima de todo ──────────────
-               Renderizado AL FINAL del SVG → z-order garantizado sobre
-               nodos, aristas y hubs. */}
+          {/* ── Menú radial de opciones: siempre encima de todo ────────────
+               3 iconos en abanico centrado en la dirección hub→nodo.
+               Sin panel rectangular: los iconos florecen desde el nodo. */}
           {(() => {
             if (!selId) return null;
             const pd = layout.pos.find((q) => q.id === selId);
@@ -1639,18 +1639,16 @@ export default function ProductNetwork({
             const dx = pd.x - hb.x, dy = pd.y - hb.y;
             const len = Math.hypot(dx, dy) || 1;
             const ux = dx / len, uy = dy / len;
-            const perp = { x: -uy, y: ux };
-            const SR = 21;
-            const hubRadii = layout.pos
-              .filter((q) => q.hubId === pd.hubId)
-              .map((q) => Math.hypot(q.x - hb.x, q.y - hb.y));
-            const maxRingR = hubRadii.length > 0 ? Math.max(...hubRadii) : len;
-            // Dock anclado justo fuera del anillo exterior, desde el CENTRO del hub.
-            // Así la distancia al hub vecino es siempre > HUB_GAP/2, sin solapamiento.
-            const dockR = maxRingR + 90;
-            const STEP = 80;
-            const Cx = hb.x + ux * dockR;
-            const Cy = hb.y + uy * dockR;
+
+            const SR   = 25;                               // radio del icono
+            const MR   = R + 76;                           // distancia nodo→icono (114 px)
+            const SPRD = (37 * Math.PI) / 180;             // separación angular
+            const base = Math.atan2(uy, ux);               // apunta fuera del hub
+            const angles = [base - SPRD, base, base + SPRD];
+            const LBL_R = MR + SR + 20;                    // radio de la etiqueta
+
+            const selSt  = nodeState(pd);
+            const selCol = STATE_COLOR[selSt];
 
             const opts: Array<{
               key: string; label: string; rgb: string;
@@ -1658,117 +1656,102 @@ export default function ProductNetwork({
             }> = [
               { key: "ana", label: "Analítica", rgb: "125,211,252", icon: "bars",
                 onClick: () => window.dispatchEvent(new CustomEvent("orvexia:open-analytics", { detail: { productId: selId } })) },
-              { key: "prof", label: "Rentabilidad", rgb: "52,211,153", icon: "coin",
-                onClick: () => window.dispatchEvent(new CustomEvent("orvexia:open-profit")) },
               { key: "tog",
                 label: pd.repricingEnabled ? "Pausar" : "Activar",
                 rgb: pd.repricingEnabled ? "251,191,36" : "52,211,153",
                 icon: pd.repricingEnabled ? "pause" : "play",
                 onClick: () => toggle() },
+              { key: "prof", label: "Rentabilidad", rgb: "52,211,153", icon: "coin",
+                onClick: () => window.dispatchEvent(new CustomEvent("orvexia:open-profit")) },
             ];
-            const m = opts.length;
-
-            // Bounding box de todos los iconos (base para el panel opaco)
-            const icoPos = opts.map((_, i) => ({
-              x: Cx + perp.x * (i - (m - 1) / 2) * STEP,
-              y: Cy + perp.y * (i - (m - 1) / 2) * STEP,
-            }));
-            // PX grande para que el rect sea siempre lo bastante ancho para el título.
-            const PX = 100, PT = SR + 35, PB = SR + 38;
-            const bx0 = Math.min(...icoPos.map((q) => q.x)) - PX;
-            const bx1 = Math.max(...icoPos.map((q) => q.x)) + PX;
-            const by0 = Math.min(...icoPos.map((q) => q.y)) - PT;
-            const by1 = Math.max(...icoPos.map((q) => q.y)) + PB;
-            // Punto en la parte del panel más cercana al producto
-            // (para colocar la etiqueta del producto en ese lado)
-            const panelCx = (bx0 + bx1) / 2;
-            const panelCy = (by0 + by1) / 2;
 
             return (
               <g>
-                {/* Anillo pulsante sobre el nodo seleccionado */}
-                <circle cx={pd.x} cy={pd.y} r={R + 19}
-                  fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2.2"
+                {/* Doble anillo de selección — color del estado del nodo */}
+                <circle cx={pd.x} cy={pd.y} r={R + 26}
+                  fill="none" stroke={selCol.halo} strokeWidth="2.6"
                   strokeDasharray="7 5" className="hub-ring" filter="url(#glow)" />
+                <circle cx={pd.x} cy={pd.y} r={R + 15}
+                  fill="none" stroke={selCol.stroke} strokeWidth="1.6"
+                  filter="url(#glow)" className="hub-breathe" />
 
-                {/* Conector: del nodo al centro del dock */}
-                <line
-                  x1={pd.x + ux * (R + 7)} y1={pd.y + uy * (R + 7)}
-                  x2={panelCx} y2={panelCy}
-                  stroke="rgba(200,220,255,0.22)" strokeWidth="1.6"
-                  strokeDasharray="5 8" strokeLinecap="round"
-                  vectorEffect="non-scaling-stroke" />
-                <line
-                  x1={pd.x + ux * (R + 7)} y1={pd.y + uy * (R + 7)}
-                  x2={panelCx} y2={panelCy}
-                  stroke="rgba(200,220,255,0.55)" strokeWidth="1.2"
-                  strokeLinecap="round" className="net-flow"
-                  vectorEffect="non-scaling-stroke" />
-
-                {/* Panel opaco de fondo */}
-                <rect x={bx0} y={by0} width={bx1 - bx0} height={by1 - by0}
-                  rx={24}
-                  fill="rgba(6,7,18,0.96)"
-                  stroke="rgba(255,255,255,0.11)"
-                  strokeWidth="1" />
-
-                {/* Cabecera: título del producto */}
-                <text x={panelCx} y={by0 + 16}
-                  textAnchor="middle" fontSize="9" fontWeight={700}
-                  letterSpacing="2.2" fill="rgba(255,255,255,0.28)">
-                  OPCIONES
-                </text>
-                <text x={panelCx} y={by0 + 30}
-                  textAnchor="middle" fontSize="10.5" fontWeight={600}
-                  fill="rgba(200,220,255,0.65)">
-                  {clip(pd.title, 20)}
-                </text>
-
-                {/* Iconos de opciones */}
+                {/* Iconos en abanico radial */}
                 {opts.map((o, i) => {
-                  const SX = Cx + perp.x * (i - (m - 1) / 2) * STEP;
-                  const SY = Cy + perp.y * (i - (m - 1) / 2) * STEP;
+                  const a   = angles[i];
+                  const ix  = pd.x + Math.cos(a) * MR;
+                  const iy  = pd.y + Math.sin(a) * MR;
+                  const lx  = pd.x + Math.cos(a) * LBL_R;
+                  const ly  = pd.y + Math.sin(a) * LBL_R;
+                  const ca  = Math.cos(a);
+                  const anc = ca > 0.28 ? "start" : ca < -0.28 ? "end" : "middle";
+                  // Extremos de la línea radial (borde hex → borde icono)
+                  const l1x = pd.x + Math.cos(a) * (R + 11);
+                  const l1y = pd.y + Math.sin(a) * (R + 11);
+                  const l2x = pd.x + Math.cos(a) * (MR - SR - 6);
+                  const l2y = pd.y + Math.sin(a) * (MR - SR - 6);
                   return (
                     <g key={o.key} className="tool-in"
-                      style={{ "--td": `${0.04 + i * 0.06}s` } as CSSProperties}>
+                      style={{ "--td": `${i * 0.08}s` } as CSSProperties}>
+
+                      {/* Línea radial punteada */}
+                      <line x1={l1x} y1={l1y} x2={l2x} y2={l2y}
+                        stroke={`rgba(${o.rgb},0.30)`} strokeWidth="1.4"
+                        strokeDasharray="4 5" strokeLinecap="round"
+                        vectorEffect="non-scaling-stroke" />
+
                       <g className="hex-node" style={{ cursor: "pointer" }}
                         onClick={() => {
                           if (suppressClick.current) { suppressClick.current = false; return; }
                           o.onClick();
                         }}>
-                        <circle cx={SX} cy={SY} r={SR + 13} fill="transparent" />
-                        <circle cx={SX} cy={SY} r={SR + 5} fill="none"
-                          stroke={`rgba(${o.rgb},0.45)`} strokeWidth="1.2" filter="url(#glow)" />
-                        <circle cx={SX} cy={SY} r={SR}
-                          fill="rgba(8,10,22,0.94)" stroke={`rgba(${o.rgb},0.7)`} strokeWidth="1.3" />
+                        {/* Área de clic ampliada */}
+                        <circle cx={ix} cy={iy} r={SR + 17} fill="transparent" />
+                        {/* Halo difuso */}
+                        <circle cx={ix} cy={iy} r={SR + 11} fill="none"
+                          stroke={`rgba(${o.rgb},0.14)`} strokeWidth="1"
+                          filter="url(#glow)" />
+                        {/* Anillo punteado exterior */}
+                        <circle cx={ix} cy={iy} r={SR + 5} fill="none"
+                          stroke={`rgba(${o.rgb},0.38)`} strokeWidth="0.9"
+                          strokeDasharray="3 3" />
+                        {/* Círculo principal */}
+                        <circle cx={ix} cy={iy} r={SR}
+                          fill="rgba(4,5,16,0.97)"
+                          stroke={`rgba(${o.rgb},0.88)`} strokeWidth="2" />
+
+                        {/* Icono */}
                         {o.icon === "bars" && (
-                          <g stroke={`rgb(${o.rgb})`} strokeWidth="2.6" strokeLinecap="round">
-                            <line x1={SX - 8} y1={SY + 6} x2={SX - 8} y2={SY + 1} />
-                            <line x1={SX} y1={SY + 6} x2={SX} y2={SY - 5} />
-                            <line x1={SX + 8} y1={SY + 6} x2={SX + 8} y2={SY - 2} />
+                          <g stroke={`rgb(${o.rgb})`} strokeWidth="2.5" strokeLinecap="round">
+                            <line x1={ix - 9} y1={iy + 7} x2={ix - 9} y2={iy + 1} />
+                            <line x1={ix}     y1={iy + 7} x2={ix}     y2={iy - 7} />
+                            <line x1={ix + 9} y1={iy + 7} x2={ix + 9} y2={iy - 2} />
                           </g>
                         )}
                         {o.icon === "coin" && (
                           <>
-                            <circle cx={SX} cy={SY} r={10} fill="none"
-                              stroke={`rgb(${o.rgb})`} strokeWidth="1.5" />
-                            <text x={SX} y={SY + 0.5} textAnchor="middle"
-                              dominantBaseline="central" fontSize="13" fontWeight={800}
+                            <circle cx={ix} cy={iy} r={12} fill="none"
+                              stroke={`rgb(${o.rgb})`} strokeWidth="1.7" />
+                            <text x={ix} y={iy + 0.5} textAnchor="middle"
+                              dominantBaseline="central" fontSize="15" fontWeight={800}
                               fill={`rgb(${o.rgb})`}>€</text>
                           </>
                         )}
                         {o.icon === "pause" && (
                           <g fill={`rgb(${o.rgb})`}>
-                            <rect x={SX - 7} y={SY - 8} width="4.5" height="16" rx="1.2" />
-                            <rect x={SX + 2.5} y={SY - 8} width="4.5" height="16" rx="1.2" />
+                            <rect x={ix - 8}   y={iy - 9} width="5.5" height="18" rx="1.5" />
+                            <rect x={ix + 2.5} y={iy - 9} width="5.5" height="18" rx="1.5" />
                           </g>
                         )}
                         {o.icon === "play" && (
-                          <path d={`M${SX - 6},${SY - 8} L${SX + 8},${SY} L${SX - 6},${SY + 8} Z`}
+                          <path d={`M${ix - 7},${iy - 9} L${ix + 10},${iy} L${ix - 7},${iy + 9} Z`}
                             fill={`rgb(${o.rgb})`} />
                         )}
-                        <text x={SX} y={SY + SR + 15} textAnchor="middle"
-                          fontSize="11" fontWeight={700} fill={`rgba(${o.rgb},0.9)`}>
+
+                        {/* Etiqueta radial */}
+                        <text x={lx} y={ly}
+                          textAnchor={anc} dominantBaseline="central"
+                          fontSize="12.5" fontWeight={700}
+                          fill={`rgba(${o.rgb},0.93)`}>
                           {o.label}
                         </text>
                       </g>
