@@ -173,13 +173,13 @@ export default function PoliticaDatosAmazon() {
           .
         </LI>
         <LI>
-          <strong>Neon Inc. (PostgreSQL gestionada, región UE)</strong> — base de datos
-          principal con cifrado en reposo (AES-256) y en tránsito (TLS). Almacena los refresh
+          <strong>Neon, LLC (filial de Databricks, Inc., EE.UU.)</strong> — PostgreSQL
+          gestionada, región <code>us-east-1</code> (Virginia, EE.UU.). Almacena los refresh
           tokens cifrados, los listings, los ciclos de reprecio y la configuración del
-          vendedor. Datos alojados en la Unión Europea, sin transferencia internacional. DPA
-          disponible en{" "}
-          <a className="underline" href="https://neon.com/legal/dpa" target="_blank" rel="noopener noreferrer">
-            neon.com/legal/dpa
+          vendedor. Cifrado AES-256 en reposo y TLS 1.2+ en tránsito. Adherida al EU-US Data
+          Privacy Framework. DPA disponible en{" "}
+          <a className="underline" href="https://neon.com/dpa" target="_blank" rel="noopener noreferrer">
+            neon.com/dpa
           </a>
           .
         </LI>
@@ -211,6 +211,47 @@ export default function PoliticaDatosAmazon() {
         minimización: ningún proveedor recibe más datos de los estrictamente necesarios para su
         función.
       </P>
+
+      <H>6.1. Transferencias internacionales de datos (UE → EE.UU.)</H>
+      <P>
+        Tres de los subencargados anteriores procesan datos personales en EE.UU.: Vercel Inc.
+        (alojamiento), Neon, LLC (base de datos) y Resend Inc. (correos transaccionales). De
+        ellos, únicamente Vercel y Neon procesan datos obtenidos de Amazon; Resend solo
+        procesa direcciones de correo y contenido de mensajes generados por la Aplicación.
+      </P>
+      <P>
+        Estas transferencias internacionales están legitimadas, conforme al artículo 46 del
+        RGPD, mediante una doble garantía:
+      </P>
+      <ul className="mt-2 list-disc pl-5">
+        <LI>
+          <strong>Cláusulas Contractuales Tipo (SCC)</strong> de la Comisión Europea
+          (Decisión 2021/914), incluidas en los respectivos DPA suscritos por Orvexia con
+          Vercel, Neon y Resend.
+        </LI>
+        <LI>
+          <strong>Adhesión activa al EU-US Data Privacy Framework</strong> de los tres
+          proveedores, certificada por el Departamento de Comercio de los EE.UU. y verificable
+          en{" "}
+          <a className="underline" href="https://www.dataprivacyframework.gov/list" target="_blank" rel="noopener noreferrer">
+            dataprivacyframework.gov/list
+          </a>
+          .
+        </LI>
+      </ul>
+      <P>
+        Como medidas técnicas y organizativas complementarias, los datos de Amazon viajan
+        siempre cifrados (TLS 1.2+ en tránsito) y se almacenan cifrados (AES-256 en reposo).
+        Los refresh tokens de Amazon Selling Partner API se cifran adicionalmente a nivel de
+        aplicación antes de persistirse en la base de datos.
+      </P>
+      <P>
+        El vendedor es informado de estas transferencias en el momento de la conexión de su
+        cuenta de Amazon y al aceptar la presente política. Stripe Payments Europe Ltd.
+        (Irlanda) procesa los datos de facturación dentro de la UE, sin transferencia
+        internacional.
+      </P>
+
       <P>
         Para solicitar una copia de cualquiera de los DPA firmados o consultar el detalle de
         los flujos de datos, escribe a <a className="underline" href="mailto:orvexiaesp@gmail.com">orvexiaesp@gmail.com</a>.
