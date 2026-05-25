@@ -144,10 +144,15 @@ export default function PoliticaDatosAmazon() {
         El refresh token y la configuración se conservan, cifrados, mientras la cuenta del
         vendedor esté activa y sea necesario para prestar el servicio. Al{" "}
         <strong>desconectar la cuenta de Amazon</strong> o solicitar la baja, las credenciales
-        de Amazon dejan de utilizarse y se eliminan. El vendedor puede solicitar en cualquier
-        momento la eliminación completa de sus datos escribiendo al contacto de abajo; se
-        atenderá en un plazo máximo de 30 días. Los datos no se conservan más allá de lo
-        necesario para la finalidad descrita ni más de lo exigido legalmente.
+        de Amazon dejan de utilizarse de inmediato y se marca la fecha de desconexión.{" "}
+        <strong>
+          Un proceso automatizado se ejecuta diariamente (02:00 UTC) y elimina por completo,
+          transcurridos 30 días desde la desconexión, todos los datos asociados: refresh token
+          cifrado, listings, ciclos de reprecio, eventos, auditoría y configuración.
+        </strong>{" "}
+        El vendedor puede solicitar en cualquier momento la eliminación inmediata escribiendo al
+        contacto de abajo; se atenderá en un plazo máximo de 30 días. Los datos no se conservan
+        más allá de lo necesario para la finalidad descrita ni más de lo exigido legalmente.
       </P>
 
       <H>6. Subencargados (sub-procesadores)</H>

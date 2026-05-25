@@ -422,10 +422,11 @@ model SellerAccount {
   stripeCustomerId     String?    @unique
   stripeSubscriptionId String?    @unique
 
-  active     Boolean   @default(true)
-  lastSyncAt DateTime?
-  lastRunAt  DateTime?
-  lockedAt   DateTime? // lock de ciclo (evita solapamientos)
+  active         Boolean   @default(true)
+  disconnectedAt DateTime? // marca el momento de desconexión; cron RGPD purga a los 30 días
+  lastSyncAt     DateTime?
+  lastRunAt      DateTime?
+  lockedAt       DateTime? // lock de ciclo (evita solapamientos)
 
   // ── Estrategia por defecto de la cuenta (productos con useAccountDefaults) ──
   defaultStrategy      RepriceStrategy   @default(BUYBOX)
@@ -478,6 +479,7 @@ model SellerAccount {
   auditLogs AuditLog[]
 
   @@index([active, lastRunAt])
+  @@index([active, disconnectedAt])
 }
 
 model AuditLog {

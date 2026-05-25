@@ -45,6 +45,7 @@ export async function upsertSellerAccount(params: {
       refreshToken: encrypted,
       spApiEnv: params.spApiEnv,
       active: true,
+      disconnectedAt: null,
     },
   });
 }
@@ -52,7 +53,7 @@ export async function upsertSellerAccount(params: {
 export async function deactivateSellerAccount(userId: string) {
   return prisma.sellerAccount.update({
     where: { userId },
-    data: { active: false },
+    data: { active: false, disconnectedAt: new Date() },
   });
 }
 
@@ -84,6 +85,7 @@ export async function upsertManualSellerAccount(userId: string) {
     update: {
       mode: "manual",
       active: true,
+      disconnectedAt: null,
     },
   });
 }
@@ -144,6 +146,33 @@ export async function exportSellerData(userId: string) {
  */
 export async function deleteSellerAccount(userId: string) {
   return prisma.sellerAccount.deleteMany({ where: { userId } });
+}
+
+/**
+ * RGPD / Amazon DPP — purga cuentas desconectadas hace más de N días.
+ * Borra la fila (cascada: listings, runs, events, audit, refresh token).
+ * Idempotente: las cuentas reconectadas resetean `disconnectedAt = null`
+ * en `upsertSellerAccount`, así que nunca se eliminan por error.
+ */
+export async function purgeStaleDisconnectedAccounts(thresholdDays = 30) {
+  const cutoff = new Date(Date.now() - thresholdDays * 24 * 60 * 60 * 1000);
+  const stale = await prisma.sellerAccount.findMany({
+    where: {
+      active: false,
+      disconnectedAt: { lt: cutoff, not: null },
+    },
+    select: { id: true, userId: true, disconnectedAt: true },
+  });
+  if (stale.length === 0) {
+    return { purged: 0, ids: [] as string[] };
+  }
+  const result = await prisma.sellerAccount.deleteMany({
+    where: { id: { in: stale.map((s) => s.id) } },
+  });
+  return {
+    purged: result.count,
+    ids: stale.map((s) => s.id),
+  };
 }
 
 export async function setAccountSettings(params: {
