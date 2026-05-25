@@ -522,47 +522,53 @@ export default function ProductNetwork({
   }
 
   const layout = useMemo(() => {
-    // ── Agrupar por origen (source) → un hub por grupo ────────────────────
-    // Convención: "amazon" es siempre el hub principal (donde cuelga el
-    // dock de herramientas). Cualquier otro source (típicamente "manual")
-    // genera una constelación propia separada en el canvas.
-    type Group = { source: string; nodes: NetNode[] };
-    const byKey = new Map<string, NetNode[]>();
+    // ── Máximo de productos por nexo ──────────────────────────────────────
+    // Cada grupo de CHUNK_SIZE nodos tiene su propio hub (nexo). Los hubs
+    // del mismo origen se encadenan con una línea visible.
+    const CHUNK_SIZE = 10;
+
+    // Agrupar por origen.
+    const bySource = new Map<string, NetNode[]>();
     for (const n of nodes) {
       const k = n.source || "amazon";
-      const arr = byKey.get(k);
+      const arr = bySource.get(k);
       if (arr) arr.push(n);
-      else byKey.set(k, [n]);
+      else bySource.set(k, [n]);
     }
-    const groups: Group[] = [];
-    // Amazon primero si existe, luego el resto en orden estable de aparición.
-    if (byKey.has("amazon")) groups.push({ source: "amazon", nodes: byKey.get("amazon")! });
-    for (const [k, list] of byKey) {
-      if (k !== "amazon") groups.push({ source: k, nodes: list });
-    }
-    const G = groups.length;
+    const sourceOrder: string[] = [];
+    if (bySource.has("amazon")) sourceOrder.push("amazon");
+    for (const [k] of bySource) if (k !== "amazon") sourceOrder.push(k);
 
+    // Dividir cada origen en trozos de CHUNK_SIZE.
+    type Group = {
+      source: string;
+      chunkIndex: number;
+      nodes: NetNode[];
+      sourceFirst: boolean;
+      startIdx: number;
+    };
+    const groups: Group[] = [];
+    for (const source of sourceOrder) {
+      const all = bySource.get(source)!;
+      const numChunks = Math.max(1, Math.ceil(all.length / CHUNK_SIZE));
+      for (let ci = 0; ci < numChunks; ci++) {
+        groups.push({
+          source,
+          chunkIndex: ci,
+          nodes: all.slice(ci * CHUNK_SIZE, (ci + 1) * CHUNK_SIZE),
+          sourceFirst: ci === 0,
+          startIdx: ci * CHUNK_SIZE,
+        });
+      }
+    }
     // ── Constantes del layout en anillos concéntricos ────────────────────
-    // R0:       radio del primer anillo (deja sitio para el icono del hub).
-    // RING_GAP: distancia radial entre anillos (> altura del label ~90 px).
-    // MIN_ARC:  separación de arco mínima entre nodos del mismo anillo.
-    // Calibrados para dejar ~50 px libres edge-to-edge en cualquier
-    // dirección (radial y tangencial), entre esferas de R=38.
     const R0 = 145;
     const RING_GAP = 125;
     const MIN_ARC = 128;
-    const HR = 54; // radio del icono central del hub
+    const HR = 54;
 
-    /**
-     * Distribuye `count` nodos en anillos concéntricos. Usa el mínimo número
-     * de anillos posible y reparte proporcionalmente a la capacidad de cada
-     * anillo, así nunca queda un anillo final con 1-2 nodos sueltos.
-     *
-     * Devuelve: array de tamaños por anillo (de dentro a fuera).
-     */
     function distributeRings(count: number): number[] {
       if (count <= 0) return [];
-      // 1. ¿Cuántos anillos hacen falta como mínimo?
       const caps: number[] = [];
       let cumulative = 0;
       let ringIdx = 0;
@@ -572,92 +578,76 @@ export default function ProductNetwork({
         caps.push(c);
         cumulative += c;
         ringIdx++;
-        if (ringIdx > 20) break; // safety
+        if (ringIdx > 20) break;
       }
-      // 2. Reparto proporcional a la capacidad de cada anillo.
       const totalCap = caps.reduce((s, c) => s + c, 0);
       const sizes = caps.map((c) => Math.max(1, Math.round((c * count) / totalCap)));
-      // Ajusta diferencia por redondeo añadiendo/quitando del último.
       let diff = count - sizes.reduce((s, x) => s + x, 0);
       let i = sizes.length - 1;
       while (diff !== 0) {
-        if (diff > 0) {
-          sizes[i] += 1;
-          diff--;
-        } else if (sizes[i] > 1) {
-          sizes[i] -= 1;
-          diff++;
-        }
+        if (diff > 0) { sizes[i] += 1; diff--; }
+        else if (sizes[i] > 1) { sizes[i] -= 1; diff++; }
         i = (i - 1 + sizes.length) % sizes.length;
       }
       return sizes;
     }
 
-    /** Radio del último anillo dado un reparto de tamaños. */
     function maxRadiusForCount(count: number): number {
       const sizes = distributeRings(count);
-      if (sizes.length === 0) return 0;
-      return R0 + (sizes.length - 1) * RING_GAP;
+      return sizes.length === 0 ? 0 : R0 + (sizes.length - 1) * RING_GAP;
     }
 
-    // ── Posicionar hubs dinámicamente según su contenido ─────────────────
-    // En lugar de fijar centros %, los calculamos a partir del radio que
-    // necesita cada constelación. Así un hub con muchos productos recibe
-    // más espacio y nadie se solapa con el vecino.
+    // ── Posicionar hubs: filas por origen, columnas por trozo ─────────────
+    // Cada origen ocupa una fila horizontal. Los trozos se disponen en esa
+    // fila de izquierda a derecha y se conectan entre sí con una cadena.
     function dynamicCenters(): { x: number; y: number }[] {
       const cx = VB_W / 2;
       const cy = VB_H / 2;
-      if (G <= 1) return [{ x: cx, y: cy }];
-      const maxRs = groups.map((g) => maxRadiusForCount(g.nodes.length));
-      const PAD = 36; // margen entre el borde del territorio y el del canvas
-      const GAP_MIN = 90; // mínimo "no man's land" entre constelaciones
+      const numSources = sourceOrder.length;
 
-      if (G === 2) {
-        const need = maxRs[0] + maxRs[1] + GAP_MIN + 2 * PAD;
-        if (need <= VB_W) {
-          const x0 = PAD + maxRs[0];
-          const x1 = VB_W - PAD - maxRs[1];
-          return [
-            { x: x0, y: cy },
-            { x: x1, y: cy },
-          ];
+      const rowY = new Map<string, number>();
+      if (numSources === 1) {
+        rowY.set(sourceOrder[0], cy);
+      } else if (numSources === 2) {
+        rowY.set(sourceOrder[0], VB_H * 0.30);
+        rowY.set(sourceOrder[1], VB_H * 0.75);
+      } else {
+        sourceOrder.forEach((s, si) =>
+          rowY.set(s, VB_H * ((si + 0.5) / numSources)),
+        );
+      }
+
+      // Espacio entre centros: diámetro del radio máximo + gap.
+      const hubR = maxRadiusForCount(CHUNK_SIZE);
+      const HUB_GAP = 60;
+      const hubSpacing = 2 * hubR + HUB_GAP;
+      const PAD = 80;
+      const maxSpread = VB_W - 2 * PAD - 2 * hubR;
+
+      const centers: { x: number; y: number }[] = [];
+      for (const source of sourceOrder) {
+        const numHubs = groups.filter((g) => g.source === source).length;
+        const y = rowY.get(source)!;
+        const spread =
+          numHubs <= 1
+            ? 0
+            : Math.min((numHubs - 1) * hubSpacing, maxSpread);
+        const step = numHubs > 1 ? spread / (numHubs - 1) : 0;
+        const startX = cx - spread / 2;
+        for (let ci = 0; ci < numHubs; ci++) {
+          centers.push({ x: startX + ci * step, y });
         }
-        // No cabe: distribuye proporcionalmente.
-        return [
-          { x: VB_W * 0.22, y: cy },
-          { x: VB_W * 0.78, y: cy },
-        ];
       }
-      if (G === 3) {
-        return [
-          { x: VB_W * 0.24, y: VB_H * 0.34 },
-          { x: VB_W * 0.76, y: VB_H * 0.34 },
-          { x: VB_W * 0.50, y: VB_H * 0.78 },
-        ];
-      }
-      // 4+ grid
-      const cols = Math.ceil(Math.sqrt(G));
-      const rows = Math.ceil(G / cols);
-      const out: { x: number; y: number }[] = [];
-      for (let k = 0; k < G; k++) {
-        const r = Math.floor(k / cols);
-        const c = k % cols;
-        out.push({
-          x: VB_W * ((c + 0.5) / cols),
-          y: VB_H * ((r + 0.5) / rows),
-        });
-      }
-      return out;
+      return centers;
     }
     const centers = dynamicCenters();
 
     type Pos = { x: number; y: number; hubId: number };
     const P: Pos[] = new Array(nodes.length);
-    // Index inverso: nodeId → su posición en `nodes` (para colocar el resultado).
     const idxOf = new Map<string, number>();
     nodes.forEach((n, i) => idxOf.set(n.id, i));
 
-    // Dock de herramientas: cuelga del hub primario.
+    // Dock de herramientas: cuelga del hub primario (primer nexo).
     const primaryHub = centers[0];
     const T_SR = 22;
     const T_GAP = 160;
@@ -688,9 +678,6 @@ export default function ProductNetwork({
       sizes.forEach((ringSize, ringIdx) => {
         const r = R0 + ringIdx * RING_GAP;
         const step = (2 * Math.PI) / ringSize;
-        // Empezamos el primer nodo arriba (-π/2 = 12 en punto) y
-        // escalonamos los anillos rotando media casilla para que los
-        // nodos exteriores no queden alineados con los interiores.
         const phase = -Math.PI / 2 + ringIdx * (step / 2);
         for (let k = 0; k < ringSize; k++) {
           const a = phase + k * step;
@@ -703,10 +690,7 @@ export default function ProductNetwork({
         nodeOffset += ringSize;
       });
 
-      // ── Esquivar el dock de herramientas (solo hub primario) ───────────
-      // Si un nodo cae dentro del rectángulo del dock, lo "saltamos"
-      // empujándolo justo debajo. Mantiene la simetría del anillo: sólo
-      // se mueve el nodo afectado.
+      // Esquivar el dock (solo hub primario).
       if (gi === 0) {
         for (let i = 0; i < local.length; i++) {
           const p = local[i];
@@ -737,13 +721,26 @@ export default function ProductNetwork({
     const hubs = groups.map((g, gi) => ({
       id: gi,
       source: g.source,
+      chunkIndex: g.chunkIndex,
+      sourceFirst: g.sourceFirst,
+      startIdx: g.startIdx,
       x: centers[gi].x,
       y: centers[gi].y,
       count: g.nodes.length,
       primary: gi === 0,
+      // id del hub anterior en la cadena (null para el primero de cada origen).
+      prevHubId: g.chunkIndex > 0 ? gi - 1 : null,
     }));
 
-    return { hubs, hub: hubs[0] ?? { id: 0, source: "amazon", x: VB_W / 2, y: VB_H / 2, count: 0, primary: true }, pos };
+    return {
+      hubs,
+      hub: hubs[0] ?? {
+        id: 0, source: "amazon", x: VB_W / 2, y: VB_H / 2,
+        count: 0, primary: true, sourceFirst: true,
+        chunkIndex: 0, startIdx: 0, prevHubId: null,
+      },
+      pos,
+    };
   }, [nodes]);
 
   const sel = nodes.find((x) => x.id === selId) ?? null;
@@ -1123,6 +1120,40 @@ export default function ProductNetwork({
             );
           })()}
 
+          {/* ── Cadenas entre hubs consecutivos del mismo origen ── */}
+          {layout.hubs.map((h) => {
+            if (h.prevHubId === null) return null;
+            const prev = layout.hubs[h.prevHubId];
+            if (!prev) return null;
+            const dx = h.x - prev.x, dy = h.y - prev.y;
+            const len = Math.sqrt(dx * dx + dy * dy);
+            if (len < 1) return null;
+            const ux = dx / len, uy = dy / len;
+            const HR_c = 54;
+            const x1 = prev.x + ux * (HR_c + 14), y1 = prev.y + uy * (HR_c + 14);
+            const x2 = h.x - ux * (HR_c + 14), y2 = h.y - uy * (HR_c + 14);
+            const isAmz = h.source === "amazon";
+            const cFaint  = isAmz ? "rgba(255,153,0,0.22)"    : "rgba(94,234,212,0.22)";
+            const cStrong = isAmz ? "rgba(255,178,71,0.65)"   : "rgba(110,231,219,0.65)";
+            const cDot    = isAmz ? "#FFD08A"                 : "#5EEAD4";
+            const d = `M${x1},${y1} L${x2},${y2}`;
+            return (
+              <g key={`chain-${h.id}`}>
+                <line x1={x1} y1={y1} x2={x2} y2={y2}
+                  stroke={cFaint} strokeWidth="2.5"
+                  strokeDasharray="8 10" strokeLinecap="round"
+                  vectorEffect="non-scaling-stroke" />
+                <path d={d} fill="none"
+                  stroke={cStrong} strokeWidth="1.8" strokeLinecap="round"
+                  vectorEffect="non-scaling-stroke" className="net-flow" />
+                <circle r="3" fill={cDot} filter="url(#glow)">
+                  <animateMotion dur="2.4s" repeatCount="indefinite"
+                    path={d} keyPoints="0;1" keyTimes="0;1" calcMode="linear" />
+                </circle>
+              </g>
+            );
+          })}
+
           {/* Nodos centrales: un hub por origen (Amazon, Manual…).
               Sólo el hub primario abre el dock de herramientas; los demás
               son informativos (mostrar count y nombre). */}
@@ -1135,9 +1166,11 @@ export default function ProductNetwork({
             const ringStroke = isAmazon ? "rgba(255,153,0,0.55)" : "rgba(94,234,212,0.55)";
             const breatheStroke = isAmazon ? "rgba(255,153,0,0.45)" : "rgba(94,234,212,0.45)";
             const labelColor = isAmazon ? "rgba(255,170,80,0.85)" : "rgba(110,231,219,0.85)";
-            const labelText = isAmazon
-              ? `Tu cuenta · ${hubInfo.count} producto${hubInfo.count === 1 ? "" : "s"}`
-              : `${humanizeSource(hubInfo.source)} · ${hubInfo.count} producto${hubInfo.count === 1 ? "" : "s"}`;
+            const labelText = hubInfo.sourceFirst
+              ? isAmazon
+                ? `Tu cuenta · ${hubInfo.count} productos`
+                : `${humanizeSource(hubInfo.source)} · ${hubInfo.count} productos`
+              : `${hubInfo.startIdx + 1}–${hubInfo.startIdx + hubInfo.count} · ${hubInfo.count} prod.`;
             return (
               <g
                 key={`hub-${hubInfo.id}`}
@@ -1192,6 +1225,7 @@ export default function ProductNetwork({
                   stroke={stroke}
                   strokeWidth="1.8"
                 />
+                <g opacity={hubInfo.sourceFirst ? 1 : 0.65}>
                 {isAmazon ? (
                   <>
                     {/* wordmark + sonrisa de Amazon */}
@@ -1242,6 +1276,7 @@ export default function ProductNetwork({
                     </text>
                   </>
                 )}
+                </g>
                 <text
                   x={h.x}
                   y={h.y + HR + 20}
