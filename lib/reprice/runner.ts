@@ -495,7 +495,9 @@ export async function runRepricer(
             await prisma.$transaction([
               prisma.sellerListing.update({
                 where: { id: listing.id },
-                data: { priceCurrent: result.newPrice, lastRepricedAt: now },
+                // consecutiveErrors: 0 aquí como defensa: si persistPatchOutcome
+                // falla silenciosamente más abajo, el contador sigue reseteado.
+                data: { priceCurrent: result.newPrice, lastRepricedAt: now, consecutiveErrors: 0 },
               }),
               prisma.repricingEvent.create({
                 data: {

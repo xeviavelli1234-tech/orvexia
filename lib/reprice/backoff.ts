@@ -14,6 +14,7 @@ const RATE_LIMIT_CODES = new Set([
   "QuotaExceeded",
   "TooManyRequests",
   "RequestThrottled",
+  "Throttled", // SP-API v0 usa este code en algunas rutas
 ]);
 
 export async function runPatchWithBackoff<T>(
@@ -65,7 +66,12 @@ function classifyError(e: unknown) {
   const code = err?.code ?? "unknown";
   const status = err?.status ?? 0;
   const message = (err?.message ?? String(e)).slice(0, 300);
-  const isRateLimit = status === 429 || RATE_LIMIT_CODES.has(code);
+  // Incluye detección por mensaje para cubrir variantes de naming de Amazon
+  // ("Request is throttled", "Your request is throttled", etc.)
+  const isRateLimit =
+    status === 429 ||
+    RATE_LIMIT_CODES.has(code) ||
+    message.toLowerCase().includes("throttl");
   const isTransient = status >= 500 || code === "network_error";
   return { code, message, isRateLimit, isTransient };
 }

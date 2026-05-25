@@ -253,7 +253,11 @@ export async function POST(req: NextRequest) {
     await prisma.$transaction([
       prisma.sellerListing.update({
         where: { id: listing.id },
-        data: { priceCurrent: result.newPrice, consecutiveErrors: 0 },
+        data: {
+          priceCurrent: result.newPrice,
+          consecutiveErrors: 0,
+          lastRepricedAt: now,
+        },
       }),
       prisma.repricingEvent.create({
         data: {
@@ -272,6 +276,13 @@ export async function POST(req: NextRequest) {
         data: { finishedAt: new Date(), listingsProcessed: 1, listingsRepriced: 1, errors: 0 },
       }),
     ]);
+    // Quota tracker + lastExpectedPrice (best-effort, igual que en runner.ts)
+    await persistPatchOutcome({
+      sellerAccountId: account.id,
+      listingId: listing.id,
+      outcome,
+      appliedPrice: result.newPrice,
+    });
     await prisma.sellerAccount.update({
       where: { id: account.id },
       data: { lastRunAt: now },

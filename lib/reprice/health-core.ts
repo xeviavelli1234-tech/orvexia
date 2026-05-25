@@ -100,7 +100,7 @@ export function calculateHealth(listings: ListingSnapshot[]): HealthScore {
         autopaused: listings.filter((l) => l.autoPausedAt).length,
         manualPrice: listings.filter((l) => l.manualPriceDetected).length,
         noAsin: listings.filter((l) => !l.asinValid).length,
-        atFloor: listings.filter((l) => l.daysAtPriceFloor >= 3).length,
+        atFloor: listings.filter((l) => l.daysAtPriceFloor >= 5).length, // consistente con el umbral de sugerencia
         losingBuyBox: listings.filter((l) => l.buyBoxStatus === "LOST").length,
       },
     },
