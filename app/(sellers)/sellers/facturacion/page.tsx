@@ -8,8 +8,32 @@ import {
   type SellerPlan,
 } from "@/lib/billing";
 import { prisma } from "@/lib/prisma";
-import { isStripeConfigured } from "@/lib/stripe";
+import { getStripe, isStripeConfigured } from "@/lib/stripe";
 import BillingProfileForm from "./BillingProfileForm";
+
+/**
+ * Si la suscripción está programada para cancelarse al fin del período,
+ * devuelve la fecha; si no, null. Best-effort: si Stripe falla, log y null.
+ */
+async function getCancellationInfo(
+  stripeSubscriptionId: string | null,
+): Promise<{ endsAt: Date } | null> {
+  if (!stripeSubscriptionId) return null;
+  try {
+    const stripe = await getStripe();
+    const sub = await stripe.subscriptions.retrieve(stripeSubscriptionId);
+    if (!sub.cancel_at_period_end) return null;
+    // En la API moderna current_period_end vive por item. Stripe también
+    // expone `cancel_at` cuando hay cancelación programada — más simple.
+    const endTs =
+      sub.cancel_at ?? sub.items?.data?.[0]?.current_period_end ?? null;
+    if (!endTs) return null;
+    return { endsAt: new Date(endTs * 1000) };
+  } catch (e) {
+    console.warn("[facturacion] no se pudo leer la suscripcion:", e);
+    return null;
+  }
+}
 
 export const metadata = { title: "Facturación · Orvexia Repricer" };
 
@@ -51,11 +75,18 @@ export default async function FacturacionPage({
   }
 
   const billing = getBillingState(account.plan as SellerPlan, account.trialEndsAt);
-  const skuCount = await prisma.sellerListing.count({
-    where: { sellerAccountId: account.id },
-  });
   const stripeReady = isStripeConfigured();
+  const [skuCount, cancellation] = await Promise.all([
+    prisma.sellerListing.count({ where: { sellerAccountId: account.id } }),
+    stripeReady ? getCancellationInfo(account.stripeSubscriptionId) : Promise.resolve(null),
+  ]);
   const msg = status ? STATUS[status] : null;
+  const fmtDate = (d: Date) =>
+    new Intl.DateTimeFormat("es-ES", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }).format(d);
 
   return (
     <div className="max-w-2xl mx-auto px-5 py-12">
@@ -114,6 +145,15 @@ export default async function FacturacionPage({
               Plan Pro activo. Reprecio cada {billing.intervalMinutes} min. Gracias por
               confiar en Orvexia 💜
             </p>
+            {cancellation && (
+              <div className="mt-3 rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30 px-4 py-3 text-sm text-amber-800 dark:text-amber-300">
+                <strong>Suscripción cancelada.</strong> Mantienes acceso Pro
+                hasta el <strong>{fmtDate(cancellation.endsAt)}</strong>. A partir
+                de esa fecha tu cuenta pasará a TRIAL y el reprecio se detendrá.
+                Si cambias de idea, puedes reactivarla desde &quot;Gestionar
+                suscripción&quot;.
+              </div>
+            )}
             <div className="mt-5 flex flex-wrap gap-3">
               {stripeReady && account.stripeCustomerId && (
                 <form action="/api/sellers/billing/portal" method="post">
@@ -145,12 +185,14 @@ export default async function FacturacionPage({
             {skuCount === 1 ? "" : "s"}
           </span>
         </div>
-        <div className="mt-4 rounded-xl border border-[var(--brand-400)] bg-[var(--brand-50)] px-4 py-3">
+        <div className="mt-4 rounded-xl border border-[var(--brand-400)] bg-[var(--brand-50)] dark:bg-[var(--brand-500)]/10 px-4 py-3">
           <div className="flex items-baseline justify-between gap-2">
-            <span className="text-sm font-semibold">Plan Pro · SKUs ilimitados</span>
-            <span className="text-lg font-bold">
+            <span className="text-sm font-semibold text-[var(--brand-700)] dark:text-[var(--brand-200)]">
+              Plan Pro · SKUs ilimitados
+            </span>
+            <span className="text-lg font-bold text-[var(--brand-700)] dark:text-[var(--brand-200)]">
               {PRO_PRICE_EUR} €
-              <span className="text-[11px] font-normal text-fg/55">/mes</span>
+              <span className="text-[11px] font-normal opacity-60">/mes</span>
             </span>
           </div>
         </div>
