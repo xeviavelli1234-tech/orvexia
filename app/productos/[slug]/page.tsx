@@ -108,14 +108,45 @@ async function getRelated(category: string, excludeId: string) {
   });
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
   const { slug } = await params;
   const product = await getProduct(slug);
   if (!product) return { title: "Producto no encontrado | Orvexia" };
   const offer = product.offers[0];
+  const title = `${product.name} | Orvexia`;
+  const description = `Compara el precio del ${product.name} de ${product.brand}. ${
+    offer
+      ? `Desde ${offer.priceCurrent}€ con precios actualizados en tiempo real.`
+      : ""
+  } Análisis, especificaciones y valoraciones.`;
+  const canonical = `https://www.orvexia.es/productos/${product.slug}`;
+  // OG image dinámica: el archivo opengraph-image.tsx vecino la genera por
+  // slug. Next la sirve en ${canonical}/opengraph-image. La declaramos
+  // también explícitamente por compat con scrapers viejos.
+  const ogImage = `${canonical}/opengraph-image`;
   return {
-    title: `${product.name} | Orvexia`,
-    description: `Compara el precio del ${product.name} de ${product.brand}. ${offer ? `Desde ${offer.priceCurrent}€ con precios actualizados en tiempo real.` : ""} Análisis, especificaciones y valoraciones.`,
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: {
+      type: "website",
+      url: canonical,
+      title,
+      description,
+      siteName: "Orvexia",
+      locale: "es_ES",
+      images: [{ url: ogImage, width: 1200, height: 630, alt: product.name }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [ogImage],
+    },
   };
 }
 

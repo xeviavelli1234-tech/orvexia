@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import { captureException } from "@/lib/monitoring";
 
 /**
  * Error boundary global. Captura cualquier error no manejado en rutas
@@ -15,8 +16,12 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Telemetría básica en consola. En prod, el digest queda en logs de Vercel.
-    console.error("[error.tsx]", error.message, error.digest);
+    // Manda a Sentry si está activo + log estructurado siempre.
+    // El digest de Next ayuda a correlacionar con logs del servidor.
+    void captureException(error, {
+      tags: { source: "client-error-boundary" },
+      extra: { digest: error.digest },
+    });
   }, [error]);
 
   return (

@@ -8,6 +8,7 @@ import DealsCountdown from "@/components/DealsCountdown";
 import { REPRICER_ENABLED, REPRICER_PUBLIC } from "@/lib/featureFlags";
 import { HeroSearch } from "@/components/HeroSearch";
 import { getRealDeals } from "@/lib/deals";
+import { HudFrame } from "./_components/HomePrimitives";
 
 // Semilla diaria estable (fecha peninsular). El set de ofertas es el mismo
 // para todos durante el día y cambia a medianoche Europe/Madrid.
@@ -236,16 +237,6 @@ const FAQS: { q: string; a: React.ReactNode }[] = [
     ),
   },
 ];
-
-// Tiny reusable HUD bracket frame
-function HudFrame({ className = "", children }: { className?: string; children: React.ReactNode }) {
-  return (
-    <div className={`hud-corners ${className}`}>
-      <span className="hud-tl" /><span className="hud-tr" /><span className="hud-bl" /><span className="hud-br" />
-      {children}
-    </div>
-  );
-}
 
 export default async function HomePage() {
   const [productos, stats] = await Promise.all([getTopDeals(), getStats()]);

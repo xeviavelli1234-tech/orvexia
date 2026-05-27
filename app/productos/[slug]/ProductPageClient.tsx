@@ -6,6 +6,7 @@ import Link from "next/link";
 import { StockBadge } from "@/components/StockBadge";
 import ReviewSection from "@/components/ReviewSection";
 import type { ProductAnalysis } from "@/lib/productAnalysis";
+import { formatEUR } from "@/lib/format/eur";
 
 interface Offer {
   store: string;
@@ -52,9 +53,7 @@ interface Props {
   analysis: ProductAnalysis;
 }
 
-function formatPrice(n: number) {
-  return new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(n);
-}
+const formatPrice = (n: number) => formatEUR(n);
 
 const VERDICT_TONE: Record<string, { bg: string; fg: string; border: string }> = {
   great: { bg: "var(--accent-50)",  fg: "var(--accent-700)", border: "var(--accent-100)" },
