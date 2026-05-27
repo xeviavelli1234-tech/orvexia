@@ -1,13 +1,20 @@
 /**
  * Lógica de planes — FUNCIONES PURAS, testeables.
  *
- * Plan TRIAL: 14 días gratis, reprecio cada 15 min.
- * Plan PRO:   29 €/mes, reprecio cada 5 min.
+ * Plan TRIAL: 14 días gratis, reprecio cada 15 min, 50 SKUs máximo.
+ * Plan PRO:   19 €/mes flat, reprecio cada 5 min, SKUs ilimitados.
+ *
+ * NOTA sobre los precios: hay UN solo plan Pro a 19 €/mes que coincide con
+ * el producto único configurado en Stripe Live. Antes había tramos por
+ * volumen (starter/growth/scale/unlimited) pero generaban inconsistencia
+ * entre la factura interna y lo que cobra Stripe. Si en el futuro se vuelve
+ * a precios escalonados, crear N productos en Stripe Live y elegir el price
+ * dinámicamente en /api/sellers/billing/checkout.
  */
 
 export type SellerPlan = "TRIAL" | "PRO";
 
-export const PRO_PRICE_EUR = 29;
+export const PRO_PRICE_EUR = 19;
 export const TRIAL_DAYS = 14;
 
 const INTERVAL_BY_PLAN: Record<SellerPlan, number> = {
@@ -62,7 +69,10 @@ export interface BillingState {
   intervalMinutes: number;
 }
 
-// ── Planes por volumen de SKUs ───────────────────────────────────────────────
+// ── Plan único Pro ──────────────────────────────────────────────────────────
+// Mantenemos la forma de array para que el resto del código (landing,
+// facturación, factura) siga iterando sobre PRICE_TIERS sin cambios mayores,
+// pero ahora siempre hay un único elemento.
 export interface PriceTier {
   id: string;
   label: string;
@@ -71,41 +81,29 @@ export interface PriceTier {
 }
 
 export const PRICE_TIERS: PriceTier[] = [
-  { id: "starter", label: "Hasta 50 SKUs", maxSkus: 50, priceEur: 29 },
-  { id: "growth", label: "Hasta 200 SKUs", maxSkus: 200, priceEur: 49 },
-  { id: "scale", label: "Hasta 1.000 SKUs", maxSkus: 1000, priceEur: 99 },
-  { id: "unlimited", label: "SKUs ilimitados", maxSkus: Infinity, priceEur: 149 },
+  { id: "pro", label: "Plan Pro", maxSkus: Infinity, priceEur: PRO_PRICE_EUR },
 ];
 
-/** Tramo de precio según el número de SKUs del catálogo. */
-export function tierForSkuCount(skuCount: number): PriceTier {
-  const n = Math.max(0, Math.floor(skuCount || 0));
-  return (
-    PRICE_TIERS.find((t) => n <= t.maxSkus) ??
-    PRICE_TIERS[PRICE_TIERS.length - 1]
-  );
+/** Tramo único: siempre el plan Pro. Mantengo la firma para no romper consumidores. */
+export function tierForSkuCount(_skuCount: number): PriceTier {
+  return PRICE_TIERS[0];
 }
 
-export function priceForSkuCount(skuCount: number): number {
-  return tierForSkuCount(skuCount).priceEur;
+export function priceForSkuCount(_skuCount: number): number {
+  return PRO_PRICE_EUR;
 }
 
 // ── Límite de productos con repricing ACTIVO ─────────────────────────────
-// `catalogCount` = total de listings (incluye los pausados). El tier sale
-// del catálogo: si has subido 250 productos, eres "growth" aunque solo
-// tengas 10 activos. Lo que limitamos es cuántos de ese catálogo pueden
-// estar con `repricingEnabled = true` a la vez. Más allá hay que upgradear.
-//
-// TRIAL siempre 50 (suficiente para probar el motor, no para escalar).
+// TRIAL: tope de 50 SKUs activos para probar el motor sin escalar.
+// PRO:   sin límite (un solo precio cubre todo).
 export const TRIAL_ACTIVE_LIMIT = 50;
 
 export function repricingActiveLimit(
   plan: SellerPlan,
-  catalogCount: number,
+  _catalogCount: number,
 ): number {
   if (plan === "TRIAL") return TRIAL_ACTIVE_LIMIT;
-  const tier = tierForSkuCount(catalogCount);
-  return tier.maxSkus;
+  return Infinity;
 }
 
 export function getBillingState(

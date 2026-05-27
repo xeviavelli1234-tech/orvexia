@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PRICE_TIERS } from "@/lib/billing";
+import { PRO_PRICE_EUR } from "@/lib/billing";
 
 export default function SellersLandingPage() {
   return (
@@ -89,35 +89,25 @@ export default function SellersLandingPage() {
       {/* ── Pricing ───────────────────────────────────────────────────────── */}
       <section id="precios" className="px-5 py-20 max-w-4xl mx-auto">
         <h2 className="text-3xl font-bold tracking-tight text-center">
-          Precio según tu catálogo
+          Un precio plano. SKUs ilimitados.
         </h2>
         <p className="mt-3 text-center text-fg/70">
-          Pagas por el volumen que gestionas. Empieza gratis 14 días, sin
-          tarjeta y sin permanencia.
+          Empieza gratis 14 días, sin tarjeta y sin permanencia.
         </p>
 
-        <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {PRICE_TIERS.map((t, i) => (
-            <div
-              key={t.id}
-              className={`rounded-2xl border bg-bg p-6 shadow-sm flex flex-col ${
-                i === 0 ? "border-[var(--brand-300)]" : "border-fg/10"
-              }`}
-            >
-              <div className="text-sm font-semibold text-fg/70">{t.label}</div>
-              <div className="mt-2 flex items-baseline gap-1">
-                <span className="text-3xl font-bold tracking-tight">
-                  {t.priceEur} €
-                </span>
-                <span className="text-fg/55 text-sm">/mes</span>
-              </div>
-              {i === 0 && (
-                <span className="mt-2 inline-block w-fit text-[11px] font-semibold text-[var(--brand-700)] bg-[var(--brand-50)] px-2 py-0.5 rounded-full">
-                  Para empezar
-                </span>
-              )}
-            </div>
-          ))}
+        <div className="mt-12 max-w-md mx-auto rounded-2xl border border-[var(--brand-300)] bg-bg p-8 shadow-sm">
+          <div className="text-sm font-semibold text-fg/70 text-center">Plan Pro</div>
+          <div className="mt-2 flex items-baseline justify-center gap-1">
+            <span className="text-5xl font-bold tracking-tight">
+              {PRO_PRICE_EUR} €
+            </span>
+            <span className="text-fg/55 text-sm">/mes</span>
+          </div>
+          <div className="mt-3 flex justify-center">
+            <span className="inline-block w-fit text-[11px] font-semibold text-[var(--brand-700)] bg-[var(--brand-50)] px-2 py-0.5 rounded-full">
+              SKUs ilimitados
+            </span>
+          </div>
         </div>
 
         <ul className="mt-8 grid sm:grid-cols-2 gap-3 text-sm max-w-2xl mx-auto">
@@ -136,9 +126,8 @@ export default function SellersLandingPage() {
           Empezar 14 días gratis
         </Link>
         <p className="mt-3 text-center text-xs text-fg/50">
-          El tramo se ajusta solo al crecer tu catálogo. El plan Profesional de
-          Amazon (que exige Amazon para automatizar precios) se paga aparte a
-          Amazon.
+          El plan Profesional de Amazon (que exige Amazon para automatizar
+          precios) se paga aparte a Amazon.
         </p>
       </section>
 

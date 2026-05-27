@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSession } from "@/lib/session";
 import { getSellerAccountByUserId } from "@/lib/db/sellerAccount";
-import { getBillingState, tierForSkuCount, type SellerPlan } from "@/lib/billing";
+import { getBillingState, PRO_PRICE_EUR, type SellerPlan } from "@/lib/billing";
 import { prisma } from "@/lib/prisma";
 import PrintButton from "./PrintButton";
 
@@ -33,11 +33,10 @@ export default async function FacturaPage() {
   const isPreview = billing.plan !== "PRO";
 
   const now = new Date();
-  const skuCount = await prisma.sellerListing.count({
-    where: { sellerAccountId: account.id },
-  });
-  const tier = tierForSkuCount(skuCount);
-  const total = tier.priceEur; // IVA incluido, según tramo de volumen
+  // Plan único: 19 €/mes (IVA incluido) coincidiendo con el price configurado
+  // en Stripe Live. Si en el futuro hay tramos múltiples, leer el precio real
+  // de la suscripción de Stripe vía customer.subscriptions.retrieve().
+  const total = PRO_PRICE_EUR;
   const base = Math.round((total / (1 + VAT_RATE / 100)) * 100) / 100;
   const iva = Math.round((total - base) * 100) / 100;
 
@@ -149,8 +148,7 @@ export default async function FacturaPage() {
           <tbody>
             <tr className="border-b border-[#f1f5f9]">
               <td className="py-3">
-                Suscripción Orvexia Repricer · Plan Pro · {tier.label}{" "}
-                (mensual)
+                Suscripción Orvexia Repricer · Plan Pro (mensual)
               </td>
               <td className="py-3 text-right font-mono">{eur(base)}</td>
               <td className="py-3 text-right font-mono">{eur(iva)}</td>

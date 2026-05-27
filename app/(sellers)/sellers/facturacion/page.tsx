@@ -4,8 +4,7 @@ import { getSession } from "@/lib/session";
 import { getSellerAccountByUserId } from "@/lib/db/sellerAccount";
 import {
   getBillingState,
-  PRICE_TIERS,
-  tierForSkuCount,
+  PRO_PRICE_EUR,
   type SellerPlan,
 } from "@/lib/billing";
 import { prisma } from "@/lib/prisma";
@@ -55,7 +54,6 @@ export default async function FacturacionPage({
   const skuCount = await prisma.sellerListing.count({
     where: { sellerAccountId: account.id },
   });
-  const tier = tierForSkuCount(skuCount);
   const stripeReady = isStripeConfigured();
   const msg = status ? STATUS[status] : null;
 
@@ -138,48 +136,27 @@ export default async function FacturacionPage({
         )}
       </div>
 
-      {/* Planes por volumen de SKUs */}
+      {/* Plan único Pro */}
       <div className="mt-6 rounded-2xl border border-fg/10 bg-bg p-6">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <div className="text-sm font-bold">Precio según tu catálogo</div>
+          <div className="text-sm font-bold">Plan Pro</div>
           <span className="text-xs text-fg/55">
-            Usas <strong className="text-fg/80">{skuCount}</strong> SKU
+            Catálogo: <strong className="text-fg/80">{skuCount}</strong> SKU
             {skuCount === 1 ? "" : "s"}
           </span>
         </div>
-        <div className="mt-4 grid sm:grid-cols-2 gap-2.5">
-          {PRICE_TIERS.map((t) => {
-            const cur = t.id === tier.id;
-            return (
-              <div
-                key={t.id}
-                className={`rounded-xl border px-4 py-3 ${
-                  cur
-                    ? "border-[var(--brand-400)] bg-[var(--brand-50)]"
-                    : "border-fg/10"
-                }`}
-              >
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="text-sm font-semibold">{t.label}</span>
-                  <span className="text-lg font-bold">
-                    {t.priceEur} €
-                    <span className="text-[11px] font-normal text-fg/55">
-                      /mes
-                    </span>
-                  </span>
-                </div>
-                {cur && (
-                  <div className="mt-1 text-[11px] font-semibold text-[var(--brand-700)]">
-                    Tu tramo actual
-                  </div>
-                )}
-              </div>
-            );
-          })}
+        <div className="mt-4 rounded-xl border border-[var(--brand-400)] bg-[var(--brand-50)] px-4 py-3">
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="text-sm font-semibold">Plan Pro · SKUs ilimitados</span>
+            <span className="text-lg font-bold">
+              {PRO_PRICE_EUR} €
+              <span className="text-[11px] font-normal text-fg/55">/mes</span>
+            </span>
+          </div>
         </div>
         <p className="mt-3 text-xs text-fg/50">
-          El precio se ajusta automáticamente al tramo según el número de
-          productos de tu catálogo. Sin permanencia, cancela cuando quieras.
+          Un único precio plano para todo tu catálogo. Sin permanencia, cancela
+          cuando quieras.
         </p>
       </div>
 
@@ -188,9 +165,9 @@ export default async function FacturacionPage({
         <div className="mt-6 rounded-2xl border border-[var(--brand-200)] bg-bg p-6">
           <div className="flex items-baseline gap-2">
             <span className="text-4xl font-bold tracking-tight">
-              {tier.priceEur} €
+              {PRO_PRICE_EUR} €
             </span>
-            <span className="text-fg/60">/mes · {tier.label}</span>
+            <span className="text-fg/60">/mes · Plan Pro</span>
           </div>
           <ul className="mt-4 space-y-2 text-sm text-fg/70">
             <li>✓ Reprecio cada 5 minutos (vs 15 en prueba)</li>

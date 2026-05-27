@@ -74,7 +74,7 @@ const SECTIONS = [
             "El Cliente debe introducir un método de pago válido (tarjeta) en el checkout de Stripe, pero no se le cargará importe alguno durante los 14 días.",
             "El Servicio funciona con un intervalo de reprecio de 15 minutos y un límite de 50 productos activos.",
             "El Cliente puede cancelar en cualquier momento durante el trial sin coste.",
-            "Si no se cancela antes del día 14, la suscripción se activa automáticamente al plan correspondiente al tamaño del catálogo (ver Sección 4).",
+            "Si no se cancela antes del día 14, la suscripción se activa automáticamente al plan Pro (ver Sección 4).",
             "El período de prueba es de un solo uso por cuenta. Cancelar y volver a suscribirse no concede un nuevo trial.",
           ].map((item) => (
             <li key={item} className="flex gap-3 items-start text-sm">
@@ -87,44 +87,36 @@ const SECTIONS = [
     ),
   },
   {
-    title: "4. Planes, precios y facturación",
+    title: "4. Plan, precio y facturación",
     content: (
       <>
         <p className="mb-3">
-          El Servicio se factura mediante una <strong>suscripción mensual recurrente</strong> cuyo
-          precio depende del número de productos del catálogo del Cliente. Los tramos vigentes son:
+          El Servicio se factura mediante una <strong>suscripción mensual recurrente</strong> de
+          precio plano. Tarifa vigente:
         </p>
         <table className="w-full text-sm border-collapse mt-1 mb-3">
           <thead>
             <tr className="bg-bg-subtle">
               <th className="text-left px-3 py-2 font-semibold text-fg rounded-tl-lg">Plan</th>
-              <th className="text-left px-3 py-2 font-semibold text-fg">SKUs</th>
-              <th className="text-left px-3 py-2 font-semibold text-fg rounded-tr-lg">Precio (sin IVA)</th>
+              <th className="text-left px-3 py-2 font-semibold text-fg">Catálogo incluido</th>
+              <th className="text-left px-3 py-2 font-semibold text-fg rounded-tr-lg">Precio (IVA incluido)</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#F1F5F9]">
-            {[
-              ["Starter", "Hasta 50", "19 €/mes"],
-              ["Growth", "51–200", "29 €/mes"],
-              ["Scale", "201–500", "49 €/mes"],
-              ["Pro", "501–1.000", "79 €/mes"],
-              ["Enterprise", "Más de 1.000", "119 €/mes"],
-            ].map(([plan, sku, price]) => (
-              <tr key={plan}>
-                <td className="px-3 py-2 text-fg font-semibold">{plan}</td>
-                <td className="px-3 py-2 text-fg-muted">{sku}</td>
-                <td className="px-3 py-2 text-fg-muted">{price}</td>
-              </tr>
-            ))}
+            <tr>
+              <td className="px-3 py-2 text-fg font-semibold">Pro</td>
+              <td className="px-3 py-2 text-fg-muted">SKUs ilimitados</td>
+              <td className="px-3 py-2 text-fg-muted">19 €/mes</td>
+            </tr>
           </tbody>
         </table>
         <ul className="space-y-2 list-none">
           {[
-            "Los precios se muestran sin IVA. Se aplicará el IVA español (21%) o el correspondiente al país del Cliente conforme a la normativa europea de facturación electrónica.",
-            "El tramo se calcula automáticamente cada mes según el número de SKUs sincronizados con Amazon en la fecha de renovación. Si el catálogo crece, el siguiente cargo será del tramo superior; si decrece, del inferior.",
+            "El precio mostrado incluye el IVA español del 21%. Para operaciones intracomunitarias B2B con NIF-IVA válido puede aplicarse la inversión del sujeto pasivo conforme a la normativa europea.",
             "La suscripción se renueva automáticamente cada mes en la fecha del cargo inicial. El Cliente autoriza expresamente a Stripe a realizar estos cargos recurrentes con el método de pago facilitado.",
             "Los pagos se procesan por Stripe Payments Europe, Ltd. Orvexia no almacena ni tiene acceso a los datos de la tarjeta del Cliente.",
-            "Orvexia se reserva el derecho a modificar los precios con un preaviso mínimo de 30 días por correo electrónico. El Cliente podrá cancelar antes de la entrada en vigor del nuevo precio sin coste adicional.",
+            "El plan incluye SKUs ilimitados, reprecio cada 5 minutos, soporte por correo y todas las funcionalidades del Servicio.",
+            "Orvexia se reserva el derecho a modificar el precio con un preaviso mínimo de 30 días por correo electrónico. El Cliente podrá cancelar antes de la entrada en vigor del nuevo precio sin coste adicional.",
           ].map((item) => (
             <li key={item} className="flex gap-3 items-start text-sm">
               <span className="mt-1 w-1.5 h-1.5 rounded-full bg-[#4F46E5] flex-shrink-0" />
