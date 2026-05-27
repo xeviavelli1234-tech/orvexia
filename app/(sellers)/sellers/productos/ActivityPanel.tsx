@@ -23,6 +23,12 @@ interface PlanInfo {
   trialTotal: number;
   intervalMinutes: number;
   trialExpired: boolean;
+  /**
+   * Días restantes del trial de Stripe cuando el plan es PRO pero la
+   * suscripción está dentro del trial gratuito (14 días). Si > 0 mostramos
+   * la barra de progreso también en PRO. null o 0 = no aplicable.
+   */
+  proTrialDaysLeft?: number | null;
 }
 
 export default function ActivityPanel({
@@ -35,8 +41,14 @@ export default function ActivityPanel({
   lastRunAt?: string | null;
   proHref: string;
 }) {
-  const pct = plan.isTrial
-    ? Math.max(0, Math.min(100, (plan.trialDaysLeft / plan.trialTotal) * 100))
+  // ¿Hay un trial activo que mostrar? Puede venir de:
+  //   a) plan TRIAL en la DB local (sin pago),
+  //   b) plan PRO con suscripción de Stripe aún dentro de su trial de 14 días.
+  const proInTrial = !plan.isTrial && (plan.proTrialDaysLeft ?? 0) > 0;
+  const showTrialBar = plan.isTrial || proInTrial;
+  const daysLeft = plan.isTrial ? plan.trialDaysLeft : (plan.proTrialDaysLeft ?? 0);
+  const pct = showTrialBar
+    ? Math.max(0, Math.min(100, (daysLeft / plan.trialTotal) * 100))
     : 100;
   const errors = events.filter((e) => !e.success).length;
   const changes = events.filter(
@@ -65,12 +77,14 @@ export default function ActivityPanel({
             {plan.isTrial ? "Trial" : "Pro"}
           </span>
         </div>
-        {plan.isTrial && (
+        {showTrialBar && (
           <>
             <div className="mt-2 text-[11px] text-white/45">
               {plan.trialExpired
                 ? "Prueba expirada"
-                : `${plan.trialDaysLeft}/${plan.trialTotal} días restantes`}
+                : proInTrial
+                  ? `Prueba Pro: ${daysLeft}/${plan.trialTotal} días gratis restantes`
+                  : `${daysLeft}/${plan.trialTotal} días restantes`}
             </div>
             <div className="mt-1.5 h-1.5 rounded-full bg-white/10 overflow-hidden">
               <div

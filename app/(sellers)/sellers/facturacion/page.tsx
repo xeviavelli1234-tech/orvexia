@@ -7,33 +7,10 @@ import {
   PRO_PRICE_EUR,
   type SellerPlan,
 } from "@/lib/billing";
+import { getSubscriptionStatus } from "@/lib/billing/subscription-status";
 import { prisma } from "@/lib/prisma";
-import { getStripe, isStripeConfigured } from "@/lib/stripe";
+import { isStripeConfigured } from "@/lib/stripe";
 import BillingProfileForm from "./BillingProfileForm";
-
-/**
- * Si la suscripción está programada para cancelarse al fin del período,
- * devuelve la fecha; si no, null. Best-effort: si Stripe falla, log y null.
- */
-async function getCancellationInfo(
-  stripeSubscriptionId: string | null,
-): Promise<{ endsAt: Date } | null> {
-  if (!stripeSubscriptionId) return null;
-  try {
-    const stripe = await getStripe();
-    const sub = await stripe.subscriptions.retrieve(stripeSubscriptionId);
-    if (!sub.cancel_at_period_end) return null;
-    // En la API moderna current_period_end vive por item. Stripe también
-    // expone `cancel_at` cuando hay cancelación programada — más simple.
-    const endTs =
-      sub.cancel_at ?? sub.items?.data?.[0]?.current_period_end ?? null;
-    if (!endTs) return null;
-    return { endsAt: new Date(endTs * 1000) };
-  } catch (e) {
-    console.warn("[facturacion] no se pudo leer la suscripcion:", e);
-    return null;
-  }
-}
 
 export const metadata = { title: "Facturación · Orvexia Repricer" };
 
@@ -76,10 +53,14 @@ export default async function FacturacionPage({
 
   const billing = getBillingState(account.plan as SellerPlan, account.trialEndsAt);
   const stripeReady = isStripeConfigured();
-  const [skuCount, cancellation] = await Promise.all([
+  const [skuCount, subStatus] = await Promise.all([
     prisma.sellerListing.count({ where: { sellerAccountId: account.id } }),
-    stripeReady ? getCancellationInfo(account.stripeSubscriptionId) : Promise.resolve(null),
+    stripeReady ? getSubscriptionStatus(account.stripeSubscriptionId) : Promise.resolve(null),
   ]);
+  const cancellation =
+    subStatus?.cancelAtPeriodEnd && subStatus.endsAt
+      ? { endsAt: subStatus.endsAt }
+      : null;
   const msg = status ? STATUS[status] : null;
   const fmtDate = (d: Date) =>
     new Intl.DateTimeFormat("es-ES", {

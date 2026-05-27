@@ -30,6 +30,11 @@ import {
   TRIAL_DAYS,
   type SellerPlan,
 } from "@/lib/billing";
+import {
+  getSubscriptionStatus,
+  daysUntil,
+} from "@/lib/billing/subscription-status";
+import { isStripeConfigured } from "@/lib/stripe";
 import ActivityPanel, { type EventDTO } from "./ActivityPanel";
 import ControlCenterShell from "./ControlCenterShell";
 import { Eyebrow, Stat } from "@/components/ui/Stat";
@@ -84,7 +89,7 @@ export default async function ProductosPage() {
     ?? null;
 
   const billing = getBillingState(account.plan as SellerPlan, account.trialEndsAt);
-  const [lastRun, runCount, rawEvents] = await Promise.all([
+  const [lastRun, runCount, rawEvents, subStatus] = await Promise.all([
     prisma.repricingRun.findFirst({
       where: { sellerAccountId: account.id },
       orderBy: { startedAt: "desc" },
@@ -97,7 +102,16 @@ export default async function ProductosPage() {
       take: 500,
       include: { listing: { select: { title: true } } },
     }),
+    isStripeConfigured() && billing.plan === "PRO"
+      ? getSubscriptionStatus(account.stripeSubscriptionId)
+      : Promise.resolve(null),
   ]);
+  // Si la suscripción Stripe está en periodo de prueba todavía, indica los
+  // días que quedan para que el usuario vea cuánto le queda gratis.
+  const proTrialDaysLeft =
+    subStatus?.isTrialing && subStatus.endsAt
+      ? daysUntil(subStatus.endsAt)
+      : null;
   const events: EventDTO[] = rawEvents.map((e) => ({
     id: e.id,
     title: e.listing?.title ?? "Producto",
@@ -369,6 +383,7 @@ export default async function ProductosPage() {
               trialTotal: TRIAL_DAYS,
               intervalMinutes: billing.intervalMinutes,
               trialExpired: billing.trialExpired,
+              proTrialDaysLeft,
             }}
             lastRunAt={lastRun?.startedAt.toISOString() ?? null}
             proHref="/sellers/facturacion"
