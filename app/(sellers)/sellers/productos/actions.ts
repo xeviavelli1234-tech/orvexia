@@ -84,7 +84,7 @@ export async function updateListingRangeAction(formData: FormData): Promise<Acti
 
 const strategySchema = z.object({
   listingId: z.string().min(1),
-  strategy: z.enum(["BUYBOX", "MATCH", "FIXED", "MARGIN"]),
+  strategy: z.enum(["BUYBOX", "BUYBOX_WINNER", "MATCH", "FIXED", "MARGIN"]),
   undercutType: z.enum(["AMOUNT", "PERCENT"]),
   undercutValue: z.number().min(0).max(99999),
   fixedPrice: z.number().positive().max(99999).nullable(),
@@ -242,7 +242,13 @@ const settingsSchema = z.object({
   dryRun: z.boolean(),
   patchDelayMs: z.number().int().min(0).max(10000),
   autoSyncHours: z.number().int().min(0).max(168),
-  defaultStrategy: z.enum(["BUYBOX", "MATCH", "FIXED", "MARGIN"]),
+  defaultStrategy: z.enum([
+    "BUYBOX",
+    "BUYBOX_WINNER",
+    "MATCH",
+    "FIXED",
+    "MARGIN",
+  ]),
   defaultUndercutType: z.enum(["AMOUNT", "PERCENT"]),
   defaultUndercutValue: z.number().min(0).max(99999),
   defaultNoCompetition: z.enum(["MAX", "HOLD", "STEP_UP"]),
@@ -253,6 +259,13 @@ const settingsSchema = z.object({
   alertOnBuyBoxLost: z.boolean(),
   alertOnPriceFloor: z.boolean(),
   alertOnError: z.boolean(),
+  minChangeAmount: z.number().min(0).max(99999),
+  minChangePct: z.number().min(0).max(100),
+  debounceSeconds: z.number().int().min(0).max(86400),
+  priceWarCycles: z.number().int().min(0).max(50),
+  priceWarAction: z.enum(["FLOOR", "PAUSE"]),
+  stepUpAccelCycles: z.number().int().min(0).max(50),
+  stepUpMaxMult: z.number().min(1).max(64),
 });
 
 export async function updateAccountSettingsAction(
@@ -295,6 +308,13 @@ export async function updateAccountSettingsAction(
     alertOnBuyBoxLost: formData.get("alertOnBuyBoxLost") === "true",
     alertOnPriceFloor: formData.get("alertOnPriceFloor") === "true",
     alertOnError: formData.get("alertOnError") === "true",
+    minChangeAmount: numF("minChangeAmount", 0),
+    minChangePct: numF("minChangePct", 0),
+    debounceSeconds: numI("debounceSeconds", 0),
+    priceWarCycles: numI("priceWarCycles", 0),
+    priceWarAction: String(formData.get("priceWarAction") ?? "FLOOR"),
+    stepUpAccelCycles: numI("stepUpAccelCycles", 0),
+    stepUpMaxMult: numF("stepUpMaxMult", 8),
   });
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "validation_failed" };

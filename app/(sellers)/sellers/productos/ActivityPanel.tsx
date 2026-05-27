@@ -1,4 +1,6 @@
 import AnalyticsTrigger from "./AnalyticsTrigger";
+import { formatRelativeShort } from "@/lib/format/relative";
+import { MiniStat } from "@/components/ui/Stat";
 
 export interface EventDTO {
   id: string;
@@ -12,15 +14,6 @@ export interface EventDTO {
   simulated: boolean;
   errorMessage: string | null;
   createdAt: string; // ISO
-}
-
-function relTime(iso: string): string {
-  const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
-  if (m < 1) return "ahora";
-  if (m < 60) return `${m} min`;
-  const h = Math.round(m / 60);
-  if (h < 24) return `${h} h`;
-  return `${Math.round(h / 24)} d`;
 }
 
 interface PlanInfo {
@@ -111,7 +104,7 @@ export default function ActivityPanel({
         </div>
       </div>
 
-      {/* Mini-resumen de actividad */}
+      {/* Mini-resumen de actividad — labels cortas para que entren a 3 col. */}
       <div className="grid grid-cols-3 gap-1.5">
         <MiniStat label="Eventos" value={String(events.length)} />
         <MiniStat label="Cambios" value={String(changes)} tone="cyan" />
@@ -121,13 +114,13 @@ export default function ActivityPanel({
           tone={errors > 0 ? "red" : undefined}
         />
         <MiniStat
-          label="% Buy Box"
+          label="Buy Box"
           value={bbPct != null ? `${bbPct}%` : "—"}
           tone={bbPct != null ? (bbPct >= 50 ? "emerald" : "red") : undefined}
         />
         <MiniStat
           label="Últ. cambio"
-          value={lastChange ? relTime(lastChange.createdAt) : "—"}
+          value={lastChange ? formatRelativeShort(lastChange.createdAt) : "—"}
         />
         <MiniStat
           label="Simulados"
@@ -141,34 +134,3 @@ export default function ActivityPanel({
   );
 }
 
-function MiniStat({
-  label,
-  value,
-  sub,
-  tone,
-}: {
-  label: string;
-  value: string;
-  sub?: string;
-  tone?: "cyan" | "emerald" | "red";
-}) {
-  const c =
-    tone === "emerald"
-      ? "text-emerald-300"
-      : tone === "red"
-        ? "text-red-300"
-        : tone === "cyan"
-          ? "text-cyan-300"
-          : "text-white/85";
-  return (
-    <div className="rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1.5">
-      <div className="text-[8.5px] uppercase tracking-[0.1em] text-white/40 truncate">
-        {label}
-      </div>
-      <div className={`mt-0.5 font-mono text-sm font-bold tabular-nums ${c}`}>
-        {value}
-        {sub && <span className="ml-1 text-[9px] text-white/35">{sub}</span>}
-      </div>
-    </div>
-  );
-}

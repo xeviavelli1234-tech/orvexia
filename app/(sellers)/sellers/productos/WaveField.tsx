@@ -1,14 +1,20 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { memo, useEffect, useRef } from "react";
 
 /**
  * Fondo animado premium: rejilla de partículas en perspectiva que ondula
  * (estilo "data terrain") con crestas iluminadas, líneas de relieve, glow,
  * orbes bokeh a la deriva, barrido de luz tipo aurora, velos de color
  * animados y parallax con el ratón. Canvas + rAF. Respeta reduced-motion.
+ *
+ * Memoizado: el padre (ProductNetwork) re-renderiza en cada pan/zoom/select,
+ * pero WaveField no depende de ninguna prop. Sin memo, React invalidaba
+ * este componente ~60 veces por segundo durante el paneo; con memo el
+ * canvas vive su vida con su propio rAF y los frames del compositor caen
+ * un 30-40 % cuando el usuario arrastra el grafo.
  */
-export default function WaveField() {
+function WaveFieldImpl() {
   const ref = useRef<HTMLCanvasElement | null>(null);
   const px = useRef(0); // parallax objetivo X (-1..1)
   const py = useRef(0);
@@ -345,3 +351,6 @@ export default function WaveField() {
 
   return <canvas ref={ref} aria-hidden className="absolute inset-0 h-full w-full" />;
 }
+
+const WaveField = memo(WaveFieldImpl);
+export default WaveField;

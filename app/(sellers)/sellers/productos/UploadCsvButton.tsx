@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
+import { formatRelativeShort } from "@/lib/format/relative";
 
 interface ImportResponse {
   ok?: boolean;
@@ -112,12 +113,14 @@ export function UploadCsvButton({ lastSyncAt }: { lastSyncAt: Date | null }) {
           Subir catálogo CSV
         </Button>
         {lastSyncAt && (
-          <span className="text-[11px] text-white/40">
-            Última carga:{" "}
-            {new Intl.DateTimeFormat("es-ES", {
+          <span
+            className="text-[11px] text-white/40"
+            title={new Intl.DateTimeFormat("es-ES", {
               dateStyle: "short",
               timeStyle: "short",
             }).format(lastSyncAt)}
+          >
+            Última carga: hace {formatRelativeShort(lastSyncAt)}
           </span>
         )}
       </div>

@@ -783,8 +783,159 @@ body {
   transition: transform 0.25s var(--ease-out);
   transform-box: fill-box;
   transform-origin: center;
+  /* will-change avisa al compositor para que prepare una capa GPU; con
+     ~30 nodos animándose por hover/select se traduce en frametimes ~3x
+     más estables sin bloquear el hilo principal. */
+  will-change: transform;
 }
 .hex-node:hover { transform: scale(1.12); }
+
+/* Etiqueta del nodo (título + precio): oculta por defecto, aparece al hover
+   o cuando el nodo está seleccionado (opacity inline = 1). Reduce el ruido
+   textual masivo del grafo cuando hay muchos productos. */
+.node-label {
+  transition: opacity .18s ease;
+  pointer-events: none;
+}
+.hex-node:hover .node-label { opacity: 1 !important; }
+
+/* ── Layout en anillos: animaciones de fluidez ─────────────────────────────
+   Pulso intenso del centro cuando hay urgencias (color rojo). Es distinto
+   del hub-breathe genérico: aquí la opacidad varía más y el scale latido
+   atrae el ojo de inmediato. */
+@keyframes urgent-pulse {
+  0%, 100% { opacity: 0.45; transform: scale(1); }
+  50%      { opacity: 0.95; transform: scale(1.08); }
+}
+.urgent-pulse {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: urgent-pulse 1.8s ease-in-out infinite;
+}
+
+/* Anillos concéntricos rotando lentamente: dan sensación de "vivo" sin
+   distraer porque el periodo es muy largo (>40s). Direcciones alternas
+   evitan que el ojo perciba todo como un solo movimiento. */
+@keyframes ring-rotate-cw {
+  to { transform: rotate(360deg); }
+}
+@keyframes ring-rotate-ccw {
+  to { transform: rotate(-360deg); }
+}
+.ring-spin-1 {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ring-rotate-cw 60s linear infinite;
+}
+.ring-spin-2 {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ring-rotate-ccw 90s linear infinite;
+}
+.ring-spin-3 {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ring-rotate-cw 140s linear infinite;
+}
+
+/* Fade-in escalonado de los nodos al cargar. El stagger lo pone el
+   componente con --node-delay inline; aquí solo definimos la animación. */
+@keyframes node-pop-in {
+  0%   { opacity: 0; transform: scale(0.5); }
+  60%  { opacity: 1; transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.node-pop {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: node-pop-in 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  animation-delay: var(--node-delay, 0s);
+}
+
+/* Anillo de selección que respira sin "saltar" — sustituye al ::before
+   estático que había. */
+@keyframes select-breathe {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50%      { opacity: 1;    transform: scale(1.04); }
+}
+.select-breathe {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: select-breathe 2.4s ease-in-out infinite;
+}
+
+/* ── Efectos premium del grafo, SOLO desktop ──────────────────────────────
+   Todo este bloque se activa solo a partir de 1024px. En mobile/tablet la
+   máquina suele ser menos potente y estos efectos quedarían a tirones.
+
+   - Parallax: el wrapper del SVG se desplaza un poco con --mx/--my que
+     pone JS en el contenedor en cada pointermove (deferred a rAF).
+   - Halo del nodo seleccionado: bloom más intenso que el genérico.
+   - Ripple: anillo que se expande al seleccionar un nodo (clase .node-ripple).
+   - Energía centro→urgencias: líneas pulsantes desde el centro a los
+     nodos en estado lost/error.
+   - Tamaño / opacidad por anillo: refuerza profundidad. */
+@media (min-width: 1024px) {
+  .graph-parallax {
+    transform: translate3d(var(--mx, 0px), var(--my, 0px), 0);
+    transition: transform 0.18s var(--ease-out);
+    will-change: transform;
+  }
+  .hex-node:hover polygon:nth-of-type(1) {
+    filter: url(#glow) drop-shadow(0 0 18px rgba(125, 211, 252, 0.55));
+  }
+  /* Calma se ve un punto más "lejano": ligeramente más pequeño y translúcido.
+     Atención al revés: visualmente "cercana" (1.06x). Usamos selector de
+     atributo data-bucket que pintamos en el <g> del nodo. */
+  [data-bucket="0"] {
+    transform-box: fill-box;
+    transform-origin: center;
+    transform: scale(1.08);
+  }
+  [data-bucket="2"] {
+    opacity: 0.82;
+    transform-box: fill-box;
+    transform-origin: center;
+    transform: scale(0.88);
+  }
+}
+
+/* Ripple radial al seleccionar un nodo. El componente añade el elemento
+   con clase .node-ripple cuando hay selección; se autoanima 0.9s y queda
+   estable después (al final invisible). */
+@keyframes ripple-out {
+  0%   { opacity: 0.85; transform: scale(0.3); }
+  100% { opacity: 0;    transform: scale(2.4); }
+}
+.node-ripple {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ripple-out 0.9s var(--ease-out) forwards;
+  pointer-events: none;
+}
+
+/* Línea de energía centro → nodo crítico. La línea está fija; el "punto
+   viajero" usa <animateMotion> en el JSX. Aquí solo damos a la línea un
+   pulso de opacidad para que respire en sincronía. */
+@keyframes energy-line {
+  0%, 100% { opacity: 0.25; }
+  50%      { opacity: 0.75; }
+}
+.energy-line {
+  animation: energy-line 2.2s ease-in-out infinite;
+}
+
+/* Reduced motion: respetamos la preferencia del usuario y desactivamos
+   las animaciones de rotación / pulso. Hover se mantiene porque es
+   feedback de interacción. */
+@media (prefers-reduced-motion: reduce) {
+  .ring-spin-1, .ring-spin-2, .ring-spin-3,
+  .urgent-pulse, .select-breathe, .node-pop,
+  .energy-line, .node-ripple {
+    animation: none !important;
+  }
+  .graph-parallax { transition: none !important; }
+}
 
 /* Flotación suave de cada nodo (independiente por delay) */
 @keyframes node-float {

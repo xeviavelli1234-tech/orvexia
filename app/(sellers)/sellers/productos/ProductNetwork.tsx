@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useDeferredValue,
   useEffect,
   useMemo,
   useRef,
@@ -11,14 +12,8 @@ import {
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/Toast";
 import WaveField from "./WaveField";
-import PricingSuggest from "./PricingSuggest";
-import {
-  breakEvenPrice,
-  minPriceForMargin,
-  profitAt,
-  type CostInputs,
-} from "@/lib/reprice/margin";
 import { parseTags, collectTags } from "@/lib/tags";
+import { prettyStrategy } from "@/lib/format/strategy-label";
 import {
   updateListingRangeAction,
   toggleListingAction,
@@ -28,322 +23,42 @@ import {
   updateListingParentAction,
   pauseAllAction,
 } from "./actions";
-
-type Strategy = "BUYBOX" | "MATCH" | "FIXED" | "MARGIN";
-type UndercutType = "AMOUNT" | "PERCENT";
-type NoComp = "MAX" | "HOLD" | "STEP_UP";
-type Fulfillment = "ANY" | "FBA" | "FBM";
-type BuyBox = "UNKNOWN" | "WON" | "LOST";
-
-export interface NetNode {
-  id: string;
-  title: string;
-  asin: string;
-  parentAsin: string;
-  sku: string;
-  imageUrl: string | null;
-  /**
-   * Origen del listing — se usa para agrupar los nodos por hub en el grafo.
-   * "amazon" (vino de SP-API o demo) o "manual" (CSV de modo manual). Cada
-   * valor distinto crea su propio hub (constelación) en el canvas.
-   */
-  source: string;
-  priceCurrent: number;
-  currency: string;
-  priceMin: number | null;
-  priceMax: number | null;
-  repricingEnabled: boolean;
-  tags: string;
-  strategy: Strategy;
-  undercutType: UndercutType;
-  undercutValue: number;
-  fixedPrice: number | null;
-  cost: number | null;
-  shippingCost: number | null;
-  fbaFee: number | null;
-  vatRate: number | null;
-  feePercent: number | null;
-  targetMargin: number | null;
-  noCompetition: NoComp;
-  useAccountDefaults: boolean;
-  ignoreAmazon: boolean;
-  fulfillmentFilter: Fulfillment;
-  minSellerRating: number | null;
-  excludeSellers: string;
-  onlySellers: string;
-  buyBoxStatus: BuyBox;
-  buyBoxPrice: number | null;
-  stepUpType: UndercutType;
-  stepUpValue: number;
-  lastReason: string | null;
-  lastSuccess: boolean | null;
-  /** Plan de precios cacheado (sólo aplica a productos del modo manual). */
-  suggestedPrice: number | null;
-  suggestedAt: string | null;
-  suggestedConfidence: number | null;
-  suggestedStrategy: string | null;
-  suggestedReason: string | null;
-}
-
-const VB_W = 1900;
-const VB_H = 1050;
-const R = 38;
-const K_MIN = 0.65;
-const K_MAX = 4;
-
-/** Limita el paneo: solo se permite asomarse un poco a las esquinas. */
-function clampView(v: { k: number; x: number; y: number }) {
-  const mx = VB_W * 0.07;
-  const my = VB_H * 0.07;
-  const bx0 = VB_W * 0.12,
-    bx1 = VB_W * 0.88,
-    by0 = VB_H * 0.1,
-    by1 = VB_H * 0.9;
-
-  // Margen libre de paneo (se permite moverse "un poco", no infinito).
-  const freeX = VB_W * 0.28;
-  const freeY = VB_H * 0.28;
-
-  let xMin: number, xMax: number;
-  {
-    const lo = VB_W - mx - v.k * bx1;
-    const hi = mx - v.k * bx0;
-    if (lo <= hi) {
-      // Contenido mayor que la ventana: paneo dentro + asomo extra.
-      xMin = lo - freeX * 0.6;
-      xMax = hi + freeX * 0.6;
-    } else {
-      // Cabe entero: paneo libre acotado alrededor del centro.
-      const c = (lo + hi) / 2;
-      xMin = c - freeX;
-      xMax = c + freeX;
-    }
-  }
-
-  let yMin: number, yMax: number;
-  {
-    const lo = VB_H - my - v.k * by1;
-    const hi = my - v.k * by0;
-    if (lo <= hi) {
-      yMin = lo - freeY * 0.6;
-      yMax = hi + freeY * 0.6;
-    } else {
-      const c = (lo + hi) / 2;
-      yMin = c - freeY;
-      yMax = c + freeY;
-    }
-  }
-
-  return {
-    k: v.k,
-    x: Math.min(xMax, Math.max(xMin, v.x)),
-    y: Math.min(yMax, Math.max(yMin, v.y)),
-  };
-}
-
-/** Convierte el código de origen en una etiqueta legible bajo el hub. */
-function humanizeSource(source: string): string {
-  if (source === "manual") return "Tu tienda";
-  if (source === "amazon") return "Amazon";
-  return source.charAt(0).toUpperCase() + source.slice(1);
-}
-
-
-function hexPoints(cx: number, cy: number, r: number): string {
-  const pts: string[] = [];
-  for (let k = 0; k < 6; k++) {
-    const a = (Math.PI / 180) * (60 * k - 90);
-    pts.push(`${(cx + r * Math.cos(a)).toFixed(1)},${(cy + r * Math.sin(a)).toFixed(1)}`);
-  }
-  return pts.join(" ");
-}
-
-function sym(code: string): string {
-  if (code === "EUR") return "€";
-  if (code === "USD") return "$";
-  if (code === "GBP") return "£";
-  return code;
-}
-function clip(s: string, n: number): string {
-  return s.length > n ? s.slice(0, n - 1) + "…" : s;
-}
-function fmt(n: number): string {
-  return n.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
-type State =
-  | "noprice"
-  | "paused"
-  | "error"
-  | "lost"
-  | "floor"
-  | "won"
-  | "active";
-
-/** Estado del nodo por prioridad: error/Buy Box perdida es lo más urgente. */
-function nodeState(n: NetNode): State {
-  const isManual = n.source === "manual";
-  // Para productos manuales NO requerimos ASIN (no tienen porque vienen
-  // de un CSV propio del vendedor). Sólo nos importa que tengan precio.
-  if (n.priceCurrent <= 0 || (!isManual && !n.asin)) return "noprice";
-  if (!n.repricingEnabled) return "paused";
-  if (n.lastSuccess === false) return "error";
-  if (n.buyBoxStatus === "LOST") return "lost";
-  if (
-    n.lastReason === "min_floor" ||
-    n.lastReason === "margin_floor" ||
-    n.lastReason === "max_ceiling"
-  )
-    return "floor";
-  if (n.buyBoxStatus === "WON") return "won";
-  return "active";
-}
-const STATE_COLOR: Record<
+// Tipos + helpers + subcomponentes — extraídos en /network para
+// reducir este archivo monolítico.
+import type {
+  Strategy,
+  UndercutType,
+  NoComp,
+  Fulfillment,
+  BuyBox,
   State,
-  { stroke: string; halo: string; dot?: string }
-> = {
-  won: { stroke: "rgba(52,211,153,0.95)", halo: "rgba(52,211,153,0.85)", dot: "#34d399" },
-  active: { stroke: "rgba(34,211,238,0.9)", halo: "rgba(34,211,238,0.55)", dot: "#22d3ee" },
-  floor: { stroke: "rgba(251,191,36,0.95)", halo: "rgba(251,191,36,0.6)", dot: "#fbbf24" },
-  lost: { stroke: "rgba(248,113,113,0.95)", halo: "rgba(248,113,113,0.6)", dot: "#f87171" },
-  error: { stroke: "rgba(249,115,22,0.95)", halo: "rgba(249,115,22,0.55)", dot: "#fb923c" },
-  paused: { stroke: "rgba(96,165,250,0.7)", halo: "rgba(99,102,241,0.4)" },
-  noprice: { stroke: "rgba(160,160,180,0.4)", halo: "rgba(120,120,140,0.25)" },
-};
-const LIVE_CORE: ReadonlySet<State> = new Set<State>(["won", "active", "floor"]);
-const STATE_LABEL: Array<{ st: State; label: string }> = [
-  { st: "won", label: "Buy Box ganada" },
-  { st: "lost", label: "Buy Box perdida" },
-  { st: "error", label: "Error de reprecio" },
-  { st: "floor", label: "En precio mínimo / techo" },
-  { st: "active", label: "Repreciando (sin datos aún)" },
-  { st: "paused", label: "Configurable / pausado" },
-  { st: "noprice", label: "Sin oferta o ASIN en Amazon" },
-];
+  NetNode,
+} from "./network/types";
+import {
+  VB_W,
+  VB_H,
+  R,
+  K_MIN,
+  K_MAX,
+  clampView,
+  humanizeSource,
+  hexPoints,
+  sym,
+  clip,
+  fmt,
+  nodeState,
+  STATE_COLOR,
+  LIVE_CORE,
+  STATE_LABEL,
+  pnum,
+  diagnose,
+  errMsg,
+} from "./network/helpers";
+import { ZoomBtn } from "./network/Subcomponents";
+import Inspector from "./network/Inspector";
 
-function pnum(s: string): number {
-  const n = Number.parseFloat(s.replace(",", "."));
-  return Number.isFinite(n) ? n : 0;
-}
-
-function CostField({
-  label,
-  value,
-  set,
-  placeholder,
-  disabled,
-}: {
-  label: string;
-  value: string;
-  set: (v: string) => void;
-  placeholder: string;
-  disabled?: boolean;
-}) {
-  return (
-    <label className="block">
-      <span className="text-[10px] uppercase tracking-wider text-white/40">
-        {label}
-      </span>
-      <input
-        value={value}
-        onChange={(e) => set(e.target.value)}
-        inputMode="decimal"
-        placeholder={placeholder}
-        disabled={disabled}
-        className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-2 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
-      />
-    </label>
-  );
-}
-
-function Row({
-  k,
-  v,
-  warn,
-  accent,
-}: {
-  k: string;
-  v: string;
-  warn?: boolean;
-  accent?: boolean;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-3">
-      <span className="text-white/45">{k}</span>
-      <span
-        className={`font-mono font-semibold tabular-nums ${
-          warn ? "text-amber-300" : accent ? "text-cyan-200" : "text-white/85"
-        }`}
-      >
-        {v}
-      </span>
-    </div>
-  );
-}
-
-/** Diagnóstico accionable para el producto seleccionado (intuitivo). */
-function diagnose(
-  n: NetNode,
-): { tone: "ok" | "warn" | "info"; text: string } | null {
-  const f = (v: number) =>
-    v.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) +
-    " " +
-    sym(n.currency);
-  if (n.priceCurrent <= 0 || !n.asin) return null; // ya hay aviso propio
-  if (n.priceMin == null || n.priceMax == null)
-    return {
-      tone: "info",
-      text: "Aún sin rango. Define Precio mín y máx y pulsa «Guardar rango» para poder repreciar.",
-    };
-  if (!n.repricingEnabled)
-    return {
-      tone: "info",
-      text: "Reprecio pausado. Activa «Reprecio automático» para que el motor actúe.",
-    };
-  if (n.buyBoxStatus === "WON")
-    return { tone: "ok", text: "Tienes la Buy Box. El motor mantiene tu posición." };
-  if (
-    n.buyBoxStatus === "LOST" &&
-    n.buyBoxPrice != null &&
-    n.priceMin >= n.buyBoxPrice
-  )
-    return {
-      tone: "warn",
-      text: `Tu mínimo (${f(n.priceMin)}) es ≥ al precio de la Buy Box (${f(
-        n.buyBoxPrice,
-      )}). Baja el mínimo por debajo de ${f(n.buyBoxPrice)} para poder ganarla.`,
-    };
-  if (n.lastReason === "min_floor" || n.lastReason === "margin_floor")
-    return {
-      tone: "warn",
-      text: "El motor topó con tu suelo (mínimo o margen): no puede bajar más. Baja el mínimo o el margen objetivo para competir.",
-    };
-  if (n.buyBoxStatus === "LOST")
-    return {
-      tone: "warn",
-      text: "Otro vendedor tiene la Buy Box. Revisa tu estrategia/rango y ejecuta un ciclo.",
-    };
-  return {
-    tone: "info",
-    text: "Repreciando. Pulsa «Ejecutar reprecio ahora» (barra izquierda) para ver el resultado del próximo ciclo.",
-  };
-}
-
-function errMsg(code: string): string {
-  const m: Record<string, string> = {
-    price_max_must_be_greater_or_equal_to_min: "El máximo debe ser ≥ al mínimo",
-    missing_price_range: "Define mín y máx primero",
-    listing_not_repriceable: "Sin precio/ASIN en Amazon: no se puede repreciar",
-    fixed_price_required: "Indica un precio fijo válido",
-    cost_required: "Indica el coste del producto",
-    invalid_undercut: "Valor de ajuste no válido",
-    invalid_rating: "La valoración mínima debe estar entre 0 y 5",
-    listing_not_found_or_not_owned: "Producto no encontrado",
-    unauthorized: "Sesión expirada",
-    validation_failed: "Datos inválidos",
-  };
-  return m[code] ?? code;
-}
+// Re-export del tipo público (lo importan page.tsx, LazyOverlays, etc.).
+export type { NetNode };
 
 export default function ProductNetwork({
   nodes,
@@ -391,12 +106,14 @@ export default function ProductNetwork({
 
   // ── Viewport (pan / zoom) ──────────────────────────────────
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const parallaxRef = useRef<HTMLDivElement | null>(null);
   const [view, setView] = useState({ k: 1, x: 0, y: 0 });
   const drag = useRef<{ active: boolean; sx: number; sy: number; ox: number; oy: number; moved: boolean }>(
     { active: false, sx: 0, sy: 0, ox: 0, oy: 0, moved: false },
   );
   const suppressClick = useRef(false);
   const panRaf = useRef<number | null>(null);
+  const parallaxRaf = useRef<number | null>(null);
   const pendingPan = useRef<{ x: number; y: number } | null>(null);
 
   /** Punto de cliente → coordenadas del viewBox (respeta slice). */
@@ -446,6 +163,46 @@ export default function ProductNetwork({
     svg.addEventListener("wheel", onWheel, { passive: false });
     return () => svg.removeEventListener("wheel", onWheel);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Parallax sutil: el contenedor del SVG se desplaza ~10 px en sentido
+  // contrario al cursor. Da sensación 3D sin marear. Deferido a rAF para
+  // que no compita con el render del grafo y throttleado a 16ms.
+  // Solo desktop: en mobile/táctil no hay pointer hover continuo.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.innerWidth < 1024) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const node = parallaxRef.current;
+    if (!node) return;
+    const onMove = (e: PointerEvent) => {
+      // No movemos durante un drag (compite con el pan); el grafo ya se
+      // mueve por su cuenta.
+      if (drag.current.active) return;
+      if (parallaxRaf.current != null) return;
+      parallaxRaf.current = requestAnimationFrame(() => {
+        parallaxRaf.current = null;
+        const r = node.getBoundingClientRect();
+        const nx = (e.clientX - r.left - r.width / 2) / r.width; // -0.5..0.5
+        const ny = (e.clientY - r.top - r.height / 2) / r.height;
+        node.style.setProperty("--mx", `${(-nx * 14).toFixed(2)}px`);
+        node.style.setProperty("--my", `${(-ny * 10).toFixed(2)}px`);
+      });
+    };
+    const onLeave = () => {
+      node.style.setProperty("--mx", "0px");
+      node.style.setProperty("--my", "0px");
+    };
+    window.addEventListener("pointermove", onMove, { passive: true });
+    node.addEventListener("pointerleave", onLeave);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      node.removeEventListener("pointerleave", onLeave);
+      if (parallaxRaf.current != null) {
+        cancelAnimationFrame(parallaxRaf.current);
+        parallaxRaf.current = null;
+      }
+    };
   }, []);
 
   // Red de seguridad: pase lo que pase (soltar fuera, perder foco, abrir
@@ -525,226 +282,187 @@ export default function ProductNetwork({
   }
 
   const layout = useMemo(() => {
-    // ── Máximo de productos por nexo ──────────────────────────────────────
-    // Cada grupo de CHUNK_SIZE nodos tiene su propio hub (nexo). Los hubs
-    // del mismo origen se encadenan con una línea visible.
-    const CHUNK_SIZE = 10;
-
-    // Agrupar por origen.
-    const bySource = new Map<string, NetNode[]>();
-    for (const n of nodes) {
-      const k = n.source || "amazon";
-      const arr = bySource.get(k);
-      if (arr) arr.push(n);
-      else bySource.set(k, [n]);
-    }
-    const sourceOrder: string[] = [];
-    if (bySource.has("amazon")) sourceOrder.push("amazon");
-    for (const [k] of bySource) if (k !== "amazon") sourceOrder.push(k);
-
-    // Dividir cada origen en trozos de CHUNK_SIZE.
-    type Group = {
-      source: string;
-      chunkIndex: number;
-      nodes: NetNode[];
-      sourceFirst: boolean;
-      startIdx: number;
+    // ── Layout en anillos por URGENCIA ─────────────────────────────────────
+    //
+    // Centro = problemas que requieren atención (Buy Box perdida + errores).
+    // Anillo medio = productos compitiendo activos (active, en suelo).
+    // Anillo externo = todo lo demás (Buy Box ganada, pausados, sin oferta).
+    //
+    // Dentro de cada anillo, agrupamos por origen (Amazon a la izquierda,
+    // resto a la derecha) para que el "color" del hub no se pierda. Un
+    // único hub central muestra el conteo por bucket — los hubs por origen
+    // se reducen a chips informativos.
+    type Bucket = "attention" | "competing" | "calm";
+    const BUCKET_OF: Record<State, Bucket> = {
+      error: "attention",
+      lost: "attention",
+      active: "competing",
+      floor: "competing",
+      won: "calm",
+      paused: "calm",
+      noprice: "calm",
     };
-    const groups: Group[] = [];
-    for (const source of sourceOrder) {
-      const all = bySource.get(source)!;
-      const numChunks = Math.max(1, Math.ceil(all.length / CHUNK_SIZE));
-      for (let ci = 0; ci < numChunks; ci++) {
-        groups.push({
-          source,
-          chunkIndex: ci,
-          nodes: all.slice(ci * CHUNK_SIZE, (ci + 1) * CHUNK_SIZE),
-          sourceFirst: ci === 0,
-          startIdx: ci * CHUNK_SIZE,
-        });
-      }
-    }
-    // ── Constantes del layout en anillos concéntricos ────────────────────
-    // R0: radio del primer anillo. RING_GAP: separación entre anillos.
-    // MIN_ARC: arco mínimo entre nodos (más grande → más espacio angular).
-    const R0 = 175;
-    const RING_GAP = 155;
-    const MIN_ARC = 175;
-    const HR = 54;
 
-    function distributeRings(count: number): number[] {
-      if (count <= 0) return [];
-      const caps: number[] = [];
-      let cumulative = 0;
-      let ringIdx = 0;
-      while (cumulative < count) {
-        const r = R0 + ringIdx * RING_GAP;
-        const c = Math.max(3, Math.floor((2 * Math.PI * r) / MIN_ARC));
-        caps.push(c);
-        cumulative += c;
-        ringIdx++;
-        if (ringIdx > 20) break;
-      }
-      const totalCap = caps.reduce((s, c) => s + c, 0);
-      const sizes = caps.map((c) => Math.max(1, Math.round((c * count) / totalCap)));
-      let diff = count - sizes.reduce((s, x) => s + x, 0);
-      let i = sizes.length - 1;
-      while (diff !== 0) {
-        if (diff > 0) { sizes[i] += 1; diff--; }
-        else if (sizes[i] > 1) { sizes[i] -= 1; diff++; }
-        i = (i - 1 + sizes.length) % sizes.length;
-      }
-      return sizes;
+    // Constantes del layout.
+    const CX = VB_W / 2;
+    const CY = VB_H / 2;
+    const R_ATTENTION = 230; // crítico: pegado al centro, imposible de ignorar
+    const R_COMPETING = 470; // medio
+    const R_CALM = 700;      // externo: el ojo descansa
+    const PHASE_BASE = -Math.PI / 2; // arranca arriba
+
+    // Clasificar nodos en buckets respetando el orden recibido.
+    const buckets: Record<Bucket, NetNode[]> = {
+      attention: [],
+      competing: [],
+      calm: [],
+    };
+    for (const n of nodes) {
+      buckets[BUCKET_OF[nodeState(n)]].push(n);
     }
 
-    function maxRadiusForCount(count: number): number {
-      const sizes = distributeRings(count);
-      return sizes.length === 0 ? 0 : R0 + (sizes.length - 1) * RING_GAP;
-    }
-
-    // ── Posicionar hubs: filas por origen, columnas por trozo ─────────────
-    // Cada origen ocupa una fila horizontal. Los trozos se disponen en esa
-    // fila de izquierda a derecha y se conectan entre sí con una cadena.
-    function dynamicCenters(): { x: number; y: number }[] {
-      const cx = VB_W / 2;
-      const cy = VB_H / 2;
-      const numSources = sourceOrder.length;
-
-      const rowY = new Map<string, number>();
-      if (numSources === 1) {
-        rowY.set(sourceOrder[0], cy);
-      } else if (numSources === 2) {
-        rowY.set(sourceOrder[0], VB_H * 0.27);
-        rowY.set(sourceOrder[1], VB_H * 0.76);
+    // ── Cap visual del grafo ──────────────────────────────────────────────
+    // Con >200 nodos el layout colapsa: hexágonos solapados, GPU al límite,
+    // animaciones a tirones. Prioridad: atención completa → compitiendo
+    // → calma. Si todavía sobra, recortamos calm (el ojo no pierde nada
+    // crítico). La vista Tabla sigue mostrándolos todos sin recorte.
+    const VISUAL_CAP = 200;
+    const totalNodes =
+      buckets.attention.length + buckets.competing.length + buckets.calm.length;
+    let truncatedCalm = 0;
+    let truncatedCompeting = 0;
+    if (totalNodes > VISUAL_CAP) {
+      const overflow = totalNodes - VISUAL_CAP;
+      if (buckets.calm.length >= overflow) {
+        truncatedCalm = overflow;
+        buckets.calm = buckets.calm.slice(0, buckets.calm.length - overflow);
       } else {
-        sourceOrder.forEach((s, si) =>
-          rowY.set(s, VB_H * ((si + 0.5) / numSources)),
+        truncatedCalm = buckets.calm.length;
+        const remainingOverflow = overflow - buckets.calm.length;
+        buckets.calm = [];
+        truncatedCompeting = Math.min(buckets.competing.length, remainingOverflow);
+        buckets.competing = buckets.competing.slice(
+          0,
+          buckets.competing.length - truncatedCompeting,
         );
       }
-
-      // Espacio entre centros: diámetro del radio máximo + gap.
-      const hubR = maxRadiusForCount(CHUNK_SIZE);
-      const HUB_GAP = 300;  // margen mínimo entre territorios adyacentes
-      const hubSpacing = 2 * hubR + HUB_GAP;
-      const PAD = 90;
-      const maxSpread = VB_W - 2 * PAD - 2 * hubR;
-
-      const centers: { x: number; y: number }[] = [];
-      for (const source of sourceOrder) {
-        const numHubs = groups.filter((g) => g.source === source).length;
-        const y = rowY.get(source)!;
-        const spread =
-          numHubs <= 1
-            ? 0
-            : Math.min((numHubs - 1) * hubSpacing, maxSpread);
-        const step = numHubs > 1 ? spread / (numHubs - 1) : 0;
-        const startX = cx - spread / 2;
-        for (let ci = 0; ci < numHubs; ci++) {
-          centers.push({ x: startX + ci * step, y });
-        }
-      }
-      return centers;
     }
-    const centers = dynamicCenters();
+    const hiddenCount = truncatedCalm + truncatedCompeting;
+
+    // Sub-clasificar por origen (amazon primero) para que dentro del anillo
+    // los Amazon queden agrupados juntos en lugar de alternando con Manual.
+    function sortByOrigin(list: NetNode[]): NetNode[] {
+      return [...list].sort((a, b) => {
+        const oa = a.source === "amazon" ? 0 : 1;
+        const ob = b.source === "amazon" ? 0 : 1;
+        return oa - ob;
+      });
+    }
 
     type Pos = { x: number; y: number; hubId: number };
     const P: Pos[] = new Array(nodes.length);
     const idxOf = new Map<string, number>();
     nodes.forEach((n, i) => idxOf.set(n.id, i));
 
-    // Dock de herramientas: cuelga del hub primario (primer nexo).
-    const primaryHub = centers[0];
-    const T_SR = 22;
-    const T_GAP = 160;
-    const T_N = 4;
-    const T_PADX = 48;
-    const T_SY = primaryHub.y + HR + 120;
-    const T_LEFT = primaryHub.x - ((T_N - 1) / 2) * T_GAP - T_SR - T_PADX;
-    const T_W = (T_N - 1) * T_GAP + 2 * (T_SR + T_PADX);
-    const T_TOP = T_SY - T_SR - 30;
-    const T_H = T_SR * 2 + 78;
-    const T_MARGIN = R + 20;
-    const dockBox = {
-      x0: T_LEFT - T_MARGIN,
-      x1: T_LEFT + T_W + T_MARGIN,
-      y0: T_TOP - T_MARGIN,
-      y1: T_TOP + T_H + T_MARGIN,
+    // Coloca un bucket en su anillo. Si el bucket está vacío no dibuja nada.
+    // hubId codifica el bucket (0=attention, 1=competing, 2=calm) — el menú
+    // radial y otros consumidores siguen aceptándolo igual.
+    function placeRing(
+      list: NetNode[],
+      radius: number,
+      bucketId: number,
+      ringPhase: number,
+    ) {
+      const sorted = sortByOrigin(list);
+      const n = sorted.length;
+      if (n === 0) return;
+      // Si solo hay 1, lo ponemos arriba del bucket. Si hay muchos,
+      // distribuimos uniformemente con un pequeño desfase por anillo.
+      const step = (2 * Math.PI) / Math.max(n, 1);
+      for (let i = 0; i < n; i++) {
+        const a = PHASE_BASE + ringPhase + i * step;
+        const node = sorted[i];
+        P[idxOf.get(node.id)!] = {
+          x: CX + Math.cos(a) * radius,
+          y: CY + Math.sin(a) * radius,
+          hubId: bucketId,
+        };
+      }
+    }
+
+    // Pequeño desfase por anillo: rompe la alineación radial que cansa al ojo.
+    placeRing(buckets.attention, R_ATTENTION, 0, 0);
+    placeRing(buckets.competing, R_COMPETING, 1, Math.PI / 14);
+    placeRing(buckets.calm,      R_CALM,      2, Math.PI / 22);
+
+    // pos solo incluye los nodos visibles (los recortados por VISUAL_CAP
+    // no tienen entrada en P). La tabla y los filtros siguen viendo `nodes`
+    // entero — el cap es exclusivamente visual.
+    const pos = nodes
+      .map((node, i) =>
+        P[i]
+          ? { ...node, x: P[i].x, y: P[i].y, hubId: P[i].hubId }
+          : null,
+      )
+      .filter((x): x is NonNullable<typeof x> => x !== null);
+
+    // ── Hub virtual único en el centro ───────────────────────────────────
+    // Reemplaza los varios hubs (Amazon/Tienda) por un único nodo central
+    // con el conteo por urgencia. Los chips por origen se mostrarán como
+    // pills pequeños en el toolbar (fuera del canvas) en lugar de
+    // hexágonos grandes que ocupaban el centro de la pantalla.
+    const hub = {
+      id: 0,
+      source: "center" as const,
+      x: CX,
+      y: CY,
+      count: nodes.length,
+      primary: true,
+      sourceFirst: true,
+      chunkIndex: 0,
+      startIdx: 0,
+      prevHubId: null as number | null,
+      // metadatos nuevos: cuántos hay en cada bucket
+      attentionCount: buckets.attention.length,
+      competingCount: buckets.competing.length,
+      calmCount: buckets.calm.length,
     };
 
-    groups.forEach((g, gi) => {
-      const c = centers[gi];
-      const list = g.nodes;
-      const n = list.length;
-      if (n === 0) return;
+    // Mantenemos `hubs` como array para compat con el render existente.
+    // Solo hay 1 hub real. Los antiguos "Amazon" / "Manual" se reducen a
+    // CHIPS que pinta el toolbar.
+    const hubs = [hub];
 
-      const sizes = distributeRings(n);
-      const local: Pos[] = new Array(n);
-      let nodeOffset = 0;
-      sizes.forEach((ringSize, ringIdx) => {
-        const r = R0 + ringIdx * RING_GAP;
-        const step = (2 * Math.PI) / ringSize;
-        const phase = -Math.PI / 2 + ringIdx * (step / 2);
-        for (let k = 0; k < ringSize; k++) {
-          const a = phase + k * step;
-          local[nodeOffset + k] = {
-            x: c.x + Math.cos(a) * r,
-            y: c.y + Math.sin(a) * r,
-            hubId: gi,
-          };
-        }
-        nodeOffset += ringSize;
-      });
-
-      // Esquivar el dock (solo hub primario).
-      if (gi === 0) {
-        for (let i = 0; i < local.length; i++) {
-          const p = local[i];
-          if (
-            p.x > dockBox.x0 &&
-            p.x < dockBox.x1 &&
-            p.y > dockBox.y0 &&
-            p.y < dockBox.y1
-          ) {
-            p.y = dockBox.y1 + 6;
-          }
-        }
-      }
-
-      list.forEach((node, i) => {
-        const globalIdx = idxOf.get(node.id)!;
-        P[globalIdx] = local[i];
-      });
-    });
-
-    const pos = nodes.map((node, i) => ({
-      ...node,
-      x: P[i].x,
-      y: P[i].y,
-      hubId: P[i].hubId,
-    }));
-
-    const hubs = groups.map((g, gi) => ({
-      id: gi,
-      source: g.source,
-      chunkIndex: g.chunkIndex,
-      sourceFirst: g.sourceFirst,
-      startIdx: g.startIdx,
-      x: centers[gi].x,
-      y: centers[gi].y,
-      count: g.nodes.length,
-      primary: gi === 0,
-      // id del hub anterior en la cadena (null para el primero de cada origen).
-      prevHubId: g.chunkIndex > 0 ? gi - 1 : null,
+    // ── Resumen de orígenes para los chips del toolbar ───────────────────
+    const sourceSummary = new Map<string, number>();
+    for (const n of nodes) {
+      const k = n.source || "amazon";
+      sourceSummary.set(k, (sourceSummary.get(k) ?? 0) + 1);
+    }
+    const origins = [...sourceSummary.entries()].map(([source, count]) => ({
+      source,
+      count,
     }));
 
     return {
       hubs,
-      hub: hubs[0] ?? {
-        id: 0, source: "amazon", x: VB_W / 2, y: VB_H / 2,
-        count: 0, primary: true, sourceFirst: true,
-        chunkIndex: 0, startIdx: 0, prevHubId: null,
-      },
+      hub,
       pos,
+      hiddenCount,
+      totalNodes,
+      origins,
+      bucketCounts: {
+        attention: buckets.attention.length,
+        competing: buckets.competing.length,
+        calm: buckets.calm.length,
+      },
+      rings: {
+        attention: R_ATTENTION,
+        competing: R_COMPETING,
+        calm: R_CALM,
+      },
+      cx: CX,
+      cy: CY,
     };
   }, [nodes]);
 
@@ -755,9 +473,14 @@ export default function ProductNetwork({
     () => collectTags(nodes.map((n) => n.tags)),
     [nodes],
   );
-  const filterActive = gq.trim() !== "" || gState !== "ALL" || gTag !== "";
+  // Búsqueda con valor diferido: al escribir, el input responde inmediato
+  // pero el recálculo del matchSet (potencialmente caro con 200+ productos)
+  // espera al siguiente tick libre. Para 16 productos no se nota, para 500
+  // sí — preventivo, coste cero.
+  const dgq = useDeferredValue(gq);
+  const filterActive = dgq.trim() !== "" || gState !== "ALL" || gTag !== "";
   const matchSet = useMemo(() => {
-    const q = gq.trim().toLowerCase();
+    const q = dgq.trim().toLowerCase();
     const tg = gTag.toLowerCase();
     const ids = new Set<string>();
     for (const n of nodes) {
@@ -777,28 +500,7 @@ export default function ProductNetwork({
       ids.add(n.id);
     }
     return ids;
-  }, [nodes, gq, gState, gTag]);
-
-  // Calculadora de costes/margen en vivo (estrategia MARGIN).
-  const costCalc = useMemo(() => {
-    const pf = (s: string) => {
-      const n = Number.parseFloat(s.replace(",", "."));
-      return Number.isFinite(n) ? n : 0;
-    };
-    const c: CostInputs = {
-      cost: pf(cost),
-      shipping: pf(ship),
-      fbaFee: pf(fba),
-      referralPct: pf(feeP) || 15,
-      vatPct: feeP === "" && vat === "" ? 21 : pf(vat),
-    };
-    if (!(c.cost > 0)) return null;
-    const breakEven = breakEvenPrice(c);
-    const minRec = minPriceForMargin(c, pf(tMargin));
-    const atCurrent =
-      sel && sel.priceCurrent > 0 ? profitAt(sel.priceCurrent, c) : null;
-    return { breakEven, minRec, atCurrent };
-  }, [cost, ship, fba, vat, feeP, tMargin, sel]);
+  }, [nodes, dgq, gState, gTag]);
 
   const fmtEur = (n: number) => n.toFixed(2).replace(".", ",") + " €";
   const { loading: toastLoading, update, dismiss, error: toastError } = useToast();
@@ -1049,14 +751,19 @@ export default function ProductNetwork({
       )}
 
       <div
-        className={`hidden lg:block absolute inset-y-0 left-0 right-0 transition-[right] duration-300 ${
+        ref={parallaxRef}
+        className={`graph-parallax hidden lg:block absolute inset-y-0 left-0 right-0 transition-[right] duration-300 ${
           sel ? "sm:right-[380px]" : ""
         }`}
       >
-      {/* Fondo animado */}
-      <WaveField />
+      {/* Fondo animado — atenuado al 55% para que los nodos sean los
+          protagonistas. Antes el WaveField competía visualmente con los
+          hexágonos cuando había >20 productos en escena. */}
+      <div className="pointer-events-none absolute inset-0 opacity-55">
+        <WaveField />
+      </div>
       {/* Viñeta muy suave solo en los bordes (centro despejado) */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_58%,rgba(2,2,12,0.34))]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_58%,rgba(2,2,12,0.5))]" />
 
       <svg
         ref={svgRef}
@@ -1096,125 +803,121 @@ export default function ProductNetwork({
         </defs>
 
         <g transform={`translate(${view.x} ${view.y}) scale(${view.k})`}>
-          {/* Ramas: de cada hub a sus productos. Cada origen (amazon /
-              manual / …) colorea sus propias ramas. */}
+          {/* ── Anillos visuales por urgencia ─────────────────────────────
+              Antes pintábamos spokes hub→nodo (líneas curvas para cada
+              producto). Ahora el LAYOUT mismo es la información: tres
+              anillos concéntricos por bucket. Dibujamos los anillos como
+              tres circles tenues y las etiquetas en el lado izq fuera del
+              clutter. El ojo entiende en 1s qué requiere atención. */}
           {(() => {
-            const spoke = (h: { x: number; y: number }, p: { x: number; y: number }) => {
-              const mx = (h.x + p.x) / 2,
-                my = (h.y + p.y) / 2;
-              const dx = p.x - h.x,
-                dy = p.y - h.y;
-              return `M${h.x},${h.y} Q${mx - dy * 0.08},${my + dx * 0.08} ${p.x},${p.y}`;
-            };
-            const paletteOf = (source: string) =>
-              source === "amazon"
-                ? { faint: "rgba(255,153,0,0.18)", strong: "rgba(255,178,71,0.6)", dot: "#FFD08A" }
-                : { faint: "rgba(94,234,212,0.18)", strong: "rgba(110,231,219,0.6)", dot: "#5EEAD4" };
+            const { cx, cy, rings, bucketCounts } = layout;
+            const rs: Array<{
+              r: number;
+              stroke: string;
+              dot: string;
+              label: string;
+              count: number;
+            }> = [
+              {
+                r: rings.attention,
+                stroke: "rgba(248,113,113,0.36)",
+                dot: "#f87171",
+                label: "Atención",
+                count: bucketCounts.attention,
+              },
+              {
+                r: rings.competing,
+                stroke: "rgba(34,211,238,0.28)",
+                dot: "#22d3ee",
+                label: "Compitiendo",
+                count: bucketCounts.competing,
+              },
+              {
+                r: rings.calm,
+                stroke: "rgba(52,211,153,0.22)",
+                dot: "#34d399",
+                label: "Calma",
+                count: bucketCounts.calm,
+              },
+            ];
             return (
-              <>
-                {layout.hubs.map((h) => {
-                  const items = layout.pos.filter((p) => p.hubId === h.id);
-                  const pal = paletteOf(h.source);
-                  return (
-                    <g key={`spokes-${h.id}`}>
-                      <g stroke={pal.faint} strokeWidth="1.2" fill="none">
-                        {items.map((p) => (
-                          <path
-                            key={`f-${p.id}`}
-                            vectorEffect="non-scaling-stroke"
-                            d={spoke(h, p)}
-                          />
-                        ))}
-                      </g>
-                      <g
-                        stroke={pal.strong}
-                        strokeWidth="1.5"
-                        fill="none"
-                        strokeLinecap="round"
-                      >
-                        {items.map((p, i) => (
-                          <path
-                            key={`s-${p.id}`}
-                            className="net-flow"
-                            vectorEffect="non-scaling-stroke"
-                            style={{ animationDelay: `${(i % 7) * 0.18}s` }}
-                            d={spoke(h, p)}
-                          />
-                        ))}
-                      </g>
-                      <g>
-                        {items.map((p, i) => (
-                          <circle key={`d-${p.id}`} r="3.4" fill={pal.dot} filter="url(#glow)">
-                            <animateMotion
-                              dur={`${3 + (i % 4) * 0.6}s`}
-                              begin={`${(i % 6) * 0.5}s`}
-                              repeatCount="indefinite"
-                              path={spoke(h, p)}
-                              keyPoints="1;0"
-                              keyTimes="0;1"
-                              calcMode="linear"
-                            />
-                          </circle>
-                        ))}
-                      </g>
-                    </g>
-                  );
-                })}
-              </>
+              <g>
+                {rs.map((ring, i) => (
+                  <circle
+                    key={`ring-${i}`}
+                    className={
+                      i === 0
+                        ? "ring-spin-1"
+                        : i === 1
+                          ? "ring-spin-2"
+                          : "ring-spin-3"
+                    }
+                    cx={cx}
+                    cy={cy}
+                    r={ring.r}
+                    fill="none"
+                    stroke={ring.stroke}
+                    strokeWidth="1.4"
+                    strokeDasharray="6 14"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                ))}
+              </g>
             );
           })()}
 
-          {/* ── Cadenas entre hubs consecutivos del mismo origen ── */}
-          {layout.hubs.map((h) => {
-            if (h.prevHubId === null) return null;
-            const prev = layout.hubs[h.prevHubId];
-            if (!prev) return null;
-            const dx = h.x - prev.x, dy = h.y - prev.y;
-            const len = Math.sqrt(dx * dx + dy * dy);
-            if (len < 1) return null;
-            const ux = dx / len, uy = dy / len;
-            const HR_c = 54;
-            const x1 = prev.x + ux * (HR_c + 14), y1 = prev.y + uy * (HR_c + 14);
-            const x2 = h.x - ux * (HR_c + 14), y2 = h.y - uy * (HR_c + 14);
-            const isAmz = h.source === "amazon";
-            const cFaint  = isAmz ? "rgba(255,153,0,0.22)"    : "rgba(94,234,212,0.22)";
-            const cStrong = isAmz ? "rgba(255,178,71,0.65)"   : "rgba(110,231,219,0.65)";
-            const cDot    = isAmz ? "#FFD08A"                 : "#5EEAD4";
-            const d = `M${x1},${y1} L${x2},${y2}`;
-            return (
-              <g key={`chain-${h.id}`}>
-                <line x1={x1} y1={y1} x2={x2} y2={y2}
-                  stroke={cFaint} strokeWidth="2.5"
-                  strokeDasharray="8 10" strokeLinecap="round"
-                  vectorEffect="non-scaling-stroke" />
-                <path d={d} fill="none"
-                  stroke={cStrong} strokeWidth="1.8" strokeLinecap="round"
-                  vectorEffect="non-scaling-stroke" className="net-flow" />
-                <circle r="3" fill={cDot} filter="url(#glow)">
-                  <animateMotion dur="2.4s" repeatCount="indefinite"
-                    path={d} keyPoints="0;1" keyTimes="0;1" calcMode="linear" />
-                </circle>
-              </g>
-            );
-          })}
+          {/* ── Líneas de energía centro → nodos en estado crítico ────────
+              Conectan el hub central con cada nodo del bucket "atención".
+              Una línea tenue + un punto luminoso que viaja del centro al
+              nodo (efecto "el problema viene a por ti"). Solo si hay
+              urgencias — si todo está OK, no se pinta nada. */}
+          {layout.pos
+            .filter((p) => p.hubId === 0)
+            .map((p) => {
+              const d = `M${layout.cx},${layout.cy} L${p.x},${p.y}`;
+              return (
+                <g key={`energy-${p.id}`}>
+                  <path
+                    d={d}
+                    className="energy-line"
+                    stroke="rgba(248,113,113,0.6)"
+                    strokeWidth="1.4"
+                    strokeDasharray="3 6"
+                    strokeLinecap="round"
+                    fill="none"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                  <circle r={3} fill="#f87171" filter="url(#glow)">
+                    <animateMotion
+                      dur="2.2s"
+                      repeatCount="indefinite"
+                      path={d}
+                      keyPoints="0;1"
+                      keyTimes="0;1"
+                      calcMode="linear"
+                    />
+                  </circle>
+                </g>
+              );
+            })}
 
-          {/* Nodos centrales: un hub por origen (Amazon, Manual…).
-              Sólo el hub primario abre el dock de herramientas; los demás
-              son informativos (mostrar count y nombre). */}
+          {/* Hub único central: ya no es un nodo "Amazon" gigante. Es el
+              ancla del grafo en anillos. Muestra el conteo total de
+              productos y, si hay urgentes, los destaca en rojo. Sigue
+              siendo el punto de entrada al dock de herramientas. */}
           {layout.hubs.map((hubInfo) => {
             const h = { x: hubInfo.x, y: hubInfo.y };
-            const HR = 54;
-            const w = HR * 1.15;
-            const isAmazon = hubInfo.source === "amazon";
-            const stroke = isAmazon ? "#FF9900" : "#5EEAD4";
-            const ringStroke = isAmazon ? "rgba(255,153,0,0.55)" : "rgba(94,234,212,0.55)";
-            const breatheStroke = isAmazon ? "rgba(255,153,0,0.45)" : "rgba(94,234,212,0.45)";
-            const labelColor = isAmazon ? "rgba(255,170,80,0.85)" : "rgba(110,231,219,0.85)";
-            const labelText = hubInfo.sourceFirst
-              ? isAmazon
-                ? `Tu cuenta · ${hubInfo.count} productos`
-                : `${humanizeSource(hubInfo.source)} · ${hubInfo.count} productos`
-              : `${hubInfo.startIdx + 1}–${hubInfo.startIdx + hubInfo.count} · ${hubInfo.count} prod.`;
+            const HR = 48;
+            const attentionCount = hubInfo.attentionCount ?? 0;
+            const hasUrgent = attentionCount > 0;
+            // Color del anillo central: rojo si hay urgentes, neutro si todo OK.
+            const stroke = hasUrgent ? "#f87171" : "#5EEAD4";
+            const ringStroke = hasUrgent
+              ? "rgba(248,113,113,0.55)"
+              : "rgba(94,234,212,0.55)";
+            const breatheStroke = hasUrgent
+              ? "rgba(248,113,113,0.45)"
+              : "rgba(94,234,212,0.45)";
             return (
               <g
                 key={`hub-${hubInfo.id}`}
@@ -1236,8 +939,8 @@ export default function ProductNetwork({
                   {hubInfo.primary
                     ? hubOpen
                       ? "Ocultar herramientas"
-                      : "Pulsa para ver las herramientas (Catálogo, Rentabilidad, Cuenta…)"
-                    : labelText}
+                      : "Centro de control · pulsa para ver herramientas"
+                    : "Centro"}
                 </title>
                 <circle cx={h.x} cy={h.y} r={HR + 16} fill="transparent" />
                 <circle
@@ -1252,7 +955,7 @@ export default function ProductNetwork({
                   strokeLinecap="round"
                 />
                 <circle
-                  className="hub-breathe"
+                  className={hasUrgent ? "urgent-pulse" : "hub-breathe"}
                   cx={h.x}
                   cy={h.y}
                   r={HR + 6}
@@ -1265,95 +968,88 @@ export default function ProductNetwork({
                   cx={h.x}
                   cy={h.y}
                   r={HR}
-                  fill="rgba(10,9,16,0.92)"
+                  fill="rgba(10,9,16,0.95)"
                   stroke={stroke}
-                  strokeWidth="1.8"
+                  strokeWidth="2"
                 />
-                <g opacity={hubInfo.sourceFirst ? 1 : 0.65}>
-                {isAmazon ? (
+                {/* Contenido del centro: si hay urgentes, los grita en rojo.
+                    Si todo OK, muestra el conteo total con tono verde. */}
+                {hasUrgent ? (
                   <>
-                    {/* wordmark + sonrisa de Amazon */}
                     <text
                       x={h.x}
                       y={h.y - 4}
                       textAnchor="middle"
-                      fontSize="20"
-                      fontWeight={800}
-                      fill="#ffffff"
-                      style={{ letterSpacing: "0.5px" }}
+                      fontSize="28"
+                      fontWeight={900}
+                      fill="#f87171"
+                      className="text-glow-cyan"
+                      style={{ filter: "drop-shadow(0 0 8px rgba(248,113,113,0.6))" }}
                     >
-                      amazon
+                      {attentionCount}
                     </text>
-                    <path
-                      d={`M${h.x - w / 2},${h.y + 10} Q${h.x},${h.y + 26} ${h.x + w / 2},${h.y + 9}`}
-                      fill="none"
-                      stroke="#FF9900"
-                      strokeWidth="3.2"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d={`M${h.x + w / 2 - 9},${h.y + 4} L${h.x + w / 2 + 1},${h.y + 9} L${h.x + w / 2 - 6},${h.y + 16} Z`}
-                      fill="#FF9900"
-                    />
+                    <text
+                      x={h.x}
+                      y={h.y + 14}
+                      textAnchor="middle"
+                      fontSize="9.5"
+                      fontWeight={700}
+                      fill="rgba(248,113,113,0.85)"
+                      letterSpacing="1.5"
+                    >
+                      ATENCIÓN
+                    </text>
                   </>
                 ) : (
                   <>
-                    {/* Icono de tienda personalizada (storefront) */}
-                    <g stroke="#5EEAD4" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none">
-                      {/* Awning / tejado */}
-                      <path d={`M${h.x - 22},${h.y - 10} L${h.x + 22},${h.y - 10} L${h.x + 18},${h.y - 18} L${h.x - 18},${h.y - 18} Z`} fill="rgba(94,234,212,0.12)" />
-                      {/* Cuerpo */}
-                      <path d={`M${h.x - 19},${h.y - 10} L${h.x - 19},${h.y + 18} L${h.x + 19},${h.y + 18} L${h.x + 19},${h.y - 10}`} />
-                      {/* Puerta */}
-                      <path d={`M${h.x - 5},${h.y + 18} L${h.x - 5},${h.y + 2} L${h.x + 5},${h.y + 2} L${h.x + 5},${h.y + 18}`} fill="rgba(94,234,212,0.18)" />
-                    </g>
                     <text
                       x={h.x}
-                      y={h.y + 32}
+                      y={h.y - 2}
+                      textAnchor="middle"
+                      fontSize="22"
+                      fontWeight={800}
+                      fill="#5EEAD4"
+                    >
+                      {hubInfo.count}
+                    </text>
+                    <text
+                      x={h.x}
+                      y={h.y + 14}
                       textAnchor="middle"
                       fontSize="9"
                       fontWeight={700}
-                      letterSpacing="2"
-                      fill="rgba(110,231,219,0.6)"
+                      fill="rgba(110,231,219,0.7)"
+                      letterSpacing="1.2"
                     >
-                      TIENDA
+                      TODO OK
                     </text>
                   </>
                 )}
-                </g>
-                <text
-                  x={h.x}
-                  y={h.y + HR + 20}
-                  textAnchor="middle"
-                  fontSize="12"
-                  fontWeight={700}
-                  fill={labelColor}
-                >
-                  {labelText}
-                </text>
 
-                {/* Indicador de que el icono es clicable → abre opciones.
-                    Sólo en el hub primario; los hubs secundarios no abren
-                    el dock de herramientas. */}
+                {/* Chip "Pulsa: opciones" debajo del centro. */}
                 {hubInfo.primary && (
                   <g className={hubOpen ? undefined : "hub-breathe"}>
                     <rect
-                      x={h.x - 74}
-                      y={h.y + HR + 30}
-                      width={148}
-                      height={24}
-                      rx={12}
-                      fill={isAmazon ? "rgba(255,153,0,0.10)" : "rgba(94,234,212,0.10)"}
-                      stroke={isAmazon ? "rgba(255,153,0,0.55)" : "rgba(94,234,212,0.55)"}
+                      x={h.x - 64}
+                      y={h.y + HR + 14}
+                      width={128}
+                      height={22}
+                      rx={11}
+                      fill={hasUrgent ? "rgba(248,113,113,0.10)" : "rgba(94,234,212,0.10)"}
+                      stroke={hasUrgent ? "rgba(248,113,113,0.45)" : "rgba(94,234,212,0.45)"}
                       strokeWidth="1"
                     />
                     <text
                       x={h.x}
-                      y={h.y + HR + 46}
+                      y={h.y + HR + 29}
                       textAnchor="middle"
-                      fontSize="11.5"
+                      fontSize="10.5"
                       fontWeight={700}
-                      fill={isAmazon ? "rgba(255,179,71,0.95)" : "rgba(110,231,219,0.95)"}
+                      fill={
+                        hasUrgent
+                          ? "rgba(254,202,202,0.95)"
+                          : "rgba(110,231,219,0.95)"
+                      }
                     >
                       {hubOpen ? "▲  Ocultar opciones" : "▼  Pulsa: opciones"}
                     </text>
@@ -1565,14 +1261,22 @@ export default function ProductNetwork({
             const col = STATE_COLOR[st];
             const active = selId === p.id;
             const dim = filterActive && !matchSet.has(p.id);
+            // Stagger por bucket: atención (hubId=0) entra primero (más
+            // urgencia visual), compitiendo después, calma al final. Dentro
+            // del bucket, un pequeño desfase por índice para que parezca
+            // que "salen del centro" en lugar de aparecer todos a la vez.
+            const bucketOrder = p.hubId === 0 ? 0 : p.hubId === 1 ? 1 : 2;
+            const popDelay = bucketOrder * 0.18 + (i % 6) * 0.04;
             return (
               <g
                 key={p.id}
-                className="node-float"
+                data-bucket={p.hubId}
+                className="node-float node-pop"
                 style={
                   {
                     "--d": `${3.6 + (i % 5) * 0.5}s`,
                     "--dl": `${(i % 7) * 0.45}s`,
+                    "--node-delay": `${popDelay}s`,
                     opacity: dim ? 0.1 : 1,
                     pointerEvents: dim ? "none" : undefined,
                     transition: "opacity .25s ease",
@@ -1604,48 +1308,117 @@ export default function ProductNetwork({
                 {col.dot && (
                   <circle cx={p.x + R - 6} cy={p.y - R + 6} r="4.5" fill={col.dot} filter="url(#glow)" />
                 )}
-                <text x={p.x} y={p.y + R + 17} textAnchor="middle" fontSize="13" fontWeight={600}
-                  fill="rgba(255,255,255,0.85)">{clip(p.title, 22)}</text>
-                <text x={p.x} y={p.y + R + 34} textAnchor="middle" fontSize="12.5" fontWeight={700}
-                  fill={p.priceCurrent > 0 ? "#7dd3fc" : "rgba(180,180,200,0.6)"}
-                  className={p.priceCurrent > 0 ? "text-glow-cyan" : undefined}>
-                  {p.priceCurrent > 0 ? `${fmt(p.priceCurrent)} ${sym(p.currency)}` : "Sin precio"}
-                </text>
-                {!active && (
-                  <text
-                    x={p.x}
-                    y={p.y + R + 48}
-                    textAnchor="middle"
-                    fontSize="9.5"
-                    fontWeight={700}
-                    fill="rgba(255,255,255,0.32)"
-                  >
-                    ▼ opciones
+                {/* Badge de origen: pequeño marcador en la esquina inferior
+                    izquierda del hexágono. Naranja = Amazon, cyan = Tu
+                    tienda (manual). Sub-info sin gritar; no conflictúa con
+                    el dot de estado (esquina opuesta). */}
+                {(() => {
+                  const isAmz = p.source !== "manual";
+                  const fill = isAmz ? "#FF9900" : "#5EEAD4";
+                  return (
+                    <g>
+                      <circle
+                        cx={p.x - R + 7}
+                        cy={p.y + R - 7}
+                        r={5.5}
+                        fill="rgba(8,8,20,0.95)"
+                        stroke={fill}
+                        strokeWidth="1.4"
+                      />
+                      {isAmz ? (
+                        // letra "a" minimalista para Amazon
+                        <text
+                          x={p.x - R + 7}
+                          y={p.y + R - 4.5}
+                          textAnchor="middle"
+                          fontSize="8"
+                          fontWeight={800}
+                          fill={fill}
+                        >
+                          a
+                        </text>
+                      ) : (
+                        // diamante para Tu tienda (manual)
+                        <path
+                          d={`M${p.x - R + 7},${p.y + R - 10} L${p.x - R + 10},${p.y + R - 7} L${p.x - R + 7},${p.y + R - 4} L${p.x - R + 4},${p.y + R - 7} Z`}
+                          fill={fill}
+                        />
+                      )}
+                    </g>
+                  );
+                })()}
+                {/* Etiquetas: solo en el nodo seleccionado, o en hover via CSS.
+                    Antes salían en TODOS los nodos → mucho ruido visual con >20
+                    productos. Ahora el canvas respira y se distingue el estado
+                    de cada nodo a primera vista por su color/halo. */}
+                <g className="node-label" style={{ opacity: active ? 1 : 0 }}>
+                  <text x={p.x} y={p.y + R + 17} textAnchor="middle" fontSize="13" fontWeight={600}
+                    fill="rgba(255,255,255,0.92)">{clip(p.title, 22)}</text>
+                  <text x={p.x} y={p.y + R + 34} textAnchor="middle" fontSize="12.5" fontWeight={700}
+                    fill={p.priceCurrent > 0 ? "#7dd3fc" : "rgba(180,180,200,0.6)"}
+                    className={p.priceCurrent > 0 ? "text-glow-cyan" : undefined}>
+                    {p.priceCurrent > 0 ? `${fmt(p.priceCurrent)} ${sym(p.currency)}` : "Sin precio"}
                   </text>
-                )}
+                </g>
                 </g>
               </g>
             );
           })}
 
           {/* ── Menú radial de opciones: siempre encima de todo ────────────
-               3 iconos en abanico centrado en la dirección hub→nodo.
-               Sin panel rectangular: los iconos florecen desde el nodo. */}
+               3 iconos en abanico colocados en el cuadrante con MENOS vecinos.
+               Antes el abanico salía siempre en dirección hub→nodo, lo que
+               solapaba con productos vecinos cuando el nodo seleccionado
+               estaba en el centro del cluster. Ahora buscamos el ángulo que
+               maximiza la distancia mínima a los nodos cercanos. */}
           {(() => {
             if (!selId) return null;
             const pd = layout.pos.find((q) => q.id === selId);
             if (!pd) return null;
             const hb = layout.hubs.find((h) => h.id === pd.hubId) ?? layout.hub;
-            const dx = pd.x - hb.x, dy = pd.y - hb.y;
-            const len = Math.hypot(dx, dy) || 1;
-            const ux = dx / len, uy = dy / len;
 
             const SR   = 25;                               // radio del icono
-            const MR   = R + 76;                           // distancia nodo→icono (114 px)
+            const MR   = R + 76;                           // distancia nodo→icono
             const SPRD = (37 * Math.PI) / 180;             // separación angular
-            const base = Math.atan2(uy, ux);               // apunta fuera del hub
-            const angles = [base - SPRD, base, base + SPRD];
             const LBL_R = MR + SR + 20;                    // radio de la etiqueta
+
+            // Busca el ángulo `base` (en pasos de 30°) con mayor distancia
+            // mínima a los nodos vecinos. Solo nodos en un radio de 220 px
+            // cuentan (a más lejos no estorban). Si no hay vecinos, usa la
+            // dirección clásica hub→nodo.
+            const VICIN = 220;
+            const neighbours = layout.pos.filter(
+              (q) => q.id !== pd.id && Math.hypot(q.x - pd.x, q.y - pd.y) < VICIN,
+            );
+            let base: number;
+            if (neighbours.length === 0) {
+              const dx = pd.x - hb.x, dy = pd.y - hb.y;
+              base = Math.atan2(dy, dx);
+            } else {
+              let bestAng = 0;
+              let bestScore = -Infinity;
+              for (let deg = 0; deg < 360; deg += 30) {
+                const a = (deg * Math.PI) / 180;
+                // Centro del abanico a MR del nodo seleccionado.
+                const cx = pd.x + Math.cos(a) * MR;
+                const cy = pd.y + Math.sin(a) * MR;
+                // Distancia mínima a cualquier vecino + bonus por estar lejos
+                // del hub (evita que el menú salga "hacia adentro" del cluster).
+                let minD = Infinity;
+                for (const n of neighbours) {
+                  const d = Math.hypot(n.x - cx, n.y - cy);
+                  if (d < minD) minD = d;
+                }
+                const awayFromHub = Math.hypot(cx - hb.x, cy - hb.y);
+                const score = minD + awayFromHub * 0.15;
+                if (score > bestScore) {
+                  bestScore = score;
+                  bestAng = a;
+                }
+              }
+              base = bestAng;
+            }
+            const angles = [base - SPRD, base, base + SPRD];
 
             const selSt  = nodeState(pd);
             const selCol = STATE_COLOR[selSt];
@@ -1667,13 +1440,30 @@ export default function ProductNetwork({
 
             return (
               <g>
-                {/* Doble anillo de selección — color del estado del nodo */}
+                {/* Doble anillo de selección — color del estado del nodo.
+                    El externo gira despacio (hub-ring), el interno respira
+                    (select-breathe) con curva ease-in-out para que el latido
+                    se sienta orgánico, no robotizado. */}
                 <circle cx={pd.x} cy={pd.y} r={R + 26}
                   fill="none" stroke={selCol.halo} strokeWidth="2.6"
                   strokeDasharray="7 5" className="hub-ring" filter="url(#glow)" />
                 <circle cx={pd.x} cy={pd.y} r={R + 15}
                   fill="none" stroke={selCol.stroke} strokeWidth="1.6"
-                  filter="url(#glow)" className="hub-breathe" />
+                  filter="url(#glow)" className="select-breathe" />
+                {/* Ripple: anillo que se expande desde el nodo recién
+                    seleccionado. key={selId} fuerza remount → la animación
+                    se reproduce cada vez que el usuario selecciona uno
+                    distinto, no solo la primera vez. */}
+                <circle
+                  key={selId}
+                  cx={pd.x}
+                  cy={pd.y}
+                  r={R + 8}
+                  fill="none"
+                  stroke={selCol.dot ?? selCol.stroke}
+                  strokeWidth="2.5"
+                  className="node-ripple"
+                />
 
                 {/* Iconos en abanico radial */}
                 {opts.map((o, i) => {
@@ -1765,6 +1555,24 @@ export default function ProductNetwork({
         </g>
       </svg>
 
+      {/* Aviso de cap visual: si el grafo está mostrando solo los más
+          relevantes, lo dejamos claro y damos un atajo a la Tabla (que
+          no tiene cap). Por debajo de 200 productos esto no aparece. */}
+      {layout.hiddenCount > 0 && mode === "graph" && (
+        <div className="absolute bottom-3 left-3 z-20 max-w-md rounded-xl border border-amber-400/30 bg-[rgba(20,15,5,0.85)] px-3 py-2 backdrop-blur-xl text-[11px] text-amber-200/90">
+          Mostrando {layout.totalNodes - layout.hiddenCount} de{" "}
+          <strong className="text-amber-100">{layout.totalNodes}</strong>{" "}
+          productos (priorizamos atención).{" "}
+          <button
+            type="button"
+            onClick={() => setMode("table")}
+            className="underline underline-offset-2 hover:text-amber-100"
+          >
+            Ver todos en Tabla →
+          </button>
+        </div>
+      )}
+
       {/* Búsqueda / filtro del grafo */}
       {nodes.length > 0 && (
         <div
@@ -1835,23 +1643,92 @@ export default function ProductNetwork({
               Limpiar
             </button>
           )}
+          {/* Leyenda de los 3 buckets (solo en modo Grafo). Vive dentro del
+              toolbar para que NUNCA se solape con nodos del canvas. Cada
+              chip filtra por estado al hacer clic. */}
+          {mode === "graph" && (
+            <div className="ml-1 flex items-center gap-1.5 border-l border-white/10 pl-2.5">
+              {[
+                {
+                  key: "att" as const,
+                  label: "Atención",
+                  count: layout.hub.attentionCount,
+                  dot: "#f87171",
+                  cls: "border-red-400/30 bg-red-500/[0.08] text-red-300",
+                  numCls: "text-red-200",
+                  states: ["error", "lost"] as State[],
+                },
+                {
+                  key: "cmp" as const,
+                  label: "Compitiendo",
+                  count: layout.hub.competingCount,
+                  dot: "#22d3ee",
+                  cls: "border-cyan-400/25 bg-cyan-400/[0.06] text-cyan-300",
+                  numCls: "text-cyan-200",
+                  states: ["active", "floor"] as State[],
+                },
+                {
+                  key: "calm" as const,
+                  label: "Calma",
+                  count: layout.hub.calmCount,
+                  dot: "#34d399",
+                  cls: "border-emerald-400/25 bg-emerald-400/[0.06] text-emerald-300",
+                  numCls: "text-emerald-200",
+                  states: ["won", "paused", "noprice"] as State[],
+                },
+              ].map((b) => {
+                const isActiveFilter = b.states.includes(gState as State);
+                return (
+                  <button
+                    key={b.key}
+                    type="button"
+                    onClick={() =>
+                      setGState(isActiveFilter ? "ALL" : b.states[0])
+                    }
+                    className={`inline-flex items-center gap-1.5 rounded-full border ${b.cls} px-2 py-1 text-[10px] font-bold uppercase tracking-[0.1em] transition-opacity ${
+                      b.count === 0 ? "opacity-40" : "hover:opacity-80"
+                    } ${isActiveFilter ? "ring-1 ring-white/50" : ""}`}
+                    title={`Filtrar por ${b.label.toLowerCase()}`}
+                  >
+                    <span
+                      className="h-1.5 w-1.5 rounded-full shrink-0"
+                      style={{
+                        background: b.dot,
+                        boxShadow:
+                          b.count > 0 ? `0 0 6px ${b.dot}` : undefined,
+                      }}
+                    />
+                    <span>{b.label}</span>
+                    <span
+                      className={`font-mono font-extrabold tabular-nums ${b.numCls}`}
+                    >
+                      {b.count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
-      {/* Vista de tabla (alternativa al grafo) */}
+      {/* Vista de tabla (alternativa al grafo) — estilo Linear/Notion:
+          thumbnail + título + meta + badges densos. Headers sticky, hover
+          row con highlight de borde izq y "drift" sutil del fondo. */}
       {mode === "table" && (
-        <div className="absolute inset-0 z-10 overflow-auto bg-[#05060f] pt-16 px-3 sm:px-5 pb-6">
-          <table className="w-full text-left text-sm">
-            <thead className="sticky top-0 z-10 bg-[#05060f] text-[11px] uppercase tracking-wider text-white/40">
+        <div className="absolute inset-0 z-10 overflow-auto bg-[#05060f] pt-16 px-3 sm:px-6 pb-6">
+          <table className="w-full text-left text-[13px]">
+            <thead className="sticky top-0 z-10 bg-[rgba(5,6,15,0.96)] backdrop-blur text-[10px] font-semibold uppercase tracking-[0.12em] text-white/40">
               <tr className="border-b border-white/10">
-                <th className="py-2.5 px-2">Producto</th>
-                <th className="py-2.5 px-2 whitespace-nowrap">Precio</th>
-                <th className="py-2.5 px-2 whitespace-nowrap hidden sm:table-cell">
+                <th className="py-3 pl-3 pr-2 w-[44%]">Producto</th>
+                <th className="py-3 px-2 whitespace-nowrap">Precio</th>
+                <th className="py-3 px-2 whitespace-nowrap hidden sm:table-cell">
                   Rango
                 </th>
-                <th className="py-2.5 px-2 hidden md:table-cell">Estrategia</th>
-                <th className="py-2.5 px-2">Estado</th>
-                <th className="py-2.5 px-2 text-right">Reprecio</th>
+                <th className="py-3 px-2 hidden lg:table-cell">Estrategia</th>
+                <th className="py-3 px-2 hidden md:table-cell">Buy Box</th>
+                <th className="py-3 px-2">Estado</th>
+                <th className="py-3 px-2 text-right pr-3">Reprecio</th>
               </tr>
             </thead>
             <tbody>
@@ -1862,52 +1739,141 @@ export default function ProductNetwork({
                   const c = STATE_COLOR[st];
                   const lbl =
                     STATE_LABEL.find((x) => x.st === st)?.label ?? st;
+                  const isActive = selId === p.id;
+                  const tags = parseTags(p.tags);
                   return (
                     <tr
                       key={p.id}
                       onClick={() => open(p)}
-                      className={`border-b border-white/[0.06] cursor-pointer hover:bg-white/[0.04] ${
-                        selId === p.id ? "bg-cyan-400/[0.06]" : ""
+                      className={`group border-b border-white/[0.05] cursor-pointer transition-colors ${
+                        isActive
+                          ? "bg-cyan-400/[0.07]"
+                          : "hover:bg-white/[0.035]"
                       }`}
+                      style={{
+                        boxShadow: isActive
+                          ? "inset 3px 0 0 0 rgb(34,211,238)"
+                          : undefined,
+                      }}
                     >
-                      <td className="py-2.5 px-2 max-w-[320px]">
-                        <div className="truncate text-white/90">{p.title}</div>
-                        <div className="font-mono text-[10px] text-white/35 truncate">
-                          {p.sku} · {p.asin || "sin ASIN"}
-                        </div>
-                        {parseTags(p.tags).length > 0 && (
-                          <div className="mt-1 flex flex-wrap gap-1">
-                            {parseTags(p.tags).map((t) => (
+                      {/* Producto: thumbnail + título + sku + tags */}
+                      <td className="py-2.5 pl-3 pr-2">
+                        <div className="flex items-start gap-3 min-w-0">
+                          <div className="h-10 w-10 shrink-0 rounded-md border border-white/10 bg-white/[0.04] overflow-hidden grid place-items-center">
+                            {p.imageUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={p.imageUrl}
+                                alt=""
+                                className="h-full w-full object-contain"
+                              />
+                            ) : (
                               <span
-                                key={t}
-                                className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-1.5 py-0.5 text-[9px] text-cyan-200"
-                              >
-                                {t}
-                              </span>
-                            ))}
+                                className="h-2 w-2 rounded-full"
+                                style={{ background: c.dot ?? "#666" }}
+                              />
+                            )}
                           </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate text-white/90 font-medium">
+                              {p.title}
+                            </div>
+                            <div className="mt-0.5 font-mono text-[10px] text-white/35 truncate">
+                              {p.sku} · {p.asin || "sin ASIN"}
+                            </div>
+                            {tags.length > 0 && (
+                              <div className="mt-1.5 flex flex-wrap gap-1">
+                                {tags.slice(0, 4).map((t) => (
+                                  <span
+                                    key={t}
+                                    className="rounded-md border border-cyan-400/20 bg-cyan-400/[0.08] px-1.5 py-0.5 text-[9px] text-cyan-200/90"
+                                  >
+                                    {t}
+                                  </span>
+                                ))}
+                                {tags.length > 4 && (
+                                  <span className="text-[9px] text-white/30">
+                                    +{tags.length - 4}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Precio */}
+                      <td className="py-2.5 px-2 whitespace-nowrap">
+                        {p.priceCurrent > 0 ? (
+                          <span className="font-mono font-semibold text-white/95 tabular-nums">
+                            {fmt(p.priceCurrent)} {sym(p.currency)}
+                          </span>
+                        ) : (
+                          <span className="font-mono text-white/30">—</span>
                         )}
                       </td>
-                      <td className="py-2.5 px-2 font-mono text-white/80 whitespace-nowrap">
-                        {p.priceCurrent > 0
-                          ? `${fmt(p.priceCurrent)} ${sym(p.currency)}`
-                          : "—"}
+
+                      {/* Rango mín/máx */}
+                      <td className="py-2.5 px-2 hidden sm:table-cell whitespace-nowrap">
+                        {p.priceMin != null && p.priceMax != null ? (
+                          <span className="font-mono text-[12px] text-white/55 tabular-nums">
+                            {fmt(p.priceMin)}
+                            <span className="text-white/25 mx-1">–</span>
+                            {fmt(p.priceMax)}
+                          </span>
+                        ) : (
+                          <span className="text-[11px] text-amber-300/70">
+                            sin rango
+                          </span>
+                        )}
                       </td>
-                      <td className="py-2.5 px-2 font-mono text-[12px] text-white/50 whitespace-nowrap hidden sm:table-cell">
-                        {p.priceMin != null && p.priceMax != null
-                          ? `${fmt(p.priceMin)}–${fmt(p.priceMax)}`
-                          : "—"}
+
+                      {/* Estrategia legible */}
+                      <td className="py-2.5 px-2 hidden lg:table-cell">
+                        {p.useAccountDefaults ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] text-white/55">
+                            <span className="h-1.5 w-1.5 rounded-full bg-white/30" />
+                            Defaults cuenta
+                          </span>
+                        ) : (
+                          <span className="text-[12px] text-white/70">
+                            {prettyStrategy(p.strategy)}
+                          </span>
+                        )}
                       </td>
-                      <td className="py-2.5 px-2 text-white/60 hidden md:table-cell">
-                        {p.useAccountDefaults ? "Cuenta" : p.strategy}
+
+                      {/* Buy Box */}
+                      <td className="py-2.5 px-2 hidden md:table-cell">
+                        {p.buyBoxStatus === "WON" ? (
+                          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/25 bg-emerald-400/[0.08] px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
+                            ★ ganada
+                          </span>
+                        ) : p.buyBoxStatus === "LOST" ? (
+                          <span className="inline-flex items-center gap-1 rounded-full border border-red-400/25 bg-red-500/[0.08] px-2 py-0.5 text-[10px] font-semibold text-red-300">
+                            perdida
+                            {p.buyBoxPrice ? (
+                              <span className="font-mono text-[9.5px] text-red-200/70">
+                                {fmt(p.buyBoxPrice)}€
+                              </span>
+                            ) : null}
+                          </span>
+                        ) : (
+                          <span className="text-[11px] text-white/30">—</span>
+                        )}
                       </td>
+
+                      {/* Estado del nodo (pill con color) */}
                       <td className="py-2.5 px-2">
                         <span
-                          className="inline-flex items-center gap-1.5 text-[12px]"
-                          style={{ color: c.dot ?? "rgba(255,255,255,0.6)" }}
+                          className="inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-medium whitespace-nowrap"
+                          style={{
+                            color: c.dot ?? "rgba(255,255,255,0.7)",
+                            borderColor: c.halo,
+                            background: `${c.halo.replace(/,[^)]+\)$/, ",0.08)")}`,
+                          }}
                         >
                           <span
-                            className="h-2 w-2 rounded-full"
+                            className="h-1.5 w-1.5 rounded-full"
                             style={{
                               background: c.dot ?? "rgba(255,255,255,0.4)",
                             }}
@@ -1915,8 +1881,10 @@ export default function ProductNetwork({
                           {lbl}
                         </span>
                       </td>
+
+                      {/* Toggle reprecio */}
                       <td
-                        className="py-2.5 px-2 text-right"
+                        className="py-2.5 px-2 pr-3 text-right"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <button
@@ -1931,12 +1899,19 @@ export default function ProductNetwork({
                               if (r.ok) router.refresh();
                             });
                           }}
-                          className={`rounded-md border px-2.5 py-1 text-[11px] font-semibold transition-colors disabled:opacity-50 ${
+                          className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-semibold transition-colors disabled:opacity-50 ${
                             p.repricingEnabled
                               ? "border-emerald-400/40 text-emerald-300 hover:bg-emerald-400/10"
-                              : "border-white/15 text-white/55 hover:bg-white/10"
+                              : "border-white/15 text-white/55 hover:bg-white/10 hover:text-white/80"
                           }`}
                         >
+                          <span
+                            className={`h-1.5 w-1.5 rounded-full ${
+                              p.repricingEnabled
+                                ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]"
+                                : "bg-white/35"
+                            }`}
+                          />
                           {p.repricingEnabled ? "Activo" : "Pausado"}
                         </button>
                       </td>
@@ -1947,10 +1922,22 @@ export default function ProductNetwork({
                 .length === 0 && (
                 <tr>
                   <td
-                    colSpan={6}
-                    className="py-10 text-center text-white/45"
+                    colSpan={7}
+                    className="py-14 text-center text-white/45"
                   >
-                    Sin productos para este filtro.
+                    <div className="text-2xl mb-2">🔍</div>
+                    <div className="text-sm">Sin productos para este filtro.</div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setGq("");
+                        setGState("ALL");
+                        setGTag("");
+                      }}
+                      className="mt-3 text-[11px] text-cyan-300 hover:text-cyan-200 underline underline-offset-4"
+                    >
+                      Limpiar filtros
+                    </button>
                   </td>
                 </tr>
               )}
@@ -2087,691 +2074,70 @@ export default function ProductNetwork({
 
       {/* Inspector / administración del nodo */}
       {sel && (
-        <div className="absolute inset-y-0 right-0 w-full sm:w-[380px] bg-[rgba(7,7,18,0.96)] backdrop-blur-2xl border-l border-cyan-400/15 shadow-[-30px_0_60px_-30px_rgba(34,211,238,0.35)] overflow-y-auto fade-in">
-          {/* Cabecera */}
-          <div className="sticky top-0 z-10 flex items-start gap-3 px-5 py-4 bg-[rgba(7,7,18,0.96)] backdrop-blur-2xl border-b border-white/10">
-            <div className="h-11 w-11 shrink-0 rounded-lg border border-white/10 bg-white/[0.04] overflow-hidden grid place-items-center">
-              {sel.imageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={sel.imageUrl} alt="" className="h-full w-full object-contain" />
-              ) : (
-                <span className="text-white/30 text-xs">—</span>
-              )}
-            </div>
-            <div className="min-w-0 flex-1">
-              <h3 className="text-sm font-bold text-white/90 leading-snug line-clamp-2">
-                {sel.title}
-              </h3>
-              <div className="mt-0.5 flex items-center gap-1.5 font-mono text-[10px] text-white/35 truncate">
-                {selIsManual ? (
-                  <span className="inline-flex items-center gap-1 rounded-sm border border-cyan-400/30 bg-cyan-400/[0.08] px-1 py-px text-cyan-200/85 text-[9px] uppercase tracking-wider">
-                    Tu tienda
-                  </span>
-                ) : (
-                  <span className="truncate">{sel.asin || "sin ASIN"}</span>
-                )}
-                <span className="text-white/25">·</span>
-                <span className="truncate">{sel.sku}</span>
-              </div>
-            </div>
-            <button
-              onClick={() => setSelId(null)}
-              aria-label="Cerrar"
-              className="shrink-0 h-7 w-7 grid place-items-center rounded-md text-white/40 hover:text-white hover:bg-white/10 transition-colors text-lg leading-none"
-            >
-              ×
-            </button>
-          </div>
-
-          <div className="p-5">
-            <div className="rounded-xl border border-cyan-400/15 bg-[linear-gradient(135deg,rgba(34,211,238,0.10),rgba(99,102,241,0.06))] p-4">
-              <div className="text-[10px] uppercase tracking-[0.16em] text-white/45">
-                Precio actual
-              </div>
-              <div className="mt-1 text-3xl font-extrabold text-cyan-300 text-glow-cyan tabular-nums">
-                {sel.priceCurrent > 0 ? `${fmt(sel.priceCurrent)} ${sym(sel.currency)}` : "Sin oferta"}
-              </div>
-              <div className="mt-2 flex items-center gap-2 flex-wrap">
-                {sel.priceMin != null && sel.priceMax != null && (
-                  <span className="text-[11px] text-white/45">
-                    Rango {fmt(sel.priceMin)}–{fmt(sel.priceMax)} {sym(sel.currency)}
-                  </span>
-                )}
-                {!selIsManual && (
-                  <span
-                    className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
-                      sel.buyBoxStatus === "WON"
-                        ? "text-emerald-300 bg-emerald-400/10 border-emerald-400/25"
-                        : sel.buyBoxStatus === "LOST"
-                          ? "text-red-300 bg-red-500/10 border-red-400/25"
-                          : "text-white/45 bg-white/[0.05] border-white/10"
-                    }`}
-                  >
-                    Buy Box:{" "}
-                    {sel.buyBoxStatus === "WON"
-                      ? "ganada"
-                      : sel.buyBoxStatus === "LOST"
-                        ? "perdida"
-                        : "—"}
-                  </span>
-                )}
-              </div>
-            </div>
-
-          {(() => {
-            const dg = diagnose(sel);
-            if (!dg) return null;
-            const cls =
-              dg.tone === "ok"
-                ? "text-emerald-300/90 border-emerald-400/25 bg-emerald-400/[0.06]"
-                : dg.tone === "warn"
-                  ? "text-amber-300/90 border-amber-400/25 bg-amber-400/[0.06]"
-                  : "text-cyan-200/90 border-cyan-400/20 bg-cyan-400/[0.05]";
-            return (
-              <div
-                className={`mt-4 flex gap-2 rounded-lg border px-3 py-2.5 text-[12px] leading-relaxed ${cls}`}
-              >
-                <span className="shrink-0">
-                  {dg.tone === "ok" ? "✓" : dg.tone === "warn" ? "⚠" : "ℹ"}
-                </span>
-                <span>{dg.text}</span>
-              </div>
-            );
-          })()}
-
-          {/* Tarjeta de precio sugerido (modo manual con plan generado) */}
-          {selIsManual && sel.suggestedPrice != null && sel.suggestedPrice > 0 && (
-            <div className="mt-4 rounded-xl border border-cyan-400/25 bg-[linear-gradient(135deg,rgba(34,211,238,0.10),rgba(99,102,241,0.06))] p-4">
-              <div className="flex items-baseline justify-between gap-3">
-                <span className="text-[10px] uppercase tracking-[0.16em] text-cyan-200/80">
-                  Precio sugerido
-                  {sel.suggestedStrategy ? ` · ${sel.suggestedStrategy}` : ""}
-                </span>
-                {sel.suggestedConfidence != null && (
-                  <span className="text-[11px] text-white/55">
-                    Confianza{" "}
-                    <strong
-                      className={
-                        sel.suggestedConfidence >= 75
-                          ? "text-emerald-300"
-                          : sel.suggestedConfidence >= 50
-                            ? "text-amber-300"
-                            : "text-rose-300"
-                      }
-                    >
-                      {Math.round(sel.suggestedConfidence)}%
-                    </strong>
-                  </span>
-                )}
-              </div>
-              <div className="mt-1 flex items-baseline gap-2">
-                <span className="text-2xl font-extrabold text-cyan-200 tabular-nums">
-                  {fmt(sel.suggestedPrice)} {sym(sel.currency)}
-                </span>
-                {sel.priceCurrent > 0 && (
-                  <span
-                    className={`text-xs font-semibold ${
-                      sel.suggestedPrice > sel.priceCurrent
-                        ? "text-emerald-300"
-                        : sel.suggestedPrice < sel.priceCurrent
-                          ? "text-amber-300"
-                          : "text-white/50"
-                    }`}
-                  >
-                    {sel.suggestedPrice > sel.priceCurrent ? "+" : ""}
-                    {((sel.suggestedPrice - sel.priceCurrent) / sel.priceCurrent * 100).toFixed(1)}%
-                  </span>
-                )}
-              </div>
-              {sel.suggestedReason && (
-                <p className="mt-2 text-[11px] text-white/55 leading-relaxed">
-                  {sel.suggestedReason}
-                </p>
-              )}
-              {sel.suggestedAt && (
-                <p className="mt-2 text-[10px] text-white/35">
-                  Generado:{" "}
-                  {new Intl.DateTimeFormat("es-ES", {
-                    dateStyle: "short",
-                    timeStyle: "short",
-                  }).format(new Date(sel.suggestedAt))}
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* ── Botón de reprecio inmediato (solo Amazon, productos con precio) ── */}
-          {!selIsManual && selState !== "noprice" && (
-            <button
-              type="button"
-              onClick={repriceNow}
-              disabled={repricing || pending}
-              className={`mt-4 w-full rounded-xl py-2.5 text-sm font-semibold transition-all border flex items-center justify-center gap-2
-                ${repricing
-                  ? "border-cyan-400/30 bg-cyan-400/[0.06] text-cyan-300/60 cursor-not-allowed"
-                  : "border-cyan-400/50 bg-cyan-400/[0.08] text-cyan-200 hover:bg-cyan-400/[0.16] hover:border-cyan-400/70 hover:shadow-[0_0_16px_-4px_rgba(34,211,238,0.55)] active:scale-[0.98]"
-                }`}
-            >
-              {repricing ? (
-                <>
-                  <svg className="animate-spin h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.25" />
-                    <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-                  </svg>
-                  Repreciando…
-                </>
-              ) : (
-                <>
-                  <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4 shrink-0" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M4 10a6 6 0 1 1 1.5 4" />
-                    <path d="M4 14v-4h4" />
-                  </svg>
-                  Repreciar ahora
-                </>
-              )}
-            </button>
-          )}
-
-          {selState === "noprice" ? (
-            <p className="mt-4 text-xs text-amber-300/80 rounded-lg border border-amber-400/20 bg-amber-400/5 p-3">
-              {selIsManual
-                ? "Este producto no tiene precio actual en el CSV. Edita el archivo y vuelve a subirlo."
-                : "Este producto no tiene oferta/precio activo en Amazon (o le falta ASIN). No se puede repreciar hasta que tenga una oferta válida."}
-            </p>
-          ) : (
-            <>
-              <div className="mt-4 grid grid-cols-2 gap-3">
-                <label className="block">
-                  <span className="text-[10px] uppercase tracking-wider text-white/40">Mín €</span>
-                  <input value={min} onChange={(e) => setMin(e.target.value)}
-                    inputMode="decimal" placeholder="0,00" disabled={pending}
-                    className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none" />
-                </label>
-                <label className="block">
-                  <span className="text-[10px] uppercase tracking-wider text-white/40">Máx €</span>
-                  <input value={max} onChange={(e) => setMax(e.target.value)}
-                    inputMode="decimal" placeholder="0,00" disabled={pending}
-                    className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none" />
-                </label>
-              </div>
-              <button onClick={saveRange} disabled={pending}
-                className="mt-3 w-full rounded-lg bg-[var(--brand-600)] text-white py-2 text-sm font-semibold hover:bg-[var(--brand-700)] transition-colors disabled:opacity-50">
-                {pending ? "Guardando…" : "Guardar rango"}
-              </button>
-
-              {!selIsManual && (
-                <>
-                  <PricingSuggest
-                    listingId={sel.id}
-                    currency={sel.currency}
-                    onApplyMin={(v) => setMin(String(v).replace(".", ","))}
-                    onApplyMax={(v) => setMax(String(v).replace(".", ","))}
-                    onApplyFixed={(v) => {
-                      setStrategy("FIXED");
-                      setFixedP(String(v).replace(".", ","));
-                    }}
-                  />
-                  <p className="mt-1 text-[10px] text-white/30 text-center">
-                    IA analiza histórico, competencia y márgenes
-                  </p>
-                </>
-              )}
-
-              <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3.5">
-                <div className="min-w-0">
-                  <div className="text-sm font-semibold text-white/90">
-                    {selIsManual ? "Incluir en el plan" : "Reprecio automático"}
-                  </div>
-                  <div className="mt-0.5 flex items-center gap-1.5 text-[11px]">
-                    <span
-                      className={`h-1.5 w-1.5 rounded-full ${
-                        sel.repricingEnabled ? "bg-emerald-400" : "bg-white/30"
-                      }`}
-                    />
-                    <span className={sel.repricingEnabled ? "text-emerald-300" : "text-white/45"}>
-                      {sel.repricingEnabled
-                        ? selIsManual
-                          ? "Incluido"
-                          : "Activo"
-                        : selIsManual
-                          ? "Excluido"
-                          : "Pausado"}
-                    </span>
-                  </div>
-                </div>
-                <Toggle on={sel.repricingEnabled} disabled={pending} onClick={toggle} />
-              </div>
-
-              {/* ── Estrategia de reprecio ── */}
-              <div className="mt-5 rounded-xl border border-white/10 bg-white/[0.03] p-3">
-                <div className="text-[10px] uppercase tracking-wider text-white/40">
-                  Estrategia
-                </div>
-                <select
-                  value={strategy}
-                  onChange={(e) => setStrategy(e.target.value as Strategy)}
-                  disabled={pending}
-                  className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
-                >
-                  {!selIsManual && (
-                    <option value="BUYBOX">Ganar Buy Box (bajar del competidor)</option>
-                  )}
-                  {!selIsManual && (
-                    <option value="MATCH">Igualar al competidor</option>
-                  )}
-                  <option value="FIXED">Precio fijo</option>
-                  <option value="MARGIN">Por margen (coste + beneficio)</option>
-                </select>
-
-                {!selIsManual && (strategy === "BUYBOX" || strategy === "MARGIN") && (
-                  <div className="mt-3 grid grid-cols-2 gap-3">
-                    <label className="block">
-                      <span className="text-[10px] uppercase tracking-wider text-white/40">
-                        Bajar por
-                      </span>
-                      <select
-                        value={undType}
-                        onChange={(e) => setUndType(e.target.value as UndercutType)}
-                        disabled={pending}
-                        className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-2 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
-                      >
-                        <option value="AMOUNT">Importe €</option>
-                        <option value="PERCENT">Porcentaje %</option>
-                      </select>
-                    </label>
-                    <label className="block">
-                      <span className="text-[10px] uppercase tracking-wider text-white/40">
-                        {undType === "PERCENT" ? "%" : "€"}
-                      </span>
-                      <input
-                        value={undVal}
-                        onChange={(e) => setUndVal(e.target.value)}
-                        inputMode="decimal"
-                        placeholder={undType === "PERCENT" ? "2" : "0,01"}
-                        disabled={pending}
-                        className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
-                      />
-                    </label>
-                  </div>
-                )}
-
-                {strategy === "FIXED" && (
-                  <label className="mt-3 block">
-                    <span className="text-[10px] uppercase tracking-wider text-white/40">
-                      Precio fijo €
-                    </span>
-                    <input
-                      value={fixedP}
-                      onChange={(e) => setFixedP(e.target.value)}
-                      inputMode="decimal"
-                      placeholder="0,00"
-                      disabled={pending}
-                      className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
-                    />
-                  </label>
-                )}
-
-                {strategy === "MARGIN" && (
-                  <div className="mt-3 space-y-3">
-                    <div className="grid grid-cols-3 gap-2">
-                      <CostField label="Coste €" value={cost} set={setCost}
-                        placeholder="0,00" disabled={pending} />
-                      <CostField label="Envío €" value={ship} set={setShip}
-                        placeholder="0,00" disabled={pending} />
-                      <CostField label="FBA €" value={fba} set={setFba}
-                        placeholder="0,00" disabled={pending} />
-                      <CostField label="Comis. %" value={feeP} set={setFeeP}
-                        placeholder="15" disabled={pending} />
-                      <CostField label="IVA %" value={vat} set={setVat}
-                        placeholder="21" disabled={pending} />
-                      <CostField label="Margen %" value={tMargin} set={setTMargin}
-                        placeholder="10" disabled={pending} />
-                    </div>
-
-                    {costCalc && (
-                      <div className="rounded-lg border border-cyan-400/20 bg-cyan-400/[0.04] p-3 space-y-1.5 text-[12px]">
-                        <Row k="Precio de equilibrio"
-                          v={costCalc.breakEven != null
-                            ? fmtEur(costCalc.breakEven)
-                            : "no rentable"}
-                          warn={costCalc.breakEven == null} />
-                        <Row k={`Mínimo para ${pnum(tMargin) || 0}% margen`}
-                          v={costCalc.minRec != null
-                            ? fmtEur(costCalc.minRec)
-                            : "no alcanzable"}
-                          warn={costCalc.minRec == null} accent />
-                        {costCalc.atCurrent && (
-                          <Row
-                            k={`Margen a ${fmtEur(sel.priceCurrent)} (actual)`}
-                            v={`${costCalc.atCurrent.profit
-                              .toFixed(2)
-                              .replace(".", ",")} € · ${costCalc.atCurrent.marginPct.toFixed(
-                              1,
-                            )}%`}
-                            warn={costCalc.atCurrent.profit < 0}
-                          />
-                        )}
-                        {costCalc.minRec != null && (
-                          <button
-                            type="button"
-                            disabled={pending}
-                            onClick={() =>
-                              setMin(
-                                String(
-                                  Math.ceil((costCalc.minRec as number) * 100) / 100,
-                                ),
-                              )
-                            }
-                            className="mt-1 w-full rounded-md border border-cyan-400/40 text-cyan-200 py-1.5 text-[11px] font-semibold hover:bg-cyan-400/10 transition-colors disabled:opacity-50"
-                          >
-                            Usar como precio mínimo ↑
-                          </button>
-                        )}
-                        <p className="text-[10px] text-white/35 pt-0.5">
-                          Precios con IVA incluido. El motor nunca bajará del
-                          mínimo rentable.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {!selIsManual && strategy !== "FIXED" && (
-                  <>
-                    <label className="mt-3 block">
-                      <span className="text-[10px] uppercase tracking-wider text-white/40">
-                        Sin competencia
-                      </span>
-                      <select
-                        value={noComp}
-                        onChange={(e) => setNoComp(e.target.value as NoComp)}
-                        disabled={pending}
-                        className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
-                      >
-                        <option value="MAX">Subir al máximo</option>
-                        <option value="HOLD">Mantener precio</option>
-                        <option value="STEP_UP">Subir gradualmente</option>
-                      </select>
-                    </label>
-                    {noComp === "STEP_UP" && (
-                      <div className="mt-2 grid grid-cols-2 gap-3">
-                        <label className="block">
-                          <span className="text-[10px] uppercase tracking-wider text-white/40">
-                            Paso por
-                          </span>
-                          <select
-                            value={stepUType}
-                            onChange={(e) =>
-                              setStepUType(e.target.value as UndercutType)
-                            }
-                            disabled={pending}
-                            className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-2 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
-                          >
-                            <option value="AMOUNT">Importe €</option>
-                            <option value="PERCENT">Porcentaje %</option>
-                          </select>
-                        </label>
-                        <label className="block">
-                          <span className="text-[10px] uppercase tracking-wider text-white/40">
-                            {stepUType === "PERCENT" ? "% / ciclo" : "€ / ciclo"}
-                          </span>
-                          <input
-                            value={stepUVal}
-                            onChange={(e) => setStepUVal(e.target.value)}
-                            inputMode="decimal"
-                            placeholder={stepUType === "PERCENT" ? "1" : "0,05"}
-                            disabled={pending}
-                            className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
-                          />
-                        </label>
-                        <p className="col-span-2 text-[10px] text-white/35">
-                          Sin competencia el precio sube este paso cada ciclo
-                          hasta el máximo (no salta de golpe).
-                        </p>
-                      </div>
-                    )}
-                  </>
-                )}
-
-                <button
-                  onClick={saveStrategy}
-                  disabled={pending}
-                  className="mt-3 w-full rounded-lg border border-cyan-400/40 text-cyan-200 py-2 text-sm font-semibold hover:bg-cyan-400/10 transition-colors disabled:opacity-50"
-                >
-                  {pending ? "Guardando…" : "Guardar estrategia"}
-                </button>
-              </div>
-
-              {/* ── Etiquetas / grupos ── */}
-              <div className="mt-5 rounded-xl border border-white/10 bg-white/[0.03] p-3">
-                <div className="text-[10px] uppercase tracking-wider text-white/40">
-                  Etiquetas / grupos
-                </div>
-                {parseTags(tags).length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {parseTags(tags).map((t) => (
-                      <span
-                        key={t}
-                        className="inline-flex items-center gap-1 rounded-full border border-cyan-400/25 bg-cyan-400/10 px-2 py-0.5 text-[11px] text-cyan-200"
-                      >
-                        {t}
-                        <button
-                          type="button"
-                          disabled={pending}
-                          onClick={() =>
-                            setTags(
-                              parseTags(tags)
-                                .filter((x) => x !== t)
-                                .join(","),
-                            )
-                          }
-                          className="text-cyan-300/70 hover:text-white leading-none"
-                          aria-label={`Quitar ${t}`}
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-                <input
-                  value={tags}
-                  onChange={(e) => setTags(e.target.value)}
-                  placeholder="marca, temporada-alta, liquidación…"
-                  disabled={pending}
-                  className="mt-2 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-cyan-400/60 focus:outline-none"
-                />
-                <p className="mt-1 text-[10px] text-white/35">
-                  Separadas por comas. Sirven para filtrar y aplicar acciones
-                  por grupo en el catálogo.
-                </p>
-                <button
-                  onClick={saveTags}
-                  disabled={pending}
-                  className="mt-2 w-full rounded-lg border border-cyan-400/40 text-cyan-200 py-2 text-sm font-semibold hover:bg-cyan-400/10 transition-colors disabled:opacity-50"
-                >
-                  {pending ? "Guardando…" : "Guardar etiquetas"}
-                </button>
-
-                {!selIsManual && (
-                  <div className="mt-4 border-t border-white/10 pt-3">
-                    <span className="text-[10px] uppercase tracking-wider text-white/40">
-                      Variación · ASIN padre
-                    </span>
-                    <input
-                      value={parentA}
-                      onChange={(e) => setParentA(e.target.value)}
-                      placeholder="B0XXXXXXXX (vacío = producto único)"
-                      disabled={pending}
-                      className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-cyan-400/60 focus:outline-none"
-                    />
-                    <p className="mt-1 text-[10px] text-white/35">
-                      Agrupa tallas/colores bajo el mismo ASIN padre para
-                      filtrarlos y gestionarlos como familia.
-                    </p>
-                    <button
-                      onClick={saveParent}
-                      disabled={pending}
-                      className="mt-2 w-full rounded-lg border border-cyan-400/40 text-cyan-200 py-2 text-sm font-semibold hover:bg-cyan-400/10 transition-colors disabled:opacity-50"
-                    >
-                      {pending ? "Guardando…" : "Guardar variación"}
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* ── Competencia ── */}
-              {!selIsManual && (<div className="mt-5 rounded-xl border border-white/10 bg-white/[0.03] p-3">
-                <div className="text-[10px] uppercase tracking-wider text-white/40">
-                  Competencia
-                </div>
-
-                <label className="mt-3 flex items-center justify-between gap-3">
-                  <span className="text-sm text-white/85">Usar ajustes de la cuenta</span>
-                  <Toggle on={useAccDef} disabled={pending} onClick={() => setUseAccDef((v) => !v)} />
-                </label>
-                {useAccDef && (
-                  <p className="mt-1 text-[10px] text-white/35">
-                    La estrategia se hereda de los ajustes de cuenta.
-                  </p>
-                )}
-
-                <label className="mt-3 flex items-center justify-between gap-3">
-                  <span className="text-sm text-white/85">Ignorar Amazon (retail)</span>
-                  <Toggle on={ignoreAmz} disabled={pending} onClick={() => setIgnoreAmz((v) => !v)} />
-                </label>
-
-                <div className="mt-3 grid grid-cols-2 gap-3">
-                  <label className="block">
-                    <span className="text-[10px] uppercase tracking-wider text-white/40">
-                      Logística
-                    </span>
-                    <select
-                      value={fulfil}
-                      onChange={(e) => setFulfil(e.target.value as Fulfillment)}
-                      disabled={pending}
-                      className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-2 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
-                    >
-                      <option value="ANY">Cualquiera</option>
-                      <option value="FBA">Solo FBA</option>
-                      <option value="FBM">Solo FBM</option>
-                    </select>
-                  </label>
-                  <label className="block">
-                    <span className="text-[10px] uppercase tracking-wider text-white/40">
-                      Valoración mín. (0-5)
-                    </span>
-                    <input
-                      value={minRating}
-                      onChange={(e) => setMinRating(e.target.value)}
-                      inputMode="decimal"
-                      placeholder="sin filtro"
-                      disabled={pending}
-                      className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
-                    />
-                  </label>
-                </div>
-
-                <label className="mt-3 block">
-                  <span className="text-[10px] uppercase tracking-wider text-white/40">
-                    Excluir vendedores (IDs, separados por comas)
-                  </span>
-                  <input
-                    value={exclSellers}
-                    onChange={(e) => setExclSellers(e.target.value)}
-                    placeholder="A1B2C3D4E5, F6G7H8I9J0"
-                    disabled={pending}
-                    className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-cyan-400/60 focus:outline-none"
-                  />
-                </label>
-                <label className="mt-2 block">
-                  <span className="text-[10px] uppercase tracking-wider text-white/40">
-                    Solo competir con (IDs; vacío = todos)
-                  </span>
-                  <input
-                    value={onlySell}
-                    onChange={(e) => setOnlySell(e.target.value)}
-                    placeholder="vacío = todos"
-                    disabled={pending}
-                    className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-cyan-400/60 focus:outline-none"
-                  />
-                </label>
-                <p className="mt-1 text-[10px] text-white/35">
-                  El seller ID aparece en la actividad/competencia. «Excluir»
-                  ignora a esos vendedores; «Solo» compite únicamente contra
-                  ellos.
-                </p>
-
-                <button
-                  onClick={saveCompetition}
-                  disabled={pending}
-                  className="mt-3 w-full rounded-lg border border-cyan-400/40 text-cyan-200 py-2 text-sm font-semibold hover:bg-cyan-400/10 transition-colors disabled:opacity-50"
-                >
-                  {pending ? "Guardando…" : "Guardar competencia"}
-                </button>
-              </div>)}
-            </>
-          )}
-
-            {err && (
-              <p className="mt-4 text-xs text-red-300 rounded-lg border border-red-400/25 bg-red-500/10 p-2.5">
-                {err}
-              </p>
-            )}
-          </div>
-        </div>
+        <Inspector
+          sel={sel}
+          selIsManual={selIsManual}
+          selState={selState}
+          min={min}
+          setMin={setMin}
+          max={max}
+          setMax={setMax}
+          strategy={strategy}
+          setStrategy={setStrategy}
+          undType={undType}
+          setUndType={setUndType}
+          undVal={undVal}
+          setUndVal={setUndVal}
+          fixedP={fixedP}
+          setFixedP={setFixedP}
+          cost={cost}
+          setCost={setCost}
+          ship={ship}
+          setShip={setShip}
+          fba={fba}
+          setFba={setFba}
+          vat={vat}
+          setVat={setVat}
+          feeP={feeP}
+          setFeeP={setFeeP}
+          tMargin={tMargin}
+          setTMargin={setTMargin}
+          noComp={noComp}
+          setNoComp={setNoComp}
+          stepUType={stepUType}
+          setStepUType={setStepUType}
+          stepUVal={stepUVal}
+          setStepUVal={setStepUVal}
+          useAccDef={useAccDef}
+          setUseAccDef={setUseAccDef}
+          ignoreAmz={ignoreAmz}
+          setIgnoreAmz={setIgnoreAmz}
+          fulfil={fulfil}
+          setFulfil={setFulfil}
+          minRating={minRating}
+          setMinRating={setMinRating}
+          exclSellers={exclSellers}
+          setExclSellers={setExclSellers}
+          onlySell={onlySell}
+          setOnlySell={setOnlySell}
+          tags={tags}
+          setTags={setTags}
+          parentA={parentA}
+          setParentA={setParentA}
+          saveRange={saveRange}
+          toggle={toggle}
+          saveStrategy={saveStrategy}
+          saveCompetition={saveCompetition}
+          saveTags={saveTags}
+          saveParent={saveParent}
+          repriceNow={repriceNow}
+          setSelId={setSelId}
+          pending={pending}
+          repricing={repricing}
+          err={err}
+        />
       )}
     </div>
   );
 }
 
-function Toggle({
-  on,
-  disabled,
-  onClick,
-}: {
-  on: boolean;
-  disabled?: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={on}
-      disabled={disabled}
-      onClick={onClick}
-      className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors duration-200 disabled:opacity-50 ${
-        on ? "bg-emerald-500 shadow-[0_0_14px_-2px_rgba(16,185,129,0.7)]" : "bg-white/15"
-      }`}
-    >
-      <span
-        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-200 ease-out ${
-          on ? "translate-x-6" : "translate-x-1"
-        }`}
-      />
-    </button>
-  );
-}
-
-function ZoomBtn({
-  children,
-  label,
-  onClick,
-}: {
-  children: React.ReactNode;
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      title={label}
-      onClick={onClick}
-      className="h-9 w-9 grid place-items-center rounded-lg border border-white/15 bg-[rgba(8,8,20,0.7)] backdrop-blur text-white/80 text-lg leading-none hover:bg-white/10 hover:text-white transition-colors"
-    >
-      {children}
-    </button>
-  );
-}

@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
+import { formatRelativeShort } from "@/lib/format/relative";
 
 interface SyncResponse {
   count?: number;
@@ -73,12 +74,14 @@ export function SyncButton({ lastSyncAt }: { lastSyncAt: Date | null }) {
         Sincronizar con Amazon
       </Button>
       {lastSyncAt && (
-        <span className="text-[11px] text-white/40">
-          Última sync:{" "}
-          {new Intl.DateTimeFormat("es-ES", {
+        <span
+          className="text-[11px] text-white/40"
+          title={new Intl.DateTimeFormat("es-ES", {
             dateStyle: "short",
             timeStyle: "short",
           }).format(lastSyncAt)}
+        >
+          Última sync: hace {formatRelativeShort(lastSyncAt)}
         </span>
       )}
     </div>

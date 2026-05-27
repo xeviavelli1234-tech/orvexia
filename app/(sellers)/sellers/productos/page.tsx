@@ -8,28 +8,31 @@ import { UploadCsvButton } from "./UploadCsvButton";
 import { GeneratePlanButton, ExportPlanButton } from "./PlanButtons";
 import ProductNetwork, { type NetNode } from "./ProductNetwork";
 import AssistantWidget from "./AssistantWidget";
-import AnalyticsOverlay, { type OvEvent, type OvProduct } from "./AnalyticsOverlay";
-import AccountSettings, {
-  SettingsButton,
-  type AccountSettingsData,
-} from "./AccountSettings";
-import CatalogOverlay, {
-  CatalogButton,
-  PanicButton,
-} from "./CatalogOverlay";
-import ProfitOverlay, { ProfitButton } from "./ProfitOverlay";
-import RealDataPanel, { RealDataButton } from "./RealDataPanel";
-import ToolboxPanel, { ToolboxButton } from "./ToolboxPanel";
+import type { OvEvent, OvProduct } from "./AnalyticsOverlay";
+import { SettingsButton, type AccountSettingsData } from "./AccountSettings";
+import { CatalogButton, PanicButton } from "./CatalogOverlay";
+import { ProfitButton } from "./ProfitOverlay";
+import { RealDataButton } from "./RealDataPanel";
+import { ToolboxButton } from "./ToolboxPanel";
 import DemoBanner from "./DemoBanner";
-import HelpOverlay, { HelpButton } from "./HelpOverlay";
-import Tour from "./Tour";
-import AuditOverlay, { AuditButton } from "./AuditOverlay";
+import { HelpButton } from "./HelpOverlay";
+import { AuditButton } from "./AuditOverlay";
+// Los Overlays grandes se cargan diferidos (next/dynamic + ssr:false).
+// Mantenemos los Buttons como import estático porque la sidebar los
+// renderiza al entrar; los Overlays solo importan JS al hidratar/montar.
+import LazyOverlays from "./LazyOverlays";
 import { RunNowButton } from "@/app/(sellers)/sellers/dashboard/RunNowButton";
 import { DisconnectButton } from "@/app/(sellers)/sellers/dashboard/DisconnectButton";
 import { prisma } from "@/lib/prisma";
-import { getBillingState, TRIAL_DAYS, type SellerPlan } from "@/lib/billing";
+import {
+  getBillingState,
+  repricingActiveLimit,
+  TRIAL_DAYS,
+  type SellerPlan,
+} from "@/lib/billing";
 import ActivityPanel, { type EventDTO } from "./ActivityPanel";
 import ControlCenterShell from "./ControlCenterShell";
+import { Eyebrow, Stat } from "@/components/ui/Stat";
 
 export const metadata = { title: "Centro de control · Orvexia Repricer" };
 export const dynamic = "force-dynamic";
@@ -67,6 +70,12 @@ export default async function ProductosPage() {
   const active = listings.filter((l) => l.repricingEnabled).length;
   const catalogValue = listings.reduce((s, l) => s + (l.priceCurrent || 0), 0);
   const isManualMode = account.mode === "manual";
+  // Tope de activos según plan/tier — alimenta el banner de cuota en la
+  // sidebar y se compara con `active` para detectar saturación.
+  const activeLimit = repricingActiveLimit(
+    account.plan as SellerPlan,
+    listings.length,
+  );
   const planGeneratedCount = listings.filter((l) => l.suggestedPrice != null).length;
   const planLastGeneratedAt = listings
     .map((l) => l.suggestedAt)
@@ -200,6 +209,14 @@ export default async function ProductosPage() {
     alertOnBuyBoxLost: account.alertOnBuyBoxLost,
     alertOnPriceFloor: account.alertOnPriceFloor,
     alertOnError: account.alertOnError,
+    minChangeAmount: account.minChangeAmount,
+    minChangePct: account.minChangePct,
+    debounceSeconds: account.debounceSeconds,
+    priceWarCycles: account.priceWarCycles,
+    priceWarAction:
+      account.priceWarAction === "PAUSE" ? "PAUSE" : "FLOOR",
+    stepUpAccelCycles: account.stepUpAccelCycles,
+    stepUpMaxMult: account.stepUpMaxMult,
   };
 
   const sidebar = (
@@ -224,7 +241,15 @@ export default async function ProductosPage() {
           <div className="mt-3 grid grid-cols-2 gap-2.5">
             <Stat label="Productos" value={String(listings.length)} />
             <Stat label="Con precio" value={`${withPrice}/${listings.length}`} />
-            <Stat label="Repreciando" value={`${active}/${listings.length}`} accent />
+            <Stat
+              label="Repreciando"
+              value={
+                Number.isFinite(activeLimit)
+                  ? `${active}/${activeLimit}`
+                  : `${active}`
+              }
+              accent
+            />
             <Stat
               label="Valor catálogo"
               value={
@@ -234,6 +259,62 @@ export default async function ProductosPage() {
               }
             />
           </div>
+          {/* Banner de cuota: barra + CTA si está saturado o casi. Solo
+              tiene sentido cuando hay un límite finito (TRIAL o tiers no
+              unlimited). */}
+          {Number.isFinite(activeLimit) && (() => {
+            const pct = activeLimit > 0
+              ? Math.min(100, Math.round((active / activeLimit) * 100))
+              : 0;
+            const tone =
+              active >= activeLimit
+                ? "red"
+                : pct >= 90
+                  ? "amber"
+                  : "ok";
+            const barColor =
+              tone === "red"
+                ? "bg-red-500"
+                : tone === "amber"
+                  ? "bg-amber-400"
+                  : "bg-emerald-400";
+            const textColor =
+              tone === "red"
+                ? "text-red-300"
+                : tone === "amber"
+                  ? "text-amber-300"
+                  : "text-white/45";
+            return (
+              <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.02] px-3 py-2">
+                <div className="flex items-center justify-between gap-2 text-[11px]">
+                  <span className={textColor}>
+                    {tone === "red"
+                      ? "Cuota llena — sube de plan"
+                      : tone === "amber"
+                        ? "Cuota casi llena"
+                        : "Plan " + billing.label}
+                  </span>
+                  {(tone === "red" || tone === "amber") && (
+                    <Link
+                      href="/sellers/facturacion"
+                      className="text-[10px] font-semibold text-cyan-300 hover:text-cyan-200"
+                    >
+                      Subir →
+                    </Link>
+                  )}
+                </div>
+                <div className="mt-1.5 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                  <div
+                    className={`h-full ${barColor} transition-all`}
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+                <div className="mt-1 text-[10px] text-white/35 font-mono tabular-nums">
+                  {active} de {activeLimit} activos · {pct}%
+                </div>
+              </div>
+            );
+          })()}
         </div>
 
         <div
@@ -418,21 +499,17 @@ export default async function ProductosPage() {
       overlays={
         <>
           <AssistantWidget />
-          <AnalyticsOverlay
-            products={ovProducts}
-            events={ovEvents}
-            plan={{ label: billing.label, intervalMinutes: billing.intervalMinutes }}
-            runCount={runCount}
-            lastRunAt={lastRun?.startedAt.toISOString() ?? null}
-          />
-          <AccountSettings initial={accountSettings} />
-          <CatalogOverlay items={nodes} />
-          <ProfitOverlay items={nodes} />
-          <HelpOverlay />
-          <AuditOverlay />
-          <RealDataPanel />
-          <ToolboxPanel
-            initialVacation={{
+          <LazyOverlays
+            analytics={{
+              products: ovProducts,
+              events: ovEvents,
+              plan: { label: billing.label, intervalMinutes: billing.intervalMinutes },
+              runCount,
+              lastRunAt: lastRun?.startedAt.toISOString() ?? null,
+            }}
+            accountSettings={accountSettings}
+            items={nodes}
+            toolboxInitial={{
               vacationFrom: account.vacationFrom
                 ? account.vacationFrom.toISOString().slice(0, 16)
                 : null,
@@ -442,45 +519,9 @@ export default async function ProductosPage() {
               vacationNote: account.vacationNote,
             }}
           />
-          <Tour />
         </>
       }
     />
-  );
-}
-
-function Eyebrow({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">
-      {children}
-    </div>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  accent,
-}: {
-  label: string;
-  value: string;
-  accent?: boolean;
-}) {
-  return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5">
-      <div className="text-[9px] uppercase tracking-[0.12em] text-white/40 truncate">
-        {label}
-      </div>
-      <div
-        className={`mt-0.5 font-mono text-lg font-extrabold tabular-nums ${
-          accent
-            ? "text-emerald-300 [text-shadow:0_0_16px_rgba(16,185,129,0.5)]"
-            : "text-cyan-300 text-glow-cyan"
-        }`}
-      >
-        {value}
-      </div>
-    </div>
   );
 }
 

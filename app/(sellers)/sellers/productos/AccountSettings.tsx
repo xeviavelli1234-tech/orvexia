@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { EU_MARKETPLACES } from "@/lib/amazon/endpoints";
+import { Toggle } from "@/components/ui/Toggle";
 import {
   updateAccountSettingsAction,
   exportMyDataAction,
@@ -17,7 +18,7 @@ export interface AccountSettingsData {
   dryRun: boolean;
   patchDelayMs: number;
   autoSyncHours: number;
-  defaultStrategy: "BUYBOX" | "MATCH" | "FIXED" | "MARGIN";
+  defaultStrategy: "BUYBOX" | "BUYBOX_WINNER" | "MATCH" | "FIXED" | "MARGIN";
   defaultUndercutType: "AMOUNT" | "PERCENT";
   defaultUndercutValue: number;
   defaultNoCompetition: "MAX" | "HOLD" | "STEP_UP";
@@ -28,6 +29,16 @@ export interface AccountSettingsData {
   alertOnBuyBoxLost: boolean;
   alertOnPriceFloor: boolean;
   alertOnError: boolean;
+  // ── Anti-flapping ───────────────────────────────
+  minChangeAmount: number;
+  minChangePct: number;
+  debounceSeconds: number;
+  // ── Guerra de precios ───────────────────────────
+  priceWarCycles: number;
+  priceWarAction: "FLOOR" | "PAUSE";
+  // ── STEP_UP geométrico ──────────────────────────
+  stepUpAccelCycles: number;
+  stepUpMaxMult: number;
 }
 
 export function SettingsButton() {
@@ -42,35 +53,6 @@ export function SettingsButton() {
         Ajustes de cuenta
       </span>
       <span className="text-[11px] text-white/40">horario · simulación →</span>
-    </button>
-  );
-}
-
-function Toggle({
-  on,
-  onClick,
-  disabled,
-}: {
-  on: boolean;
-  onClick: () => void;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={on}
-      disabled={disabled}
-      onClick={onClick}
-      className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors duration-200 disabled:opacity-50 ${
-        on ? "bg-emerald-500 shadow-[0_0_14px_-2px_rgba(16,185,129,0.7)]" : "bg-white/15"
-      }`}
-    >
-      <span
-        className={`inline-block h-5 w-5 rounded-full bg-white shadow-md transition-transform duration-200 ${
-          on ? "translate-x-6" : "translate-x-1"
-        }`}
-      />
     </button>
   );
 }
@@ -157,6 +139,13 @@ export default function AccountSettings({ initial }: { initial: AccountSettingsD
     fd.set("alertOnBuyBoxLost", String(s.alertOnBuyBoxLost));
     fd.set("alertOnPriceFloor", String(s.alertOnPriceFloor));
     fd.set("alertOnError", String(s.alertOnError));
+    fd.set("minChangeAmount", String(s.minChangeAmount));
+    fd.set("minChangePct", String(s.minChangePct));
+    fd.set("debounceSeconds", String(s.debounceSeconds));
+    fd.set("priceWarCycles", String(s.priceWarCycles));
+    fd.set("priceWarAction", s.priceWarAction);
+    fd.set("stepUpAccelCycles", String(s.stepUpAccelCycles));
+    fd.set("stepUpMaxMult", String(s.stepUpMaxMult));
     updateAccountSettingsAction(fd).then((r) => {
       setSaving(false);
       if (!r.ok) setErr(r.error);
@@ -332,7 +321,8 @@ export default function AccountSettings({ initial }: { initial: AccountSettingsD
                   }
                   className={inp}
                 >
-                  <option value="BUYBOX">Ganar Buy Box</option>
+                  <option value="BUYBOX">Ganar Buy Box (más barato)</option>
+                  <option value="BUYBOX_WINNER">Ganar Buy Box (vs ganador)</option>
                   <option value="MATCH">Igualar</option>
                   <option value="FIXED">Precio fijo</option>
                   <option value="MARGIN">Por margen</option>
@@ -421,6 +411,159 @@ export default function AccountSettings({ initial }: { initial: AccountSettingsD
                       ...v,
                       defaultUndercutValue:
                         Number.parseFloat(e.target.value.replace(",", ".")) || 0,
+                    }))
+                  }
+                  className={inp}
+                />
+              </label>
+            </div>
+          </section>
+
+          {/* Protección anti-flapping */}
+          <section className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+            <div className="text-sm font-semibold text-white/90">
+              Anti-flapping
+            </div>
+            <p className="mt-1 text-[11px] text-white/45">
+              Evita reescribir el precio si el cambio es muy pequeño o ya
+              hubo otro reciente en la misma dirección.
+            </p>
+            <div className="mt-3 grid grid-cols-3 gap-3">
+              <label className="block">
+                <span className={lbl}>Mínimo €</span>
+                <input
+                  inputMode="decimal"
+                  value={s.minChangeAmount}
+                  onChange={(e) =>
+                    setS((v) => ({
+                      ...v,
+                      minChangeAmount:
+                        Number.parseFloat(e.target.value.replace(",", ".")) || 0,
+                    }))
+                  }
+                  className={inp}
+                />
+              </label>
+              <label className="block">
+                <span className={lbl}>Mínimo %</span>
+                <input
+                  inputMode="decimal"
+                  value={s.minChangePct}
+                  onChange={(e) =>
+                    setS((v) => ({
+                      ...v,
+                      minChangePct:
+                        Number.parseFloat(e.target.value.replace(",", ".")) || 0,
+                    }))
+                  }
+                  className={inp}
+                />
+              </label>
+              <label className="block">
+                <span className={lbl}>Debounce (s)</span>
+                <input
+                  type="number"
+                  min={0}
+                  max={86400}
+                  value={s.debounceSeconds}
+                  onChange={(e) =>
+                    setS((v) => ({
+                      ...v,
+                      debounceSeconds: Number(e.target.value),
+                    }))
+                  }
+                  className={inp}
+                />
+              </label>
+            </div>
+            <p className="mt-2 text-[10px] text-white/35">
+              Las protecciones (suelo, techo, margen y guerra) ignoran estos
+              umbrales: siempre se aplican.
+            </p>
+          </section>
+
+          {/* Guerra de precios */}
+          <section className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+            <div className="text-sm font-semibold text-white/90">
+              Detector de guerra de precios
+            </div>
+            <p className="mt-1 text-[11px] text-white/45">
+              Tras N ciclos seguidos bajando arrastrados por la competencia,
+              el motor frena. 0 = OFF.
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <label className="block">
+                <span className={lbl}>Ciclos (0=OFF)</span>
+                <input
+                  type="number"
+                  min={0}
+                  max={50}
+                  value={s.priceWarCycles}
+                  onChange={(e) =>
+                    setS((v) => ({
+                      ...v,
+                      priceWarCycles: Number(e.target.value),
+                    }))
+                  }
+                  className={inp}
+                />
+              </label>
+              <label className="block">
+                <span className={lbl}>Acción</span>
+                <select
+                  value={s.priceWarAction}
+                  onChange={(e) =>
+                    setS((v) => ({
+                      ...v,
+                      priceWarAction: e.target
+                        .value as AccountSettingsData["priceWarAction"],
+                    }))
+                  }
+                  className={inp}
+                >
+                  <option value="FLOOR">Saltar al suelo</option>
+                  <option value="PAUSE">Pausar el listing</option>
+                </select>
+              </label>
+            </div>
+          </section>
+
+          {/* Aceleración del STEP_UP */}
+          <section className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+            <div className="text-sm font-semibold text-white/90">
+              STEP_UP acelerado
+            </div>
+            <p className="mt-1 text-[11px] text-white/45">
+              Cuando llevas N ciclos sin competencia, el paso de subida se
+              dobla geométricamente. 0 = OFF.
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <label className="block">
+                <span className={lbl}>Ciclos antes de acelerar (0=OFF)</span>
+                <input
+                  type="number"
+                  min={0}
+                  max={50}
+                  value={s.stepUpAccelCycles}
+                  onChange={(e) =>
+                    setS((v) => ({
+                      ...v,
+                      stepUpAccelCycles: Number(e.target.value),
+                    }))
+                  }
+                  className={inp}
+                />
+              </label>
+              <label className="block">
+                <span className={lbl}>Multiplicador máx (×)</span>
+                <input
+                  inputMode="decimal"
+                  value={s.stepUpMaxMult}
+                  onChange={(e) =>
+                    setS((v) => ({
+                      ...v,
+                      stepUpMaxMult:
+                        Number.parseFloat(e.target.value.replace(",", ".")) || 1,
                     }))
                   }
                   className={inp}
