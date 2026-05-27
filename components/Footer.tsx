@@ -39,6 +39,7 @@ const NAV = [
     links: [
       { label: "Sobre nosotros", href: "/sobre-nosotros" },
       { label: "Aviso legal", href: "/aviso-legal" },
+      { label: "Términos del Repricer", href: "/terminos" },
       { label: "Política de privacidad", href: "/politica-privacidad" },
       { label: "Política de cookies", href: "/politica-cookies" },
       { label: "Datos Amazon (SP-API)", href: "/politica-datos-amazon" },

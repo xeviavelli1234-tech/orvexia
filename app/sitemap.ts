@@ -35,6 +35,7 @@ const STATIC_ENTRIES: Entry[] = [
   { url: `${BASE_URL}/guias`, changeFrequency: "weekly", priority: 0.8 },
   { url: `${BASE_URL}/sobre-nosotros`, changeFrequency: "monthly", priority: 0.5 },
   { url: `${BASE_URL}/aviso-legal`, changeFrequency: "monthly", priority: 0.3 },
+  { url: `${BASE_URL}/terminos`, changeFrequency: "monthly", priority: 0.3 },
   { url: `${BASE_URL}/politica-privacidad`, changeFrequency: "monthly", priority: 0.3 },
   { url: `${BASE_URL}/politica-cookies`, changeFrequency: "monthly", priority: 0.3 },
 ];

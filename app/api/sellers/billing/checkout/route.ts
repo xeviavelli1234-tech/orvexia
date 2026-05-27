@@ -42,6 +42,19 @@ export async function POST(req: Request) {
         metadata: { sellerAccountId: account.id },
         ...(isFirstSubscription ? { trial_period_days: 14 } : {}),
       },
+      // Stripe Live exige consentimiento explícito. El checkbox sólo aparece si la
+      // URL de Términos del Servicio está configurada en Stripe Dashboard →
+      // Settings → Public details → "Terms of service URL" = https://www.orvexia.es/terminos.
+      // Si la URL no está configurada, Stripe ignora `consent_collection` y el
+      // checkout sigue funcionando (no rompe nada en Test mode).
+      consent_collection: { terms_of_service: "required" },
+      // Mensaje legal sobre el botón de pago (siempre visible).
+      custom_text: {
+        terms_of_service_acceptance: {
+          message:
+            "Al suscribirte aceptas los [Términos del Servicio](https://www.orvexia.es/terminos) y la [Política de Privacidad](https://www.orvexia.es/politica-privacidad) de Orvexia. Suscripción mensual, sin permanencia.",
+        },
+      },
       success_url: `${base}/sellers/facturacion?status=upgraded`,
       cancel_url: `${base}/sellers/facturacion?status=cancelled`,
     });
