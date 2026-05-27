@@ -12,7 +12,9 @@
 import { ImageResponse } from "next/og";
 import { prisma } from "@/lib/prisma";
 
-export const runtime = "edge";
+// Node runtime (default) en lugar de edge: usamos Prisma para consultar el
+// producto y Prisma trae módulos Node (node:path, node:url) que no
+// existen en Edge. ImageResponse funciona igual de bien en Node runtime.
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 export const alt = "Producto en Orvexia";
