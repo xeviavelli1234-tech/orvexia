@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import type { NormalizedListing } from "@/lib/amazon/listings";
 import { normalizeTags, addTag, removeTag } from "@/lib/tags";
 import { normalizeAsin } from "@/lib/variations";
+import { repricingActiveLimit, type SellerPlan } from "@/lib/billing";
 
 export async function listListingsByAccount(sellerAccountId: string) {
   return prisma.sellerListing.findMany({
@@ -178,7 +179,7 @@ export async function setListingCompetition(params: {
 export async function setListingStrategy(params: {
   listingId: string;
   userId: string;
-  strategy: "BUYBOX" | "MATCH" | "FIXED" | "MARGIN";
+  strategy: "BUYBOX" | "BUYBOX_WINNER" | "MATCH" | "FIXED" | "MARGIN";
   undercutType: "AMOUNT" | "PERCENT";
   undercutValue: number;
   fixedPrice: number | null;
@@ -249,6 +250,37 @@ export async function setListingEnabled(params: {
     throw new Error("listing_not_repriceable");
   }
 
+  // Tope de productos activos por plan/tier. Solo se aplica al ACTIVAR
+  // (al desactivar siempre dejamos); y solo si el listing NO estaba ya
+  // activo, porque no se le cuenta dos veces.
+  if (params.enabled && !existing.repricingEnabled) {
+    const account = await prisma.sellerAccount.findUnique({
+      where: { userId: params.userId },
+      select: { plan: true },
+    });
+    if (account) {
+      const [activeCount, catalogCount] = await Promise.all([
+        prisma.sellerListing.count({
+          where: {
+            sellerAccount: { userId: params.userId },
+            repricingEnabled: true,
+          },
+        }),
+        prisma.sellerListing.count({
+          where: { sellerAccount: { userId: params.userId } },
+        }),
+      ]);
+      const limit = repricingActiveLimit(
+        account.plan as SellerPlan,
+        catalogCount,
+      );
+      if (activeCount >= limit) {
+        // El error.code lo traduce actions.ts a un mensaje con CTA upgrade.
+        throw new Error(`active_limit_reached:${activeCount}/${limit}`);
+      }
+    }
+  }
+
   return prisma.sellerListing.update({
     where: { id: params.listingId },
     data: { repricingEnabled: params.enabled },
@@ -276,10 +308,36 @@ export async function bulkSetEnabled(
       data: { repricingEnabled: false },
     });
   }
-  // Solo se activan los que tienen rango, precio y ASIN válidos.
+
+  // Tope de activos: si la activación masiva pasaría del límite del plan,
+  // limitamos el batch al hueco disponible. Devolvemos info para que el
+  // UI pueda avisar "activamos N de los M que pediste — sube de plan".
+  const account = await prisma.sellerAccount.findUnique({
+    where: { userId },
+    select: { plan: true },
+  });
+  if (!account) return { count: 0 };
+  const [activeCount, catalogCount] = await Promise.all([
+    prisma.sellerListing.count({
+      where: { sellerAccount: { userId }, repricingEnabled: true },
+    }),
+    prisma.sellerListing.count({
+      where: { sellerAccount: { userId } },
+    }),
+  ]);
+  const limit = repricingActiveLimit(
+    account.plan as SellerPlan,
+    catalogCount,
+  );
+  const remaining = limit - activeCount;
+  if (remaining <= 0) {
+    throw new Error(`active_limit_reached:${activeCount}/${limit}`);
+  }
+  // Si remaining < ids.length, recortamos el batch (preserva orden recibido).
+  const safeIds = remaining >= ids.length ? ids : ids.slice(0, remaining);
   return prisma.sellerListing.updateMany({
     where: {
-      id: { in: ids },
+      id: { in: safeIds },
       sellerAccount: { userId },
       priceMin: { not: null },
       priceMax: { not: null },
@@ -369,7 +427,7 @@ export interface ImportRow {
   parentAsin?: string;
   priceMin?: number | null;
   priceMax?: number | null;
-  strategy?: "BUYBOX" | "MATCH" | "FIXED" | "MARGIN";
+  strategy?: "BUYBOX" | "BUYBOX_WINNER" | "MATCH" | "FIXED" | "MARGIN";
   undercutType?: "AMOUNT" | "PERCENT";
   undercutValue?: number;
   fixedPrice?: number | null;

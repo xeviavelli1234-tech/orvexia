@@ -155,7 +155,7 @@ export async function setAccountSettings(params: {
   dryRun: boolean;
   patchDelayMs: number;
   autoSyncHours: number;
-  defaultStrategy: "BUYBOX" | "MATCH" | "FIXED" | "MARGIN";
+  defaultStrategy: "BUYBOX" | "BUYBOX_WINNER" | "MATCH" | "FIXED" | "MARGIN";
   defaultUndercutType: "AMOUNT" | "PERCENT";
   defaultUndercutValue: number;
   defaultNoCompetition: "MAX" | "HOLD" | "STEP_UP";
@@ -166,6 +166,13 @@ export async function setAccountSettings(params: {
   alertOnBuyBoxLost: boolean;
   alertOnPriceFloor: boolean;
   alertOnError: boolean;
+  minChangeAmount: number;
+  minChangePct: number;
+  debounceSeconds: number;
+  priceWarCycles: number;
+  priceWarAction: "FLOOR" | "PAUSE";
+  stepUpAccelCycles: number;
+  stepUpMaxMult: number;
 }) {
   const acc = await prisma.sellerAccount.findUnique({
     where: { userId: params.userId },
@@ -199,6 +206,13 @@ export async function setAccountSettings(params: {
       alertOnBuyBoxLost: params.alertOnBuyBoxLost,
       alertOnPriceFloor: params.alertOnPriceFloor,
       alertOnError: params.alertOnError,
+      minChangeAmount: Math.max(0, params.minChangeAmount),
+      minChangePct: Math.max(0, Math.min(100, params.minChangePct)),
+      debounceSeconds: Math.max(0, Math.min(86400, Math.round(params.debounceSeconds))),
+      priceWarCycles: Math.max(0, Math.min(50, Math.round(params.priceWarCycles))),
+      priceWarAction: params.priceWarAction === "PAUSE" ? "PAUSE" : "FLOOR",
+      stepUpAccelCycles: Math.max(0, Math.min(50, Math.round(params.stepUpAccelCycles))),
+      stepUpMaxMult: Math.max(1, Math.min(64, params.stepUpMaxMult)),
     },
   });
 }

@@ -12,6 +12,7 @@ import { isRepricingAllowed, type SellerPlan } from "@/lib/billing";
 import { computeNewPrice } from "@/lib/reprice/engine";
 import { minPriceForMargin } from "@/lib/reprice/margin";
 import { parseTags } from "@/lib/tags";
+import { rateLimit } from "@/lib/rate-limit";
 
 export const maxDuration = 30;
 
@@ -19,6 +20,12 @@ export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+  // 1 reprecio manual cada 5 s por usuario — el botón también está
+  // disabled mientras corre, pero defendemos el endpoint contra clicks
+  // rápidos / scripting. PATCH cuesta cuota a Amazon, no es gratis.
+  if (rateLimit("reprice-run-one", session.userId, 12, 60_000)) {
+    return NextResponse.json({ error: "rate_limited" }, { status: 429 });
   }
 
   const account = await getSellerAccountByUserId(session.userId);
@@ -96,13 +103,29 @@ export async function POST(req: NextRequest) {
       account.amazonSellerId,
     );
 
-    // Actualizar Buy Box
+    const hasCompThisCycle = comp.price != null;
+    const nextNoCompStreak = hasCompThisCycle
+      ? 0
+      : listing.noCompetitionStreak + 1;
+    let stepUpMult = 1;
+    if (account.stepUpAccelCycles > 0 && nextNoCompStreak > account.stepUpAccelCycles) {
+      const excess = nextNoCompStreak - account.stepUpAccelCycles;
+      stepUpMult = Math.min(
+        Math.max(1, account.stepUpMaxMult),
+        Math.pow(2, excess),
+      );
+    }
+
+    // Actualizar Buy Box + cache de competencia (igual que el runner).
     await prisma.sellerListing.update({
       where: { id: listing.id },
       data: {
         buyBoxStatus: comp.buyBox,
         buyBoxPrice: comp.buyBoxPrice ?? comp.price ?? undefined,
         buyBoxAt: now,
+        lastCompetitorPrice: comp.price ?? null,
+        lastCompetitorAt: now,
+        noCompetitionStreak: nextNoCompStreak,
       },
     });
 
@@ -138,11 +161,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const priceWarLocked =
+      account.priceWarCycles > 0 &&
+      listing.priceWarStreak >= account.priceWarCycles;
+
     const result = computeNewPrice({
       priceCurrent: listing.priceCurrent,
       priceMin: listing.priceMin!,
       priceMax: listing.priceMax!,
       competitorPrice: comp.price,
+      buyBoxPrice: comp.buyBoxPrice ?? null,
       strategy: eff.strategy,
       undercutType: eff.undercutType,
       undercutValue: eff.undercutValue,
@@ -151,7 +179,27 @@ export async function POST(req: NextRequest) {
       noCompetition: eff.noCompetition,
       stepUpType: eff.stepUpType,
       stepUpValue: eff.stepUpValue,
+      stepUpMult,
+      minChangeAmount: account.minChangeAmount,
+      minChangePct: account.minChangePct,
+      priceWarLocked,
     });
+
+    const goingDown =
+      result.changed && result.newPrice < listing.priceCurrent;
+    const pulledByCompetitor = result.reason === "competitor_undercut";
+    const nextWarStreak =
+      result.reason === "price_war"
+        ? 0
+        : goingDown && pulledByCompetitor
+          ? listing.priceWarStreak + 1
+          : 0;
+    const newDir =
+      !result.changed
+        ? null
+        : result.newPrice > listing.priceCurrent
+          ? "UP"
+          : "DOWN";
 
     if (!result.changed) {
       await prisma.repricingEvent.create({
@@ -257,6 +305,8 @@ export async function POST(req: NextRequest) {
           priceCurrent: result.newPrice,
           consecutiveErrors: 0,
           lastRepricedAt: now,
+          priceWarStreak: nextWarStreak,
+          lastDirection: newDir ?? listing.lastDirection,
         },
       }),
       prisma.repricingEvent.create({

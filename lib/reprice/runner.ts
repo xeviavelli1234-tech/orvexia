@@ -8,13 +8,17 @@ import { persistPatchOutcome } from "./resilience";
 import { fetchAllListings } from "@/lib/amazon/listings";
 import { upsertListingsBatch } from "@/lib/db/sellerListing";
 import { isFixtureMode } from "@/lib/amazon/fixtures";
-import { isRepricingAllowed, type SellerPlan } from "@/lib/billing";
+import { type SellerPlan } from "@/lib/billing";
 import { sendRepricerAlertEmail, sendTrialEndingEmail } from "@/lib/email";
 import { parseTags } from "@/lib/tags";
-import { isScheduleAllowed } from "./schedule";
+import { shouldRunAccount } from "./gating";
 import { computeNewPrice } from "./engine";
 import { minPriceForMargin } from "./margin";
+import { logger } from "@/lib/logger";
+import { captureException } from "@/lib/monitoring";
 import type { RepriceAlert } from "./alerts";
+
+const log = logger.child("reprice:runner");
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const eur = (n: number) => n.toFixed(2).replace(".", ",") + " €";
@@ -51,7 +55,10 @@ async function maybeSendAlerts(
       data: { lastAlertAt: now },
     });
   } catch (e) {
-    console.warn("[reprice] alert email failed:", e);
+    log.warn(
+      { accountId: account.id, alertCount: alerts.length, err: e },
+      "alert email failed",
+    );
   }
 
   // Notificaciones externas (Slack/Telegram/Discord) — agrupadas por categoría
@@ -82,7 +89,10 @@ async function maybeSendAlerts(
       });
     }
   } catch (e) {
-    console.warn("[reprice] external channels failed:", e);
+    log.warn(
+      { accountId: account.id, err: e },
+      "external channels failed",
+    );
   }
 }
 
@@ -142,7 +152,10 @@ export async function runRepricer(
             await sendTrialEndingEmail({ to: account.user.email, daysLeft });
           }
         } catch (e) {
-          console.warn("[reprice] trial reminder failed:", e);
+          log.warn(
+            { accountId: account.id, err: e },
+            "trial reminder failed",
+          );
         }
         await prisma.sellerAccount.update({
           where: { id: account.id },
@@ -151,38 +164,24 @@ export async function runRepricer(
       }
     }
 
-    // Trial expirado y sin pasar a PRO → no reprecia (gating de plan).
-    if (!isRepricingAllowed(account.plan as SellerPlan, account.trialEndsAt, now)) {
-      continue;
-    }
-
-    // ¿Toca ya según su intervalo? (el disparo manual lo ignora con force)
-    if (!force && account.lastRunAt) {
-      const nextDue = account.lastRunAt.getTime() + account.intervalSeconds * 1000;
-      if (now.getTime() < nextDue) continue;
-    }
-
-    // Modo vacaciones: ventana en la que TODO se pausa (incluso el force).
-    if (account.vacationFrom && account.vacationTo) {
-      const t = now.getTime();
-      if (t >= account.vacationFrom.getTime() && t <= account.vacationTo.getTime()) {
-        continue;
-      }
-    }
-
-    // Programación horaria: fuera de la franja → no reprecia.
-    // El disparo manual (force) la ignora para poder probar al momento.
-    if (
-      !force &&
-      !isScheduleAllowed(
-        account.scheduleEnabled,
-        account.scheduleStartHour,
-        account.scheduleEndHour,
-        now,
-      )
-    ) {
-      continue;
-    }
+    // Plan, intervalo, vacaciones y schedule — todos en una sola decisión pura
+    // (testeable en gating.test.ts). Si dice run=false, salta la cuenta.
+    const gate = shouldRunAccount(
+      {
+        plan: account.plan,
+        trialEndsAt: account.trialEndsAt,
+        lastRunAt: account.lastRunAt,
+        intervalSeconds: account.intervalSeconds,
+        vacationFrom: account.vacationFrom,
+        vacationTo: account.vacationTo,
+        scheduleEnabled: account.scheduleEnabled,
+        scheduleStartHour: account.scheduleStartHour,
+        scheduleEndHour: account.scheduleEndHour,
+      },
+      now,
+      { force },
+    );
+    if (!gate.run) continue;
 
     // Lock de ciclo: claim atómico. Si otra ejecución (cron + manual)
     // ya lo tiene y no ha caducado, se salta esta cuenta.
@@ -332,14 +331,33 @@ export async function runRepricer(
           );
           const competitorPrice = comp.price;
           const prevBuyBox = listing.buyBoxStatus;
+          const hasCompThisCycle = competitorPrice != null;
 
-          // Estado de Buy Box (informativo, cada ciclo).
+          // Streak de "sin competencia" → habilita STEP_UP geométrico.
+          // Lo calculamos ANTES del engine para pasar el multiplicador.
+          const nextNoCompStreak = hasCompThisCycle
+            ? 0
+            : listing.noCompetitionStreak + 1;
+          let stepUpMult = 1;
+          if (account.stepUpAccelCycles > 0 && nextNoCompStreak > account.stepUpAccelCycles) {
+            const excess = nextNoCompStreak - account.stepUpAccelCycles;
+            stepUpMult = Math.min(
+              Math.max(1, account.stepUpMaxMult),
+              Math.pow(2, excess),
+            );
+          }
+
+          // Estado de Buy Box + cache del competidor para la UI y para
+          // poder detectar oscilaciones entre ciclos. Se persiste SIEMPRE.
           await prisma.sellerListing.update({
             where: { id: listing.id },
             data: {
               buyBoxStatus: comp.buyBox,
               buyBoxPrice: comp.buyBoxPrice ?? competitorPrice ?? undefined,
               buyBoxAt: now,
+              lastCompetitorPrice: competitorPrice ?? null,
+              lastCompetitorAt: now,
+              noCompetitionStreak: nextNoCompStreak,
             },
           });
 
@@ -396,11 +414,18 @@ export async function runRepricer(
             );
           }
 
+          // Freno por guerra de precios: si llevamos N ciclos seguidos
+          // bajando arrastrados, el engine salta al suelo con razón "price_war".
+          const priceWarLocked =
+            account.priceWarCycles > 0 &&
+            listing.priceWarStreak >= account.priceWarCycles;
+
           const result = computeNewPrice({
             priceCurrent: listing.priceCurrent,
             priceMin: listing.priceMin!,
             priceMax: listing.priceMax!,
             competitorPrice,
+            buyBoxPrice: comp.buyBoxPrice ?? null,
             strategy: eff.strategy,
             undercutType: eff.undercutType,
             undercutValue: eff.undercutValue,
@@ -409,39 +434,158 @@ export async function runRepricer(
             noCompetition: eff.noCompetition,
             stepUpType: eff.stepUpType,
             stepUpValue: eff.stepUpValue,
+            stepUpMult,
+            minChangeAmount: account.minChangeAmount,
+            minChangePct: account.minChangePct,
+            priceWarLocked,
           });
 
+          // Streak de guerra: cuenta ciclos consecutivos bajando empujados
+          // por la competencia. Se resetea ante cualquier otra señal.
+          const goingDown =
+            result.changed && result.newPrice < listing.priceCurrent;
+          const pulledByCompetitor = result.reason === "competitor_undercut";
+          let nextWarStreak =
+            goingDown && pulledByCompetitor
+              ? listing.priceWarStreak + 1
+              : 0;
+          if (result.reason === "price_war") nextWarStreak = 0; // freno aplicado → reset
+
+          // Debounce: no repetir un movimiento del mismo signo dentro de la
+          // ventana configurada. Evita ping-pong frente a competidores que
+          // oscilan en cada ciclo. Las razones duras NO se debouncenan.
+          const HARD = new Set([
+            "min_floor",
+            "max_ceiling",
+            "margin_floor",
+            "price_war",
+          ]);
+          const newDir =
+            !result.changed
+              ? null
+              : result.newPrice > listing.priceCurrent
+                ? "UP"
+                : "DOWN";
+          const debounceWindowMs = account.debounceSeconds * 1000;
+          const sinceLastMs = listing.lastRepricedAt
+            ? now.getTime() - listing.lastRepricedAt.getTime()
+            : Infinity;
+          const debounced =
+            account.debounceSeconds > 0 &&
+            result.changed &&
+            !HARD.has(result.reason) &&
+            listing.lastDirection != null &&
+            newDir === listing.lastDirection &&
+            sinceLastMs < debounceWindowMs;
+
+          if (debounced) {
+            // Registramos el evento como "debounced" y no tocamos el precio.
+            await prisma.$transaction([
+              prisma.repricingEvent.create({
+                data: {
+                  runId: run.id,
+                  listingId: listing.id,
+                  priceBefore: listing.priceCurrent,
+                  priceAfter: listing.priceCurrent,
+                  competitorPrice,
+                  reason: "debounced",
+                  success: true,
+                  buyBox: comp.buyBox,
+                },
+              }),
+              prisma.sellerListing.update({
+                where: { id: listing.id },
+                data: { priceWarStreak: nextWarStreak },
+              }),
+            ]);
+            continue;
+          }
+
           if (!result.changed) {
-            await prisma.repricingEvent.create({
-              data: {
-                runId: run.id,
-                listingId: listing.id,
-                priceBefore: listing.priceCurrent,
-                priceAfter: listing.priceCurrent,
-                competitorPrice,
-                reason: "no_change",
-                success: true,
-                buyBox: comp.buyBox,
-              },
-            });
+            await prisma.$transaction([
+              prisma.repricingEvent.create({
+                data: {
+                  runId: run.id,
+                  listingId: listing.id,
+                  priceBefore: listing.priceCurrent,
+                  priceAfter: listing.priceCurrent,
+                  competitorPrice,
+                  reason: result.reason,
+                  success: true,
+                  buyBox: comp.buyBox,
+                },
+              }),
+              prisma.sellerListing.update({
+                where: { id: listing.id },
+                data: { priceWarStreak: nextWarStreak },
+              }),
+            ]);
+            continue;
+          }
+
+          // Guerra de precios + acción "PAUSE": deshabilita el reprecio del
+          // listing y avisa. El cambio del engine (saltar al suelo) NO se
+          // aplica: pausamos directamente para que el dueño investigue.
+          if (
+            result.reason === "price_war" &&
+            account.priceWarAction === "PAUSE"
+          ) {
+            await prisma.$transaction([
+              prisma.sellerListing.update({
+                where: { id: listing.id },
+                data: {
+                  repricingEnabled: false,
+                  autoPausedAt: now,
+                  autoPausedReason: "price_war",
+                  priceWarStreak: 0,
+                },
+              }),
+              prisma.repricingEvent.create({
+                data: {
+                  runId: run.id,
+                  listingId: listing.id,
+                  priceBefore: listing.priceCurrent,
+                  priceAfter: listing.priceCurrent,
+                  competitorPrice,
+                  reason: "price_war_paused",
+                  success: true,
+                  buyBox: comp.buyBox,
+                },
+              }),
+            ]);
+            if (account.alertOnError) {
+              accountAlerts.push({
+                kind: "error",
+                sku: listing.sku,
+                title: listing.title,
+                detail: `Pausado por guerra de precios (${account.priceWarCycles} bajadas seguidas)`,
+              });
+            }
             continue;
           }
 
           if (account.dryRun) {
             // Simulación: calcula pero NO aplica en Amazon ni cambia precio.
-            await prisma.repricingEvent.create({
-              data: {
-                runId: run.id,
-                listingId: listing.id,
-                priceBefore: listing.priceCurrent,
-                priceAfter: result.newPrice,
-                competitorPrice,
-                reason: result.reason,
-                success: true,
-                simulated: true,
-                buyBox: comp.buyBox,
-              },
-            });
+            // Aún así guardamos streaks para que las estadísticas no mientan.
+            await prisma.$transaction([
+              prisma.repricingEvent.create({
+                data: {
+                  runId: run.id,
+                  listingId: listing.id,
+                  priceBefore: listing.priceCurrent,
+                  priceAfter: result.newPrice,
+                  competitorPrice,
+                  reason: result.reason,
+                  success: true,
+                  simulated: true,
+                  buyBox: comp.buyBox,
+                },
+              }),
+              prisma.sellerListing.update({
+                where: { id: listing.id },
+                data: { priceWarStreak: nextWarStreak },
+              }),
+            ]);
             repriced += 1;
           } else {
             // PATCH con backoff exponencial + telemetría
@@ -497,7 +641,13 @@ export async function runRepricer(
                 where: { id: listing.id },
                 // consecutiveErrors: 0 aquí como defensa: si persistPatchOutcome
                 // falla silenciosamente más abajo, el contador sigue reseteado.
-                data: { priceCurrent: result.newPrice, lastRepricedAt: now, consecutiveErrors: 0 },
+                data: {
+                  priceCurrent: result.newPrice,
+                  lastRepricedAt: now,
+                  consecutiveErrors: 0,
+                  priceWarStreak: nextWarStreak,
+                  lastDirection: newDir ?? listing.lastDirection,
+                },
               }),
               prisma.repricingEvent.create({
                 data: {
@@ -570,6 +720,14 @@ export async function runRepricer(
     } catch (e) {
       runError = e instanceof Error ? e.message.slice(0, 500) : String(e);
       errors += 1;
+      log.error(
+        { accountId: account.id, runId: run.id, err: e },
+        "cycle aborted",
+      );
+      void captureException(e, {
+        tags: { scope: "reprice-runner", accountId: account.id },
+        extra: { runId: run.id },
+      });
       if (account.alertOnError) {
         accountAlerts.push({
           kind: "error",

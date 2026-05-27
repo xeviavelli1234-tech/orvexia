@@ -3,6 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { recordPatch } from "./quota";
 import { recordAudit } from "@/lib/db/audit";
 import { runPatchWithBackoff, type PatchExecutionResult } from "./backoff";
+import { logger } from "@/lib/logger";
+
+const log = logger.child("reprice:resilience");
 
 /**
  * Resiliencia del motor de reprecio (parte server-only):
@@ -68,8 +71,40 @@ export async function persistPatchOutcome({
       });
     } else if (outcome.rateLimited) {
       // Throttling: ni autopausa ni contador (es nuestra culpa, no del listing).
+    } else if (
+      outcome.errorCategory === "AUTH" ||
+      outcome.errorCategory === "INVALID"
+    ) {
+      // Errores no recuperables del propio listing/cuenta. No tiene sentido
+      // acumular 5 fallos: el siguiente PATCH va a fallar igual. Pausamos ya.
+      const reason =
+        outcome.errorCategory === "AUTH"
+          ? `auto-pausa por error de autenticación (${outcome.error?.code ?? "AUTH"})`
+          : `auto-pausa por payload inválido (${outcome.error?.code ?? "INVALID"})`;
+      const updated = await prisma.sellerListing.update({
+        where: { id: listingId },
+        data: {
+          consecutiveErrors: { increment: 1 },
+          repricingEnabled: false,
+          autoPausedAt: new Date(),
+          autoPausedReason: reason,
+        },
+        select: { id: true, sellerAccountId: true, sku: true },
+      });
+      autoPaused = true;
+      const acc = await prisma.sellerAccount.findUnique({
+        where: { id: updated.sellerAccountId },
+        select: { userId: true },
+      });
+      if (acc) {
+        await recordAudit(
+          acc.userId,
+          "listing.auto_paused",
+          `SKU ${updated.sku}: ${reason}`,
+        );
+      }
     } else {
-      // Error duro: cuenta y, si supera el umbral, autopausa.
+      // TRANSIENT / UNKNOWN: cuenta y, si supera el umbral, autopausa.
       const updated = await prisma.sellerListing.update({
         where: { id: listingId },
         data: { consecutiveErrors: { increment: 1 } },
@@ -111,7 +146,16 @@ export async function persistPatchOutcome({
       }
     }
   } catch (e) {
-    console.warn("[resilience] persistPatchOutcome fallo:", e);
+    log.warn(
+      {
+        sellerAccountId,
+        listingId,
+        errorCategory: outcome.errorCategory,
+        rateLimited: outcome.rateLimited,
+        err: e,
+      },
+      "persistPatchOutcome failed",
+    );
   }
   return { autoPaused };
 }

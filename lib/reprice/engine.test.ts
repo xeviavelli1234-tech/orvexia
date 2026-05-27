@@ -274,3 +274,189 @@ test("STEP_UP ya en el máximo → no_change", () => {
   assert.equal(r.changed, false);
   assert.equal(r.reason, "no_change");
 });
+
+// ── BUYBOX_WINNER ───────────────────────────────────────────────
+
+test("BUYBOX_WINNER → undercut sobre el precio de la Buy Box, no del más barato", () => {
+  // Hay un competidor más barato (80) pero la Buy Box está a 95: competimos contra 95.
+  const r = computeNewPrice({
+    priceCurrent: 100,
+    priceMin: 70,
+    priceMax: 120,
+    competitorPrice: 80,
+    buyBoxPrice: 95,
+    strategy: "BUYBOX_WINNER",
+  });
+  assert.equal(r.newPrice, 94.99);
+  assert.equal(r.reason, "competitor_undercut");
+});
+
+test("BUYBOX_WINNER sin buyBoxPrice → fallback al competidor más barato", () => {
+  const r = computeNewPrice({
+    priceCurrent: 100,
+    priceMin: 70,
+    priceMax: 120,
+    competitorPrice: 90,
+    buyBoxPrice: null,
+    strategy: "BUYBOX_WINNER",
+  });
+  assert.equal(r.newPrice, 89.99);
+  assert.equal(r.reason, "competitor_undercut");
+});
+
+test("BUYBOX_WINNER sin Buy Box ni competidor → no_competition", () => {
+  const r = computeNewPrice({
+    priceCurrent: 100,
+    priceMin: 70,
+    priceMax: 120,
+    competitorPrice: null,
+    buyBoxPrice: null,
+    strategy: "BUYBOX_WINNER",
+  });
+  assert.equal(r.newPrice, 120);
+  assert.equal(r.reason, "no_competition");
+});
+
+// ── Histéresis (anti-flapping) ─────────────────────────────────
+
+test("histéresis por € → cambio inferior al umbral se descarta", () => {
+  // El motor querría bajar 0,01 € (de 100 a 99,99) pero el umbral son 0,05 €.
+  const r = computeNewPrice({
+    priceCurrent: 100,
+    priceMin: 50,
+    priceMax: 150,
+    competitorPrice: 100, // 100 - 0.01 = 99.99 → delta 0.01 < 0.05
+    minChangeAmount: 0.05,
+  });
+  assert.equal(r.newPrice, 100);
+  assert.equal(r.changed, false);
+  assert.equal(r.reason, "below_threshold");
+});
+
+test("histéresis por % → cambio inferior al % se descarta", () => {
+  // Cambio propuesto: 99,99. Delta 0,01. Umbral: 0,5% de 100 = 0,5 €.
+  const r = computeNewPrice({
+    priceCurrent: 100,
+    priceMin: 50,
+    priceMax: 150,
+    competitorPrice: 100,
+    minChangePct: 0.5,
+  });
+  assert.equal(r.changed, false);
+  assert.equal(r.reason, "below_threshold");
+});
+
+test("histéresis NO se aplica si la razón es dura (min_floor)", () => {
+  // El motor toca suelo: aunque el delta sea pequeño, hay que aplicarlo
+  // porque el suelo es una protección del usuario.
+  const r = computeNewPrice({
+    priceCurrent: 100.01,
+    priceMin: 100,
+    priceMax: 150,
+    competitorPrice: 50, // querría caer muy abajo → topa con 100
+    minChangeAmount: 1, // umbral grande
+  });
+  assert.equal(r.newPrice, 100);
+  assert.equal(r.reason, "min_floor");
+  assert.equal(r.changed, true);
+});
+
+test("histéresis: cambio por encima del umbral se aplica normal", () => {
+  const r = computeNewPrice({
+    priceCurrent: 100,
+    priceMin: 50,
+    priceMax: 150,
+    competitorPrice: 90, // 89.99 → delta ~10
+    minChangeAmount: 0.05,
+    minChangePct: 0.5,
+  });
+  assert.equal(r.newPrice, 89.99);
+  assert.equal(r.reason, "competitor_undercut");
+});
+
+// ── Freno por guerra de precios ─────────────────────────────────
+
+test("priceWarLocked → salta al suelo con razón price_war", () => {
+  const r = computeNewPrice({
+    priceCurrent: 100,
+    priceMin: 70,
+    priceMax: 150,
+    competitorPrice: 60,
+    priceWarLocked: true,
+  });
+  assert.equal(r.newPrice, 70);
+  assert.equal(r.reason, "price_war");
+  assert.equal(r.changed, true);
+});
+
+test("priceWarLocked usa marginFloor cuando es superior al mínimo", () => {
+  const r = computeNewPrice({
+    priceCurrent: 100,
+    priceMin: 50,
+    priceMax: 150,
+    competitorPrice: 60,
+    strategy: "MARGIN",
+    marginFloor: 80,
+    priceWarLocked: true,
+  });
+  assert.equal(r.newPrice, 80);
+  assert.equal(r.reason, "price_war");
+});
+
+test("priceWarLocked y ya estamos en el suelo → no_change", () => {
+  const r = computeNewPrice({
+    priceCurrent: 70,
+    priceMin: 70,
+    priceMax: 150,
+    competitorPrice: 60,
+    priceWarLocked: true,
+  });
+  assert.equal(r.changed, false);
+  assert.equal(r.reason, "no_change");
+});
+
+// ── STEP_UP geométrico (multiplicador) ─────────────────────────
+
+test("STEP_UP con stepUpMult=4 → cuadruplica el paso", () => {
+  const r = computeNewPrice({
+    priceCurrent: 100,
+    priceMin: 80,
+    priceMax: 150,
+    competitorPrice: null,
+    noCompetition: "STEP_UP",
+    stepUpType: "AMOUNT",
+    stepUpValue: 1,
+    stepUpMult: 4,
+  });
+  assert.equal(r.newPrice, 104);
+  assert.equal(r.reason, "step_up");
+});
+
+test("STEP_UP mult invalida (<1) → tratado como 1", () => {
+  const r = computeNewPrice({
+    priceCurrent: 100,
+    priceMin: 80,
+    priceMax: 150,
+    competitorPrice: null,
+    noCompetition: "STEP_UP",
+    stepUpType: "AMOUNT",
+    stepUpValue: 2,
+    stepUpMult: 0.5,
+  });
+  assert.equal(r.newPrice, 102);
+});
+
+test("STEP_UP mult acelerado se acota igualmente al techo", () => {
+  const r = computeNewPrice({
+    priceCurrent: 128,
+    priceMin: 80,
+    priceMax: 130,
+    competitorPrice: null,
+    noCompetition: "STEP_UP",
+    stepUpType: "AMOUNT",
+    stepUpValue: 2,
+    stepUpMult: 8, // 2*8=16 → 128+16=144 → acotado a 130
+  });
+  assert.equal(r.newPrice, 130);
+  assert.equal(r.reason, "max_ceiling");
+});

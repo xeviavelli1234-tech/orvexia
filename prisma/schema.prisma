@@ -375,6 +375,7 @@ enum RepriceStrategy {
   MATCH // igualar al competidor
   FIXED // precio fijo (ignora competencia)
   MARGIN // como BUYBOX pero con suelo de beneficio
+  BUYBOX_WINNER // bajar por debajo del precio ACTUAL de la Buy Box
 }
 
 enum UndercutType {
@@ -442,6 +443,28 @@ model SellerAccount {
   dryRun            Boolean @default(false) // calcula pero NO aplica en Amazon
   patchDelayMs      Int     @default(0) // retardo entre PATCHes (anti QuotaExceeded)
   autoSyncHours     Int     @default(0) // sincroniza catálogo cada N h (0 = manual)
+
+  // ── Anti-flapping (histéresis del motor) ──
+  // No cambiar precio si el delta absoluto es menor que max(€, % del actual).
+  // 0 = desactivado (compatibilidad con cuentas existentes).
+  minChangeAmount Float @default(0) // umbral mínimo en €
+  minChangePct    Float @default(0) // umbral mínimo en %
+  // Debounce: segundos mínimos entre dos cambios consecutivos del MISMO signo
+  // (dos bajadas o dos subidas seguidas). 0 = desactivado.
+  debounceSeconds Int   @default(0)
+
+  // ── Detector de guerra de precios ──
+  // Ciclos seguidos bajando arrastrados por competencia que activan el freno.
+  // 0 = OFF; valor típico 5.
+  priceWarCycles Int    @default(0)
+  // Acción al activar: "FLOOR" (saltar al suelo) | "PAUSE" (desactivar reprecio).
+  priceWarAction String @default("FLOOR")
+
+  // ── Aceleración del STEP_UP cuando estamos solos ──
+  // Tras N ciclos sin competencia, el paso se duplica geométricamente hasta
+  // stepUpMaxMult. 0 = OFF (compatible con comportamiento clásico).
+  stepUpAccelCycles Int   @default(0)
+  stepUpMaxMult     Float @default(8)
 
   // ── Alertas por email ──
   alertsEnabled     Boolean   @default(true)
@@ -542,6 +565,16 @@ model SellerListing {
   buyBoxStatus BuyBoxStatus @default(UNKNOWN)
   buyBoxPrice  Float?
   buyBoxAt     DateTime?
+
+  // ── Último estado de competencia (cache para UI y para detectar deltas) ──
+  // priceWarStreak: ciclos consecutivos bajando arrastrados por competidor.
+  // noCompetitionStreak: ciclos consecutivos sin competencia (para STEP_UP geométrico).
+  // lastDirection: dirección del último cambio efectivo ("UP" | "DOWN"), para debounce.
+  lastCompetitorPrice Float?
+  lastCompetitorAt    DateTime?
+  priceWarStreak      Int       @default(0)
+  noCompetitionStreak Int       @default(0)
+  lastDirection       String?
 
   // ── Resiliencia / sync inverso ──
   consecutiveErrors   Int       @default(0) // se incrementa en cada error, se resetea al primer éxito

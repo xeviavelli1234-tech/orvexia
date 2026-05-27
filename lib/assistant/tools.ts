@@ -249,7 +249,12 @@ export async function executeTool(
       if ("error" in r) return r.error!;
       const cur = await getListingForUser({ listingId: r.listing!.id, userId });
       if (!cur) return "No se pudo cargar el producto.";
-      const strategy = String(input.strategy) as "BUYBOX" | "MATCH" | "FIXED" | "MARGIN";
+      const strategy = String(input.strategy) as
+        | "BUYBOX"
+        | "BUYBOX_WINNER"
+        | "MATCH"
+        | "FIXED"
+        | "MARGIN";
       try {
         await setListingStrategy({
           listingId: cur.id,

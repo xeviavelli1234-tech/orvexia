@@ -1,5 +1,8 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import { logger } from "@/lib/logger";
+
+const log = logger.child("reprice:quota");
 
 /**
  * Quota tracker: una fila por cuenta y día. Incrementa contadores tras cada
@@ -47,7 +50,7 @@ export async function recordPatch(
       },
     });
   } catch (e) {
-    console.warn("[quota] recordPatch fallo:", e);
+    log.warn({ sellerAccountId, err: e }, "recordPatch failed");
   }
 }
 

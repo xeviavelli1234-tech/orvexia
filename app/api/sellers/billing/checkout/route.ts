@@ -25,6 +25,12 @@ export async function POST(req: Request) {
     const stripe = await getStripe();
     const base = getBaseUrl(req);
 
+    // Trial: 14 días gratis SOLO si es la primera suscripción del usuario
+    // (sin stripeCustomerId previo). Evita que alguien se dé de baja y se
+    // reaproveche del trial otra vez. Coincide con TRIAL_DAYS=14 de
+    // lib/billing.ts → la UI ya promete "14 días de prueba".
+    const isFirstSubscription = !account.stripeCustomerId;
+
     const checkout = await stripe.checkout.sessions.create({
       mode: "subscription",
       line_items: [{ price: STRIPE_PRICE_ID(), quantity: 1 }],
@@ -32,7 +38,10 @@ export async function POST(req: Request) {
       customer_email: account.stripeCustomerId ? undefined : session.email,
       client_reference_id: account.id,
       metadata: { sellerAccountId: account.id, userId: session.userId },
-      subscription_data: { metadata: { sellerAccountId: account.id } },
+      subscription_data: {
+        metadata: { sellerAccountId: account.id },
+        ...(isFirstSubscription ? { trial_period_days: 14 } : {}),
+      },
       success_url: `${base}/sellers/facturacion?status=upgraded`,
       cancel_url: `${base}/sellers/facturacion?status=cancelled`,
     });

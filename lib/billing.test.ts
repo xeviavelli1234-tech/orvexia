@@ -8,6 +8,8 @@ import {
   getBillingState,
   tierForSkuCount,
   priceForSkuCount,
+  repricingActiveLimit,
+  TRIAL_ACTIVE_LIMIT,
   PRICE_TIERS,
 } from "./billing";
 
@@ -89,4 +91,28 @@ test("tramos crecientes en SKUs y precio", () => {
     assert.ok(PRICE_TIERS[i].maxSkus > PRICE_TIERS[i - 1].maxSkus);
     assert.ok(PRICE_TIERS[i].priceEur > PRICE_TIERS[i - 1].priceEur);
   }
+});
+
+// ── repricingActiveLimit ─────────────────────────────────────────────────
+
+test("repricingActiveLimit: TRIAL siempre 50 activos máx, ignora catálogo", () => {
+  assert.equal(repricingActiveLimit("TRIAL", 5), TRIAL_ACTIVE_LIMIT);
+  assert.equal(repricingActiveLimit("TRIAL", 500), TRIAL_ACTIVE_LIMIT);
+  assert.equal(repricingActiveLimit("TRIAL", 50_000), TRIAL_ACTIVE_LIMIT);
+});
+
+test("repricingActiveLimit: PRO usa el tier por catálogo", () => {
+  // Catálogo de 30 SKUs → starter (50).
+  assert.equal(repricingActiveLimit("PRO", 30), 50);
+  // 120 SKUs → growth (200).
+  assert.equal(repricingActiveLimit("PRO", 120), 200);
+  // 500 SKUs → scale (1000).
+  assert.equal(repricingActiveLimit("PRO", 500), 1000);
+  // 5000 SKUs → unlimited (Infinity).
+  assert.equal(repricingActiveLimit("PRO", 5000), Infinity);
+});
+
+test("repricingActiveLimit: PRO con catálogo 0 → starter 50", () => {
+  // Un PRO recién suscrito sin productos sigue teniendo 50 disponibles.
+  assert.equal(repricingActiveLimit("PRO", 0), 50);
 });

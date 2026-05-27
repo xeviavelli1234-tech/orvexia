@@ -5,6 +5,9 @@ import { getSalesKpisForUser } from "./orders-sync";
 import { getLastDaysUsage } from "./quota";
 import { sendRepricerWeeklyDigestEmail } from "@/lib/email";
 import { sendToExternalChannels } from "./notify-external";
+import { logger } from "@/lib/logger";
+
+const log = logger.child("reprice:weekly-digest");
 
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -78,7 +81,9 @@ export async function generateAndSendWeeklyDigest(
     narrative,
     summary,
     aiUsed: false,
-  }).catch((e) => console.warn("[weekly-digest] email failed:", e));
+  }).catch((e) =>
+    log.warn({ sellerAccountId, err: e }, "digest email failed"),
+  );
 
   // Notificación externa (resumen acortado)
   const short = `📊 Resumen semanal Orvexia\nSalud: ${summary.healthLetter} (${summary.healthScore}/100) · Eventos: ${summary.eventsCount} · Errores: ${summary.errorsCount} · Pedidos: ${summary.ordersCount} · Sugerencias: ${summary.suggestionsCount}`;

@@ -2,19 +2,36 @@
  * Motor de reprecio — FUNCIÓN PURA, sin side effects, 100% testeable.
  *
  * Estrategias:
- *  - BUYBOX  : nos ponemos por debajo del competidor más barato (importe o %).
- *  - MATCH   : igualamos al competidor.
- *  - FIXED   : precio fijo, ignora la competencia.
- *  - MARGIN  : como BUYBOX pero con suelo de beneficio (marginFloor).
- * Sin competencia: subir al máximo (MAX) o mantener (HOLD).
+ *  - BUYBOX        : nos ponemos por debajo del competidor más barato.
+ *  - BUYBOX_WINNER : nos ponemos por debajo del precio actual de la Buy Box
+ *                    (no necesariamente el más barato). Si no hay datos
+ *                    de Buy Box, hace fallback a BUYBOX clásico.
+ *  - MATCH         : igualamos al competidor.
+ *  - FIXED         : precio fijo, ignora la competencia.
+ *  - MARGIN        : como BUYBOX pero con suelo de beneficio (marginFloor).
+ * Sin competencia: subir al máximo (MAX) o mantener (HOLD) o STEP_UP gradual.
  * El resultado SIEMPRE se acota a [priceMin, priceMax] (y a marginFloor).
  * Redondeo a 2 decimales.
+ *
+ * Histéresis (anti-flapping): si el cambio absoluto cae por debajo de
+ * max(minChangeAmount, current * minChangePct/100), no cambiamos. Las
+ * salvaguardas duras (suelo, techo, margen, guerra) NO se filtran por
+ * histéresis: nunca dejamos al cliente sangrando para ahorrar un PATCH.
+ *
+ * Guerra de precios: si el runner detecta N ciclos seguidos bajando
+ * arrastrados y pasa priceWarLocked=true, el motor salta al suelo efectivo
+ * (effMin) con razón "price_war".
  *
  * Por defecto (sin pasar strategy) reproduce el comportamiento clásico:
  * BUYBOX, undercut 0,01 €, sin competencia → máximo.
  */
 
-export type RepriceStrategy = "BUYBOX" | "MATCH" | "FIXED" | "MARGIN";
+export type RepriceStrategy =
+  | "BUYBOX"
+  | "BUYBOX_WINNER"
+  | "MATCH"
+  | "FIXED"
+  | "MARGIN";
 export type UndercutType = "AMOUNT" | "PERCENT";
 export type NoCompetitionMode = "MAX" | "HOLD" | "STEP_UP";
 
@@ -28,7 +45,9 @@ export type RepriceReason =
   | "no_competition"
   | "step_up"
   | "hold"
-  | "no_change";
+  | "no_change"
+  | "below_threshold"
+  | "price_war";
 
 export interface RepriceInput {
   priceCurrent: number;
@@ -36,6 +55,8 @@ export interface RepriceInput {
   priceMax: number;
   /** Precio del competidor más barato, o null si no hay competencia. */
   competitorPrice: number | null;
+  /** Precio del ganador actual de la Buy Box (real, SP-API), o null. Usado por BUYBOX_WINNER. */
+  buyBoxPrice?: number | null;
 
   strategy?: RepriceStrategy;
   undercutType?: UndercutType;
@@ -53,6 +74,18 @@ export interface RepriceInput {
   stepUpType?: UndercutType;
   /** STEP_UP: tamaño del paso por ciclo (importe o %). */
   stepUpValue?: number;
+  /** STEP_UP: multiplicador acumulado del paso (≥1). Default 1 (sin acelerar). */
+  stepUpMult?: number;
+
+  // ── Anti-flapping ─────────────────────────────────────────────────────
+  /** Umbral mínimo en €. Si |new-current| < threshold → no cambiar. Default 0. */
+  minChangeAmount?: number;
+  /** Umbral mínimo en % del precio actual. Se combina con minChangeAmount (max). Default 0. */
+  minChangePct?: number;
+
+  // ── Freno por guerra de precios ───────────────────────────────────────
+  /** Si true, ignora la lógica normal y va al suelo con razón "price_war". */
+  priceWarLocked?: boolean;
 }
 
 export interface RepriceResult {
@@ -64,6 +97,15 @@ export interface RepriceResult {
 function round2(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100;
 }
+
+/** Razones que son "constraints duros": el motor las debe respetar
+ *  aunque salten la histéresis (son protección del usuario, no un movimiento). */
+const HARD_REASONS = new Set<RepriceReason>([
+  "min_floor",
+  "max_ceiling",
+  "margin_floor",
+  "price_war",
+]);
 
 export function computeNewPrice(input: RepriceInput): RepriceResult {
   const strategy: RepriceStrategy = input.strategy ?? "BUYBOX";
@@ -94,8 +136,35 @@ export function computeNewPrice(input: RepriceInput): RepriceResult {
   }
   if (effMin > max) effMin = max; // el suelo nunca supera el techo
 
-  const hasComp =
+  // Freno por guerra de precios: salto directo al suelo, sin pasar por el
+  // resto de la lógica. Es protección, así que ignora la histéresis.
+  if (input.priceWarLocked === true) {
+    const newPrice = round2(effMin);
+    return {
+      newPrice,
+      changed: newPrice !== current,
+      reason: newPrice !== current ? "price_war" : "no_change",
+    };
+  }
+
+  const hasCompCheapest =
     input.competitorPrice != null && Number.isFinite(input.competitorPrice);
+  const hasBuyBox =
+    input.buyBoxPrice != null && Number.isFinite(input.buyBoxPrice);
+
+  // Para BUYBOX_WINNER: competir contra buyBoxPrice; si no hay → fallback
+  // al competidor más barato (BUYBOX clásico). Sin ninguno → noCompetition.
+  const competeAgainst: number | null =
+    strategy === "BUYBOX_WINNER"
+      ? hasBuyBox
+        ? (input.buyBoxPrice as number)
+        : hasCompCheapest
+          ? (input.competitorPrice as number)
+          : null
+      : hasCompCheapest
+        ? (input.competitorPrice as number)
+        : null;
+  const hasComp = competeAgainst != null;
 
   let target: number;
   let baseReason: RepriceReason;
@@ -108,7 +177,8 @@ export function computeNewPrice(input: RepriceInput): RepriceResult {
       return { newPrice: current, changed: false, reason: "no_change" };
     }
     if (noComp === "STEP_UP") {
-      // Subir poco a poco hacia el máximo (no saltar de golpe).
+      // Subir poco a poco hacia el máximo. mult permite aceleración geométrica
+      // controlada desde el runner cuando llevamos N ciclos solos.
       const stType: UndercutType = input.stepUpType ?? "AMOUNT";
       const rawV = input.stepUpValue;
       const v =
@@ -117,7 +187,13 @@ export function computeNewPrice(input: RepriceInput): RepriceResult {
           : stType === "PERCENT"
             ? 1
             : 0.05;
-      const rawStep = stType === "PERCENT" ? current * (v / 100) : v;
+      const mult =
+        input.stepUpMult != null &&
+        Number.isFinite(input.stepUpMult) &&
+        input.stepUpMult >= 1
+          ? input.stepUpMult
+          : 1;
+      const rawStep = (stType === "PERCENT" ? current * (v / 100) : v) * mult;
       const step = Math.max(0.01, rawStep); // garantiza avance
       target = round2(current + step);
       baseReason = "step_up";
@@ -126,12 +202,12 @@ export function computeNewPrice(input: RepriceInput): RepriceResult {
       baseReason = "no_competition";
     }
   } else {
-    const comp = input.competitorPrice as number;
+    const comp = competeAgainst as number;
     if (strategy === "MATCH") {
       target = round2(comp);
       baseReason = "competitor_match";
     } else {
-      // BUYBOX / MARGIN
+      // BUYBOX / BUYBOX_WINNER / MARGIN
       target =
         undercutType === "PERCENT"
           ? round2(comp * (1 - undercutValue / 100))
@@ -152,7 +228,30 @@ export function computeNewPrice(input: RepriceInput): RepriceResult {
   }
 
   newPrice = round2(newPrice);
-  const changed = newPrice !== current;
 
+  // ── Histéresis (anti-flapping) ─────────────────────────────────────────
+  // Si el movimiento es más pequeño que el umbral configurado y NO es una
+  // razón "dura" (suelo/techo/margen/guerra), lo descartamos. Esto evita
+  // PATCHes inútiles cuando el competidor oscila ±0,01–0,02 €.
+  const minAmt =
+    input.minChangeAmount != null &&
+    Number.isFinite(input.minChangeAmount) &&
+    input.minChangeAmount > 0
+      ? input.minChangeAmount
+      : 0;
+  const minPct =
+    input.minChangePct != null &&
+    Number.isFinite(input.minChangePct) &&
+    input.minChangePct > 0
+      ? input.minChangePct
+      : 0;
+  if ((minAmt > 0 || minPct > 0) && !HARD_REASONS.has(reason)) {
+    const threshold = Math.max(minAmt, (current * minPct) / 100);
+    if (Math.abs(newPrice - current) < threshold) {
+      return { newPrice: current, changed: false, reason: "below_threshold" };
+    }
+  }
+
+  const changed = newPrice !== current;
   return { newPrice, changed, reason: changed ? reason : "no_change" };
 }

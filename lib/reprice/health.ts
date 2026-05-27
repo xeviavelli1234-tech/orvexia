@@ -7,6 +7,9 @@ import {
   type Suggestion,
   type ListingSnapshot,
 } from "./health-core";
+import { logger } from "@/lib/logger";
+
+const log = logger.child("reprice:health");
 
 export type { HealthScore, Suggestion } from "./health-core";
 
@@ -136,7 +139,10 @@ export async function recordDumperHit(
       },
     });
   } catch (e) {
-    console.warn("[health] recordDumperHit:", e);
+    log.warn(
+      { sellerAccountId, amazonSellerId, err: e },
+      "recordDumperHit failed",
+    );
   }
 }
 

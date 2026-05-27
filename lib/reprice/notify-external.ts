@@ -1,5 +1,15 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import { logger } from "@/lib/logger";
+import {
+  shouldDispatchToChannel,
+  type AlertCategory,
+  type ChannelAlertFlags,
+} from "./notify-external-filter";
+
+export { shouldDispatchToChannel, type AlertCategory, type ChannelAlertFlags };
+
+const log = logger.child("notify-external");
 
 /**
  * Notificaciones externas (Slack / Telegram / Discord / webhook genérico).
@@ -20,7 +30,7 @@ export type ChannelKind = "slack" | "telegram" | "discord" | "webhook";
 
 export interface SendInput {
   sellerAccountId: string;
-  category: "buybox_lost" | "price_floor" | "error" | "auto_pause" | "weekly";
+  category: AlertCategory;
   text: string;
   payload?: Record<string, unknown>;
 }
@@ -38,12 +48,8 @@ export async function sendToExternalChannels(input: SendInput): Promise<{
     },
   });
   for (const ch of channels) {
-    // Respeta filtros por tipo
-    if (input.category === "buybox_lost" && !ch.alertBuyBoxLost) continue;
-    if (input.category === "price_floor" && !ch.alertPriceFloor) continue;
-    if (input.category === "error" && !ch.alertError) continue;
-    if (input.category === "auto_pause" && !ch.alertAutoPause) continue;
-    if (input.category === "weekly" && !ch.alertWeekly) continue;
+    // Respeta filtros por tipo según los flags configurados en el canal
+    if (!shouldDispatchToChannel(ch, input.category)) continue;
     try {
       await dispatch(ch.kind as ChannelKind, ch.webhookUrl, ch.extraTarget, input.text, input.payload);
       await prisma.notificationChannel.update({
@@ -53,12 +59,33 @@ export async function sendToExternalChannels(input: SendInput): Promise<{
       sent++;
     } catch (e) {
       failed++;
-      await prisma.notificationChannel
-        .update({
+      // Loguea el fallo del canal con contexto (qué canal, qué tipo, qué error).
+      // El throw NO se propaga: un canal roto no debe romper otros canales del
+      // mismo seller, ni el ciclo de reprice que dispara la notificación.
+      log.warn(
+        {
+          channelId: ch.id,
+          sellerAccountId: ch.sellerAccountId,
+          kind: ch.kind,
+          category: input.category,
+          err: e,
+        },
+        "external_channel_dispatch_failed",
+      );
+      try {
+        await prisma.notificationChannel.update({
           where: { id: ch.id },
           data: { lastError: e instanceof Error ? e.message.slice(0, 300) : "error" },
-        })
-        .catch(() => {});
+        });
+      } catch (dbErr) {
+        // Si NI siquiera podemos guardar el error en BD, eso es escalable:
+        // típicamente significa que la BD está caída. Lo logueamos como error
+        // para que aparezca en stderr / Sentry / Vercel logs.
+        log.error(
+          { channelId: ch.id, originalErr: e, dbErr },
+          "external_channel_lastError_save_failed",
+        );
+      }
     }
   }
   return { sent, failed };

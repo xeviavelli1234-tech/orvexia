@@ -90,6 +90,24 @@ export function priceForSkuCount(skuCount: number): number {
   return tierForSkuCount(skuCount).priceEur;
 }
 
+// ── Límite de productos con repricing ACTIVO ─────────────────────────────
+// `catalogCount` = total de listings (incluye los pausados). El tier sale
+// del catálogo: si has subido 250 productos, eres "growth" aunque solo
+// tengas 10 activos. Lo que limitamos es cuántos de ese catálogo pueden
+// estar con `repricingEnabled = true` a la vez. Más allá hay que upgradear.
+//
+// TRIAL siempre 50 (suficiente para probar el motor, no para escalar).
+export const TRIAL_ACTIVE_LIMIT = 50;
+
+export function repricingActiveLimit(
+  plan: SellerPlan,
+  catalogCount: number,
+): number {
+  if (plan === "TRIAL") return TRIAL_ACTIVE_LIMIT;
+  const tier = tierForSkuCount(catalogCount);
+  return tier.maxSkus;
+}
+
 export function getBillingState(
   plan: SellerPlan,
   trialEndsAt: Date | null,
