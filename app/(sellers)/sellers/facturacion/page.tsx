@@ -208,6 +208,17 @@ export default async function FacturacionPage({
               >
                 Pasar a Pro
               </button>
+              <p className="mt-3 text-[11px] text-fg/50 leading-relaxed">
+                Al continuar aceptas los{" "}
+                <Link href="/terminos" className="underline hover:text-[var(--brand-600)]">
+                  Términos del Servicio
+                </Link>
+                {" "}y la{" "}
+                <Link href="/politica-privacidad" className="underline hover:text-[var(--brand-600)]">
+                  Política de Privacidad
+                </Link>
+                . Suscripción mensual recurrente sin permanencia, cancela cuando quieras.
+              </p>
             </form>
           ) : (
             <div className="mt-6 rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30 px-4 py-3 text-xs text-amber-700 dark:text-amber-400">
