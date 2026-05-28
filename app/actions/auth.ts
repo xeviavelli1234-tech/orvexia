@@ -13,6 +13,7 @@ import {
 } from "@/lib/session";
 import { decryptToken } from "@/lib/crypto";
 import { verifyTotp } from "@/lib/totp";
+import { VERIFICATION_CODE_TTL_MS } from "@/lib/auth-constants";
 import { randomInt } from "crypto";
 import { sendVerificationEmail } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
@@ -70,12 +71,16 @@ export async function registerAction(
       where: { id: existing.id },
       data: {
         verificationToken: code,
-        verificationTokenExpires: new Date(Date.now() + 1000 * 60 * 60 * 24),
+        verificationTokenExpires: new Date(Date.now() + VERIFICATION_CODE_TTL_MS),
       },
     });
     const { emailSent: sent } = await sendVerificationEmail({ to: existing.email, code });
+    // Si el email falla, avisamos con emailSent=false. El código SOLO se expone
+    // en la URL en desarrollo; en producción nunca (filtraría la verificación).
+    const devCode =
+      !sent && process.env.NODE_ENV !== "production" ? `&code=${code}` : "";
     redirect(
-      `/verify?email=${encodeURIComponent(existing.email)}${sent ? "" : `&emailSent=false&code=${code}`}`
+      `/verify?email=${encodeURIComponent(existing.email)}${sent ? "" : `&emailSent=false${devCode}`}`
     );
   }
 
@@ -87,7 +92,7 @@ export async function registerAction(
     email,
     password: hashedPassword,
     verificationToken: verificationCode,
-    verificationTokenExpires: new Date(Date.now() + 1000 * 60 * 60 * 24),
+    verificationTokenExpires: new Date(Date.now() + VERIFICATION_CODE_TTL_MS),
   });
 
   const { emailSent } = await sendVerificationEmail({
@@ -95,9 +100,14 @@ export async function registerAction(
     code: verificationCode,
   });
 
+  // Igual que arriba: el código solo se expone en la URL en desarrollo.
+  const devCode2 =
+    !emailSent && process.env.NODE_ENV !== "production"
+      ? `&code=${verificationCode}`
+      : "";
   redirect(
     `/verify?email=${encodeURIComponent(user.email)}${
-      emailSent ? "" : `&emailSent=false&code=${verificationCode}`
+      emailSent ? "" : `&emailSent=false${devCode2}`
     }`
   );
 }

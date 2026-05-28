@@ -23,6 +23,7 @@ const STATUS: Record<string, { kind: "ok" | "err" | "info"; text: string }> = {
   },
   stripe_error: { kind: "err", text: "Error con Stripe. Inténtalo de nuevo o contacta soporte." },
   connect_first: { kind: "err", text: "Primero conecta o activa tu cuenta en el panel." },
+  rate_limited: { kind: "err", text: "Demasiadas solicitudes seguidas. Espera un momento e inténtalo de nuevo." },
 };
 
 export default async function FacturacionPage({

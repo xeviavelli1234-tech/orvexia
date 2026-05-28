@@ -12,6 +12,7 @@ import { prisma } from "@/lib/prisma";
 import { parse } from "csv-parse";
 import { createGunzip } from "node:zlib";
 import { Readable } from "node:stream";
+import { parsePricePositive } from "@/lib/format/parsePrice";
 
 export interface FeedConfig {
   /** Nombre canónico del store en BD (ej. "El Corte Inglés", "Fnac"). */
@@ -55,13 +56,9 @@ const STALE_DAYS = 14;
 
 // ── Utilidades de parseo ─────────────────────────────────────────────────────
 
-function parsePrice(s: string | undefined): number | null {
-  if (!s) return null;
-  const n = parseFloat(s.replace(",", ".").replace(/[^\d.-]/g, ""));
-  return Number.isFinite(n) && n > 0 ? Math.round(n * 100) / 100 : null;
-}
+const parsePrice = parsePricePositive;
 
-function parseInStock(row: Record<string, string>): boolean {
+export function parseInStock(row: Record<string, string>): boolean {
   const inStock = row.in_stock?.trim();
   const isForSale = row.is_for_sale?.trim();
   const stockStatus = row.stock_status?.trim().toLowerCase();
@@ -75,13 +72,68 @@ function parseInStock(row: Record<string, string>): boolean {
   return inStock === "1" || stockStatus === "" || /disponib|in\s*stock|available/i.test(stockStatus ?? "");
 }
 
-function extractAwProductId(externalUrl: string): string | null {
+export function extractAwProductId(externalUrl: string): string | null {
   // Awin URL: https://www.awin1.com/pclick.php?p=44372459927&a=2854543&m=77630
   const m = externalUrl.match(/[?&]p=([^&]+)/);
   return m ? decodeURIComponent(m[1]) : null;
 }
 
-function extractImages(row: Record<string, string>): string[] {
+export interface FeedRowComputed {
+  priceCurrent: number;
+  priceOld: number | null;
+  discountPercent: number | null;
+  inStock: boolean;
+}
+
+/**
+ * Calcula los valores derivados de una fila del feed (precio, precio anterior,
+ * descuento, stock) sin tocar BD. Devuelve `null` si la fila no es procesable
+ * (sin precio actual válido).
+ *
+ * Reglas críticas:
+ * - Precio actual: search_price > store_price > display_price
+ * - Precio antiguo: was_price > product_price_old > rrp_price (PVPR fabricante)
+ * - Si el PVPR implica >25% descuento y no hay was_price del store, lo descartamos
+ *   (suele ser PVP de lanzamiento ya obsoleto)
+ * - Descuento: prioriza el del feed (savings_percent ECI / saving_percent FNAC),
+ *   si no, lo calcula del ratio
+ * - Si no hay priceOld, no hay descuento
+ */
+export function computeOfferUpdate(row: Record<string, string>): FeedRowComputed | null {
+  const priceCurrent =
+    parsePrice(row.search_price) ??
+    parsePrice(row.store_price) ??
+    parsePrice(row.display_price);
+
+  if (priceCurrent === null) return null;
+
+  const wasPrice = parsePrice(row.was_price);
+  const oldFromStore = wasPrice ?? parsePrice(row.product_price_old);
+  const rrpPrice = parsePrice(row.rrp_price);
+
+  let priceOld: number | null = oldFromStore ?? rrpPrice;
+  if (priceOld !== null && priceOld <= priceCurrent) priceOld = null;
+
+  if (priceOld !== null && oldFromStore === null && rrpPrice !== null) {
+    const implied = (priceOld - priceCurrent) / priceOld;
+    if (implied > 0.25) priceOld = null;
+  }
+
+  // ECI usa savings_percent, Fnac usa saving_percent (sin 's')
+  const savingsRaw = row.savings_percent ?? row.saving_percent ?? "0";
+  const savingsPct = parseInt(savingsRaw, 10);
+  let discountPercent: number | null = Number.isFinite(savingsPct) && savingsPct > 0 ? savingsPct : null;
+  if (!discountPercent && priceOld) {
+    discountPercent = Math.round((1 - priceCurrent / priceOld) * 100);
+  }
+  if (!priceOld) discountPercent = null;
+
+  const inStock = parseInStock(row);
+
+  return { priceCurrent, priceOld, discountPercent, inStock };
+}
+
+export function extractImages(row: Record<string, string>): string[] {
   const candidates = [
     row.merchant_image_url,
     row.large_image,
@@ -231,42 +283,9 @@ export async function importStore(
     stats.matched++;
 
     try {
-      // Precio actual: search_price > store_price > display_price
-      const priceCurrent =
-        parsePrice(row.search_price) ??
-        parsePrice(row.store_price) ??
-        parsePrice(row.display_price);
-
-      if (priceCurrent === null) continue;
-
-      // Precio antiguo: priorizamos el "tachado" real del store
-      // (was_price / product_price_old) sobre rrp_price (PVP de fabricante,
-      // que con frecuencia es el de lanzamiento y ya no refleja lo que
-      // la tienda lleva meses cobrando — produce descuentos falsos).
-      const wasPrice = parsePrice(row.was_price);
-      const oldFromStore = wasPrice ?? parsePrice(row.product_price_old);
-      const rrpPrice = parsePrice(row.rrp_price);
-
-      let priceOld: number | null = oldFromStore ?? rrpPrice;
-      if (priceOld !== null && priceOld <= priceCurrent) priceOld = null;
-
-      // Sanidad: si el priceOld NO viene del store y el descuento implícito
-      // supera el 25%, casi seguro es un PVP de lanzamiento inflado.
-      if (priceOld !== null && oldFromStore === null && rrpPrice !== null) {
-        const implied = (priceOld - priceCurrent) / priceOld;
-        if (implied > 0.25) priceOld = null;
-      }
-
-      // Descuento %: ECI usa savings_percent, Fnac usa saving_percent (sin 's')
-      const savingsRaw = row.savings_percent ?? row.saving_percent ?? "0";
-      const savingsPct = parseInt(savingsRaw, 10);
-      let discountPercent: number | null = Number.isFinite(savingsPct) && savingsPct > 0 ? savingsPct : null;
-      if (!discountPercent && priceOld) {
-        discountPercent = Math.round((1 - priceCurrent / priceOld) * 100);
-      }
-      if (!priceOld) discountPercent = null;
-
-      const inStock = parseInStock(row);
+      const computed = computeOfferUpdate(row);
+      if (computed === null) continue;
+      const { priceCurrent, priceOld, discountPercent, inStock } = computed;
 
       // Imágenes nuevas del feed (puede estar vacío si no las trae)
       const feedImages = extractImages(row);

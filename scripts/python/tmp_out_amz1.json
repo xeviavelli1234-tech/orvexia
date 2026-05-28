@@ -1,0 +1,126 @@
+{
+  "asin": "B0F45BLD1H",
+  "url": "https://www.amazon.es/XIAOMI-Pulgadas-Control-Compatible-AirPlay/dp/B0F45BLD1H",
+  "title": "XIAOMI TV F Pro 75, 75 Pulgadas (190 cm), 4K UHD QLED, Smart TV, Fire OS8, Control por Voz Alexa, HDR10+, Modo Game Boost 120Hz, MEMC, 2GB+32GB, Compatible con Apple AirPlay",
+  "brand": "XIAOMI",
+  "price_current": 599.0,
+  "price_previous": 699.0,
+  "currency": "EUR",
+  "discount_percent": 14,
+  "coupon": "Ahorra",
+  "prime_price": null,
+  "deal_detected": true,
+  "deal_type": [
+    "oferta_visible",
+    "descuento_calculado",
+    "cupon_adicional"
+  ],
+  "availability": "en_stock",
+  "seller": "Vendido por Amazon Segunda mano y gestionado por Amazon .",
+  "rating": 4.2,
+  "review_count": 3311,
+  "images": [
+    "https://m.media-amazon.com/images/I/61n7+7Z8t2L.jpg",
+    "https://m.media-amazon.com/images/I/61WO3JCJzEL.jpg",
+    "https://m.media-amazon.com/images/I/71uxeNlsSyL.jpg",
+    "https://m.media-amazon.com/images/I/71k2Opxsg9L.jpg",
+    "https://m.media-amazon.com/images/I/61FBRmWlfaL.jpg",
+    "https://m.media-amazon.com/images/I/71Sh+8hfB+L.jpg",
+    "https://images-eu.ssl-images-amazon.com/images/I/6175BXNcHoL.jpg"
+  ],
+  "variants": [
+    {
+      "dimension": "Nombre de estilo",
+      "options": [
+        {
+          "value": "Fire TV Pro(2026 model)",
+          "asin": "B0F45BLD1H",
+          "status": "disponible"
+        },
+        {
+          "value": "F2 TV",
+          "asin": "B09XY1G7PT",
+          "status": "no_disponible"
+        }
+      ]
+    },
+    {
+      "dimension": "Tamaño",
+      "options": [
+        {
+          "value": "32\"",
+          "asin": "B0F457M449",
+          "status": "disponible"
+        },
+        {
+          "value": "43\"",
+          "asin": "B0F454D76T",
+          "status": "disponible"
+        },
+        {
+          "value": "50\"",
+          "asin": "B0F45835F8",
+          "status": "disponible"
+        },
+        {
+          "value": "55\"",
+          "asin": "B0F44W5HQH",
+          "status": "disponible"
+        },
+        {
+          "value": "65\"",
+          "asin": "B0F454CH49",
+          "status": "disponible"
+        },
+        {
+          "value": "75\"",
+          "asin": "B0F45BLD1H",
+          "status": "disponible"
+        }
+      ]
+    },
+    {
+      "dimension": "Tamano",
+      "options": [
+        {
+          "value": "32\"",
+          "asin": "B0F457M449",
+          "status": "disponible"
+        },
+        {
+          "value": "43\"",
+          "asin": "B0F454D76T",
+          "status": "disponible"
+        },
+        {
+          "value": "50\"",
+          "asin": "B0F45835F8",
+          "status": "disponible"
+        },
+        {
+          "value": "55\"",
+          "asin": "B0F44W5HQH",
+          "status": "disponible"
+        },
+        {
+          "value": "65\"",
+          "asin": "B0F454CH49",
+          "status": "disponible"
+        },
+        {
+          "value": "75\"",
+          "asin": "B0F45BLD1H",
+          "status": "disponible"
+        }
+      ]
+    }
+  ],
+  "scraped_at": "2026-04-20T09:06:57.656759+00:00",
+  "marketplace": "amazon.es",
+  "price_change_vs_previous_run": null,
+  "product_condition": "nuevo",
+  "canonical_url": "https://www.amazon.es/XIAOMI-Pulgadas-Control-Compatible-AirPlay/dp/B0F45BLD1H",
+  "extraction_warnings": [],
+  "http_status": null,
+  "page_not_found": false
+}

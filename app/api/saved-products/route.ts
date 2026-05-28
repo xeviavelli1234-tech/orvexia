@@ -6,8 +6,11 @@ export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-  const { productId } = await req.json();
-  if (!productId) return NextResponse.json({ error: "productId requerido" }, { status: 400 });
+  const body = await req.json().catch(() => null);
+  const productId = body?.productId;
+  if (!productId || typeof productId !== "string") {
+    return NextResponse.json({ error: "productId requerido" }, { status: 400 });
+  }
 
   const product = await prisma.product.findUnique({
     where: { id: productId },
@@ -32,8 +35,11 @@ export async function DELETE(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-  const { productId } = await req.json();
-  if (!productId) return NextResponse.json({ error: "productId requerido" }, { status: 400 });
+  const body = await req.json().catch(() => null);
+  const productId = body?.productId;
+  if (!productId || typeof productId !== "string") {
+    return NextResponse.json({ error: "productId requerido" }, { status: 400 });
+  }
 
   await prisma.savedProduct.deleteMany({
     where: { userId: session.userId, productId },

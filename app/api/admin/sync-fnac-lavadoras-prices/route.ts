@@ -18,9 +18,18 @@ const UPDATES: Update[] = [
 ];
 
 export async function GET(req: NextRequest) {
+  // Este endpoint REESCRIBE precios → fail-closed. Sin CRON_SECRET
+  // configurado, en producción se rechaza (antes era fail-open: cualquiera
+  // podía mutar precios si faltaba el secret). Acepta el secret por header o
+  // query param para conservar el uso manual existente.
   const secret = process.env.CRON_SECRET;
-  if (secret) {
-    const provided = req.headers.get("x-cron-secret") ?? req.nextUrl.searchParams.get("secret");
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      return NextResponse.json({ error: "not_configured" }, { status: 503 });
+    }
+  } else {
+    const provided =
+      req.headers.get("x-cron-secret") ?? req.nextUrl.searchParams.get("secret");
     if (provided !== secret) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

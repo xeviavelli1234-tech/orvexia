@@ -73,6 +73,7 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
             },
           },
           orderBy: { createdAt: "asc" },
+          take: 200, // evita cargar hilos enormes de golpe
         },
         votes: { select: { userId: true } },
         product: { select: { id: true, name: true, image: true, slug: true } },

@@ -1,8 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import ProductModal from "./ProductModal";
+import Image from "next/image";
+import dynamic from "next/dynamic";
 import { StockBadge } from "./StockBadge";
+import { formatEUR } from "@/lib/format/eur";
+import { getRealDiscountPercent } from "@/lib/products/discount";
+
+// El modal solo se monta tras el primer click → fuera del bundle inicial.
+const ProductModal = dynamic(() => import("./ProductModal"), { ssr: false });
 
 interface Offer {
   store: string;
@@ -37,20 +43,7 @@ interface Props {
 const MIN_REASONABLE_PRICE = 20;
 const MAX_REASONABLE_PRICE = 5000;
 
-function formatPrice(n: number) {
-  return new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(n);
-}
-
-function getRealDiscountPercent(offer: Offer | undefined): number {
-  if (!offer?.priceOld) return 0;
-  if (offer.priceCurrent >= offer.priceOld) return 0;
-  // Tiendas de feed oficial Awin: confiamos en el descuento (ya verificado).
-  // Outlets de LG / Reacondicionados ECI llegan legítimamente al 60-70%.
-  const trustedStore =
-    /^(LG|Fnac)$/i.test(offer.store) || offer.store.toLowerCase().includes("corte ingl");
-  if (!trustedStore && offer.priceOld / offer.priceCurrent > 2.1) return 0; // descarta PVPR inflado
-  return Math.round((1 - offer.priceCurrent / offer.priceOld) * 100);
-}
+const formatPrice = (n: number) => formatEUR(n);
 
 export function CategoryProductCard({ product, catColor, catIcon }: Props) {
   const [open, setOpen] = useState(false);
@@ -76,11 +69,12 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
         {/* Imagen */}
         <div className="relative w-24 sm:w-28 flex-shrink-0 bg-white">
           {thumb && !thumbError ? (
-            <img
+            <Image
               src={thumb}
               alt={product.name}
-              className="absolute inset-0 w-full h-full object-contain p-3"
-              loading="lazy"
+              fill
+              sizes="(min-width: 640px) 112px, 96px"
+              className="object-contain p-3"
               referrerPolicy="no-referrer"
               onError={() => {
                 if (!thumb) return;
@@ -153,9 +147,9 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
               </div>
               {saneOffers.length > 1 && (
                 <div className="flex flex-wrap gap-1 mt-0.5">
-                  {saneOffers.slice(0, 4).map((o) => (
+                  {saneOffers.slice(0, 4).map((o, i) => (
                     <span
-                      key={o.store}
+                      key={`${o.store}-${i}`}
                       className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${
                         o.store === oferta.store
                           ? "border-cyan-400/45 bg-cyan-400/10 text-cyan-200"

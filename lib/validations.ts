@@ -2,9 +2,18 @@ import { z } from "zod";
 
 const emailCom = z.string().email("Email inválido");
 
+// Reglas de contraseña fuertes — replican la validación del cliente
+// (RegisterForm) para que un POST directo no pueda saltarse los requisitos.
+export const strongPassword = z
+  .string()
+  .min(8, "La contraseña debe tener al menos 8 caracteres")
+  .regex(/[A-Z]/, "Debe incluir al menos una mayúscula")
+  .regex(/[0-9]/, "Debe incluir al menos un número")
+  .regex(/[^A-Za-z0-9]/, "Debe incluir al menos un carácter especial");
+
 export const registerSchema = z.object({
   email: emailCom,
-  password: z.string().min(1, "La contraseña es obligatoria"),
+  password: strongPassword,
 });
 
 export const loginSchema = z.object({

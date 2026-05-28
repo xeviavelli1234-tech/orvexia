@@ -139,7 +139,13 @@ export function computeNewPrice(input: RepriceInput): RepriceResult {
   // Freno por guerra de precios: salto directo al suelo, sin pasar por el
   // resto de la lógica. Es protección, así que ignora la histéresis.
   if (input.priceWarLocked === true) {
-    const newPrice = round2(effMin);
+    // Garantiza la invariante [min, max] de forma explícita. effMin ya está
+    // acotado a max (línea anterior) y nunca baja de min por construcción,
+    // pero clampeamos por robustez para que NINGUNA rama escape del rango.
+    let newPrice = round2(effMin);
+    if (newPrice < min) newPrice = min;
+    else if (newPrice > max) newPrice = max;
+    newPrice = round2(newPrice);
     return {
       newPrice,
       changed: newPrice !== current,

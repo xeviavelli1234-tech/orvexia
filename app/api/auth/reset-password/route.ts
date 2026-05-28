@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
+import { strongPassword } from "@/lib/validations";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,9 +23,11 @@ export async function POST(request: Request) {
     );
   }
 
-  if (password.length < 6) {
+  // Misma fuerza que en el registro (antes solo exigía 6 caracteres).
+  const pwCheck = strongPassword.safeParse(password);
+  if (!pwCheck.success) {
     return NextResponse.json(
-      { message: "La contraseña debe tener al menos 6 caracteres" },
+      { message: pwCheck.error.issues[0]?.message ?? "Contraseña no válida" },
       { status: 400 }
     );
   }

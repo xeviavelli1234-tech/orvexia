@@ -147,9 +147,11 @@ export default async function CompararPage({ params }: { params: Promise<{ slug:
           const min = idx === 0 ? minA : minB;
           return (
             <div key={p.id} className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <div className="aspect-square relative bg-white/5 rounded-lg overflow-hidden mb-3">
-                {p.image && (
+              <div className="aspect-square relative bg-white/5 rounded-lg overflow-hidden mb-3 flex items-center justify-center">
+                {p.image ? (
                   <Image src={p.image} alt={p.name} fill className="object-contain p-3" sizes="(max-width:768px) 50vw, 25vw" />
+                ) : (
+                  <span className="text-3xl opacity-40" aria-hidden>📦</span>
                 )}
               </div>
               <div className="text-xs text-white/40 uppercase tracking-wider mb-1">{p.brand}</div>

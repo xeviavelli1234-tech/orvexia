@@ -44,13 +44,28 @@ export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-  const { productId, store, targetPrice } = await req.json();
-  if (!productId || !store || !targetPrice) {
-    return NextResponse.json({ error: "productId, store y targetPrice requeridos" }, { status: 400 });
+  const body = await req.json().catch(() => null);
+  const productId = body?.productId;
+  const store = body?.store;
+  const target = Number(body?.targetPrice);
+  if (!productId || !store) {
+    return NextResponse.json({ error: "productId y store requeridos" }, { status: 400 });
+  }
+  // targetPrice debe ser un número finito y positivo (antes "abc" → NaN se
+  // persistía y un productId inexistente lanzaba un FK 500).
+  if (!Number.isFinite(target) || target <= 0) {
+    return NextResponse.json({ error: "targetPrice debe ser un número positivo" }, { status: 400 });
+  }
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    select: { id: true },
+  });
+  if (!product) {
+    return NextResponse.json({ error: "Producto no encontrado" }, { status: 404 });
   }
 
   const alert = await prisma.priceAlert.create({
-    data: { userId: session.userId, productId, store, targetPrice: Number(targetPrice) },
+    data: { userId: session.userId, productId, store, targetPrice: target },
   });
 
   return NextResponse.json({ ok: true, id: alert.id });
@@ -60,7 +75,8 @@ export async function DELETE(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-  const { alertId } = await req.json();
+  const body = await req.json().catch(() => null);
+  const alertId = body?.alertId;
   if (!alertId) return NextResponse.json({ error: "alertId requerido" }, { status: 400 });
 
   await prisma.priceAlert.deleteMany({

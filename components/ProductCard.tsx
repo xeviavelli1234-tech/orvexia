@@ -1,13 +1,20 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useCallback } from "react";
 import type React from "react";
-import ProductModal from "./ProductModal";
+import dynamic from "next/dynamic";
+
+// El modal solo se monta tras el primer click → fuera del bundle inicial.
+// Reduce JS no usado en home / categorías hasta que el usuario interactúa.
+const ProductModal = dynamic(() => import("./ProductModal"), { ssr: false });
 import { BuySignalBadge } from "./BuySignalBadge";
 import { SaveButton } from "./SaveButton";
 import { StockBadge } from "./StockBadge";
 import { trackAffiliateClick } from "@/lib/affiliate-track";
+import { formatEURNumber, formatEURInteger } from "@/lib/format/eur";
+import { getRealDiscountPercent, getSavingsAmount } from "@/lib/products/discount";
 
 const CATEGORY_LABELS: Record<string, string> = {
   TELEVISORES: "Televisores", LAVADORAS: "Lavadoras", FRIGORIFICOS: "Frigoríficos",
@@ -43,8 +50,7 @@ interface Props {
 }
 
 export default function ProductCard({ product, priority = false }: Props) {
-  const formatEuro = (value: number) =>
-    new Intl.NumberFormat("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+  const formatEuro = formatEURNumber;
 
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
@@ -75,24 +81,6 @@ export default function ProductCard({ product, priority = false }: Props) {
     });
   }, []);
 
-  // Evalúa la <img> también vía ref: si está cacheada/precargada, onLoad y
-  // onError no disparan tras la hidratación (a diferencia del modal, que
-  // monta tras el click). Cubre 404 cacheado (naturalWidth 0) y placeholder
-  // proxy "No image available" de productserve (<250px), igual que el modal.
-  const evaluateCardImg = useCallback(
-    (img: HTMLImageElement | null, src: string | undefined) => {
-      if (!img || !src || !img.complete) return;
-      if (img.naturalWidth === 0) {
-        markCardImageFailed(src);
-        return;
-      }
-      if (img.naturalWidth < 250 && img.naturalHeight < 250) {
-        markCardImageFailed(src);
-      }
-    },
-    [markCardImageFailed],
-  );
-
   const mejorOferta = product.offers[0];
   const isOutOfStock = mejorOferta?.inStock === false;
   const ctaStoreName =
@@ -100,23 +88,10 @@ export default function ProductCard({ product, priority = false }: Props) {
       ? "PcComp."
       : mejorOferta?.store ?? "tienda";
 
-  const trustedStore = mejorOferta?.store
-    ? /^(LG|El Corte Inglés|Fnac)$/i.test(mejorOferta.store) ||
-      mejorOferta.store.toLowerCase().includes("corte ingl")
-    : false;
   // Si está agotada, no anunciamos descuento/ahorro: el precio es histórico,
   // no una oferta activa.
-  const realDiscount =
-    !isOutOfStock && mejorOferta?.priceOld != null && mejorOferta.priceCurrent < mejorOferta.priceOld
-      ? trustedStore
-        ? Math.round((1 - mejorOferta.priceCurrent / mejorOferta.priceOld) * 100)
-        : mejorOferta.priceOld / mejorOferta.priceCurrent <= 2.5
-        ? Math.round((1 - mejorOferta.priceCurrent / mejorOferta.priceOld) * 100)
-        : 0
-      : 0;
-  const savingsAmount = !isOutOfStock && mejorOferta?.priceOld && mejorOferta.priceOld > mejorOferta.priceCurrent
-    ? mejorOferta.priceOld - mejorOferta.priceCurrent
-    : 0;
+  const realDiscount = isOutOfStock ? 0 : getRealDiscountPercent(mejorOferta);
+  const savingsAmount = isOutOfStock ? 0 : getSavingsAmount(mejorOferta);
 
   const prev = useCallback(
     (e: React.MouseEvent) => {
@@ -160,16 +135,16 @@ export default function ProductCard({ product, priority = false }: Props) {
         {/* Image area */}
         <div className="relative aspect-[4/3] bg-white">
           {cardImages.length > 0 ? (
-            <img
+            <Image
               key={activeCardImage}
-              ref={(node) => evaluateCardImg(node, activeCardImage)}
               src={activeCardImage}
               alt={product.name}
-              loading={priority ? "eager" : "lazy"}
-              className="absolute inset-0 w-full h-full object-contain p-2 sm:p-5 transition-all duration-300 group-hover:scale-[1.04]"
+              fill
+              priority={priority}
+              sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+              className="object-contain p-2 sm:p-5 transition-all duration-300 group-hover:scale-[1.04]"
               referrerPolicy="no-referrer"
               onError={() => activeCardImage && markCardImageFailed(activeCardImage)}
-              onLoad={(e) => evaluateCardImg(e.currentTarget, activeCardImage)}
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center text-3xl text-fg-faint">📦</div>
@@ -281,7 +256,7 @@ export default function ProductCard({ product, priority = false }: Props) {
               </div>
               {savingsAmount > 0 && (
                 <p className="hidden sm:block text-[11px] font-bold text-accent-600 mb-2 tabular">
-                  Ahorras {new Intl.NumberFormat("es-ES", { maximumFractionDigits: 0 }).format(savingsAmount)} €
+                  Ahorras {formatEURInteger(savingsAmount)} €
                 </p>
               )}
               <div className="hidden sm:block mb-2">

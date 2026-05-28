@@ -4,11 +4,20 @@ import { getSellerAccountByUserId } from "@/lib/db/sellerAccount";
 import { getStripe, isStripeConfigured, STRIPE_PRICE_ID } from "@/lib/stripe";
 import { getBaseUrl } from "@/lib/url";
 import { prisma } from "@/lib/prisma";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
   const session = await getSession();
   if (!session) {
     return NextResponse.redirect(new URL("/login?next=/sellers/facturacion", req.url));
+  }
+
+  // Evita abuso: crear sesiones de checkout es barato pero llama a Stripe.
+  // 10 intentos/min por usuario es de sobra para un humano.
+  if (rateLimit("billing-checkout", session.userId, 10, 60_000)) {
+    return NextResponse.redirect(
+      new URL("/sellers/facturacion?status=rate_limited", req.url),
+    );
   }
 
   if (!isStripeConfigured()) {

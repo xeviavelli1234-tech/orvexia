@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { runLearningCycle } from "@/lib/assistant/store";
+import { cronAuthError } from "@/lib/cron/auth";
 
 /**
  * GET /api/cron/assistant-learn
@@ -9,16 +10,16 @@ import { runLearningCycle } from "@/lib/assistant/store";
  * crea candidatos AssistantLearnedTopic (approved=false) para que el
  * admin los revise.
  *
- * Protegido con `x-cron-secret = CRON_SECRET`. Sin secret, se puede
- * llamar manualmente (útil en local).
+ * Protegido con `x-cron-secret = CRON_SECRET` (fail-closed en producción).
+ * En dev sin secret se puede llamar manualmente (útil en local).
  */
 export async function GET(req: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  if (secret) {
-    const provided = req.headers.get("x-cron-secret");
-    if (provided !== secret) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  const authErr = cronAuthError(req);
+  if (authErr) {
+    return NextResponse.json(
+      { error: authErr === 503 ? "cron_not_configured" : "Unauthorized" },
+      { status: authErr },
+    );
   }
   try {
     const result = await runLearningCycle();

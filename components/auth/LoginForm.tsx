@@ -194,7 +194,7 @@ export function LoginForm({ oauthError, next }: { oauthError?: string; next?: st
 
   return (
     <div className={`space-y-4 ${inter.className}`}>
-      <GoogleButton label="Continuar con Google" />
+      <GoogleButton label="Continuar con Google" next={next} />
       <PasswordlessButtons />
 
       {errorMsg && (

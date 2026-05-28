@@ -49,6 +49,11 @@ export async function GET(req: Request) {
       select: { images: true, rating: true, reviewCount: true },
     });
     return NextResponse.json(product ?? { images: [], rating: null, reviewCount: null });
+  } catch (e) {
+    // Antes un fallo de DB propagaba un 500 crudo. Devolvemos JSON de error
+    // controlado para que el cliente lo maneje sin romper.
+    console.error("[api/products] query failed:", e);
+    return NextResponse.json({ error: "query_failed" }, { status: 500 });
   } finally {
     await prisma.$disconnect();
   }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { runWeeklyDigestForAll } from "@/lib/reprice/weekly-digest";
+import { cronAuthError } from "@/lib/cron/auth";
 
 export const maxDuration = 300;
 
@@ -8,12 +9,12 @@ export const maxDuration = 300;
  * Lunes a las 8 UTC envía el resumen semanal por cuenta.
  */
 export async function GET(req: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  if (secret) {
-    const provided = req.headers.get("x-cron-secret");
-    if (provided !== secret) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  const authErr = cronAuthError(req);
+  if (authErr) {
+    return NextResponse.json(
+      { error: authErr === 503 ? "cron_not_configured" : "Unauthorized" },
+      { status: authErr },
+    );
   }
   try {
     const result = await runWeeklyDigestForAll();

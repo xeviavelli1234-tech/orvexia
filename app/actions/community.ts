@@ -17,7 +17,6 @@ export async function createCommunityPost(
   formData: FormData
 ): Promise<CommunityActionState> {
   const session = await getSession();
-  console.log("[createCommunityPost] session:", session ? `userId=${session.userId}` : "null");
   if (!session) {
     return { error: "Debes iniciar sesión para publicar." };
   }
@@ -28,12 +27,22 @@ export async function createCommunityPost(
     type: formData.get("type") ?? "DISCUSION",
     productId: formData.get("productId"),
   };
-  console.log("[createCommunityPost] raw:", raw);
 
   const parsed = communityPostSchema.safeParse(raw);
   if (!parsed.success) {
-    console.log("[createCommunityPost] validation errors:", parsed.error.flatten());
     return { fieldErrors: parsed.error.flatten().fieldErrors };
+  }
+
+  // El schema solo valida el FORMATO del productId, no que exista. Sin esto,
+  // un CUID bien formado pero inexistente lanzaba una violación de FK (500).
+  if (parsed.data.productId) {
+    const product = await prisma.product.findUnique({
+      where: { id: parsed.data.productId },
+      select: { id: true },
+    });
+    if (!product) {
+      return { fieldErrors: { productId: ["El producto seleccionado no existe."] } };
+    }
   }
 
   await prisma.communityPost.create({

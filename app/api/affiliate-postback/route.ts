@@ -1,31 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { timingSafeEqual } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { affiliatePostbackSchema } from "@/lib/validations";
-import type { AffiliateConversionStatus } from "@/app/generated/prisma/client";
+import { statusMap, checkSecret } from "@/lib/affiliate/postback";
 
 export const dynamic = "force-dynamic";
 
-function statusMap(s: string): AffiliateConversionStatus {
-  switch (s.toLowerCase()) {
-    case "approved": return "APPROVED";
-    case "rejected":
-    case "declined": return "REJECTED";
-    default:         return "PENDING";
-  }
-}
-
-function checkSecret(provided: string | null): boolean {
-  const expected = process.env.AFFILIATE_POSTBACK_SECRET;
-  if (!expected || !provided) return false;
-  const a = Buffer.from(expected);
-  const b = Buffer.from(provided);
-  if (a.length !== b.length) return false;
-  return timingSafeEqual(a, b);
-}
-
 async function handle(req: NextRequest, params: Record<string, string>) {
-  if (!checkSecret(params.secret ?? null)) {
+  if (!checkSecret(params.secret ?? null, process.env.AFFILIATE_POSTBACK_SECRET)) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
 

@@ -181,40 +181,8 @@ export function normalizeBoolean(raw: string, defaultValue = true): boolean {
   return ["true", "1", "yes", "sí", "si", "y"].includes(s);
 }
 
-export function parsePrice(raw: string): number | null {
-  if (raw == null) return null;
-  const s = String(raw).trim();
-  if (s === "") return null;
-  // tolera "1.299,99 €", "1299.99", "1.299", "1,299.99"
-  const clean = s
-    .replace(/€|\$|£/g, "")
-    .replace(/\s/g, "")
-    .replace(/'/g, "");
-  // Heurística: si tiene coma y punto, asumimos formato es: punto miles, coma decimal
-  let normalized: string;
-  if (clean.includes(",") && clean.includes(".")) {
-    const lastComma = clean.lastIndexOf(",");
-    const lastDot = clean.lastIndexOf(".");
-    if (lastComma > lastDot) {
-      normalized = clean.replace(/\./g, "").replace(",", ".");
-    } else {
-      normalized = clean.replace(/,/g, "");
-    }
-  } else if (clean.includes(",")) {
-    // solo coma → decimal
-    const decimals = clean.split(",")[1] ?? "";
-    if (decimals.length <= 2) {
-      normalized = clean.replace(",", ".");
-    } else {
-      // probablemente separador de miles "1,234"
-      normalized = clean.replace(/,/g, "");
-    }
-  } else {
-    normalized = clean;
-  }
-  const n = Number(normalized);
-  return Number.isFinite(n) ? Math.round(n * 100) / 100 : null;
-}
+import { parsePrice } from "@/lib/format/parsePrice";
+export { parsePrice };
 
 export function slugify(brand: string, model: string, name: string): string {
   const base = [brand, model, name]

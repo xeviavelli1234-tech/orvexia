@@ -1,7 +1,11 @@
-export function GoogleButton({ label }: { label: string }) {
+export function GoogleButton({ label, next }: { label: string; next?: string }) {
+  // Propaga el destino post-login para no perderlo al pasar por Google.
+  const href = next
+    ? `/api/auth/google?next=${encodeURIComponent(next)}`
+    : "/api/auth/google";
   return (
     <a
-      href="/api/auth/google"
+      href={href}
       className="flex w-full items-center justify-center gap-2 rounded-[10px] border border-brand-600 bg-bg-elevated px-4 py-3 text-sm font-medium text-brand-600 hover:bg-brand-50 transition shadow-[0_8px_20px_-14px_rgba(37,99,235,0.35)]"
     >
       {/* Google SVG icon */}

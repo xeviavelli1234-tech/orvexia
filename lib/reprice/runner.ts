@@ -738,22 +738,41 @@ export async function runRepricer(
       }
     }
 
-    await prisma.$transaction([
-      prisma.repricingRun.update({
-        where: { id: run.id },
-        data: {
-          finishedAt: new Date(),
-          listingsProcessed: processed,
-          listingsRepriced: repriced,
-          errors,
-          errorMessage: runError,
-        },
-      }),
-      prisma.sellerAccount.update({
-        where: { id: account.id },
-        data: { lastRunAt: now, lockedAt: null }, // libera el lock
-      }),
-    ]);
+    try {
+      await prisma.$transaction([
+        prisma.repricingRun.update({
+          where: { id: run.id },
+          data: {
+            finishedAt: new Date(),
+            listingsProcessed: processed,
+            listingsRepriced: repriced,
+            errors,
+            errorMessage: runError,
+          },
+        }),
+        prisma.sellerAccount.update({
+          where: { id: account.id },
+          data: { lastRunAt: now, lockedAt: null }, // libera el lock
+        }),
+      ]);
+    } catch (txErr) {
+      // Si la transacción de cierre falla (timeout/deadlock de Postgres), el
+      // lock quedaría puesto y la cuenta se saltaría hasta que caduque el TTL
+      // (5 min). Liberamos el lock best-effort para que el siguiente ciclo
+      // pueda reintentar de inmediato. No relanzamos: un fallo de cierre no
+      // debe abortar el procesamiento de las demás cuentas.
+      log.error(
+        { accountId: account.id, runId: run.id, err: txErr },
+        "fallo al cerrar el run; liberando lock best-effort",
+      );
+      void captureException(txErr, {
+        tags: { scope: "reprice-runner-close", accountId: account.id },
+        extra: { runId: run.id },
+      });
+      await prisma.sellerAccount
+        .updateMany({ where: { id: account.id }, data: { lockedAt: null } })
+        .catch(() => {});
+    }
 
     await maybeSendAlerts(account, accountAlerts, now);
 

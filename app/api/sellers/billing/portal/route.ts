@@ -3,6 +3,7 @@ import { getSession } from "@/lib/session";
 import { getSellerAccountByUserId } from "@/lib/db/sellerAccount";
 import { getStripe, isStripeConfigured } from "@/lib/stripe";
 import { getBaseUrl } from "@/lib/url";
+import { rateLimit } from "@/lib/rate-limit";
 
 // Portal de cliente de Stripe: el vendedor gestiona/cancela su suscripción,
 // actualiza tarjeta o descarga facturas. Stripe aloja la UI.
@@ -10,6 +11,12 @@ export async function POST(req: Request) {
   const session = await getSession();
   if (!session) {
     return NextResponse.redirect(new URL("/login?next=/sellers/facturacion", req.url));
+  }
+
+  if (rateLimit("billing-portal", session.userId, 10, 60_000)) {
+    return NextResponse.redirect(
+      new URL("/sellers/facturacion?status=rate_limited", req.url),
+    );
   }
 
   if (!isStripeConfigured()) {

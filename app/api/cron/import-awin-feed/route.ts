@@ -9,11 +9,12 @@
  * En vercel.json se programa una entrada por tienda con horarios escalonados
  * para repartir carga.
  *
- * Protegido con `x-cron-secret = CRON_SECRET`. Sin secret configurado, se
- * puede llamar libremente (cómodo para depurar en local).
+ * Protegido con `x-cron-secret = CRON_SECRET` (fail-closed en producción).
+ * En dev sin secret se puede llamar libremente (cómodo para depurar en local).
  */
 import { NextRequest, NextResponse } from "next/server";
 import { getFeeds, importStore, resolveFeed, type ImportStats } from "@/lib/import/awin";
+import { cronAuthError } from "@/lib/cron/auth";
 
 export const dynamic = "force-dynamic";
 // Importar un feed grande (Fnac/ECI) ronda los 30-90s. Pedimos hasta 5
@@ -21,12 +22,12 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 export async function GET(req: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  if (secret) {
-    const provided = req.headers.get("x-cron-secret");
-    if (provided !== secret) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  const authErr = cronAuthError(req);
+  if (authErr) {
+    return NextResponse.json(
+      { error: authErr === 503 ? "cron_not_configured" : "Unauthorized" },
+      { status: authErr },
+    );
   }
 
   const { searchParams } = new URL(req.url);

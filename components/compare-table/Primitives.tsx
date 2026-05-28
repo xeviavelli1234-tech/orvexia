@@ -60,58 +60,82 @@ export function PickerGrid({
       </p>
     );
   }
+  const bothPicked = aId !== null && bId !== null;
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
       {pool.map((p) => {
         const k = productKey(p);
         const isA = k === aId;
         const isB = k === bId;
+        const selected = isA || isB;
         const offer = bestOffer(p.offers);
-        const ringClass = isA
-          ? "border-cyan-400/70 bg-cyan-400/[0.06] shadow-[0_0_18px_-6px_rgba(94,234,212,0.45)]"
+        const discount = offer?.discountPercent ?? 0;
+        // Cuando ya hay 2 elegidos, atenuamos el resto para que A y B destaquen.
+        const dim = bothPicked && !selected;
+
+        const frame = isA
+          ? "border-cyan-400/60 ring-1 ring-cyan-400/40"
           : isB
-            ? "border-fuchsia-400/70 bg-fuchsia-400/[0.06] shadow-[0_0_18px_-6px_rgba(232,121,249,0.45)]"
-            : "border-border bg-bg-elevated hover:border-border-strong";
-        const badgeClass = isA ? "bg-cyan-500" : "bg-fuchsia-500";
+            ? "border-fuchsia-400/60 ring-1 ring-fuchsia-400/40"
+            : "border-border hover:border-border-strong";
+        const accentText = isA ? "text-cyan-300" : isB ? "text-fuchsia-300" : "text-fg-subtle";
+        const badgeClass = isA ? "bg-cyan-500" : isB ? "bg-fuchsia-500" : "bg-fg-subtle/40";
+
         return (
           <button
             key={k}
             type="button"
             onClick={() => onToggle(k)}
-            className={`relative rounded-xl border-2 p-2 sm:p-2.5 flex flex-col gap-1.5 text-left transition-all ${ringClass}`}
-            aria-pressed={isA || isB}
+            className={`group relative rounded-xl border bg-bg-elevated p-2 flex items-center gap-2.5 text-left transition-all duration-150 ${frame} ${
+              dim ? "opacity-45 hover:opacity-100" : ""
+            }`}
+            aria-pressed={selected}
             aria-label={`${isA ? "Quitar de A" : isB ? "Quitar de B" : "Seleccionar"} ${p.brand} ${p.name}`}
           >
-            {(isA || isB) && (
-              <span
-                className={`absolute top-1.5 left-1.5 inline-flex items-center justify-center w-6 h-6 rounded-full text-white text-[11px] font-extrabold shadow-md z-10 ${badgeClass}`}
-                aria-hidden
-              >
-                {isA ? "A" : "B"}
-              </span>
-            )}
-            <div className="aspect-square w-full bg-white rounded-lg border border-border overflow-hidden relative">
+            {/* Imagen compacta */}
+            <div className="relative w-12 h-12 sm:w-14 sm:h-14 shrink-0 bg-white rounded-lg overflow-hidden">
               {p.image || p.images?.[0] ? (
                 <Image
                   src={p.images?.[0] ?? p.image ?? ""}
                   alt=""
                   fill
-                  className="object-contain p-1 sm:p-1.5"
-                  sizes="(max-width: 640px) 45vw, 200px"
+                  className="object-contain p-1"
+                  sizes="56px"
                 />
               ) : (
-                <div className="absolute inset-0 flex items-center justify-center text-3xl opacity-25">📦</div>
+                <div className="absolute inset-0 flex items-center justify-center text-lg opacity-25">📦</div>
               )}
             </div>
-            <p className="text-[10px] font-bold text-cyan-300 truncate">{p.brand}</p>
-            <p className="text-[11px] sm:text-[12px] font-bold text-fg line-clamp-2 leading-tight break-words flex-1 min-h-[2.2em]">
-              {p.name}
-            </p>
-            {offer && (
-              <p className="text-[12px] sm:text-[13px] font-extrabold text-fg tabular">
-                {formatPrice(offer.priceCurrent)}
+
+            {/* Info */}
+            <div className="flex flex-col min-w-0 flex-1">
+              <p className={`text-[9px] font-bold uppercase tracking-wide truncate ${accentText}`}>{p.brand}</p>
+              <p className="text-[11px] font-semibold text-fg line-clamp-1 leading-tight break-words">
+                {p.name}
               </p>
-            )}
+              <div className="flex items-baseline gap-1.5 mt-0.5">
+                {offer ? (
+                  <>
+                    <span className="text-[12px] font-extrabold text-fg tabular">{formatPrice(offer.priceCurrent)}</span>
+                    {discount > 0 && (
+                      <span className="text-[9px] font-bold text-lime-400 tabular">−{discount}%</span>
+                    )}
+                  </>
+                ) : (
+                  <span className="text-[10px] text-fg-subtle">Sin stock</span>
+                )}
+              </div>
+            </div>
+
+            {/* Indicador A/B (o vacío para seleccionar) */}
+            <span
+              className={`shrink-0 inline-flex items-center justify-center w-6 h-6 rounded-full text-[11px] font-extrabold transition-colors ${
+                selected ? `${badgeClass} text-white shadow` : "border border-border text-fg-subtle group-hover:border-border-strong"
+              }`}
+              aria-hidden
+            >
+              {isA ? "A" : isB ? "B" : "+"}
+            </span>
           </button>
         );
       })}

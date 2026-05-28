@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createSession } from "@/lib/session";
 import { deleteExpiredUnverified } from "@/lib/db/user";
+import { rateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,6 +26,17 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { message: "Email y código son requeridos" },
       { status: 400 }
+    );
+  }
+
+  // El código es de 6 dígitos (900k combinaciones). Sin límite, sería
+  // fuerza-brutable → toma de cuenta. 5 intentos por email cada 10 min hace
+  // inviable el ataque (años para agotar el espacio dentro de la ventana de
+  // validez del código).
+  if (rateLimit("verify-code", email, 5, 10 * 60_000)) {
+    return NextResponse.json(
+      { message: "Demasiados intentos. Espera unos minutos e inténtalo de nuevo." },
+      { status: 429 }
     );
   }
 

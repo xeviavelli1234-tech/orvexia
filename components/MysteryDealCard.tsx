@@ -3,6 +3,8 @@
 import { useState, useCallback, useSyncExternalStore } from "react";
 import type React from "react";
 import ProductCard from "./ProductCard";
+import { formatEURInteger } from "@/lib/format/eur";
+import { getRealDiscountPercent, getSavingsAmount } from "@/lib/products/discount";
 
 const STORAGE_KEY = "mdeal:v1";
 const SYNC_EVENT = "mdeal:sync";
@@ -96,20 +98,8 @@ export default function MysteryDealCard({
   }, [opening, revealed, revealKey, product.id]);
 
   const o = product.offers[0];
-  const trusted = o
-    ? /^(LG|El Corte Inglés|Fnac)$/i.test(o.store) ||
-      o.store.toLowerCase().includes("corte ingl")
-    : false;
-  const discount =
-    o?.priceOld != null && o.priceCurrent < o.priceOld
-      ? trusted || o.priceOld / o.priceCurrent <= 2.5
-        ? Math.round((1 - o.priceCurrent / o.priceOld) * 100)
-        : 0
-      : 0;
-  const savings =
-    o?.priceOld != null && o.priceOld > o.priceCurrent
-      ? o.priceOld - o.priceCurrent
-      : 0;
+  const discount = getRealDiscountPercent(o);
+  const savings = getSavingsAmount(o);
   const catLabel = CATEGORY_LABELS[product.category] ?? product.category;
 
   return (
@@ -156,7 +146,7 @@ export default function MysteryDealCard({
               <span className="block text-lg sm:text-4xl font-black text-gradient-neon">-{discount}%</span>
               {savings > 0 && (
                 <span className="hidden sm:block mt-1.5 font-mono-ui text-[11px] text-emerald-300/90">
-                  ahorras {new Intl.NumberFormat("es-ES", { maximumFractionDigits: 0 }).format(savings)} €
+                  ahorras {formatEURInteger(savings)} €
                 </span>
               )}
             </span>

@@ -47,13 +47,12 @@ export function CompareTable({ products }: { products: CompareProduct[] }) {
   const [aId, setAId] = useState<string | null>(null);
   const [bId, setBId] = useState<string | null>(null);
 
-  // Al cambiar de categoría, autoescoger los 2 primeros
+  // Al cambiar de categoría limpiamos la selección. NO autoseleccionamos:
+  // el usuario elige manualmente los 2 productos que quiere comparar.
   useEffect(() => {
-    if (!category) { setAId(null); setBId(null); return; }
-    const list = byCategory[category] ?? [];
-    setAId(list[0] ? productKey(list[0]) : null);
-    setBId(list[1] ? productKey(list[1]) : null);
-  }, [category, byCategory]);
+    setAId(null);
+    setBId(null);
+  }, [category]);
 
   // Toggle FIFO: tap en uno seleccionado lo quita; en uno nuevo, llena el
   // hueco vacío o desplaza A si los dos están llenos.

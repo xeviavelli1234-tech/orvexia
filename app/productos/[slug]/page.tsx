@@ -34,7 +34,7 @@ const SPEC_PATTERNS: { regex: RegExp; icon: string; label: (m: RegExpMatchArray)
   { regex: /8K/i,                        icon: "🖥️", label: () => "8K" },
   { regex: /HDR\s*10\+?/i,              icon: "✨", label: () => "HDR10" },
   { regex: /Dolby Vision/i,              icon: "✨", label: () => "Dolby Vision" },
-  { regex: /(\d+)\s*Hz/i,               icon: "⚡", label: (m) => `${m[1]} Hz" ` },
+  { regex: /(\d+)\s*Hz/i,               icon: "⚡", label: (m) => `${m[1]} Hz` },
   { regex: /OLED/i,                      icon: "💡", label: () => "OLED" },
   { regex: /QLED/i,                      icon: "💡", label: () => "QLED" },
   { regex: /(\d+)\s*kg/i,               icon: "⚖️", label: (m) => `${m[1]} kg` },

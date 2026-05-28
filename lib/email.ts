@@ -4,14 +4,44 @@ import {
   alertSubject,
   ALERT_LABEL,
 } from "@/lib/reprice/alerts";
+import { logger } from "@/lib/logger";
+
+const log = logger.child("email");
 
 function baseUrl() {
   return process.env.NEXTAUTH_URL || "http://localhost:3000";
 }
 
+/** Recorta el local-part del email para no logear PII completa. */
+export function maskEmail(to: string): string {
+  const at = to.indexOf("@");
+  if (at < 1) return "***";
+  const local = to.slice(0, at);
+  const domain = to.slice(at);
+  return `${local.slice(0, 2)}***${domain}`;
+}
+
+/**
+ * Resultado uniforme: ningún email lanza. Los callers comprueban `emailSent`
+ * para decidir si reintentan / persisten estado. `reason` distingue el motivo
+ * para que los crons puedan ignorar el caso "no configurado" en desarrollo.
+ */
+export type EmailResult = {
+  emailSent: boolean;
+  /** "ok" | "not_configured" | "send_failed" */
+  reason?: "ok" | "not_configured" | "send_failed";
+};
+
+export class EmailNotConfiguredError extends Error {
+  constructor() {
+    super("RESEND_API_KEY not configured");
+    this.name = "EmailNotConfiguredError";
+  }
+}
+
 async function tryResend(to: string, subject: string, html: string, text: string) {
   const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) throw new Error("RESEND_API_KEY not configured");
+  if (!apiKey) throw new EmailNotConfiguredError();
 
   const resend = new Resend(apiKey);
   // EMAIL_FROM takes priority (verified domain), then RESEND_FROM, then test fallback
@@ -24,10 +54,21 @@ async function tryResend(to: string, subject: string, html: string, text: string
   if (result.error) throw new Error(JSON.stringify(result.error));
 }
 
+/** Centraliza el logging tras un fallo de envío con contexto uniforme. */
+function logSendFailure(kind: string, to: string, err: unknown): EmailResult {
+  if (err instanceof EmailNotConfiguredError) {
+    // En dev/preview es normal no tener RESEND_API_KEY. No spammeamos errores.
+    log.warn({ kind, to: maskEmail(to) }, "email_not_configured");
+    return { emailSent: false, reason: "not_configured" };
+  }
+  log.error({ kind, to: maskEmail(to), err }, "email_send_failed");
+  return { emailSent: false, reason: "send_failed" };
+}
+
 export async function sendVerificationEmail(options: {
   to: string;
   code: string;
-}): Promise<{ emailSent: boolean }> {
+}): Promise<EmailResult> {
   const appName = process.env.NEXT_PUBLIC_APP_NAME || "Folio";
   const primary = "#2563eb";
   const verifyPageUrl = `${baseUrl()}/verify?email=${encodeURIComponent(
@@ -73,11 +114,14 @@ export async function sendVerificationEmail(options: {
 
   try {
     await tryResend(options.to, "Verifica tu correo", html, text);
-    return { emailSent: true };
+    return { emailSent: true, reason: "ok" };
   } catch (err) {
-    console.warn("[email] Resend falló o no está configurado:", err);
-    console.warn(`[email] Usa este código manualmente para ${options.to}: ${options.code}`);
-    return { emailSent: false };
+    const r = logSendFailure("verification", options.to, err);
+    if (r.reason === "not_configured") {
+      // Útil en dev: imprime el código en stdout para poder copiarlo a mano.
+      log.warn({ to: maskEmail(options.to), code: options.code }, "verification_code_fallback");
+    }
+    return r;
   }
 }
 
@@ -91,7 +135,7 @@ export async function sendDiscountAvailableEmail(options: {
   priceOld: number | null;
   discountPercent: number | null;
   externalUrl: string;
-}): Promise<{ emailSent: boolean }> {
+}): Promise<EmailResult> {
   const appName = process.env.NEXT_PUBLIC_APP_NAME || "Orvexia";
   const dashboardUrl = `${baseUrl()}/dashboard`;
 
@@ -157,10 +201,9 @@ export async function sendDiscountAvailableEmail(options: {
 
   try {
     await tryResend(options.to, `¡${options.productName} ahora en oferta!`, html, text);
-    return { emailSent: true };
+    return { emailSent: true, reason: "ok" };
   } catch (err) {
-    console.warn("[email] Resend falló o no está configurado:", err);
-    return { emailSent: false };
+    return logSendFailure("discount_available", options.to, err);
   }
 }
 
@@ -174,7 +217,7 @@ export async function sendBetterDealEmail(options: {
   priceOld: number;
   discountPercent: number | null;
   externalUrl: string;
-}): Promise<{ emailSent: boolean }> {
+}): Promise<EmailResult> {
   const appName = process.env.NEXT_PUBLIC_APP_NAME || "Orvexia";
   const dashboardUrl = `${baseUrl()}/dashboard`;
   const savings = (options.priceOld - options.priceCurrent).toFixed(2);
@@ -238,17 +281,16 @@ export async function sendBetterDealEmail(options: {
 
   try {
     await tryResend(options.to, `¡${options.productName} está más barato ahora!`, html, text);
-    return { emailSent: true };
+    return { emailSent: true, reason: "ok" };
   } catch (err) {
-    console.warn("[email] Resend falló o no está configurado:", err);
-    return { emailSent: false };
+    return logSendFailure("better_deal", options.to, err);
   }
 }
 
 export async function sendPasswordResetEmail(options: {
   to: string;
   token: string;
-}): Promise<{ emailSent: boolean }> {
+}): Promise<EmailResult> {
   const appName = process.env.NEXT_PUBLIC_APP_NAME || "Folio";
   const primary = "#2563eb";
   const resetUrl = `${baseUrl()}/reset-password?token=${encodeURIComponent(
@@ -289,11 +331,13 @@ export async function sendPasswordResetEmail(options: {
 
   try {
     await tryResend(options.to, "Restablece tu contraseña", html, text);
-    return { emailSent: true };
+    return { emailSent: true, reason: "ok" };
   } catch (err) {
-    console.warn("[email] Resend falló o no está configurado:", err);
-    console.warn(`[email] Token manual para ${options.to}: ${options.token}`);
-    return { emailSent: false };
+    const r = logSendFailure("password_reset", options.to, err);
+    if (r.reason === "not_configured") {
+      log.warn({ to: maskEmail(options.to), token: options.token }, "password_reset_token_fallback");
+    }
+    return r;
   }
 }
 
@@ -309,7 +353,7 @@ export async function sendNewLocationEmail(options: {
   country: string | null;
   userAgent: string | null;
   when: Date;
-}): Promise<{ emailSent: boolean }> {
+}): Promise<EmailResult> {
   const appName = process.env.NEXT_PUBLIC_APP_NAME || "Orvexia";
   const subject = `Inicio de sesión desde una nueva ubicación · ${appName}`;
   const profileUrl = `${baseUrl()}/perfil`;
@@ -360,10 +404,9 @@ Navegador: ${ua}
 Si no fuiste tú, cambia tu contraseña ya: ${profileUrl}`;
   try {
     await tryResend(options.to, subject, html, text);
-    return { emailSent: true };
+    return { emailSent: true, reason: "ok" };
   } catch (err) {
-    console.warn("[email] aviso de nueva ubicación no enviado:", err);
-    return { emailSent: false };
+    return logSendFailure("new_location", options.to, err);
   }
 }
 
@@ -388,7 +431,7 @@ export async function sendMagicLinkEmail(options: {
   to: string;
   name: string;
   url: string;
-}): Promise<{ emailSent: boolean }> {
+}): Promise<EmailResult> {
   const appName = process.env.NEXT_PUBLIC_APP_NAME || "Orvexia";
   const subject = `Tu enlace de acceso a ${appName}`;
   const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"/></head>
@@ -416,10 +459,9 @@ export async function sendMagicLinkEmail(options: {
   const text = `Entra a ${appName} sin contraseña: ${options.url}\nEl enlace caduca en 10 minutos.`;
   try {
     await tryResend(options.to, subject, html, text);
-    return { emailSent: true };
+    return { emailSent: true, reason: "ok" };
   } catch (err) {
-    console.warn("[email] magic link no enviado:", err);
-    return { emailSent: false };
+    return logSendFailure("magic_link", options.to, err);
   }
 }
 
@@ -444,7 +486,7 @@ export async function sendRepricerWeeklyDigestEmail(options: {
     quotaRateLimited: number;
   };
   aiUsed: boolean;
-}): Promise<{ emailSent: boolean }> {
+}): Promise<EmailResult> {
   const appName = process.env.NEXT_PUBLIC_APP_NAME || "Orvexia";
   const subject = `Resumen semanal · ${appName} Repricer (${options.summary.healthLetter} · ${options.summary.healthScore}/100)`;
   const dashUrl = `${baseUrl()}/sellers/productos`;
@@ -506,10 +548,9 @@ export async function sendRepricerWeeklyDigestEmail(options: {
   const text = `${subject}\n\n${options.narrative}\n\nIr al panel: ${dashUrl}`;
   try {
     await tryResend(options.to, subject, html, text);
-    return { emailSent: true };
+    return { emailSent: true, reason: "ok" };
   } catch (err) {
-    console.warn("[email] resumen semanal no enviado:", err);
-    return { emailSent: false };
+    return logSendFailure("repricer_weekly_digest", options.to, err);
   }
 }
 
@@ -517,7 +558,7 @@ export async function sendRepricerWeeklyDigestEmail(options: {
 export async function sendTrialEndingEmail(options: {
   to: string;
   daysLeft: number;
-}): Promise<{ emailSent: boolean }> {
+}): Promise<EmailResult> {
   const appName = process.env.NEXT_PUBLIC_APP_NAME || "Orvexia";
   const url = `${baseUrl()}/sellers/facturacion`;
   const d = Math.max(0, options.daysLeft);
@@ -548,10 +589,9 @@ export async function sendTrialEndingEmail(options: {
   const text = `${subject}. Pasa a Pro para no perder el reprecio: ${url}`;
   try {
     await tryResend(options.to, subject, html, text);
-    return { emailSent: true };
+    return { emailSent: true, reason: "ok" };
   } catch (err) {
-    console.warn("[email] aviso fin de prueba no enviado:", err);
-    return { emailSent: false };
+    return logSendFailure("trial_ending", options.to, err);
   }
 }
 
@@ -562,7 +602,7 @@ export async function sendTrialEndingEmail(options: {
 export async function sendRepricerAlertEmail(options: {
   to: string;
   alerts: RepriceAlert[];
-}): Promise<{ emailSent: boolean }> {
+}): Promise<EmailResult> {
   if (options.alerts.length === 0) return { emailSent: false };
 
   const appName = process.env.NEXT_PUBLIC_APP_NAME || "Orvexia";
@@ -640,9 +680,8 @@ export async function sendRepricerAlertEmail(options: {
 
   try {
     await tryResend(options.to, subject, html, text);
-    return { emailSent: true };
+    return { emailSent: true, reason: "ok" };
   } catch (err) {
-    console.warn("[email] Alerta repricer no enviada:", err);
-    return { emailSent: false };
+    return logSendFailure("repricer_alert", options.to, err);
   }
 }

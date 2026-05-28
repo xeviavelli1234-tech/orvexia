@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { sendVerificationEmail } from "@/lib/email";
 import { Prisma } from "@/app/generated/prisma/client";
 import { deleteExpiredUnverified } from "@/lib/db/user";
+import { rateLimit } from "@/lib/rate-limit";
+import { VERIFICATION_CODE_TTL_MS } from "@/lib/auth-constants";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,6 +35,15 @@ export async function POST(request: Request) {
     );
   }
 
+  // Sin límite, este endpoint permite spamear correos de verificación a
+  // cualquier dirección. 3 reenvíos por email cada 10 min es suficiente.
+  if (rateLimit("resend-verification", email, 3, 10 * 60_000)) {
+    return NextResponse.json(
+      { message: "Has pedido demasiados códigos. Espera unos minutos." },
+      { status: 429 }
+    );
+  }
+
   await cleanupExpiredUnverified();
   await deleteExpiredUnverified(); // ensure 1m expirations are removed
 
@@ -40,22 +51,15 @@ export async function POST(request: Request) {
     where: { email },
   });
 
-  if (!user) {
-    return NextResponse.json(
-      { message: "No encontramos una cuenta con ese correo" },
-      { status: 404 }
-    );
-  }
-
-  if (user.emailVerified) {
-    return NextResponse.json(
-      { message: "Este correo ya está verificado" },
-      { status: 400 }
-    );
+  // Anti-enumeración: respondemos igual exista o no la cuenta y esté o no
+  // verificada, para no revelar qué emails están registrados. Solo enviamos
+  // un código nuevo cuando realmente procede (cuenta existe sin verificar).
+  if (!user || user.emailVerified) {
+    return NextResponse.json({ ok: true });
   }
 
   let code: string | null = null;
-  const expiresAt = new Date(Date.now() + 1000 * 60 * 15); // 15 minutos
+  const expiresAt = new Date(Date.now() + VERIFICATION_CODE_TTL_MS);
   let attempts = 0;
 
   while (attempts < 5 && !code) {
@@ -102,6 +106,9 @@ export async function POST(request: Request) {
   return NextResponse.json({
     ok: true,
     emailSent,
-    code: !emailSent ? code : undefined,
+    // NUNCA exponer el código en producción: permitiría verificar la cuenta
+    // sin acceso al email. Solo se devuelve como fallback en desarrollo local.
+    code:
+      !emailSent && process.env.NODE_ENV !== "production" ? code : undefined,
   });
 }
