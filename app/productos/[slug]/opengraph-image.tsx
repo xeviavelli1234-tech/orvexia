@@ -22,10 +22,14 @@ export const alt = "Producto en Orvexia";
 export default async function OpengraphImage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
+  // En archivos de metadata (opengraph-image, sitemap, …) `params` es un
+  // Promise en esta versión de Next y hay que await-earlo. Si se accede a
+  // `params.slug` sin await sale `undefined` y Prisma lanza un 500.
+  const { slug } = await params;
   const product = await prisma.product.findUnique({
-    where: { slug: params.slug },
+    where: { slug },
     select: {
       name: true,
       brand: true,
