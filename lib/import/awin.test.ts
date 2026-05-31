@@ -5,6 +5,12 @@ import {
   extractAwProductId,
   extractImages,
   computeOfferUpdate,
+  feedIdToFnacId,
+  fnacIdFromUrl,
+  awKeysFromUrl,
+  awKeysFromRow,
+  fnacKeysFromUrl,
+  fnacKeysFromRow,
 } from "./awin";
 
 // Las claves en los fixtures siguen los nombres reales de columnas de los feeds
@@ -174,6 +180,23 @@ test("computeOfferUpdate ECI: usa savings_percent (plural)", () => {
   assert.equal(r.discountPercent, 20);
 });
 
+test("computeOfferUpdate FNAC: descuento del feed inflado se ignora, gana el ratio real", () => {
+  // Regresión del bug "descuentos erróneos": Fnac a veces manda saving_percent
+  // calculado contra el PVPR, no contra was_price. Aquí el feed dice 40% pero
+  // 600€ desde 750€ solo es 20%. El badge debe cuadrar con el tachado → 20%.
+  const row = {
+    aw_product_id: "44372459927",
+    search_price: "600",
+    was_price: "750",
+    saving_percent: "40",
+    in_stock: "1",
+  };
+  const r = computeOfferUpdate(row);
+  assert.ok(r);
+  assert.equal(r.priceOld, 750);
+  assert.equal(r.discountPercent, 20, "descuento derivado del ratio, no del feed");
+});
+
 test("computeOfferUpdate: fallback al ratio si el feed no manda descuento", () => {
   const row = { search_price: "80", was_price: "100", in_stock: "1" };
   const r = computeOfferUpdate(row);
@@ -241,4 +264,150 @@ test("computeOfferUpdate: precio europeo con coma decimal y miles con punto", ()
   assert.ok(r);
   assert.equal(r.priceCurrent, 1299.99);
   assert.equal(r.priceOld, 1599);
+});
+
+// ── Moneda: solo ingerimos EUR ───────────────────────────────────────────────
+
+test("computeOfferUpdate: descarta filas que no sean EUR", () => {
+  assert.equal(computeOfferUpdate({ search_price: "100", currency: "USD" }), null);
+  assert.equal(computeOfferUpdate({ search_price: "100", currency: "GBP" }), null);
+});
+
+test("computeOfferUpdate: acepta EUR (case-insensitive y con espacios) y sin columna currency", () => {
+  assert.equal(computeOfferUpdate({ search_price: "100", currency: "EUR" })?.priceCurrent, 100);
+  assert.equal(computeOfferUpdate({ search_price: "100", currency: "eur" })?.priceCurrent, 100);
+  assert.equal(computeOfferUpdate({ search_price: "100", currency: " EUR " })?.priceCurrent, 100);
+  assert.equal(computeOfferUpdate({ search_price: "100" })?.priceCurrent, 100);
+});
+
+// ── display_price con prefijo de moneda ("EUR155.26") ─────────────────────────
+
+test("computeOfferUpdate: display_price 'EUR155.26' como fallback se parsea sin las letras", () => {
+  // Caso real Fnac: cuando search_price/store_price faltan, display_price trae
+  // el importe con el código de moneda pegado.
+  const r = computeOfferUpdate({ display_price: "EUR155.26" });
+  assert.ok(r);
+  assert.equal(r.priceCurrent, 155.26);
+});
+
+test("computeOfferUpdate: display_price 'EUR1.299,99' (formato europeo) se parsea", () => {
+  const r = computeOfferUpdate({ display_price: "EUR1.299,99" });
+  assert.ok(r);
+  assert.equal(r.priceCurrent, 1299.99);
+});
+
+// ── parseInStock: number_available ────────────────────────────────────────────
+
+test("parseInStock: number_available > 0 → true (señal positiva de feed enriquecido)", () => {
+  assert.equal(parseInStock({ number_available: "5" }), true);
+});
+
+test("parseInStock: number_available = 0 sin otra señal → false", () => {
+  assert.equal(parseInStock({ number_available: "0" }), false);
+});
+
+test("parseInStock: in_stock=1 manda aunque number_available=0", () => {
+  // Precedencia: una señal positiva explícita (in_stock=1) gana sobre un
+  // number_available=0 ambiguo (no lo tratamos como negativo duro).
+  assert.equal(parseInStock({ in_stock: "1", number_available: "0" }), true);
+});
+
+test("parseInStock: in_stock=0 manda aunque number_available>0", () => {
+  assert.equal(parseInStock({ in_stock: "0", number_available: "5" }), false);
+});
+
+// ── feedIdToFnacId: merchant_product_id → ID de ficha ────────────────────────
+
+test("feedIdToFnacId: prefijo 3 → marketplace (mp…)", () => {
+  assert.equal(feedIdToFnacId("3-9543851"), "mp9543851");
+});
+
+test("feedIdToFnacId: prefijo 1 → venta directa (a…)", () => {
+  assert.equal(feedIdToFnacId("1-10003855"), "a10003855");
+});
+
+test("feedIdToFnacId: cualquier prefijo distinto de 3 → a…", () => {
+  assert.equal(feedIdToFnacId("2-555"), "a555");
+});
+
+test("feedIdToFnacId: formato inesperado o vacío → null", () => {
+  assert.equal(feedIdToFnacId("9543851"), null);
+  assert.equal(feedIdToFnacId("abc"), null);
+  assert.equal(feedIdToFnacId(""), null);
+  assert.equal(feedIdToFnacId(undefined), null);
+});
+
+// ── fnacIdFromUrl: ID de ficha desde la URL de afiliado ──────────────────────
+
+test("fnacIdFromUrl: URL directa de Fnac", () => {
+  assert.equal(fnacIdFromUrl("https://www.fnac.es/mp9543851/Lavadora-Balay/a1"), "mp9543851");
+  assert.equal(fnacIdFromUrl("https://www.fnac.es/a10003855?foo=1"), "a10003855");
+});
+
+test("fnacIdFromUrl: sin barra final (fin de cadena)", () => {
+  assert.equal(fnacIdFromUrl("https://www.fnac.es/mp9543851"), "mp9543851");
+});
+
+test("fnacIdFromUrl: enlace Awin cread.php con ued= codificado (caso más común)", () => {
+  const url =
+    "https://www.awin1.com/cread.php?awinmid=77630&awinaffid=2854543&platform=dl" +
+    "&ued=https%3A%2F%2Fwww.fnac.es%2Fmp9543851%2FAlgo";
+  assert.equal(fnacIdFromUrl(url), "mp9543851");
+});
+
+test("fnacIdFromUrl: fallback en crudo cuando la URL no es parseable", () => {
+  assert.equal(fnacIdFromUrl("fnac.es%2Fmp777%2F"), "mp777");
+});
+
+test("fnacIdFromUrl: URL sin ficha Fnac → null", () => {
+  assert.equal(fnacIdFromUrl("https://www.amazon.es/dp/B0XXXX"), null);
+  assert.equal(fnacIdFromUrl("https://www.awin1.com/cread.php?a=1&m=2"), null);
+});
+
+// ── Claves de match (namespaced) ─────────────────────────────────────────────
+
+test("awKeysFromUrl/Row: solo aw_product_id, prefijo aw:", () => {
+  assert.deepEqual(awKeysFromUrl("https://www.awin1.com/pclick.php?p=123&a=1&m=2"), ["aw:123"]);
+  assert.deepEqual(awKeysFromUrl("https://www.fnac.es/mp1/x"), []); // sin ?p=
+  assert.deepEqual(awKeysFromRow({ aw_product_id: "123" }), ["aw:123"]);
+  assert.deepEqual(awKeysFromRow({}), []);
+});
+
+test("fnacKeysFromUrl: aw_product_id (si hay) + ID de ficha Fnac", () => {
+  // Solo ued= (sin ?p=) → solo clave fnac
+  assert.deepEqual(
+    fnacKeysFromUrl("https://www.awin1.com/cread.php?ued=https%3A%2F%2Fwww.fnac.es%2Fmp9543851%2Fx"),
+    ["fnac:mp9543851"],
+  );
+  // Con ?p= y ued= → ambas claves
+  assert.deepEqual(
+    fnacKeysFromUrl("https://www.awin1.com/cread.php?p=888&ued=https%3A%2F%2Fwww.fnac.es%2Fa777%2Fx"),
+    ["aw:888", "fnac:a777"],
+  );
+  // pclick sin ficha Fnac → solo aw
+  assert.deepEqual(fnacKeysFromUrl("https://www.awin1.com/pclick.php?p=999&a=1"), ["aw:999"]);
+});
+
+test("fnacKeysFromRow: aw_product_id + ID de ficha desde merchant_product_id", () => {
+  assert.deepEqual(
+    fnacKeysFromRow({ aw_product_id: "888", merchant_product_id: "3-9543851" }),
+    ["aw:888", "fnac:mp9543851"],
+  );
+  assert.deepEqual(fnacKeysFromRow({ merchant_product_id: "1-555" }), ["fnac:a555"]);
+});
+
+test("REGRESIÓN: una oferta Fnac con URL cread.php?ued= empareja con su fila del feed", () => {
+  // Este es el bug de fondo: el cron solo emparejaba por aw_product_id (?p=),
+  // pero nuestras URLs Fnac son cread.php?ued=<url fnac> SIN ?p=, así que NUNCA
+  // hacían match y el precio no se actualizaba. Con el match por ID de ficha sí.
+  const offerUrl =
+    "https://www.awin1.com/cread.php?awinmid=77630&awinaffid=2854543" +
+    "&ued=https%3A%2F%2Fwww.fnac.es%2Fmp9543851%2FLavadora";
+  const feedRow = { aw_product_id: "44372459927", merchant_product_id: "3-9543851" };
+
+  const offerKeys = fnacKeysFromUrl(offerUrl); // ["fnac:mp9543851"]
+  const rowKeys = fnacKeysFromRow(feedRow);    // ["aw:44372459927", "fnac:mp9543851"]
+
+  const matches = offerKeys.some((k) => rowKeys.includes(k));
+  assert.ok(matches, "deben emparejar por la clave fnac:mp9543851");
 });

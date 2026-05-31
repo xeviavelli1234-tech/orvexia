@@ -21,6 +21,16 @@ export interface FeedConfig {
   storeMatcher: RegExp;
   /** URL del feed con apikey. */
   url: string | undefined;
+  /**
+   * Claves de emparejamiento entre NUESTRA oferta (a partir de su externalUrl)
+   * y las filas del feed. Por defecto se empareja solo por aw_product_id (el
+   * `?p=` de la URL de afiliado). Fnac añade el ID de ficha (mp…/a…) porque sus
+   * enlaces suelen ser `cread.php?ued=<url fnac>` SIN `?p=`, así que nunca
+   * harían match solo por aw_product_id. Las claves van namespaced ("aw:" /
+   * "fnac:") para que un id no colisione con otro espacio.
+   */
+  offerKeys?: (externalUrl: string) => string[];
+  rowKeys?: (row: Record<string, string>) => string[];
 }
 
 export interface ImportOptions {
@@ -63,19 +73,95 @@ export function parseInStock(row: Record<string, string>): boolean {
   const isForSale = row.is_for_sale?.trim();
   const stockStatus = row.stock_status?.trim().toLowerCase();
   const stockQty = parseInt(row.stock_quantity ?? "0", 10);
+  // number_available: unidades disponibles (feed enriquecido). En el feed de
+  // producción suele no venir; cuando viene, >0 es señal positiva de stock.
+  const numAvail = parseInt(row.number_available ?? "", 10);
 
+  // Señales negativas explícitas: mandan sobre cualquier señal positiva.
   if (inStock === "0") return false;
   if (isForSale === "0") return false;
   if (stockStatus && /agotad|sin stock|no disponible|out\s*of\s*stock/i.test(stockStatus)) return false;
   if (stockQty < 0) return false;
 
-  return inStock === "1" || stockStatus === "" || /disponib|in\s*stock|available/i.test(stockStatus ?? "");
+  // Señales positivas. Sin ninguna señal explícita asumimos agotado (defensivo,
+  // para no mostrar precios stale como si estuvieran a la venta).
+  return (
+    inStock === "1" ||
+    (Number.isFinite(numAvail) && numAvail > 0) ||
+    stockStatus === "" ||
+    /disponib|in\s*stock|available/i.test(stockStatus ?? "")
+  );
 }
 
 export function extractAwProductId(externalUrl: string): string | null {
   // Awin URL: https://www.awin1.com/pclick.php?p=44372459927&a=2854543&m=77630
   const m = externalUrl.match(/[?&]p=([^&]+)/);
   return m ? decodeURIComponent(m[1]) : null;
+}
+
+// ── Emparejamiento oferta ↔ fila del feed ────────────────────────────────────
+// El feed se mapea contra nuestras ofertas por una o varias "claves". Cada clave
+// va prefijada por su espacio ("aw:" / "fnac:") para que un aw_product_id no se
+// confunda nunca con un id de ficha Fnac.
+
+/** Clave por aw_product_id (todas las tiendas). Vacío si la URL no trae `?p=`. */
+export function awKeysFromUrl(externalUrl: string): string[] {
+  const id = extractAwProductId(externalUrl);
+  return id ? [`aw:${id}`] : [];
+}
+export function awKeysFromRow(row: Record<string, string>): string[] {
+  const id = row.aw_product_id?.trim();
+  return id ? [`aw:${id}`] : [];
+}
+
+/**
+ * Convierte el `merchant_product_id` del feed Fnac en el ID de ficha:
+ *   "3-9543851"  → "mp9543851"  (marketplace, prefijo 3)
+ *   "1-10003855" → "a10003855"  (venta directa Fnac, prefijo 1)
+ * Cualquier otro prefijo se trata como venta directa ("a…").
+ */
+export function feedIdToFnacId(merchantProductId: string | undefined): string | null {
+  const m = (merchantProductId ?? "").trim().match(/^(\d+)-(\d+)$/);
+  if (!m) return null;
+  return `${m[1] === "3" ? "mp" : "a"}${m[2]}`;
+}
+
+/**
+ * Extrae el ID de ficha Fnac (mp…/a…) de la URL de afiliado guardada en la
+ * oferta, incluyendo los enlaces Awin `cread.php?…&ued=<url fnac codificada>`,
+ * que son los que más usamos y que NO llevan `?p=`.
+ */
+export function fnacIdFromUrl(url: string): string | null {
+  // 1) URL directa de Fnac: …fnac.es/mp9543851/… o /a10003855?…
+  const direct = url.match(/fnac\.es\/(mp\d+|a\d+)(?:[/?#]|$)/i);
+  if (direct) return direct[1].toLowerCase();
+
+  // 2) Enlace Awin con la URL de Fnac en el parámetro `ued` (codificado)
+  try {
+    const ued = new URL(url).searchParams.get("ued");
+    if (ued) {
+      const m = decodeURIComponent(ued).match(/fnac\.es\/(mp\d+|a\d+)(?:[/?#]|$)/i);
+      if (m) return m[1].toLowerCase();
+    }
+  } catch { /* URL no parseable: seguimos al caso 3 */ }
+
+  // 3) Búsqueda en crudo por si `ued` viene sin parsear (fnac.es%2Fmp…%2F)
+  const raw = url.match(/fnac\.es(?:%2F|\/)(mp\d+|a\d+)(?:%2F|\/|%3F|\?|$)/i);
+  return raw ? raw[1].toLowerCase() : null;
+}
+
+/** Claves Fnac: aw_product_id (si lo hay) + ID de ficha Fnac. */
+export function fnacKeysFromUrl(externalUrl: string): string[] {
+  const keys = awKeysFromUrl(externalUrl);
+  const fid = fnacIdFromUrl(externalUrl);
+  if (fid) keys.push(`fnac:${fid}`);
+  return keys;
+}
+export function fnacKeysFromRow(row: Record<string, string>): string[] {
+  const keys = awKeysFromRow(row);
+  const fid = feedIdToFnacId(row.merchant_product_id);
+  if (fid) keys.push(`fnac:${fid}`);
+  return keys;
 }
 
 export interface FeedRowComputed {
@@ -91,19 +177,29 @@ export interface FeedRowComputed {
  * (sin precio actual válido).
  *
  * Reglas críticas:
- * - Precio actual: search_price > store_price > display_price
+ * - Moneda: solo EUR. Si `currency` declara otra divisa, la fila se descarta.
+ * - Precio actual: search_price > store_price > display_price ("EUR155.26")
  * - Precio antiguo: was_price > product_price_old > rrp_price (PVPR fabricante)
  * - Si el PVPR implica >25% descuento y no hay was_price del store, lo descartamos
  *   (suele ser PVP de lanzamiento ya obsoleto)
- * - Descuento: prioriza el del feed (savings_percent ECI / saving_percent FNAC),
- *   si no, lo calcula del ratio
+ * - Descuento: SIEMPRE se deriva de priceCurrent vs priceOld para que el badge
+ *   cuadre con el precio tachado. El saving_percent (FNAC) / savings_percent
+ *   (ECI) del feed se ignora: suele calcularse contra otra base (PVPR) e
+ *   inflaba el descuento mostrado (p.ej. -33% sobre un tachado que solo da -23%)
  * - Si no hay priceOld, no hay descuento
  */
 export function computeOfferUpdate(row: Record<string, string>): FeedRowComputed | null {
+  // Solo ingerimos precios en euros. Si el feed declara otra divisa (algún
+  // vendedor de marketplace podría hacerlo) descartamos la fila para no guardar
+  // un importe en USD/GBP como si fuera €. Sin columna `currency` asumimos EUR.
+  const currency = row.currency?.trim().toUpperCase();
+  if (currency && currency !== "EUR") return null;
+
   const priceCurrent =
     parsePrice(row.search_price) ??
     parsePrice(row.store_price) ??
-    parsePrice(row.display_price);
+    // display_price llega como "EUR155.26": quitamos el código de moneda.
+    parsePrice((row.display_price ?? "").replace(/[a-z]/gi, ""));
 
   if (priceCurrent === null) return null;
 
@@ -119,14 +215,16 @@ export function computeOfferUpdate(row: Record<string, string>): FeedRowComputed
     if (implied > 0.25) priceOld = null;
   }
 
-  // ECI usa savings_percent, Fnac usa saving_percent (sin 's')
-  const savingsRaw = row.savings_percent ?? row.saving_percent ?? "0";
-  const savingsPct = parseInt(savingsRaw, 10);
-  let discountPercent: number | null = Number.isFinite(savingsPct) && savingsPct > 0 ? savingsPct : null;
-  if (!discountPercent && priceOld) {
-    discountPercent = Math.round((1 - priceCurrent / priceOld) * 100);
+  // El descuento se deriva SIEMPRE del par priceCurrent/priceOld para que el
+  // badge "-X%" cuadre con el precio tachado que mostramos. El saving_percent
+  // (FNAC) / savings_percent (ECI) del feed se ignora a propósito: Fnac lo
+  // calcula a menudo contra otra base (el PVPR del fabricante) y producía
+  // badges inflados incoherentes con el tachado. Sin priceOld no hay descuento.
+  let discountPercent: number | null = null;
+  if (priceOld) {
+    const computed = Math.round((1 - priceCurrent / priceOld) * 100);
+    discountPercent = computed > 0 ? computed : null;
   }
-  if (!priceOld) discountPercent = null;
 
   const inStock = parseInStock(row);
 
@@ -176,6 +274,10 @@ export function getFeeds(): FeedConfig[] {
       storeMatcher: /\bfnac\b/i,
       // Acepta AWIN_FEED_URL_FNAC explícito o AWIN_FEED_URL como fallback.
       url: process.env.AWIN_FEED_URL_FNAC ?? process.env.AWIN_FEED_URL,
+      // Fnac empareja por ID de ficha (mp…/a…) además de aw_product_id, porque
+      // sus enlaces son cread.php?ued=<url fnac> sin `?p=`.
+      offerKeys: fnacKeysFromUrl,
+      rowKeys: fnacKeysFromRow,
     },
     {
       storeName: "LG",
@@ -216,25 +318,33 @@ export async function importStore(
 
   log(`\n📡 ${cfg.storeName}: descargando feed...`);
 
-  // 1. Cargar nuestras ofertas de esa tienda y mapearlas por aw_product_id
+  // 1. Cargar nuestras ofertas de esa tienda e indexarlas por sus claves de match
   const ourOffers = await prisma.offer.findMany({
     where: { store: { contains: cfg.storeName.split(" ")[0], mode: "insensitive" } },
     include: { product: { select: { id: true, name: true, image: true, images: true } } },
   });
 
-  const offersByAwId = new Map<string, (typeof ourOffers)[number]>();
+  const offerKeysFn = cfg.offerKeys ?? awKeysFromUrl;
+  const rowKeysFn = cfg.rowKeys ?? awKeysFromRow;
+
+  // Una misma oferta puede indexarse por varias claves (p.ej. aw_product_id e
+  // ID de ficha Fnac). offersByKey: clave → oferta; indexedOfferIds: para contar
+  // ofertas distintas emparejables sin recontar claves.
+  const offersByKey = new Map<string, (typeof ourOffers)[number]>();
+  const indexedOfferIds = new Set<string>();
   let urlMissing = 0;
   for (const o of ourOffers) {
     if (!cfg.storeMatcher.test(o.store)) continue;
-    const id = extractAwProductId(o.externalUrl);
-    if (!id) { urlMissing++; continue; }
-    offersByAwId.set(id, o);
+    const keys = offerKeysFn(o.externalUrl);
+    if (keys.length === 0) { urlMissing++; continue; }
+    indexedOfferIds.add(o.id);
+    for (const k of keys) if (!offersByKey.has(k)) offersByKey.set(k, o);
   }
-  log(`   📦 ${offersByAwId.size} ofertas en BD (${urlMissing} sin aw_product_id en URL)`);
+  log(`   📦 ${indexedOfferIds.size} ofertas emparejables en BD (${urlMissing} sin clave de match en URL)`);
 
-  if (offersByAwId.size === 0) {
-    stats.skipped = "0 ofertas con URL de Awin";
-    log(`   ⚠️  No hay ofertas con URL de Awin para ${cfg.storeName}; nada que actualizar`);
+  if (offersByKey.size === 0) {
+    stats.skipped = "0 ofertas con clave de match";
+    log(`   ⚠️  No hay ofertas emparejables para ${cfg.storeName}; nada que actualizar`);
     return stats;
   }
 
@@ -263,9 +373,9 @@ export async function importStore(
       trim: true,
     }));
 
-  // aw_product_ids vistos en este run del feed (de cualquier producto, no solo
-  // los que hacen match con nuestras ofertas) → para detectar ofertas zombi.
-  const seenAwIds = new Set<string>();
+  // Claves vistas en este run del feed (de cualquier producto, no solo los que
+  // hacen match con nuestras ofertas) → para detectar ofertas zombi.
+  const seenKeys = new Set<string>();
 
   for await (const rowRaw of stream) {
     stats.rowsRead++;
@@ -274,11 +384,15 @@ export async function importStore(
     }
 
     const row = rowRaw as Record<string, string>;
-    const awId = row.aw_product_id?.trim();
-    if (!awId) continue;
-    seenAwIds.add(awId);
+    const keys = rowKeysFn(row);
+    if (keys.length === 0) continue;
+    for (const k of keys) seenKeys.add(k);
 
-    const offer = offersByAwId.get(awId);
+    let offer: (typeof ourOffers)[number] | undefined;
+    for (const k of keys) {
+      const found = offersByKey.get(k);
+      if (found) { offer = found; break; }
+    }
     if (!offer) continue;
     stats.matched++;
 
@@ -380,9 +494,9 @@ export async function importStore(
     const candidates: typeof ourOffers = [];
     for (const o of ourOffers) {
       if (!cfg.storeMatcher.test(o.store)) continue;
-      const id = extractAwProductId(o.externalUrl);
-      if (!id) continue;
-      if (seenAwIds.has(id)) continue;
+      const keys = offerKeysFn(o.externalUrl);
+      if (keys.length === 0) continue;
+      if (keys.some((k) => seenKeys.has(k))) continue;
       if (!o.inStock) continue;
       if (o.updatedAt >= staleCutoff) continue;
       candidates.push(o);
