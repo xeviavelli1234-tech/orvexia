@@ -17,6 +17,7 @@
  *   npx tsx scripts/update-prices-awin.ts --store=Fnac --feed=./fnac.csv.gz --refresh-products
  */
 import { PrismaClient } from "../app/generated/prisma/client";
+import { getDatabaseUrl } from "../lib/db-url";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { parse } from "csv-parse";
 import { z } from "zod";
@@ -27,7 +28,7 @@ import * as fs from "fs";
 dotenv.config({ path: ".env.local" });
 dotenv.config({ path: ".env" });
 
-const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
+const adapter = new PrismaPg({ connectionString: getDatabaseUrl() });
 const prisma = new PrismaClient({ adapter });
 
 // guardas alineadas con scrape-prices.ts

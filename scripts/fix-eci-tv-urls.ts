@@ -6,6 +6,7 @@
  * la URL en BD con formato pclick.php?p=...&a=...&m=...
  */
 import { PrismaClient } from "../app/generated/prisma/client";
+import { getDatabaseUrl } from "../lib/db-url";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { parse } from "csv-parse";
 import { createGunzip } from "node:zlib";
@@ -19,7 +20,7 @@ if (!process.env.DATABASE_URL) { console.log("no DATABASE_URL"); process.exit(0)
 if (!process.env.AWIN_FEED_URL_ECI) { console.log("no AWIN_FEED_URL_ECI"); process.exit(0); }
 
 const DRY_RUN = process.argv.includes("--dry-run");
-const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
+const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: getDatabaseUrl() }) });
 
 // Affiliate ID (extraído de URLs Awin existentes)
 const AWIN_AFFID = "2854543";

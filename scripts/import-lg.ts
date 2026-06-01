@@ -9,6 +9,7 @@
  *   npx tsx scripts/import-lg.ts lavadoras --dry-run
  */
 import { PrismaClient, Category } from "../app/generated/prisma/client";
+import { getDatabaseUrl } from "../lib/db-url";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { parse } from "csv-parse";
 import { createReadStream } from "node:fs";
@@ -19,7 +20,7 @@ import * as path from "node:path";
 
 dotenv.config({ path: ".env.local" });
 if (!process.env.DATABASE_URL) process.exit(0);
-const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
+const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: getDatabaseUrl() }) });
 
 const DRY_RUN = process.argv.includes("--dry-run");
 const targetArg = process.argv.find((a) => a.startsWith("--target="));

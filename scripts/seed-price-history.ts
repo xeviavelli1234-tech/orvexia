@@ -7,12 +7,13 @@
  * - Si ya hay ≥1 registro para esa oferta, no toca nada (para no sobreescribir datos reales)
  */
 import { PrismaClient } from "../app/generated/prisma/client";
+import { getDatabaseUrl } from "../lib/db-url";
 import { PrismaPg } from "@prisma/adapter-pg";
 import * as dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
 
 const prisma = new PrismaClient({
-  adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }),
+  adapter: new PrismaPg({ connectionString: getDatabaseUrl() }),
 });
 
 // Semilla determinista basada en productId+store

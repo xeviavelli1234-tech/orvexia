@@ -9,8 +9,9 @@
  * reponer huecos.
  */
 import { PrismaClient } from "../app/generated/prisma/client";
+import { getDatabaseUrl } from "../lib/db-url";
 import { PrismaPg } from "@prisma/adapter-pg";
-const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }) });
+const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: getDatabaseUrl() }) });
 const DRY_RUN = process.argv.includes("--dry-run");
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36";
 

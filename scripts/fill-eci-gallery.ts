@@ -8,11 +8,12 @@
  *   npx tsx scripts/fill-eci-gallery.ts --confirm  # write
  */
 import { PrismaClient } from "../app/generated/prisma/client";
+import { getDatabaseUrl } from "../lib/db-url";
 import { PrismaPg } from "@prisma/adapter-pg";
 import * as dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
 dotenv.config({ path: ".env" });
-const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }) });
+const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: getDatabaseUrl() }) });
 
 const CONFIRM = process.argv.includes("--confirm");
 const MAX_SUFFIX = 9;

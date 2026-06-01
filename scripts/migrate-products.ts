@@ -1,9 +1,10 @@
 import { PrismaClient as PrismaLocal, type Prisma } from "../app/generated/prisma/client";
 import { PrismaClient as PrismaProd } from "../app/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { normalizeDatabaseUrl } from "../lib/db-url";
 
 const localAdapter = new PrismaPg({ connectionString: "postgresql://postgres:4563@localhost:5432/comparacion?schema=public" });
-const prodAdapter = new PrismaPg({ connectionString: process.env.PROD_DATABASE_URL! });
+const prodAdapter = new PrismaPg({ connectionString: normalizeDatabaseUrl(process.env.PROD_DATABASE_URL!) });
 
 const local = new PrismaLocal({ adapter: localAdapter });
 const prod = new PrismaProd({ adapter: prodAdapter });

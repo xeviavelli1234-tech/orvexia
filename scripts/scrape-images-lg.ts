@@ -21,6 +21,7 @@
  *   npx tsx scripts/scrape-images-lg.ts --limit 5
  */
 import * as dotenv from "dotenv";
+import { getDatabaseUrl } from "../lib/db-url";
 dotenv.config({ path: ".env.local" });
 dotenv.config({ path: ".env" });
 
@@ -33,7 +34,7 @@ if (!process.env.DATABASE_URL) {
 }
 
 const prisma = new PrismaClient({
-  adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
+  adapter: new PrismaPg({ connectionString: getDatabaseUrl() }),
 });
 
 const DRY_RUN = process.argv.includes("--dry-run");

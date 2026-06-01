@@ -1,10 +1,11 @@
 require("dotenv").config({ path: ".env.local" });
 const { Client } = require("pg");
+const { normalizeDatabaseUrl } = require("../lib/db-url.cjs");
 
 const REMOVE_COUNT = 19;
 
 async function main() {
-  const client = new Client({ connectionString: process.env.DATABASE_URL });
+  const client = new Client({ connectionString: normalizeDatabaseUrl(process.env.DATABASE_URL) });
   await client.connect();
   await client.query("BEGIN");
   try {

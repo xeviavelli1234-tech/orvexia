@@ -11,6 +11,7 @@
  */
 
 import { PrismaClient } from "../app/generated/prisma/client";
+import { getDatabaseUrl } from "../lib/db-url";
 import { PrismaPg } from "@prisma/adapter-pg";
 import * as dotenv from "dotenv";
 import * as https from "https";
@@ -22,7 +23,7 @@ import { chromium } from "playwright";
 dotenv.config({ path: ".env.local" });
 
 const prisma = new PrismaClient({
-  adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }),
+  adapter: new PrismaPg({ connectionString: getDatabaseUrl() }),
 });
 
 const DRY_RUN = process.argv.includes("--dry-run");

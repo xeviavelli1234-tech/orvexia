@@ -10,6 +10,7 @@
  */
 import "dotenv/config";
 import { Client } from "pg";
+import { normalizeDatabaseUrl } from "../lib/db-url";
 
 async function main() {
   const url = process.env.DATABASE_URL;
@@ -17,7 +18,7 @@ async function main() {
     console.error("Sin DATABASE_URL — añade a .env o exporta antes con $env:DATABASE_URL=...");
     process.exit(1);
   }
-  const c = new Client({ connectionString: url });
+  const c = new Client({ connectionString: normalizeDatabaseUrl(url) });
   await c.connect();
 
   // 1. Listar los que se van a limpiar

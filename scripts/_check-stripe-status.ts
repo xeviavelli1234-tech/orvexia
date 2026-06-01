@@ -1,6 +1,7 @@
 // Verificación de Test 4: confirma que el webhook actualizó el seller.
 import "dotenv/config";
 import { Client } from "pg";
+import { normalizeDatabaseUrl } from "../lib/db-url";
 
 async function main() {
   // Ajusta DATABASE_URL según tu setup. Si pruebas con Neon de Vercel,
@@ -10,7 +11,7 @@ async function main() {
     console.error("Sin DATABASE_URL — añade a .env o exporta antes");
     process.exit(1);
   }
-  const c = new Client({ connectionString: url });
+  const c = new Client({ connectionString: normalizeDatabaseUrl(url) });
   await c.connect();
   const r = await c.query<{
     email: string;

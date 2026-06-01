@@ -1,9 +1,10 @@
 import { PrismaClient } from "../app/generated/prisma/client";
+import { getDatabaseUrl } from "../lib/db-url";
 import { PrismaPg } from "@prisma/adapter-pg";
 import * as dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
 
-const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }) });
+const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: getDatabaseUrl() }) });
 
 const base = "https://thumb.pccomponentes.com/w-530-530/articles/1093/10934126";
 const images = [

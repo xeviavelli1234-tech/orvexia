@@ -3,6 +3,7 @@ require("dotenv").config({ path: ".env.local" });
 const fs = require("fs");
 const zlib = require("zlib");
 const { Client } = require("pg");
+const { normalizeDatabaseUrl } = require("../lib/db-url.cjs");
 
 const TARGET_COUNT = Number.parseInt(
   (process.argv.find((a) => a.startsWith("--count=")) || "").split("=")[1] || "20",
@@ -176,7 +177,7 @@ async function main() {
   const candidates = rows.filter(isStrictFridge);
   if (!candidates.length) throw new Error("No hay candidatos de frigorífico con filtro estricto.");
 
-  const client = new Client({ connectionString: process.env.DATABASE_URL });
+  const client = new Client({ connectionString: normalizeDatabaseUrl(process.env.DATABASE_URL) });
   await client.connect();
   await client.query("BEGIN");
 

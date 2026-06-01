@@ -9,8 +9,9 @@
  *  3. Verifica si la URL principal www.lg.com da 200 — si 404, la elimina
  */
 import { PrismaClient } from "../app/generated/prisma/client";
+import { getDatabaseUrl } from "../lib/db-url";
 import { PrismaPg } from "@prisma/adapter-pg";
-const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }) });
+const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: getDatabaseUrl() }) });
 const DRY_RUN = process.argv.includes("--dry-run");
 
 async function check(url: string): Promise<number> {

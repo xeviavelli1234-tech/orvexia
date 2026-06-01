@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const { Client } = require("pg");
+const { normalizeDatabaseUrl } = require("../lib/db-url.cjs");
 const dotenv = require("dotenv");
 
 dotenv.config({ path: ".env.local" });
@@ -44,7 +45,7 @@ async function main() {
     throw new Error("No se pudieron extraer updates del archivo TS");
   }
 
-  const client = new Client({ connectionString });
+  const client = new Client({ connectionString: normalizeDatabaseUrl(connectionString) });
   await client.connect();
 
   let updated = 0;
