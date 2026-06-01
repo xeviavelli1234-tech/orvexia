@@ -1,5 +1,6 @@
 import { PrismaClient } from "@/app/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { getDatabaseUrl } from "@/lib/db-url";
 
 const SCHEMA_VERSION = "v7-stripe-fields";
 
@@ -9,7 +10,7 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient() {
-  const adapter = new PrismaPg(process.env.DATABASE_URL!);
+  const adapter = new PrismaPg({ connectionString: getDatabaseUrl() });
   return new PrismaClient({ adapter });
 }
 

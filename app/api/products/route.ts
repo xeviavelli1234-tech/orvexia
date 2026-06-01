@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@/app/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { getDatabaseUrl } from "@/lib/db-url";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -8,7 +9,7 @@ export async function GET(req: Request) {
   if (!slug) return NextResponse.json({ error: "slug required" }, { status: 400 });
 
   // Cliente fresco — sin singleton — para evitar caché de esquema antiguo
-  const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
+  const adapter = new PrismaPg({ connectionString: getDatabaseUrl() });
   const prisma = new PrismaClient({ adapter });
 
   try {
