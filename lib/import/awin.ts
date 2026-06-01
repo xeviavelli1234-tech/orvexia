@@ -31,6 +31,14 @@ export interface FeedConfig {
    */
   offerKeys?: (externalUrl: string) => string[];
   rowKeys?: (row: Record<string, string>) => string[];
+  /**
+   * Claves extra derivadas del PRODUCTO (no de su URL). Plan B para Fnac: la URL
+   * suele ser `pclick.php?p=<aw_product_id>` sin la ficha, y el aw_product_id rota
+   * con el tiempo dejando la oferta huérfana del feed. El merchant_product_id
+   * "N-N" sí vive en `model`/`slug` de los productos importados del feed y da una
+   * clave `fnac:` estable que rescata el emparejamiento.
+   */
+  productKeys?: (product: { model?: string | null; slug?: string | null }) => string[];
 }
 
 export interface ImportOptions {
@@ -164,6 +172,32 @@ export function fnacKeysFromRow(row: Record<string, string>): string[] {
   return keys;
 }
 
+/**
+ * Deriva la clave de ficha Fnac (`fnac:mp…`/`fnac:a…`) desde el `model`/`slug`
+ * del producto. Los productos importados del feed guardan ahí el
+ * merchant_product_id "N-N" (p.ej. model `1-11990234`, o slug
+ * `…-1-11990234-…`). Es el plan B cuando la URL de afiliado es
+ * `pclick.php?p=<aw_product_id>` SIN la ficha: el aw_product_id rota y la oferta
+ * se queda congelada; la ficha es estable y la reengancha al feed.
+ *
+ * El segundo grupo exige ≥6 dígitos (los artículos Fnac son largos) para no
+ * confundir tokens como `75-75` (de «LG 75" 75QNED…») o `26-14` (de un modelo
+ * con «14 servicios») con una ficha real.
+ */
+export function fnacKeysFromProduct(product: {
+  model?: string | null;
+  slug?: string | null;
+}): string[] {
+  for (const src of [product.model, product.slug]) {
+    const m = (src ?? "").match(/(?:^|[^\d])([1-9]\d?)-(\d{6,})(?:[^\d]|$)/);
+    if (m) {
+      const fid = feedIdToFnacId(`${m[1]}-${m[2]}`);
+      if (fid) return [`fnac:${fid}`];
+    }
+  }
+  return [];
+}
+
 export interface FeedRowComputed {
   priceCurrent: number;
   priceOld: number | null;
@@ -275,9 +309,12 @@ export function getFeeds(): FeedConfig[] {
       // Acepta AWIN_FEED_URL_FNAC explícito o AWIN_FEED_URL como fallback.
       url: process.env.AWIN_FEED_URL_FNAC ?? process.env.AWIN_FEED_URL,
       // Fnac empareja por ID de ficha (mp…/a…) además de aw_product_id, porque
-      // sus enlaces son cread.php?ued=<url fnac> sin `?p=`.
+      // sus enlaces son cread.php?ued=<url fnac> sin `?p=`. Y como plan B, la
+      // ficha del model/slug del producto, para rescatar ofertas cuyo
+      // aw_product_id ha rotado fuera del feed.
       offerKeys: fnacKeysFromUrl,
       rowKeys: fnacKeysFromRow,
+      productKeys: fnacKeysFromProduct,
     },
     {
       storeName: "LG",
@@ -321,11 +358,16 @@ export async function importStore(
   // 1. Cargar nuestras ofertas de esa tienda e indexarlas por sus claves de match
   const ourOffers = await prisma.offer.findMany({
     where: { store: { contains: cfg.storeName.split(" ")[0], mode: "insensitive" } },
-    include: { product: { select: { id: true, name: true, image: true, images: true } } },
+    include: { product: { select: { id: true, name: true, image: true, images: true, model: true, slug: true } } },
   });
 
   const offerKeysFn = cfg.offerKeys ?? awKeysFromUrl;
   const rowKeysFn = cfg.rowKeys ?? awKeysFromRow;
+  // Claves de una oferta = las de su URL + las derivadas del producto (plan B Fnac).
+  const keysForOffer = (o: (typeof ourOffers)[number]): string[] => [
+    ...offerKeysFn(o.externalUrl),
+    ...(cfg.productKeys?.(o.product) ?? []),
+  ];
 
   // Una misma oferta puede indexarse por varias claves (p.ej. aw_product_id e
   // ID de ficha Fnac). offersByKey: clave → oferta; indexedOfferIds: para contar
@@ -335,12 +377,12 @@ export async function importStore(
   let urlMissing = 0;
   for (const o of ourOffers) {
     if (!cfg.storeMatcher.test(o.store)) continue;
-    const keys = offerKeysFn(o.externalUrl);
+    const keys = keysForOffer(o);
     if (keys.length === 0) { urlMissing++; continue; }
     indexedOfferIds.add(o.id);
     for (const k of keys) if (!offersByKey.has(k)) offersByKey.set(k, o);
   }
-  log(`   📦 ${indexedOfferIds.size} ofertas emparejables en BD (${urlMissing} sin clave de match en URL)`);
+  log(`   📦 ${indexedOfferIds.size} ofertas emparejables en BD (${urlMissing} sin clave de match)`);
 
   if (offersByKey.size === 0) {
     stats.skipped = "0 ofertas con clave de match";
@@ -494,7 +536,7 @@ export async function importStore(
     const candidates: typeof ourOffers = [];
     for (const o of ourOffers) {
       if (!cfg.storeMatcher.test(o.store)) continue;
-      const keys = offerKeysFn(o.externalUrl);
+      const keys = keysForOffer(o);
       if (keys.length === 0) continue;
       if (keys.some((k) => seenKeys.has(k))) continue;
       if (!o.inStock) continue;

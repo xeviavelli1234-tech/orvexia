@@ -11,6 +11,7 @@ import {
   awKeysFromRow,
   fnacKeysFromUrl,
   fnacKeysFromRow,
+  fnacKeysFromProduct,
 } from "./awin";
 
 // Las claves en los fixtures siguen los nombres reales de columnas de los feeds
@@ -394,6 +395,42 @@ test("fnacKeysFromRow: aw_product_id + ID de ficha desde merchant_product_id", (
     ["aw:888", "fnac:mp9543851"],
   );
   assert.deepEqual(fnacKeysFromRow({ merchant_product_id: "1-555" }), ["fnac:a555"]);
+});
+
+// ── fnacKeysFromProduct: ficha desde model/slug (plan B) ─────────────────────
+
+test("fnacKeysFromProduct: model 'N-N' → clave de ficha", () => {
+  assert.deepEqual(fnacKeysFromProduct({ model: "1-11990234" }), ["fnac:a11990234"]);
+  assert.deepEqual(fnacKeysFromProduct({ model: "3-9543851" }), ["fnac:mp9543851"]);
+});
+
+test("fnacKeysFromProduct: extrae la ficha embebida en el slug", () => {
+  assert.deepEqual(
+    fnacKeysFromProduct({
+      slug: "tv-qned-lg-75-75qned87-evo-miniled-ai-4k-2025-smart-tv-1-11990234-41627171617",
+    }),
+    ["fnac:a11990234"],
+  );
+  assert.deepEqual(
+    fnacKeysFromProduct({ slug: "fnac-1-11990228-tv-oled-42-lg-oled42c55" }),
+    ["fnac:a11990228"],
+  );
+});
+
+test("fnacKeysFromProduct: prioriza model sobre slug", () => {
+  assert.deepEqual(
+    fnacKeysFromProduct({ model: "1-11990234", slug: "algo-3-9999999-mas" }),
+    ["fnac:a11990234"],
+  );
+});
+
+test("fnacKeysFromProduct: ignora tokens cortos que no son fichas (guarda ≥6 dígitos)", () => {
+  // "75-75" de «LG 75" 75QNED», "26-14" de «…c26 14 servicios», "30-l" no aplica.
+  assert.deepEqual(fnacKeysFromProduct({ slug: "tv-lg-75-75qned87-evo" }), []);
+  assert.deepEqual(fnacKeysFromProduct({ slug: "lavavajillas-wric3c26-14-servicios" }), []);
+  assert.deepEqual(fnacKeysFromProduct({ model: "OLED42C55" }), []);
+  assert.deepEqual(fnacKeysFromProduct({ model: "43474318514" }), []); // aw id puro, sin guion
+  assert.deepEqual(fnacKeysFromProduct({}), []);
 });
 
 test("REGRESIÓN: una oferta Fnac con URL cread.php?ued= empareja con su fila del feed", () => {
