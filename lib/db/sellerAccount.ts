@@ -35,6 +35,8 @@ export async function upsertSellerAccount(params: {
       marketplaceId: MARKETPLACE_IDS.ES,
       refreshToken: encrypted,
       spApiEnv: params.spApiEnv,
+      // Conectar Amazon (OAuth/self-connect/demo) SIEMPRE es modo "amazon".
+      mode: "amazon",
       plan: "TRIAL",
       trialEndsAt,
       intervalSeconds: DEFAULT_INTERVAL_SECONDS,
@@ -44,6 +46,10 @@ export async function upsertSellerAccount(params: {
       amazonSellerId: params.amazonSellerId,
       refreshToken: encrypted,
       spApiEnv: params.spApiEnv,
+      // Crítico: si la cuenta venía de una prueba en "manual" (CSV), conectar
+      // Amazon debe devolverla a "amazon"; si no, listings/sync la rechaza y
+      // la UI sigue mostrando el catálogo CSV en vez de los listings reales.
+      mode: "amazon",
       active: true,
     },
   });
