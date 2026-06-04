@@ -52,6 +52,15 @@ const FEATURES = [
   },
 ];
 
+const PLAN_INCLUYE = [
+  "SKUs ilimitados",
+  "Reprecio automático cada 5 minutos",
+  "Estrategias de Buy Box, margen objetivo y precio fijo",
+  "Modo simulación y alertas por email",
+  "Sincronización SP-API y registro de auditoría",
+  "Soporte por correo electrónico",
+];
+
 export default function RepricerPage() {
   return (
     <main>
@@ -97,6 +106,9 @@ export default function RepricerPage() {
               Cómo protegemos tus datos
             </Link>
           </div>
+          <p className="mt-5 text-sm text-white/55 font-mono-ui">
+            14 días de prueba gratis · luego 19 €/mes (IVA incl.) · cancela cuando quieras
+          </p>
         </div>
       </section>
 
@@ -131,6 +143,51 @@ export default function RepricerPage() {
                 <p className="text-sm text-fg-muted leading-relaxed">{f.desc}</p>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* Precio */}
+        <section>
+          <h2 className="text-2xl font-extrabold text-fg mb-2">Precio</h2>
+          <p className="text-fg-muted mb-8">
+            Una sola tarifa plana, sin permanencia. Empiezas con 14 días de prueba gratuita.
+          </p>
+          <div className="bg-bg-elevated rounded-2xl border border-border p-6 sm:p-8 max-w-md mx-auto">
+            <div className="inline-flex items-center gap-2 mb-5 px-3 h-7 rounded-full bg-[#EEF2FF] border border-[#E0E7FF]">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#4F46E5]">
+                14 días gratis
+              </span>
+            </div>
+            <div className="flex items-baseline gap-2 mb-1">
+              <span className="text-4xl font-black text-fg">19 €</span>
+              <span className="text-fg-muted font-semibold">/ mes</span>
+            </div>
+            <p className="text-sm text-fg-muted mb-6">
+              Plan Pro · IVA incluido · cancela cuando quieras
+            </p>
+            <ul className="space-y-2.5 mb-6">
+              {PLAN_INCLUYE.map((item) => (
+                <li key={item} className="flex gap-3 items-start text-sm">
+                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#4F46E5] flex-shrink-0" />
+                  <span className="text-fg-muted leading-relaxed">{item}</span>
+                </li>
+              ))}
+            </ul>
+            <Link
+              href="/dashboard/repricer"
+              className="flex items-center justify-center rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white px-6 py-3 text-sm font-bold transition-colors"
+            >
+              Empezar la prueba gratuita
+            </Link>
+            <p className="mt-4 text-xs text-fg-muted leading-relaxed">
+              Tras los 14 días, la suscripción pasa al plan Pro (19 €/mes, IVA incl.) salvo que
+              canceles antes. Facturación mensual recurrente vía Stripe; puedes cancelar en
+              cualquier momento. Consulta el detalle en los{" "}
+              <Link href="/terminos" className="text-[#4F46E5] hover:underline">
+                Términos del servicio
+              </Link>
+              .
+            </p>
           </div>
         </section>
 

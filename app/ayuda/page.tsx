@@ -36,7 +36,7 @@ const FAQ = [
   },
   {
     q: "¿Cuánto cuesta y cómo cancelo?",
-    a: "Hay una prueba gratuita y puedes cancelar cuando quieras escribiéndonos a soporte. Los detalles están en los Términos del servicio.",
+    a: "El Plan Pro cuesta 19 €/mes (IVA incluido) e incluye SKUs ilimitados, reprecio cada 5 minutos y soporte por correo. Empiezas con 14 días de prueba gratuita y, si no cancelas antes, la suscripción se activa automáticamente. Puedes cancelar cuando quieras desde el portal de facturación o escribiéndonos a soporte. El detalle está en los Términos del servicio.",
   },
 ];
 
