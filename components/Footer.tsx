@@ -38,6 +38,8 @@ const NAV = [
     code: "/system",
     links: [
       { label: "Sobre nosotros", href: "/sobre-nosotros" },
+      { label: "Repricer para Amazon", href: "/repricer" },
+      { label: "Centro de ayuda", href: "/ayuda" },
       { label: "Aviso legal", href: "/aviso-legal" },
       { label: "Términos del Repricer", href: "/terminos" },
       { label: "Política de privacidad", href: "/politica-privacidad" },
