@@ -2,6 +2,7 @@ import { unstable_cache } from "next/cache";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { RecomendadosClient } from "../RecomendadosClient";
+import { safeData } from "@/lib/safe-data";
 
 /**
  * Sección "Selección curada" — antes vivía dentro de page.tsx y bloqueaba
@@ -118,7 +119,11 @@ export default async function TopRatedSection({
 }: {
   userId: string | undefined;
 }) {
-  const products = await getRecommendations(userId);
+  const products = await safeData<Awaited<ReturnType<typeof getRecommendations>>>(
+    () => getRecommendations(userId),
+    [],
+    "recomendados-top-rated",
+  );
   if (products.length === 0) return null;
 
   return (

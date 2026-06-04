@@ -6,6 +6,7 @@ import { CategoryTabs } from "./CategoryTabs";
 import { PopularCard } from "./PopularCard";
 import { FuturisticFX } from "@/components/FuturisticFX";
 import type { Product, Offer } from "@/app/generated/prisma/client";
+import { safeData } from "@/lib/safe-data";
 
 type ProductWithOffers = Product & { offers: Offer[] };
 
@@ -74,9 +75,9 @@ export default async function PopularidadPage({
   const categoria = String(sp.categoria ?? "");
 
   const [products, categories, stats] = await Promise.all([
-    getProducts(categoria),
-    getAvailableCategories(),
-    getStats(),
+    safeData<ProductWithOffers[]>(() => getProducts(categoria), [], "popularidad-products"),
+    safeData<string[]>(() => getAvailableCategories(), [], "popularidad-categories"),
+    safeData(() => getStats(), { total: 0, topProduct: null }, "popularidad-stats"),
   ]);
 
   const totalReviews = products.reduce((s, p) => s + (p.reviewCount ?? 0), 0);

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import ProductCard from "@/components/ProductCard";
 import { SortBar } from "./SortBar";
 import { getRealDeals, type DealOrder, type DealProduct } from "@/lib/deals";
+import { safeData } from "@/lib/safe-data";
 import { FuturisticFX } from "@/components/FuturisticFX";
 
 function realDiscountPercent(p: DealProduct): number {
@@ -50,7 +51,10 @@ export default async function OfertasDestacadasPage({
   const sp    = await searchParams;
   const orden = String(sp.orden ?? "discount_desc");
 
-  const [deals, stats] = await Promise.all([getFeaturedDeals(orden), getStats()]);
+  const [deals, stats] = await Promise.all([
+    safeData<DealProduct[]>(() => getFeaturedDeals(orden), [], "ofertas-deals"),
+    safeData(() => getStats(), { productCount: 0, offerCount: 0 }, "ofertas-stats"),
+  ]);
 
   const bestDiscount = deals.length
     ? Math.max(...deals.map((p) => realDiscountPercent(p)))

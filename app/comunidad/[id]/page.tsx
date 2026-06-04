@@ -9,6 +9,8 @@ import { DeleteCommentButton } from "@/components/community/DeleteCommentButton"
 import { DeletePostButton } from "@/components/community/DeletePostButton";
 import { RelativeTime } from "@/components/community/RelativeTime";
 import { PostProductCard } from "@/components/community/PostProductCard";
+import { captureException } from "@/lib/monitoring";
+import { DataUnavailable } from "@/components/DataUnavailable";
 
 export const runtime = "nodejs";
 
@@ -48,9 +50,33 @@ function Avatar({
 }
 
 
+function getPost(id: string) {
+  return prisma.communityPost.findUnique({
+    where: { id },
+    include: {
+      user: {
+        select: { id: true, name: true, avatarColor: true, avatarEmoji: true, avatarUrl: true },
+      },
+      comments: {
+        include: {
+          user: {
+            select: { id: true, name: true, avatarColor: true, avatarEmoji: true, avatarUrl: true },
+          },
+        },
+        orderBy: { createdAt: "asc" },
+        take: 200, // evita cargar hilos enormes de golpe
+      },
+      votes: { select: { userId: true } },
+      product: { select: { id: true, name: true, image: true, slug: true } },
+    },
+  });
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const post = await prisma.communityPost.findUnique({ where: { id }, select: { title: true } });
+  const post = await prisma.communityPost
+    .findUnique({ where: { id }, select: { title: true } })
+    .catch(() => null);
   return {
     title: post ? `${post.title} · Comunidad · Orvexia` : "Publicación · Orvexia",
   };
@@ -59,36 +85,25 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 export default async function PostDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  const [post, session] = await Promise.all([
-    prisma.communityPost.findUnique({
-      where: { id },
-      include: {
-        user: {
-          select: { id: true, name: true, avatarColor: true, avatarEmoji: true, avatarUrl: true },
-        },
-        comments: {
-          include: {
-            user: {
-              select: { id: true, name: true, avatarColor: true, avatarEmoji: true, avatarUrl: true },
-            },
-          },
-          orderBy: { createdAt: "asc" },
-          take: 200, // evita cargar hilos enormes de golpe
-        },
-        votes: { select: { userId: true } },
-        product: { select: { id: true, name: true, image: true, slug: true } },
-      },
-    }),
-    getSession(),
-  ]);
+  // getSession() solo verifica el JWT (sin BD), así que sobrevive a un corte.
+  const session = await getSession();
+  let post: Awaited<ReturnType<typeof getPost>>;
+  try {
+    post = await getPost(id);
+  } catch (e) {
+    void captureException(e, { tags: { source: "comunidad-post" }, level: "warning" });
+    return <DataUnavailable />;
+  }
 
   if (!post) notFound();
 
   const currentUser = session
-    ? await prisma.user.findUnique({
-        where: { id: session.userId },
-        select: { name: true, avatarColor: true, avatarEmoji: true, avatarUrl: true },
-      })
+    ? await prisma.user
+        .findUnique({
+          where: { id: session.userId },
+          select: { name: true, avatarColor: true, avatarEmoji: true, avatarUrl: true },
+        })
+        .catch(() => null)
     : null;
 
   const meta = TYPE_META[post.type];

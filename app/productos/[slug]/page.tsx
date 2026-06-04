@@ -4,6 +4,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { captureException } from "@/lib/monitoring";
+import { DataUnavailable } from "@/components/DataUnavailable";
 import type { Category } from "@/app/generated/prisma/client";
 import ProductPageClient from "./ProductPageClient";
 import { buildAnalysis, getCategoryStats } from "@/lib/productAnalysis";
@@ -114,7 +116,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const product = await getProduct(slug);
+  const product = await getProduct(slug).catch(() => null);
   if (!product) return { title: "Producto no encontrado | Orvexia" };
   const offer = product.offers[0];
   const title = `${product.name} | Orvexia`;
@@ -152,13 +154,26 @@ export async function generateMetadata({
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const product = await getProduct(slug);
+  let product: Awaited<ReturnType<typeof getProduct>>;
+  try {
+    product = await getProduct(slug);
+  } catch (e) {
+    void captureException(e, { tags: { source: "producto" }, level: "warning" });
+    return <DataUnavailable />;
+  }
   if (!product) notFound();
 
-  const [related, categoryStats] = await Promise.all([
-    getRelated(product.category, product.id),
-    getCategoryStats(product.category),
-  ]);
+  let related: Awaited<ReturnType<typeof getRelated>>;
+  let categoryStats: Awaited<ReturnType<typeof getCategoryStats>>;
+  try {
+    [related, categoryStats] = await Promise.all([
+      getRelated(product.category, product.id),
+      getCategoryStats(product.category),
+    ]);
+  } catch (e) {
+    void captureException(e, { tags: { source: "producto-extra" }, level: "warning" });
+    return <DataUnavailable />;
+  }
   const specs = extractSpecs(`${product.name} ${product.description ?? ""}`);
   const description = generateDescription(product.name, product.brand, product.category);
   const catLabel = CATEGORY_LABELS[product.category] ?? "Electrodomésticos";

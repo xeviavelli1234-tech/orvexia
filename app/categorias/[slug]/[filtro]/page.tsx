@@ -10,6 +10,7 @@ import {
   brandToSlug,
 } from "@/lib/catalog/categories";
 import ProductCard from "@/components/ProductCard";
+import { safeData } from "@/lib/safe-data";
 
 export const revalidate = 3600;
 
@@ -62,6 +63,19 @@ async function resolveBrand(categoryKey: Prisma.ProductWhereInput["category"], b
   return brands.find((b) => brandToSlug(b.brand) === brandSlug)?.brand ?? null;
 }
 
+function queryFilteredProducts(where: Prisma.ProductWhereInput, maxOfferPrice: number) {
+  return prisma.product.findMany({
+    where,
+    include: {
+      offers: {
+        where: { inStock: true, priceCurrent: { gte: MIN_PRICE, lte: maxOfferPrice } },
+        orderBy: { priceCurrent: "asc" },
+      },
+    },
+    take: 60,
+  });
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -81,7 +95,7 @@ export async function generateMetadata({
     };
   }
 
-  const realBrand = (await resolveBrand(meta.key, parsed.brand)) ?? parsed.label;
+  const realBrand = (await resolveBrand(meta.key, parsed.brand).catch(() => null)) ?? parsed.label;
   return {
     title: `${meta.label} ${realBrand} ${new Date().getFullYear()} | Orvexia`,
     description: `Compara los ${meta.label.toLowerCase()} de ${realBrand} disponibles, con precios actualizados y descuentos reales entre tiendas.`,
@@ -117,7 +131,11 @@ export default async function FiltroPage({
     intro = `Encuentra ${meta.label.toLowerCase()} con precio inferior a ${parsed.maxPrice}€. La lista cruza el stock real de cada tienda con su precio actual; los productos sin oferta válida en este rango quedan fuera.`;
     breadcrumbLabel = `menos de ${parsed.maxPrice}€`;
   } else {
-    const realBrand = await resolveBrand(meta.key, parsed.brand);
+    const realBrand = await safeData<string | null>(
+      () => resolveBrand(meta.key, parsed.brand),
+      null,
+      `filtro-brand-${slug}`,
+    );
     if (!realBrand) notFound();
     where = {
       category: meta.key,
@@ -129,16 +147,11 @@ export default async function FiltroPage({
     breadcrumbLabel = realBrand;
   }
 
-  const productsRaw = await prisma.product.findMany({
-    where,
-    include: {
-      offers: {
-        where: { inStock: true, priceCurrent: { gte: MIN_PRICE, lte: parsed.kind === "price" ? parsed.maxPrice : MAX_PRICE } },
-        orderBy: { priceCurrent: "asc" },
-      },
-    },
-    take: 60,
-  });
+  const productsRaw = await safeData<Awaited<ReturnType<typeof queryFilteredProducts>>>(
+    () => queryFilteredProducts(where, parsed.kind === "price" ? parsed.maxPrice : MAX_PRICE),
+    [],
+    `filtro-${slug}`,
+  );
 
   const products = productsRaw
     .filter((p) => p.offers.length > 0)

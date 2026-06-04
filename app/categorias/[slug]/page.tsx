@@ -1,6 +1,7 @@
 ﻿import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { safeData } from "@/lib/safe-data";
 import { Category } from "@/app/generated/prisma/client";
 import CategoryClient from "./CategoryClient";
 import { PRICE_THRESHOLDS, brandToSlug, type CategorySlug } from "@/lib/catalog/categories";
@@ -150,7 +151,11 @@ export default async function CategoryPage({
   const meta = CATEGORY_META[slug.toLowerCase()];
   if (!meta) notFound();
 
-  const products = await getProducts(meta.key);
+  const products = await safeData<Awaited<ReturnType<typeof getProducts>>>(
+    () => getProducts(meta.key),
+    [],
+    `categoria-${slug}`,
+  );
 
   const serialized = products.map((p) => ({
     id: p.id,

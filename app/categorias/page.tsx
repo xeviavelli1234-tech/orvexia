@@ -4,6 +4,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Category } from "@/app/generated/prisma/client";
 import { CategoryProductCard } from "@/components/CategoryProductCard";
+import { safeData } from "@/lib/safe-data";
 import { FuturisticFX } from "@/components/FuturisticFX";
 
 const MIN_REASONABLE_PRICE = 20;
@@ -61,8 +62,14 @@ async function getCategoriasData() {
   return { counts, topProducts };
 }
 
+type CategoriasData = Awaited<ReturnType<typeof getCategoriasData>>;
+
 export default async function CategoriasPage() {
-  const { counts, topProducts } = await getCategoriasData();
+  const { counts, topProducts } = await safeData<CategoriasData>(
+    () => getCategoriasData(),
+    { counts: [], topProducts: [] },
+    "categorias-data",
+  );
 
   const countMap = Object.fromEntries(counts.map((c) => [c.category, c._count.id]));
 

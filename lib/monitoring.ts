@@ -57,8 +57,17 @@ export async function captureException(
   err: unknown,
   ctx: MonitorContext = {},
 ): Promise<void> {
-  // Log local siempre (telemetría no debería tragarse información).
-  log.error(
+  // Log local siempre (telemetría no debería tragarse información). Respetamos
+  // el nivel: una degradación MANEJADA (level: "warning") no debe registrarse
+  // como error fatal —ni ensuciar la consola ni disparar el overlay de errores
+  // de Next en dev—. Sentry sigue recibiendo el evento igualmente.
+  const localLog =
+    ctx.level === "warning"
+      ? log.warn
+      : ctx.level === "info"
+        ? log.info
+        : log.error;
+  localLog(
     {
       err,
       tags: ctx.tags,

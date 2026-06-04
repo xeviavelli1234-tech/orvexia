@@ -4,6 +4,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getCategoryBySlug, CATEGORY_SLUGS } from "@/lib/catalog/categories";
 import ProductCard from "@/components/ProductCard";
+import { safeData } from "@/lib/safe-data";
 
 export const revalidate = 3600;
 
@@ -61,7 +62,11 @@ export default async function OfertasHoyPage({ params }: { params: Promise<{ slu
   const meta = getCategoryBySlug(slug);
   if (!meta) notFound();
 
-  const products = await getOffersToday(meta);
+  const products = await safeData<Awaited<ReturnType<typeof getOffersToday>>>(
+    () => getOffersToday(meta),
+    [],
+    `ofertas-hoy-${slug}`,
+  );
   if (products.length < 3) notFound();
 
   const cards = products.slice(0, 40).map((p) => ({

@@ -6,6 +6,7 @@ import ProductCard from "@/components/ProductCard";
 import { CategoryTabs } from "./CategoryTabs";
 import { FuturisticFX } from "@/components/FuturisticFX";
 import type { Product, Offer } from "@/app/generated/prisma/client";
+import { safeData } from "@/lib/safe-data";
 
 type ProductWithOffers = Product & { offers: Offer[] };
 
@@ -57,9 +58,9 @@ export default async function BajadasRecientesPage({
   const categoria = String(sp.categoria ?? "");
 
   const [products, categories, stats] = await Promise.all([
-    getBajadas(categoria),
-    getAvailableCategories(),
-    getStats(),
+    safeData<ProductWithOffers[]>(() => getBajadas(categoria), [], "bajadas-products"),
+    safeData<string[]>(() => getAvailableCategories(), [], "bajadas-categories"),
+    safeData(() => getStats(), { recent: 0, bestDiscount: 0 }, "bajadas-stats"),
   ]);
 
   return (

@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { prisma } from "@/lib/prisma";
+import { captureException } from "@/lib/monitoring";
+import { DataUnavailable } from "@/components/DataUnavailable";
 
 export const revalidate = 3600;
 
@@ -46,7 +48,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const pair = splitSlug(slug);
   if (!pair) return { title: "Comparativa no encontrada | Orvexia" };
-  const { a, b } = await getPair(pair[0], pair[1]);
+  const { a, b } = await getPair(pair[0], pair[1]).catch(() => ({ a: null, b: null }));
   if (!a || !b) return { title: "Comparativa no encontrada | Orvexia" };
   return {
     title: `${a.name} vs ${b.name}: comparativa y mejor precio | Orvexia`,
@@ -90,7 +92,14 @@ export default async function CompararPage({ params }: { params: Promise<{ slug:
   const { slug } = await params;
   const pair = splitSlug(slug);
   if (!pair) notFound();
-  const { a, b } = await getPair(pair[0], pair[1]);
+  let pairData: Awaited<ReturnType<typeof getPair>>;
+  try {
+    pairData = await getPair(pair[0], pair[1]);
+  } catch (e) {
+    void captureException(e, { tags: { source: "comparar" }, level: "warning" });
+    return <DataUnavailable />;
+  }
+  const { a, b } = pairData;
   if (!a || !b) notFound();
   if (a.category !== b.category) notFound();
 

@@ -1,6 +1,7 @@
 import { unstable_cache } from "next/cache";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { safeData } from "@/lib/safe-data";
 
 /**
  * Sección "Por categoría" — antes en page.tsx. Aislada para que pueda
@@ -50,7 +51,11 @@ const getByCategory = unstable_cache(
 );
 
 export default async function CategoriesSection() {
-  const byCategory = await getByCategory();
+  const byCategory = await safeData<Awaited<ReturnType<typeof getByCategory>>>(
+    () => getByCategory(),
+    [],
+    "recomendados-by-category",
+  );
   if (byCategory.length === 0) return null;
 
   return (

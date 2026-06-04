@@ -5,6 +5,7 @@ import ProductCard from "@/components/ProductCard";
 import Link from "next/link";
 import { FuturisticFX } from "@/components/FuturisticFX";
 import { searchProducts as runSearch } from "@/lib/search";
+import { safeData } from "@/lib/safe-data";
 
 const CATEGORY_LABELS: Record<string, string> = {
   TELEVISORES: "Televisores", LAVADORAS: "Lavadoras", FRIGORIFICOS: "Frigoríficos",
@@ -25,7 +26,14 @@ export default async function BuscarPage({
 }) {
   const sp = await searchParams;
   const q = String(sp.q ?? "").trim();
-  const results = q.length >= 2 ? await runSearch(q, { limit: 24 }) : [];
+  const results =
+    q.length >= 2
+      ? await safeData<Awaited<ReturnType<typeof runSearch>>>(
+          () => runSearch(q, { limit: 24 }),
+          [],
+          "buscar-results",
+        )
+      : [];
 
   return (
     <main className="min-h-screen">

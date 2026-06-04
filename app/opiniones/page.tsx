@@ -4,6 +4,7 @@ import { getSession } from "@/lib/session";
 import { RelativeTime } from "@/components/community/RelativeTime";
 import { ProductModalButton } from "@/components/ProductModalButton";
 import { FuturisticFX } from "@/components/FuturisticFX";
+import { safeData } from "@/lib/safe-data";
 
 export const runtime = "nodejs";
 export const metadata = {
@@ -65,40 +66,33 @@ function Stars({ rating, size = 13 }: { rating: number; size?: number }) {
 
 const VALID_RATINGS = [1, 2, 3, 4, 5];
 
-export default async function OpinionesPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+async function loadOpiniones(opts: {
+  productoSlug?: string;
+  rating?: number;
+  orden: "reciente" | "valoracion";
 }) {
-  const sp = await searchParams;
-  const ratingRaw = typeof sp.rating === "string" ? parseInt(sp.rating) : undefined;
-  const rating = ratingRaw && VALID_RATINGS.includes(ratingRaw) ? ratingRaw : undefined;
-  const orden = typeof sp.orden === "string" && sp.orden === "valoracion" ? "valoracion" : "reciente";
-  const productoSlug = typeof sp.producto === "string" ? sp.producto : undefined;
-
   // Resolve product slug to id if filtering by product
-  const filteredProduct = productoSlug
-    ? await prisma.product.findUnique({ where: { slug: productoSlug }, select: { id: true, name: true, brand: true, image: true, slug: true } })
+  const filteredProduct = opts.productoSlug
+    ? await prisma.product.findUnique({ where: { slug: opts.productoSlug }, select: { id: true, name: true, brand: true, image: true, slug: true } })
     : null;
 
   const whereClause = {
-    ...(rating ? { rating } : {}),
+    ...(opts.rating ? { rating: opts.rating } : {}),
     ...(filteredProduct ? { productId: filteredProduct.id } : {}),
   };
 
-  const [reviews, session, totalReviews, aggAvg, groupByProduct] = await Promise.all([
+  const [reviews, totalReviews, aggAvg, groupByProduct] = await Promise.all([
     prisma.review.findMany({
       where: whereClause,
       include: {
         user: { select: { id: true, name: true, avatarColor: true, avatarEmoji: true, avatarUrl: true } },
         product: { select: { id: true, name: true, slug: true, image: true, brand: true } },
       },
-      orderBy: orden === "valoracion"
+      orderBy: opts.orden === "valoracion"
         ? [{ rating: "desc" }, { createdAt: "desc" }]
         : { createdAt: "desc" },
       take: 100,
     }),
-    getSession(),
     prisma.review.count(filteredProduct ? { where: { productId: filteredProduct.id } } : undefined),
     prisma.review.aggregate({ _avg: { rating: true }, where: filteredProduct ? { productId: filteredProduct.id } : undefined }),
     prisma.review.groupBy({ by: ["productId"], _avg: { rating: true }, _count: { _all: true }, orderBy: { _avg: { rating: "desc" } }, take: 5 }),
@@ -116,8 +110,39 @@ export default async function OpinionesPage({
     count: g._count._all,
   })).filter((t) => t.product);
 
-  const avgDisplay = aggAvg._avg.rating ? aggAvg._avg.rating.toFixed(1) : null;
   const totalProductsReviewed = (await prisma.review.groupBy({ by: ["productId"] })).length;
+
+  return { filteredProduct, reviews, totalReviews, aggAvg, topProductsWithStats, totalProductsReviewed };
+}
+
+export default async function OpinionesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const sp = await searchParams;
+  const ratingRaw = typeof sp.rating === "string" ? parseInt(sp.rating) : undefined;
+  const rating = ratingRaw && VALID_RATINGS.includes(ratingRaw) ? ratingRaw : undefined;
+  const orden = typeof sp.orden === "string" && sp.orden === "valoracion" ? "valoracion" : "reciente";
+  const productoSlug = typeof sp.producto === "string" ? sp.producto : undefined;
+
+  // getSession() solo verifica el JWT (sin BD): sobrevive a un corte de BD.
+  const session = await getSession();
+  const { filteredProduct, reviews, totalReviews, aggAvg, topProductsWithStats, totalProductsReviewed } =
+    await safeData<Awaited<ReturnType<typeof loadOpiniones>>>(
+      () => loadOpiniones({ productoSlug, rating, orden }),
+      {
+        filteredProduct: null,
+        reviews: [],
+        totalReviews: 0,
+        aggAvg: { _avg: { rating: null } },
+        topProductsWithStats: [],
+        totalProductsReviewed: 0,
+      },
+      "opiniones",
+    );
+
+  const avgDisplay = aggAvg._avg.rating ? aggAvg._avg.rating.toFixed(1) : null;
 
   const ordenHref = (o: string) => {
     const params = new URLSearchParams();

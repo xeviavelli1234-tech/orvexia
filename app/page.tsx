@@ -1,13 +1,13 @@
-export const dynamic = "force-dynamic";
-
 import React from "react";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { unstable_cache } from "next/cache";
+import { captureException } from "@/lib/monitoring";
 import MysteryDealCard from "@/components/MysteryDealCard";
 import DealsCountdown from "@/components/DealsCountdown";
 import { REPRICER_ENABLED, REPRICER_PUBLIC } from "@/lib/featureFlags";
 import { HeroSearch } from "@/components/HeroSearch";
-import { getRealDeals } from "@/lib/deals";
+import { getRealDeals, type DealProduct } from "@/lib/deals";
 import { HudFrame } from "./_components/HomePrimitives";
 
 // Semilla diaria estable (fecha peninsular). El set de ofertas es el mismo
@@ -51,10 +51,28 @@ function seededShuffle<T>(arr: readonly T[], seed: number): T[] {
   return a;
 }
 
-async function getTopDeals() {
+// Cachea el pool de ofertas (la consulta CTE pesada) para desacoplar la carga
+// de BD del volumen de tráfico: la query corre como mucho una vez cada 10 min
+// en lugar de en cada visita. La rotación diaria (shuffle por fecha) se aplica
+// fuera de la caché, así que las ofertas siguen rotando a medianoche.
+const getCachedDealPool = unstable_cache(
+  () => getRealDeals({ limit: 200 }),
+  ["home-deal-pool"],
+  { revalidate: 600, tags: ["deals"] },
+);
+
+async function getTopDeals(): Promise<DealProduct[]> {
   // Pool de ofertas reales filtradas en BD (no en JS). 200 cubre catálogo
-  // actual con margen para la rotación diaria + diversificación.
-  const valid = await getRealDeals({ limit: 200 });
+  // actual con margen para la rotación diaria + diversificación. Si la BD no
+  // responde (p.ej. cuota agotada) degradamos con elegancia: la home renderiza
+  // su shell con el estado vacío en vez de reventar toda la página.
+  let valid: DealProduct[];
+  try {
+    valid = await getCachedDealPool();
+  } catch (e) {
+    void captureException(e, { tags: { source: "home-deals" }, level: "warning" });
+    return [];
+  }
 
   // Rotación diaria: barajado determinista por fecha sobre todo el pool,
   // así cada día se ven 8 distintas (no siempre las de mayor ahorro absoluto).
@@ -86,13 +104,28 @@ async function getTopDeals() {
   return picked;
 }
 
+const getCachedStats = unstable_cache(
+  async () => {
+    const [productCount, withDiscount, stores] = await Promise.all([
+      prisma.product.count(),
+      prisma.offer.count({ where: { discountPercent: { gt: 0 }, priceOld: { not: null } } }),
+      prisma.offer.findMany({ distinct: ["store"], select: { store: true } }),
+    ]);
+    return { productCount, withDiscount, storeCount: stores.length };
+  },
+  ["home-stats"],
+  { revalidate: 1800, tags: ["stats"] },
+);
+
 async function getStats() {
-  const [productCount, withDiscount, stores] = await Promise.all([
-    prisma.product.count(),
-    prisma.offer.count({ where: { discountPercent: { gt: 0 }, priceOld: { not: null } } }),
-    prisma.offer.findMany({ distinct: ["store"], select: { store: true } }),
-  ]);
-  return { productCount, withDiscount, storeCount: stores.length };
+  // Mismas razones que getTopDeals: cacheado + degradación a ceros si la BD no
+  // responde, para no tumbar la home por un fallo de datos.
+  try {
+    return await getCachedStats();
+  } catch (e) {
+    void captureException(e, { tags: { source: "home-stats" }, level: "warning" });
+    return { productCount: 0, withDiscount: 0, storeCount: 0 };
+  }
 }
 
 const CATEGORIES = [

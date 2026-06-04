@@ -4,6 +4,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getCategoryBySlug, CATEGORY_SLUGS } from "@/lib/catalog/categories";
 import ProductCard from "@/components/ProductCard";
+import { safeData } from "@/lib/safe-data";
 
 export const revalidate = 3600;
 
@@ -49,7 +50,11 @@ export default async function MejorPrecioPage({ params }: { params: Promise<{ sl
   const meta = getCategoryBySlug(slug);
   if (!meta) notFound();
 
-  const productsRaw = await getProducts(meta);
+  const productsRaw = await safeData<Awaited<ReturnType<typeof getProducts>>>(
+    () => getProducts(meta),
+    [],
+    `mejor-precio-${slug}`,
+  );
   const products = productsRaw
     .map((p) => ({ ...p, _min: p.offers[0]?.priceCurrent ?? Infinity }))
     .filter((p) => Number.isFinite(p._min))

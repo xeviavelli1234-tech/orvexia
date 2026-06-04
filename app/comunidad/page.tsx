@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { CommunityPostType } from "@/app/generated/prisma/client";
+import { CommunityPostType, type Prisma } from "@/app/generated/prisma/client";
 import { RelativeTime } from "@/components/community/RelativeTime";
 import { CardVoteButton } from "@/components/community/CardVoteButton";
 import { FuturisticFX } from "@/components/FuturisticFX";
+import { safeData } from "@/lib/safe-data";
 
 export const runtime = "nodejs";
 
@@ -48,6 +49,36 @@ function Avatar({
 
 const VALID_TYPES = ["DISCUSION", "PREGUNTA", "CHOLLO", "CONSEJO"] as const;
 
+async function loadCommunity(
+  where: Prisma.CommunityPostWhereInput,
+  orden: "popular" | "reciente",
+) {
+  const [posts, counts, totalUsers] = await Promise.all([
+    prisma.communityPost.findMany({
+      where,
+      include: {
+        user: { select: { id: true, name: true, avatarColor: true, avatarEmoji: true, avatarUrl: true } },
+        product: { select: { id: true, name: true, image: true, slug: true } },
+        _count: { select: { comments: true, votes: true } },
+        votes: { select: { userId: true } },
+      },
+      orderBy: orden === "popular"
+        ? [{ votes: { _count: "desc" } }, { createdAt: "desc" }]
+        : { createdAt: "desc" },
+      take: 50,
+    }),
+    prisma.communityPost.groupBy({ by: ["type"], _count: { _all: true } }),
+    prisma.user.count(),
+  ]);
+  const totalComments = await prisma.communityComment.count();
+  // Latest active thread (most recently commented)
+  const latestActivity = await prisma.communityComment.findFirst({
+    orderBy: { createdAt: "desc" },
+    include: { post: { select: { id: true, title: true } }, user: { select: { name: true, avatarColor: true, avatarEmoji: true, avatarUrl: true } } },
+  });
+  return { posts, counts, totalUsers, totalComments, latestActivity };
+}
+
 export default async function ComunidadPage({
   searchParams,
 }: {
@@ -62,36 +93,21 @@ export default async function ComunidadPage({
   const orderRaw = typeof sp.orden === "string" ? sp.orden : "reciente";
   const orden = orderRaw === "popular" ? "popular" : "reciente";
 
-  const where = tipo ? { type: tipo } : {};
+  const where: Prisma.CommunityPostWhereInput = tipo ? { type: tipo } : {};
 
-  const [posts, session, counts, totalUsers] = await Promise.all([
-    prisma.communityPost.findMany({
-      where,
-      include: {
-        user: { select: { id: true, name: true, avatarColor: true, avatarEmoji: true, avatarUrl: true } },
-        product: { select: { id: true, name: true, image: true, slug: true } },
-        _count: { select: { comments: true, votes: true } },
-        votes: { select: { userId: true } },
-      },
-      orderBy: orden === "popular"
-        ? [{ votes: { _count: "desc" } }, { createdAt: "desc" }]
-        : { createdAt: "desc" },
-      take: 50,
-    }),
-    getSession(),
-    prisma.communityPost.groupBy({ by: ["type"], _count: { _all: true } }),
-    prisma.user.count(),
-  ]);
+  // La sesión no depende de la BD (solo verifica el JWT), así que la leemos
+  // aparte para que el estado de login sobreviva aunque la BD falle.
+  const session = await getSession();
+  const { posts, counts, totalUsers, totalComments, latestActivity } = await safeData<
+    Awaited<ReturnType<typeof loadCommunity>>
+  >(
+    () => loadCommunity(where, orden),
+    { posts: [], counts: [], totalUsers: 0, totalComments: 0, latestActivity: null },
+    "comunidad",
+  );
 
   const countMap = Object.fromEntries(counts.map((c) => [c.type, c._count._all]));
   const totalCount = Object.values(countMap).reduce((a, b) => a + b, 0);
-  const totalComments = await prisma.communityComment.count();
-
-  // Latest active thread (most recently commented)
-  const latestActivity = await prisma.communityComment.findFirst({
-    orderBy: { createdAt: "desc" },
-    include: { post: { select: { id: true, title: true } }, user: { select: { name: true, avatarColor: true, avatarEmoji: true, avatarUrl: true } } },
-  });
 
   const FILTER_TABS: Array<{ label: string; value: CommunityPostType | undefined; href: string; count?: number }> = [
     { label: "Todos",     value: undefined,   href: orden === "popular" ? "/comunidad?orden=popular" : "/comunidad",                              count: totalCount },
