@@ -1,30 +1,11 @@
 ﻿import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import { getSessionSecret } from "./auth-secret";
 
 export const SESSION_COOKIE = "auth-session";
 
-// AUTH_SECRET firma los JWT de sesión. En producción es OBLIGATORIO: sin él,
-// un fallback público permitiría a cualquiera forjar sesiones con userId
-// arbitrario y suplantar usuarios. Por eso abortamos si falta en prod.
-// En dev/test permitimos un valor fijo para no bloquear el desarrollo local.
-//
-// La validación es LAZY (se evalúa al firmar/verificar, no al importar el
-// módulo) para que `next build` —que recolecta módulos en NODE_ENV=production—
-// no falle si la var solo está disponible en runtime. Cacheamos el resultado.
-let cachedSecret: Uint8Array | null = null;
-function getSecret(): Uint8Array {
-  if (cachedSecret) return cachedSecret;
-  const s = process.env.AUTH_SECRET;
-  if (!s && process.env.NODE_ENV === "production") {
-    throw new Error(
-      "AUTH_SECRET no está configurado en producción. Aborta: firmar JWT con un secreto por defecto es inseguro.",
-    );
-  }
-  cachedSecret = new TextEncoder().encode(
-    s ?? "dev-only-insecure-secret-do-not-use-in-production",
-  );
-  return cachedSecret;
-}
+// El secreto de firma/verificación de los JWT vive en lib/auth-secret.ts, en
+// su propio módulo para poder compartirlo con el middleware (proxy.ts).
 
 export interface SessionPayload {
   userId: string;
@@ -44,7 +25,7 @@ export async function createSession(
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("7d")
-    .sign(getSecret());
+    .sign(getSessionSecret());
 
   const cookieStore = await cookies();
   cookieStore.set(SESSION_COOKIE, token, {
@@ -64,7 +45,7 @@ export async function getSession(): Promise<SessionPayload | null> {
   if (!token) return null;
 
   try {
-    const { payload } = await jwtVerify(token, getSecret());
+    const { payload } = await jwtVerify(token, getSessionSecret());
     return {
       userId: payload.userId as string,
       name: payload.name as string,
@@ -98,7 +79,7 @@ export async function createPending2fa(p: Pending2fa): Promise<void> {
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("10m")
-    .sign(getSecret());
+    .sign(getSessionSecret());
   const cookieStore = await cookies();
   cookieStore.set(PENDING_2FA_COOKIE, token, {
     httpOnly: true,
@@ -114,7 +95,7 @@ export async function getPending2fa(): Promise<Pending2fa | null> {
   const token = cookieStore.get(PENDING_2FA_COOKIE)?.value;
   if (!token) return null;
   try {
-    const { payload } = await jwtVerify(token, getSecret());
+    const { payload } = await jwtVerify(token, getSessionSecret());
     return {
       userId: payload.userId as string,
       rememberMe: !!payload.rememberMe,

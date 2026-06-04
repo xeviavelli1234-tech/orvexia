@@ -2,34 +2,18 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 import { SESSION_COOKIE } from "@/lib/session";
-
-const secret = new TextEncoder().encode(
-  process.env.AUTH_SECRET ?? "fallback-secret-change-in-production"
-);
-
-async function triggerCleanup(request: NextRequest) {
-  // Evita bucle al llamar al propio endpoint
-  if (request.nextUrl.pathname.startsWith("/api/auth/cleanup")) return;
-
-  const origin =
-    process.env.NEXTAUTH_URL ||
-    `${request.nextUrl.protocol}//${request.nextUrl.host}`;
-
-  try {
-    await fetch(`${origin}/api/auth/cleanup`, {
-      method: "POST",
-      headers: { "x-cleanup-trigger": "proxy" },
-    });
-  } catch {
-    // Silenciamos errores para no bloquear la navegación.
-  }
-}
+import { getSessionSecret } from "@/lib/auth-secret";
 
 async function isAuthenticated(request: NextRequest): Promise<boolean> {
   const token = request.cookies.get(SESSION_COOKIE)?.value;
   if (!token) return false;
   try {
-    await jwtVerify(token, secret);
+    // getSessionSecret() aborta en producción si falta AUTH_SECRET. Aquí lo
+    // tratamos como "no autenticado" (fail-closed) en lugar de tumbar el sitio:
+    // las rutas protegidas redirigen a login y la home pública sigue viva. Lo
+    // que NO hacemos es verificar contra un secreto público de fallback, que
+    // permitiría forjar sesiones.
+    await jwtVerify(token, getSessionSecret());
     return true;
   } catch {
     return false;
@@ -38,8 +22,6 @@ async function isAuthenticated(request: NextRequest): Promise<boolean> {
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  // Lanza limpieza en segundo plano sin bloquear la navegación
-  triggerCleanup(request);
 
   const authenticated = await isAuthenticated(request);
 
@@ -67,6 +49,9 @@ export async function proxy(request: NextRequest) {
   return NextResponse.next();
 }
 
+// La home ("/") ya no necesita middleware: el antiguo disparador de limpieza
+// de cuentas se movió a un cron (/api/cron/cleanup-accounts). Solo
+// interceptamos las rutas que de verdad dependen del estado de sesión.
 export const config = {
-  matcher: ["/", "/login", "/register", "/dashboard/:path*"],
+  matcher: ["/login", "/register", "/dashboard/:path*"],
 };
