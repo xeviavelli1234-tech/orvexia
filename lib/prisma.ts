@@ -1,5 +1,6 @@
 import { PrismaClient } from "@/app/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { normalizeDatabaseUrl } from "@/lib/db-url";
 
 const SCHEMA_VERSION = "v7-stripe-fields";
 
@@ -9,7 +10,9 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient() {
-  const adapter = new PrismaPg(process.env.DATABASE_URL!);
+  // verify-full explícito (ver lib/db-url.ts): mismo comportamiento que hoy,
+  // sin depender del default que pg v9 va a debilitar, y sin el SECURITY WARNING.
+  const adapter = new PrismaPg(normalizeDatabaseUrl(process.env.DATABASE_URL)!);
   return new PrismaClient({ adapter });
 }
 
