@@ -120,7 +120,19 @@ export default async function OpengraphImage({
               boxShadow: "0 0 14px #22d3ee",
             }}
           />
-          ▸ orvexia · {brand.toUpperCase()}
+          {/* Triángulo como SVG, no como glifo ▸: Satori no trae fuente con
+              esos símbolos y al renderizarlos intenta descargar una fuente
+              dinámica que falla ("Failed to load dynamic font for ▸"). */}
+          <svg
+            width="13"
+            height="15"
+            viewBox="0 0 13 15"
+            fill="#67e8f9"
+            style={{ flexShrink: 0 }}
+          >
+            <path d="M1 1 L12 7.5 L1 14 Z" />
+          </svg>
+          orvexia · {brand.toUpperCase()}
         </div>
 
         {/* Nombre del producto */}
@@ -220,7 +232,18 @@ export default async function OpengraphImage({
                   gap: 14,
                 }}
               >
-                ★ {rating}
+                {/* Estrella como SVG, no como glifo ★ (misma razón que el
+                    triángulo de arriba: evita la descarga de fuente dinámica). */}
+                <svg
+                  width="48"
+                  height="48"
+                  viewBox="0 0 24 24"
+                  fill="#fbbf24"
+                  style={{ flexShrink: 0 }}
+                >
+                  <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                </svg>
+                {rating}
               </div>
               {product?.reviewCount ? (
                 <div
