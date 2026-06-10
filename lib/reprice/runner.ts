@@ -1,13 +1,9 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
-import { decryptToken } from "@/lib/crypto";
-import { SpApiClient } from "@/lib/amazon/client";
-import { getCompetition, patchListingPrice } from "@/lib/amazon/pricing";
+import { connectAdapter } from "./adapters";
 import { runPatchWithBackoff } from "./backoff";
 import { persistPatchOutcome } from "./resilience";
-import { fetchAllListings } from "@/lib/amazon/listings";
 import { upsertListingsBatch } from "@/lib/db/sellerListing";
-import { isFixtureMode } from "@/lib/amazon/fixtures";
 import { type SellerPlan } from "@/lib/billing";
 import { sendRepricerAlertEmail, sendTrialEndingEmail } from "@/lib/email";
 import { parseTags } from "@/lib/tags";
@@ -96,8 +92,6 @@ async function maybeSendAlerts(
   }
 }
 
-type SpApiEnv = "sandbox" | "production";
-
 export interface RunSummary {
   accountsProcessed: number;
   listingsProcessed: number;
@@ -110,7 +104,7 @@ export interface RunSummary {
  *  1. Carga SellerAccounts activos cuyo (lastRunAt + intervalSeconds) ya venció.
  *  2. Por cada cuenta, recorre sus listings con repricingEnabled + min/max.
  *  3. Pide precio de competencia, calcula nuevo precio con el motor puro.
- *  4. Si cambia → patchListingPrice (no-op en fixtures) + persiste precio + evento.
+ *  4. Si cambia → adapter.applyPrice (no-op en fixtures) + persiste precio + evento.
  *  5. Registra RepricingRun por cuenta.
  */
 /** TTL del lock de ciclo: si una ejecución muere, el lock caduca solo. */
@@ -208,57 +202,45 @@ export async function runRepricer(
     const accountAlerts: RepriceAlert[] = [];
 
     try {
-      const isFixtureAcc = isFixtureMode(account.spApiEnv);
-      let refreshToken: string;
-      if (account.refreshToken === "FIXTURE_NO_TOKEN") {
-        refreshToken = "FIXTURE_NO_TOKEN";
-      } else {
-        try {
-          refreshToken = decryptToken(account.refreshToken);
-        } catch {
-          // No se puede descifrar (p.ej. cambió ENCRYPTION_KEY). En modo
-          // demo da igual; en PRODUCCIÓN no mandamos un token basura a
-          // Amazon (spam de invalid_grant): saltamos la cuenta con un
-          // error claro de "reconectar".
-          if (isFixtureAcc) {
-            refreshToken = "FIXTURE_NO_TOKEN";
-          } else {
-            runError =
-              "token_no_descifrable: reconecta tu cuenta de Amazon (Desconectar → Conectar) para recifrar el token con la clave actual.";
-            errors += 1;
-            if (account.alertOnError) {
-              accountAlerts.push({
-                kind: "error",
-                sku: "—",
-                title: "Cuenta de Amazon",
-                detail:
-                  "Token no descifrable: reconecta tu cuenta de Amazon para reanudar el reprecio.",
-              });
-            }
-            await maybeSendAlerts(account, accountAlerts, now);
-            await prisma.$transaction([
-              prisma.repricingRun.update({
-                where: { id: run.id },
-                data: {
-                  finishedAt: new Date(),
-                  listingsProcessed: 0,
-                  listingsRepriced: 0,
-                  errors,
-                  errorMessage: runError,
-                },
-              }),
-              prisma.sellerAccount.update({
-                where: { id: account.id },
-                data: { lastRunAt: now, lockedAt: null },
-              }),
-            ]);
-            summary.errors += errors;
-            continue;
-          }
+      // Conecta el adapter del marketplace (hoy Amazon). Resuelve el token y
+      // el modo fixtures. Si el token no se puede descifrar en una cuenta
+      // real, no mandamos basura a Amazon: saltamos con un error claro de
+      // "reconectar".
+      const conn = connectAdapter(account);
+      if (!conn.ok) {
+        runError =
+          "token_no_descifrable: reconecta tu cuenta de Amazon (Desconectar → Conectar) para recifrar el token con la clave actual.";
+        errors += 1;
+        if (account.alertOnError) {
+          accountAlerts.push({
+            kind: "error",
+            sku: "—",
+            title: "Cuenta de Amazon",
+            detail:
+              "Token no descifrable: reconecta tu cuenta de Amazon para reanudar el reprecio.",
+          });
         }
+        await maybeSendAlerts(account, accountAlerts, now);
+        await prisma.$transaction([
+          prisma.repricingRun.update({
+            where: { id: run.id },
+            data: {
+              finishedAt: new Date(),
+              listingsProcessed: 0,
+              listingsRepriced: 0,
+              errors,
+              errorMessage: runError,
+            },
+          }),
+          prisma.sellerAccount.update({
+            where: { id: account.id },
+            data: { lastRunAt: now, lockedAt: null },
+          }),
+        ]);
+        summary.errors += errors;
+        continue;
       }
-      const client = new SpApiClient(refreshToken, account.spApiEnv as SpApiEnv);
-      const ctx = { client, spApiEnv: account.spApiEnv, marketplaceId: account.marketplaceId };
+      const adapter = conn.adapter;
 
       // Sincronización automática programada del catálogo.
       if (account.autoSyncHours > 0) {
@@ -266,12 +248,7 @@ export async function runRepricer(
         const last = account.lastSyncAt ? account.lastSyncAt.getTime() : 0;
         if (now.getTime() - last >= dueMs) {
           try {
-            const items = await fetchAllListings({
-              client,
-              amazonSellerId: account.amazonSellerId,
-              marketplaceId: account.marketplaceId,
-              spApiEnv: account.spApiEnv,
-            });
+            const items = await adapter.fetchListings();
             await upsertListingsBatch({ sellerAccountId: account.id, items });
             await prisma.sellerAccount.update({
               where: { id: account.id },
@@ -316,19 +293,17 @@ export async function runRepricer(
             continue;
           }
 
-          const comp = await getCompetition(
-            ctx,
-            listing.asin,
-            listing.priceCurrent,
-            {
+          const comp = await adapter.getCompetition({
+            productId: listing.asin,
+            basePrice: listing.priceCurrent,
+            filters: {
               ignoreAmazon: listing.ignoreAmazon,
               fulfillment: listing.fulfillmentFilter,
               minRating: listing.minSellerRating ?? null,
               excludeSellers: parseTags(listing.excludeSellers),
               onlySellers: parseTags(listing.onlySellers),
             },
-            account.amazonSellerId,
-          );
+          });
           const competitorPrice = comp.price;
           const prevBuyBox = listing.buyBoxStatus;
           const hasCompThisCycle = competitorPrice != null;
@@ -590,8 +565,7 @@ export async function runRepricer(
           } else {
             // PATCH con backoff exponencial + telemetría
             const { outcome } = await runPatchWithBackoff(() =>
-              patchListingPrice(ctx, {
-                amazonSellerId: account.amazonSellerId,
+              adapter.applyPrice({
                 sku: listing.sku,
                 productType: listing.productType,
                 newPrice: result.newPrice,
@@ -630,7 +604,7 @@ export async function runRepricer(
               }
               errors += 1;
               // Throttling: respiro antes del siguiente
-              if (account.patchDelayMs > 0 && !isFixtureMode(account.spApiEnv)) {
+              if (account.patchDelayMs > 0 && !adapter.isFixture) {
                 await sleep(account.patchDelayMs);
               }
               continue;
@@ -689,7 +663,7 @@ export async function runRepricer(
           }
 
           // Throttling: respiro entre PATCHes (anti QuotaExceeded).
-          if (account.patchDelayMs > 0 && !isFixtureMode(account.spApiEnv)) {
+          if (account.patchDelayMs > 0 && !adapter.isFixture) {
             await sleep(account.patchDelayMs);
           }
         } catch (e) {
