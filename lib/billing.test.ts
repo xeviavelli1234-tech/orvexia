@@ -31,7 +31,8 @@ test("días de trial restantes redondea hacia arriba", () => {
 test("trial expirado", () => {
   assert.equal(isTrialExpired("TRIAL", inDays(-1), NOW), true);
   assert.equal(isTrialExpired("TRIAL", inDays(3), NOW), false);
-  assert.equal(isTrialExpired("TRIAL", null, NOW), false);
+  // fail-closed: TRIAL sin fecha de fin se trata como expirado
+  assert.equal(isTrialExpired("TRIAL", null, NOW), true);
 });
 
 test("PRO nunca expira aunque trialEndsAt sea pasado", () => {

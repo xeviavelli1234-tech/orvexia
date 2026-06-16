@@ -113,8 +113,11 @@ export function observeThrottleHeader(key: string, header: string | null): void 
   const rate = Number(header);
   if (!Number.isFinite(rate) || rate <= 0) return;
   const e = getEntry(key);
-  e.cfg.refillPerSec = Math.min(rate, 50); // clamp defensivo
-  if (e.cfg.capacity < 1) e.cfg.capacity = 1;
+  const learned = Math.min(rate, 50); // clamp defensivo
+  e.cfg.refillPerSec = learned;
+  // Ajusta la ráfaga a la tasa aprendida: no permitir un burst mayor que la
+  // cuota sostenida real (evita QuotaExceeded en los primeros PATCH), con mín. 1.
+  e.cfg.capacity = Math.max(1, Math.min(e.cfg.capacity, Math.ceil(learned)));
 }
 
 /** Solo para tests: vacía los cubos en memoria. */

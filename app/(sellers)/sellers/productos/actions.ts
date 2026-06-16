@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getSession } from "@/lib/session";
-import { madridLocalToUtc } from "@/lib/tz";
+import { madridLocalToUtc, utcToMadridLocalInput } from "@/lib/tz";
 import { recordAudit, listAudit, type AuditEntry } from "@/lib/db/audit";
 import {
   setListingEnabled,
@@ -626,7 +626,7 @@ export async function setVacationModeAction(formData: FormData): Promise<ActionR
     session.userId,
     "account.vacation_mode",
     vacationFrom && vacationTo
-      ? `Modo vacaciones ${vacationFrom.toISOString().slice(0, 10)} → ${vacationTo.toISOString().slice(0, 10)}`
+      ? `Modo vacaciones ${utcToMadridLocalInput(vacationFrom).slice(0, 10)} → ${utcToMadridLocalInput(vacationTo).slice(0, 10)}`
       : "Modo vacaciones desactivado",
   );
   revalidatePath("/sellers/productos");

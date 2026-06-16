@@ -8,10 +8,10 @@ import { runRepricer } from "@/lib/reprice/runner";
 
 export const maxDuration = 60;
 
-/** Lotes de 10 que drenamos por invocación (máx. 50 mensajes/minuto). */
-const MAX_BATCHES = 5;
-/** Tope de cuentas reprecidas por invocación. */
-const MAX_ACCOUNTS = 10;
+/** Lotes de 10 que drenamos por invocación (máx. 80 mensajes/minuto). */
+const MAX_BATCHES = 8;
+/** Tope de cuentas reprecidas por invocación (acotado además por DEADLINE_MS). */
+const MAX_ACCOUNTS = 20;
 /** Presupuesto de tiempo: corta antes de que Vercel mate la lambda (60 s). */
 const DEADLINE_MS = 45_000;
 
@@ -102,6 +102,16 @@ export async function GET(req: NextRequest) {
     } catch (e) {
       console.error("[reprice-events] reprice failed:", accountId, e);
     }
+  }
+
+  // No silenciar el truncado: si el cap/deadline dejó cuentas sin procesar, sus
+  // mensajes se conservan (messagesToDelete) y reaparecen, pero lo registramos
+  // para no dar por hecho que se cubrió todo.
+  const deferred = mappedSellerIds.size - attemptedSellerIds.size;
+  if (deferred > 0) {
+    console.warn(
+      `[reprice-events] ${deferred} cuenta(s) aplazada(s) por cap/deadline; reintento en el próximo drenado`,
+    );
   }
 
   const toDelete = messagesToDelete(messages, mappedSellerIds, attemptedSellerIds);

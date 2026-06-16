@@ -13,6 +13,9 @@ const TOKEN_TTL_BUFFER_MS = 60_000;
 
 export class SpApiClient {
   private static tokenCache = new Map<string, TokenCacheEntry>();
+  // Refrescos en vuelo por refresh token: evita la estampida de N refrescos
+  // concurrentes (todos los llamantes comparten la misma promesa).
+  private static tokenInflight = new Map<string, Promise<string>>();
 
   constructor(
     private readonly refreshToken: string,
@@ -25,12 +28,24 @@ export class SpApiClient {
     if (cached && cached.expiresAt - TOKEN_TTL_BUFFER_MS > Date.now()) {
       return cached.accessToken;
     }
-    const fresh = await refreshAccessToken(this.refreshToken);
-    SpApiClient.tokenCache.set(this.refreshToken, {
-      accessToken: fresh.access_token,
-      expiresAt: Date.now() + fresh.expires_in * 1000,
-    });
-    return fresh.access_token;
+    // Dedup de refrescos concurrentes: un solo refresh por refresh token en
+    // vuelo; el resto espera la misma promesa (anti-estampida contra LWA).
+    let inflight = SpApiClient.tokenInflight.get(this.refreshToken);
+    if (!inflight) {
+      inflight = refreshAccessToken(this.refreshToken)
+        .then((fresh) => {
+          SpApiClient.tokenCache.set(this.refreshToken, {
+            accessToken: fresh.access_token,
+            expiresAt: Date.now() + fresh.expires_in * 1000,
+          });
+          return fresh.access_token;
+        })
+        .finally(() => {
+          SpApiClient.tokenInflight.delete(this.refreshToken);
+        });
+      SpApiClient.tokenInflight.set(this.refreshToken, inflight);
+    }
+    return inflight;
   }
 
   private static readonly MAX_RETRIES = 4;
@@ -60,6 +75,7 @@ export class SpApiClient {
     const opKey = opKeyFor(method, path);
 
     let lastErr: SpApiError | null = null;
+    let triedAuthRefresh = false;
     for (let attempt = 0; attempt <= SpApiClient.MAX_RETRIES; attempt++) {
       const accessToken = await this.getAccessToken();
       // Pacing proactivo: espera (si toca) a tener cuota antes de salir.
@@ -103,6 +119,20 @@ export class SpApiClient {
         /* not JSON */
       }
       lastErr = new SpApiError(res.status, code, text, requestId);
+
+      // Token expirado/revocado en vuelo (401): invalida el cache y reintenta
+      // UNA vez con token fresco. NO incluimos 403: un permiso/rol denegado es
+      // PERMANENTE — refrescar no ayuda y gasta una llamada a LWA (orders.ts ya
+      // trata 403 como caso normal). Si el 401 reincide, propaga el error.
+      if (
+        res.status === 401 &&
+        !triedAuthRefresh &&
+        attempt < SpApiClient.MAX_RETRIES
+      ) {
+        triedAuthRefresh = true;
+        SpApiClient.tokenCache.delete(this.refreshToken);
+        continue;
+      }
 
       // 429 / 5xx → throttling: esperar y reintentar.
       // OJO: solo honramos `Retry-After` (segundos). `x-amzn-RateLimit-Limit`

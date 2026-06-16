@@ -2,14 +2,14 @@ import "server-only";
 import { SpApiClient } from "./client";
 import { MARKETPLACE_IDS } from "./endpoints";
 import { isAmazonRetail, parseAmazonRetailOverride } from "./amazon-retail";
-import { getFixtureCompetitivePrice, getFixtureOffers, isFixtureMode } from "./fixtures";
+import { getFixtureOffers, isFixtureMode } from "./fixtures";
 import {
   selectCompetitor,
   type CompetitionFilters,
   type CompetitionResult,
   type CompetitorOffer,
 } from "@/lib/reprice/competition";
-import { SpApiError, type SpApiCompetitivePrice } from "./types";
+import { SpApiError } from "./types";
 import {
   submissionRejection,
   type ListingsSubmissionResponse,
@@ -19,36 +19,6 @@ interface PricingCtx {
   client: SpApiClient;
   spApiEnv: string;
   marketplaceId?: string;
-}
-
-/**
- * Precio del competidor más barato para un ASIN.
- * En modo fixtures devuelve un mock determinista pero variable en el tiempo.
- * En producción llama a SP-API getCompetitivePricing.
- */
-export async function getCompetitivePrice(
-  ctx: PricingCtx,
-  asin: string,
-  basePrice: number,
-): Promise<number | null> {
-  if (isFixtureMode(ctx.spApiEnv)) {
-    return getFixtureCompetitivePrice(asin, basePrice);
-  }
-
-  const marketplaceId = ctx.marketplaceId ?? MARKETPLACE_IDS.ES;
-  const res = await ctx.client.get<{ payload?: SpApiCompetitivePrice[] }>(
-    "/products/pricing/v0/competitivePrice",
-    { MarketplaceId: marketplaceId, Asins: asin, ItemType: "Asin" },
-  );
-
-  const prices =
-    res.payload?.[0]?.Product?.CompetitivePricing?.CompetitivePrices ?? [];
-  const landed = prices
-    .map((p) => p.Price?.LandedPrice?.Amount)
-    .filter((n): n is number => typeof n === "number" && Number.isFinite(n));
-
-  if (landed.length === 0) return null;
-  return Math.min(...landed);
 }
 
 interface ItemOffersResponse {

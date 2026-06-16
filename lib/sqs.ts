@@ -81,7 +81,7 @@ export async function deleteMessages(
       new DeleteMessageBatchCommand({
         QueueUrl: process.env.AWS_SQS_QUEUE_URL,
         Entries: chunk.map((h, j) => ({
-          Id: String(j),
+          Id: String(i + j), // índice global → log de Failed no ambiguo entre chunks
           ReceiptHandle: h.receiptHandle,
         })),
       }),

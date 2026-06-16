@@ -658,6 +658,18 @@ export async function runRepricer(
                 listingId: listing.id,
                 outcome,
               });
+              // El PATCH no se aplicó: deshacemos el avance especulativo del
+              // streak de "sin competencia" (la aceleración del step-up solo
+              // debe contar ciclos realmente aplicados). Con competencia el
+              // streak es 0; sin ella, lo dejamos como estaba (no avanza).
+              await prisma.sellerListing.update({
+                where: { id: listing.id },
+                data: {
+                  noCompetitionStreak: hasCompThisCycle
+                    ? 0
+                    : listing.noCompetitionStreak,
+                },
+              });
               if (autoPaused && account.alertOnError) {
                 accountAlerts.push({
                   kind: "error",

@@ -196,7 +196,14 @@ export async function setAccountSettings(params: {
       marketplaceId: EU_MARKETPLACE_IDS.includes(params.marketplaceId)
         ? params.marketplaceId
         : MARKETPLACE_IDS.ES,
-      scheduleEnabled: params.scheduleEnabled,
+      // Ventana degenerada (inicio == fin) no es una franja válida: normalizamos
+      // el schedule a DESACTIVADO en vez de depender del caso especial start==end
+      // de isWithinSchedule. El efecto sigue siendo "siempre activo", pero ahora
+      // explícito en el toggle (el usuario VE que su franja no se aplicó, en vez
+      // de un 24/7 silencioso). Always-on real = 0..24.
+      scheduleEnabled:
+        params.scheduleEnabled &&
+        clampH(params.scheduleStartHour, 23) !== clampH(params.scheduleEndHour, 24),
       scheduleStartHour: clampH(params.scheduleStartHour, 23),
       scheduleEndHour: clampH(params.scheduleEndHour, 24),
       dryRun: params.dryRun,

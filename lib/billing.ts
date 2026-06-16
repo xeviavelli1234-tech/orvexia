@@ -44,7 +44,10 @@ export function isTrialExpired(
   now: Date = new Date(),
 ): boolean {
   if (plan === "PRO") return false;
-  if (!trialEndsAt) return false;
+  // TRIAL sin fecha de fin = estado desconocido → lo tratamos como EXPIRADO
+  // (fail-closed): no escribimos en Amazon en un plan sin reloj de prueba.
+  // Las cuentas nuevas siempre fijan trialEndsAt; esto cubre filas legacy.
+  if (!trialEndsAt) return true;
   return now.getTime() >= trialEndsAt.getTime();
 }
 

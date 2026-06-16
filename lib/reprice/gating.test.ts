@@ -30,9 +30,10 @@ test("PRO siempre pasa el gating de plan", () => {
   assert.equal(r.run, true);
 });
 
-test("TRIAL sin trialEndsAt → permitido (no ha expirado)", () => {
+test("TRIAL sin trialEndsAt → NO permitido (fail-closed)", () => {
   const r = shouldRunAccount(base({ plan: "TRIAL", trialEndsAt: null }), now);
-  assert.equal(r.run, true);
+  assert.equal(r.run, false);
+  if (!r.run) assert.equal(r.reason, "plan_expired");
 });
 
 test("TRIAL caducado → plan_expired", () => {

@@ -22,9 +22,10 @@ export async function POST(req: NextRequest) {
   if (!session) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
-  // 1 reprecio manual cada 5 s por usuario — el botón también está
-  // disabled mientras corre, pero defendemos el endpoint contra clicks
-  // rápidos / scripting. PATCH cuesta cuota a Amazon, no es gratis.
+  // Límite: 12 reprecios manuales por minuto y usuario (best-effort, en
+  // memoria por instancia; la garantía REAL anti doble-PATCH es el lock por
+  // cuenta más abajo). El botón también está disabled mientras corre. PATCH
+  // cuesta cuota a Amazon, no es gratis.
   if (rateLimit("reprice-run-one", session.userId, 12, 60_000)) {
     return NextResponse.json({ error: "rate_limited" }, { status: 429 });
   }
@@ -324,6 +325,14 @@ export async function POST(req: NextRequest) {
         sellerAccountId: account.id,
         listingId: listing.id,
         outcome,
+      });
+      // PATCH no aplicado: deshacemos el avance especulativo del streak de
+      // "sin competencia" (igual que el cron en runner.ts).
+      await prisma.sellerListing.update({
+        where: { id: listing.id },
+        data: {
+          noCompetitionStreak: hasCompThisCycle ? 0 : listing.noCompetitionStreak,
+        },
       });
       await prisma.repricingRun.update({
         where: { id: run.id },
