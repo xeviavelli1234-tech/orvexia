@@ -5,7 +5,11 @@
  *  - BUYBOX        : nos ponemos por debajo del competidor más barato.
  *  - BUYBOX_WINNER : nos ponemos por debajo del precio actual de la Buy Box
  *                    (no necesariamente el más barato). Si no hay datos
- *                    de Buy Box, hace fallback a BUYBOX clásico.
+ *                    de Buy Box, hace fallback a BUYBOX clásico. Si YA tenemos
+ *                    la Buy Box: por defecto mantenemos; con buyBoxProbeUp
+ *                    sondeamos al alza (subimos un paso por ciclo hacia el
+ *                    techo) para recuperar margen hasta que el mercado nos la
+ *                    quite — entonces el siguiente ciclo vuelve a hacer undercut.
  *  - MATCH         : igualamos al competidor.
  *  - FIXED         : precio fijo, ignora la competencia.
  *  - MARGIN        : como BUYBOX pero con suelo de beneficio (marginFloor).
@@ -47,7 +51,8 @@ export type RepriceReason =
   | "hold"
   | "no_change"
   | "below_threshold"
-  | "price_war";
+  | "price_war"
+  | "buybox_probe";
 
 export interface RepriceInput {
   priceCurrent: number;
@@ -57,6 +62,13 @@ export interface RepriceInput {
   competitorPrice: number | null;
   /** Precio del ganador actual de la Buy Box (real, SP-API), o null. Usado por BUYBOX_WINNER. */
   buyBoxPrice?: number | null;
+  /** True si NOSOTROS ya tenemos la Buy Box. Con BUYBOX_WINNER el motor NO
+   *  se persigue a sí mismo (buyBoxPrice sería nuestro propio precio): mantiene. */
+  weOwnBuyBox?: boolean;
+  /** BUYBOX_WINNER + tenemos la Buy Box: si true, sondeamos al alza (subimos un
+   *  paso por ciclo hacia el techo) para recuperar margen en vez de mantener.
+   *  El paso usa stepUpType/stepUpValue (sin acelerar: tanteo prudente). */
+  buyBoxProbeUp?: boolean;
 
   strategy?: RepriceStrategy;
   undercutType?: UndercutType;
@@ -98,6 +110,32 @@ function round2(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100;
 }
 
+/**
+ * Precio tras subir UN paso desde `current`. El paso es un importe (€) o un
+ * porcentaje del precio actual, opcionalmente multiplicado (aceleración
+ * geométrica del STEP_UP sin competencia). Garantiza un avance mínimo de
+ * 0,01 € para que nunca se quede clavado. NO acota a [min, max] — eso lo hace
+ * quien llama. Defaults: 0,05 € (AMOUNT) o 1 % (PERCENT), mult 1.
+ */
+function stepUpTarget(
+  current: number,
+  type: UndercutType,
+  rawValue: number | undefined,
+  rawMult?: number,
+): number {
+  const v =
+    rawValue != null && Number.isFinite(rawValue) && rawValue > 0
+      ? rawValue
+      : type === "PERCENT"
+        ? 1
+        : 0.05;
+  const mult =
+    rawMult != null && Number.isFinite(rawMult) && rawMult >= 1 ? rawMult : 1;
+  const rawStep = (type === "PERCENT" ? current * (v / 100) : v) * mult;
+  const step = Math.max(0.01, rawStep); // garantiza avance
+  return round2(current + step);
+}
+
 /** Razones que son "constraints duros": el motor las debe respetar
  *  aunque salten la histéresis (son protección del usuario, no un movimiento). */
 const HARD_REASONS = new Set<RepriceReason>([
@@ -105,6 +143,9 @@ const HARD_REASONS = new Set<RepriceReason>([
   "max_ceiling",
   "margin_floor",
   "price_war",
+  // FIXED es un objetivo absoluto del usuario, no un "movimiento" arrastrado:
+  // no debe filtrarse por la histéresis o nunca convergería al precio fijo.
+  "fixed_price",
 ]);
 
 export function computeNewPrice(input: RepriceInput): RepriceResult {
@@ -153,6 +194,58 @@ export function computeNewPrice(input: RepriceInput): RepriceResult {
     };
   }
 
+  // BUYBOX_WINNER y ya tenemos la Buy Box: estamos ganando, no hay a quién
+  // quitársela. Perseguir "el precio de la Buy Box" sería undercutearnos a
+  // nosotros mismos (es nuestro propio precio) y sangrar hasta el suelo cada
+  // ciclo. Mantenemos el precio actual, acotado al rango por si min/max
+  // cambiaron desde la última vez.
+  if (strategy === "BUYBOX_WINNER" && input.weOwnBuyBox === true) {
+    // Fuera de rango: corrige primero (protección dura), tanto si sondeamos
+    // como si no. El suelo/techo manda sobre cualquier intento de subir.
+    if (current < effMin) {
+      const p = round2(effMin);
+      return {
+        newPrice: p,
+        changed: p !== current,
+        reason: p !== current ? minHitReason : "no_change",
+      };
+    }
+    if (current > max) {
+      const p = round2(max);
+      return {
+        newPrice: p,
+        changed: p !== current,
+        reason: p !== current ? "max_ceiling" : "no_change",
+      };
+    }
+    // Dentro de rango y con la Buy Box ganada.
+    if (input.buyBoxProbeUp === true && current < max) {
+      // Sondeo al alza: subimos un paso para recuperar margen. Cuando el paso
+      // nos haga perder la Buy Box, el siguiente ciclo entrará por la rama de
+      // competencia (weOwnBuyBox=false) y haremos undercut bajo el nuevo
+      // ganador, asentándonos justo por debajo del techo que tolera el mercado.
+      // Sin multiplicador: cerca del techo conviene tantear con pasos pequeños.
+      let target = stepUpTarget(
+        current,
+        input.stepUpType ?? "AMOUNT",
+        input.stepUpValue,
+      );
+      let reason: RepriceReason = "buybox_probe";
+      if (target >= max) {
+        target = max;
+        reason = "max_ceiling";
+      }
+      target = round2(target);
+      return {
+        newPrice: target,
+        changed: target !== current,
+        reason: target !== current ? reason : "no_change",
+      };
+    }
+    // Sondeo desactivado o ya en el techo → mantener (no nos undercuteamos).
+    return { newPrice: current, changed: false, reason: "no_change" };
+  }
+
   const hasCompCheapest =
     input.competitorPrice != null && Number.isFinite(input.competitorPrice);
   const hasBuyBox =
@@ -185,23 +278,12 @@ export function computeNewPrice(input: RepriceInput): RepriceResult {
     if (noComp === "STEP_UP") {
       // Subir poco a poco hacia el máximo. mult permite aceleración geométrica
       // controlada desde el runner cuando llevamos N ciclos solos.
-      const stType: UndercutType = input.stepUpType ?? "AMOUNT";
-      const rawV = input.stepUpValue;
-      const v =
-        rawV != null && Number.isFinite(rawV) && rawV > 0
-          ? rawV
-          : stType === "PERCENT"
-            ? 1
-            : 0.05;
-      const mult =
-        input.stepUpMult != null &&
-        Number.isFinite(input.stepUpMult) &&
-        input.stepUpMult >= 1
-          ? input.stepUpMult
-          : 1;
-      const rawStep = (stType === "PERCENT" ? current * (v / 100) : v) * mult;
-      const step = Math.max(0.01, rawStep); // garantiza avance
-      target = round2(current + step);
+      target = stepUpTarget(
+        current,
+        input.stepUpType ?? "AMOUNT",
+        input.stepUpValue,
+        input.stepUpMult,
+      );
       baseReason = "step_up";
     } else {
       target = max;

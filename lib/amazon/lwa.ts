@@ -70,3 +70,29 @@ export async function refreshAccessToken(refreshToken: string): Promise<LwaRefre
   }
   return (await res.json()) as LwaRefreshResponse;
 }
+
+/**
+ * Token GRANTLESS (grant_type=client_credentials) para operaciones que NO van
+ * ligadas a un vendedor, como crear/listar destinos de notificaciones.
+ * `scope` p.ej. "sellingpartnerapi::notifications".
+ */
+export async function getGrantlessToken(scope: string): Promise<string> {
+  const { clientId, clientSecret } = getCredentials();
+  const body = new URLSearchParams({
+    grant_type: "client_credentials",
+    scope,
+    client_id: clientId,
+    client_secret: clientSecret,
+  });
+  const res = await fetch(LWA_TOKEN_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body,
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new LwaError("grantless_failed", `LWA ${res.status}: ${text}`);
+  }
+  const json = (await res.json()) as { access_token: string };
+  return json.access_token;
+}

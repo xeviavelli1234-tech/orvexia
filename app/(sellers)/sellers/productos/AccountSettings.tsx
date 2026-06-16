@@ -24,6 +24,7 @@ export interface AccountSettingsData {
   defaultNoCompetition: "MAX" | "HOLD" | "STEP_UP";
   defaultStepUpType: "AMOUNT" | "PERCENT";
   defaultStepUpValue: number;
+  defaultBuyBoxProbeUp: boolean;
   alertsEnabled: boolean;
   alertEmail: string;
   alertOnBuyBoxLost: boolean;
@@ -134,6 +135,7 @@ export default function AccountSettings({ initial }: { initial: AccountSettingsD
     fd.set("defaultNoCompetition", s.defaultNoCompetition);
     fd.set("defaultStepUpType", s.defaultStepUpType);
     fd.set("defaultStepUpValue", String(s.defaultStepUpValue));
+    fd.set("defaultBuyBoxProbeUp", String(s.defaultBuyBoxProbeUp));
     fd.set("alertsEnabled", String(s.alertsEnabled));
     fd.set("alertEmail", s.alertEmail);
     fd.set("alertOnBuyBoxLost", String(s.alertOnBuyBoxLost));
@@ -416,6 +418,30 @@ export default function AccountSettings({ initial }: { initial: AccountSettingsD
                   className={inp}
                 />
               </label>
+              {s.defaultStrategy === "BUYBOX_WINNER" && (
+                <div className="col-span-2 flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2">
+                  <div>
+                    <div className="text-sm font-semibold text-white/90">
+                      Sondear al alza con la Buy Box
+                    </div>
+                    <div className="text-[11px] text-white/45">
+                      Al tener ya la Buy Box, sube un paso por ciclo hacia el
+                      máximo para recuperar margen hasta perderla (usa el paso de
+                      STEP_UP). Apagado: mantiene el precio.
+                    </div>
+                  </div>
+                  <Toggle
+                    on={s.defaultBuyBoxProbeUp}
+                    disabled={saving}
+                    onClick={() =>
+                      setS((v) => ({
+                        ...v,
+                        defaultBuyBoxProbeUp: !v.defaultBuyBoxProbeUp,
+                      }))
+                    }
+                  />
+                </div>
+              )}
             </div>
           </section>
 

@@ -34,6 +34,40 @@ test("excluye nuestra propia oferta", () => {
   assert.equal(r.price, 40);
 });
 
+test("excluye nuestra oferta por MyOffer aunque no venga el sellerId", () => {
+  const r = selectCompetitor(
+    [
+      offer({ sellerId: undefined, isMyOffer: true, price: 10 }),
+      offer({ sellerId: "X", price: 40 }),
+    ],
+    base,
+    "ME",
+  );
+  assert.equal(r.price, 40);
+});
+
+test("excluye nuestra oferta con sellerId en distinto case/espacios", () => {
+  const r = selectCompetitor(
+    [offer({ sellerId: " me ", price: 10 }), offer({ sellerId: "X", price: 40 })],
+    base,
+    "ME",
+  );
+  assert.equal(r.price, 40);
+});
+
+test("Buy Box WON vía MyOffer sin sellerId", () => {
+  const r = selectCompetitor(
+    [
+      offer({ sellerId: undefined, isMyOffer: true, price: 30, isBuyBoxWinner: true }),
+      offer({ sellerId: "X", price: 40 }),
+    ],
+    base,
+    "ME",
+  );
+  assert.equal(r.buyBox, "WON");
+  assert.equal(r.price, 40);
+});
+
 test("ignora Amazon retail si ignoreAmazon", () => {
   const r = selectCompetitor(
     [offer({ sellerId: "AMZ", price: 20, isAmazon: true }), offer({ sellerId: "X", price: 50 })],

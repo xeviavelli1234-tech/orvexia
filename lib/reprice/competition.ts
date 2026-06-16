@@ -10,6 +10,10 @@ export type FulfillmentFilter = "ANY" | "FBA" | "FBM";
 
 export interface CompetitorOffer {
   sellerId?: string;
+  /** True si ES nuestra oferta. getItemOffers v0 anonimiza el SellerId de la
+   *  competencia, así que el campo fiable para identificar la nuestra es el
+   *  flag `MyOffer` de SP-API, no comparar SellerId (que puede no venir). */
+  isMyOffer?: boolean;
   price: number; // landed price (con envío)
   isAmazon: boolean; // oferta de Amazon retail
   isFba: boolean; // gestionado por Logística de Amazon
@@ -43,13 +47,18 @@ export function selectCompetitor(
   filters: CompetitionFilters,
   ourSellerId?: string,
 ): CompetitionResult {
+  // ¿Es nuestra oferta? Primero el flag fiable `MyOffer`; como respaldo,
+  // comparación normalizada de SellerId (case/espacios) por si viniera.
+  const ourId = norm(ourSellerId);
+  const isOurs = (o: CompetitorOffer): boolean =>
+    o.isMyOffer === true || (ourId !== "" && norm(o.sellerId) === ourId);
+
   // Estado de Buy Box (independiente de los filtros de competencia).
   let buyBox: CompetitionResult["buyBox"] = "UNKNOWN";
   let buyBoxPrice: number | null = null;
   const bbWinner = offers.find((o) => o.isBuyBoxWinner);
   if (bbWinner) {
-    buyBox =
-      ourSellerId && bbWinner.sellerId === ourSellerId ? "WON" : "LOST";
+    buyBox = isOurs(bbWinner) ? "WON" : "LOST";
     buyBoxPrice =
       Number.isFinite(bbWinner.price) && bbWinner.price > 0
         ? bbWinner.price
@@ -60,7 +69,7 @@ export function selectCompetitor(
   const only = (filters.onlySellers ?? []).map(norm).filter(Boolean);
 
   const eligible = offers.filter((o) => {
-    if (ourSellerId && o.sellerId === ourSellerId) return false; // nunca contra nosotros
+    if (isOurs(o)) return false; // nunca contra nosotros
     if (!Number.isFinite(o.price) || o.price <= 0) return false;
     const sid = norm(o.sellerId);
     if (exclude.includes(sid)) return false; // lista negra

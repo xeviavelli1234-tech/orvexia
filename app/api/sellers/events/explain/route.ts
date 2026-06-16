@@ -97,6 +97,7 @@ function buildHeuristic(e: EventLike): string {
     margin_floor: "tocando el suelo del margen",
     no_change: "sin cambios respecto al ciclo anterior",
     step_up: "subiendo un paso (modo sin competencia, step-up)",
+    buybox_probe: "subiendo un paso para recuperar margen con la Buy Box ganada",
   } as Record<string, string>)[e.reason] ?? `motivo: ${e.reason}`;
   return `El precio ${dir} ${Math.abs(delta).toFixed(2)} ${e.listing?.currency ?? "€"} ${reason}. Buy Box: ${e.buyBox.toLowerCase()}.`;
 }

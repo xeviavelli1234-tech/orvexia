@@ -94,6 +94,7 @@ const CSV_COLS = [
   "feePercent",
   "targetMargin",
   "noCompetition",
+  "buyBoxProbeUp",
   "ignoreAmazon",
   "fulfillmentFilter",
   "minSellerRating",

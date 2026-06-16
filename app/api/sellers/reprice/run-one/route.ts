@@ -11,6 +11,7 @@ import { isFixtureMode } from "@/lib/amazon/fixtures";
 import { isRepricingAllowed, type SellerPlan } from "@/lib/billing";
 import { computeNewPrice } from "@/lib/reprice/engine";
 import { minPriceForMargin } from "@/lib/reprice/margin";
+import { LOCK_TTL_MS } from "@/lib/reprice/runner";
 import { parseTags } from "@/lib/tags";
 import { rateLimit } from "@/lib/rate-limit";
 
@@ -83,12 +84,28 @@ export async function POST(req: NextRequest) {
     marketplaceId: account.marketplaceId,
   };
 
-  // Crear run
-  const run = await prisma.repricingRun.create({
-    data: { sellerAccountId: account.id, startedAt: now },
+  // Lock de ciclo por cuenta (mismo mecanismo que el cron): evita que el cron
+  // y este disparo manual reprecien el mismo listing a la vez (doble PATCH,
+  // doble cuota, carrera sobre priceCurrent). Si el cron está procesando esta
+  // cuenta ahora mismo, devolvemos 409 y el usuario reintenta en unos segundos.
+  const lockStale = new Date(now.getTime() - LOCK_TTL_MS);
+  const claim = await prisma.sellerAccount.updateMany({
+    where: {
+      id: account.id,
+      OR: [{ lockedAt: null }, { lockedAt: { lt: lockStale } }],
+    },
+    data: { lockedAt: now },
   });
+  if (claim.count === 0) {
+    return NextResponse.json({ error: "busy" }, { status: 409 });
+  }
 
+  let run: { id: string } | null = null;
   try {
+    run = await prisma.repricingRun.create({
+      data: { sellerAccountId: account.id, startedAt: now },
+    });
+
     const comp = await getCompetition(
       ctx,
       listing.asin,
@@ -137,6 +154,7 @@ export async function POST(req: NextRequest) {
           noCompetition: account.defaultNoCompetition,
           stepUpType: account.defaultStepUpType,
           stepUpValue: account.defaultStepUpValue,
+          buyBoxProbeUp: account.defaultBuyBoxProbeUp,
         }
       : {
           strategy: listing.strategy,
@@ -145,6 +163,7 @@ export async function POST(req: NextRequest) {
           noCompetition: listing.noCompetition,
           stepUpType: listing.stepUpType,
           stepUpValue: listing.stepUpValue,
+          buyBoxProbeUp: listing.buyBoxProbeUp,
         };
 
     let marginFloor: number | null = null;
@@ -171,6 +190,7 @@ export async function POST(req: NextRequest) {
       priceMax: listing.priceMax!,
       competitorPrice: comp.price,
       buyBoxPrice: comp.buyBoxPrice ?? null,
+      weOwnBuyBox: comp.buyBox === "WON",
       strategy: eff.strategy,
       undercutType: eff.undercutType,
       undercutValue: eff.undercutValue,
@@ -180,6 +200,7 @@ export async function POST(req: NextRequest) {
       stepUpType: eff.stepUpType,
       stepUpValue: eff.stepUpValue,
       stepUpMult,
+      buyBoxProbeUp: eff.buyBoxProbeUp,
       minChangeAmount: account.minChangeAmount,
       minChangePct: account.minChangePct,
       priceWarLocked,
@@ -202,22 +223,31 @@ export async function POST(req: NextRequest) {
           : "DOWN";
 
     if (!result.changed) {
-      await prisma.repricingEvent.create({
-        data: {
-          runId: run.id,
-          listingId: listing.id,
-          priceBefore: listing.priceCurrent,
-          priceAfter: listing.priceCurrent,
-          competitorPrice: comp.price,
-          reason: "no_change",
-          success: true,
-          buyBox: comp.buyBox,
-        },
-      });
-      await prisma.repricingRun.update({
-        where: { id: run.id },
-        data: { finishedAt: new Date(), listingsProcessed: 1, listingsRepriced: 0, errors: 0 },
-      });
+      // Persistimos priceWarStreak igual que el cron (runner.ts): si no lo
+      // hiciéramos, el detector de guerra de precios leería un streak obsoleto
+      // tras un reprecio manual.
+      await prisma.$transaction([
+        prisma.repricingEvent.create({
+          data: {
+            runId: run.id,
+            listingId: listing.id,
+            priceBefore: listing.priceCurrent,
+            priceAfter: listing.priceCurrent,
+            competitorPrice: comp.price,
+            reason: "no_change",
+            success: true,
+            buyBox: comp.buyBox,
+          },
+        }),
+        prisma.sellerListing.update({
+          where: { id: listing.id },
+          data: { priceWarStreak: nextWarStreak },
+        }),
+        prisma.repricingRun.update({
+          where: { id: run.id },
+          data: { finishedAt: new Date(), listingsProcessed: 1, listingsRepriced: 0, errors: 0 },
+        }),
+      ]);
       return NextResponse.json({
         ok: true,
         changed: false,
@@ -229,23 +259,31 @@ export async function POST(req: NextRequest) {
     }
 
     if (account.dryRun) {
-      await prisma.repricingEvent.create({
-        data: {
-          runId: run.id,
-          listingId: listing.id,
-          priceBefore: listing.priceCurrent,
-          priceAfter: result.newPrice,
-          competitorPrice: comp.price,
-          reason: result.reason,
-          success: true,
-          simulated: true,
-          buyBox: comp.buyBox,
-        },
-      });
-      await prisma.repricingRun.update({
-        where: { id: run.id },
-        data: { finishedAt: new Date(), listingsProcessed: 1, listingsRepriced: 1, errors: 0 },
-      });
+      // Simulación: como el cron, guardamos el streak para que las stats no
+      // mientan, pero NO tocamos el precio ni Amazon.
+      await prisma.$transaction([
+        prisma.repricingEvent.create({
+          data: {
+            runId: run.id,
+            listingId: listing.id,
+            priceBefore: listing.priceCurrent,
+            priceAfter: result.newPrice,
+            competitorPrice: comp.price,
+            reason: result.reason,
+            success: true,
+            simulated: true,
+            buyBox: comp.buyBox,
+          },
+        }),
+        prisma.sellerListing.update({
+          where: { id: listing.id },
+          data: { priceWarStreak: nextWarStreak },
+        }),
+        prisma.repricingRun.update({
+          where: { id: run.id },
+          data: { finishedAt: new Date(), listingsProcessed: 1, listingsRepriced: 1, errors: 0 },
+        }),
+      ]);
       return NextResponse.json({
         ok: true,
         changed: true,
@@ -333,10 +371,9 @@ export async function POST(req: NextRequest) {
       outcome,
       appliedPrice: result.newPrice,
     });
-    await prisma.sellerAccount.update({
-      where: { id: account.id },
-      data: { lastRunAt: now },
-    });
+    // NO tocamos account.lastRunAt: es un reprecio manual de UN producto, no un
+    // ciclo de cuenta. Escribirlo retrasaría el siguiente ciclo del cron para
+    // TODOS los listings de la cuenta (el cron usa lastRunAt + intervalo).
 
     return NextResponse.json({
       ok: true,
@@ -349,10 +386,17 @@ export async function POST(req: NextRequest) {
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    await prisma.repricingRun.update({
-      where: { id: run.id },
-      data: { finishedAt: new Date(), listingsProcessed: 1, listingsRepriced: 0, errors: 1, errorMessage: msg },
-    }).catch(() => {});
+    if (run) {
+      await prisma.repricingRun.update({
+        where: { id: run.id },
+        data: { finishedAt: new Date(), listingsProcessed: 1, listingsRepriced: 0, errors: 1, errorMessage: msg },
+      }).catch(() => {});
+    }
     return NextResponse.json({ error: "unexpected", detail: msg }, { status: 500 });
+  } finally {
+    // Libera el lock pase lo que pase (éxito, return temprano o excepción).
+    await prisma.sellerAccount
+      .updateMany({ where: { id: account.id }, data: { lockedAt: null } })
+      .catch(() => {});
   }
 }

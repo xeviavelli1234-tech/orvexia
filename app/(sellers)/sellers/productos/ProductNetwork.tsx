@@ -788,6 +788,22 @@ export default function ProductNetwork({
             <stop offset="45%" stopColor="#6366f1" stopOpacity="0.85" />
             <stop offset="100%" stopColor="#1e1b4b" stopOpacity="0.05" />
           </radialGradient>
+          {/* Fondo del panel de herramientas: degradado vertical sutil que da
+              relieve frente al fondo plano anterior. */}
+          <linearGradient id="dockGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#12142c" stopOpacity="0.97" />
+            <stop offset="100%" stopColor="#070812" stopOpacity="0.97" />
+          </linearGradient>
+          {/* Sombra suave para despegar el panel del grafo (que está lleno). */}
+          <filter id="dockShadow" x="-30%" y="-35%" width="160%" height="175%">
+            <feDropShadow
+              dx="0"
+              dy="10"
+              stdDeviation="16"
+              floodColor="#04050c"
+              floodOpacity="0.6"
+            />
+          </filter>
           <filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
             <feGaussianBlur stdDeviation="6" result="b" />
             <feMerge>
@@ -1079,15 +1095,29 @@ export default function ProductNetwork({
               { key: "set", label: "Cuenta", rgb: "165,180,252", icon: "shield", ev: "orvexia:open-settings" },
               { key: "panic", label: "Pausar todo", rgb: "248,113,113", icon: "pause", ev: "", panic: true },
             ];
-            const n = tools.length;
-            const GAP = 160;
-            const SY = h.y + HR + 120; // centro Y de los iconos
-            const cx = (i: number) => h.x + (i - (n - 1) / 2) * GAP;
-            const dockPadX = 48;
-            const dockLeft = cx(0) - SR - dockPadX;
-            const dockW = (n - 1) * GAP + 2 * (SR + dockPadX);
-            const dockTop = SY - SR - 30;
-            const dockH = SR * 2 + 78;
+            // Rejilla 2×2 centrada bajo el hub: más compacta y equilibrada que
+            // una fila de 4 (la mitad de ancho, lectura tipo paleta). Canales
+            // iguales en ambos ejes; el icono va centrado en su celda.
+            const GUT = 18; // canal entre celdas (igual en X e Y)
+            const TW = 134; // ancho de celda
+            const tileTopOff = SR + 17; // margen por encima del icono
+            const tileBotOff = SR + 29; // margen por debajo (cubre la etiqueta)
+            const TH = tileTopOff + tileBotOff; // alto de celda (90)
+            const COLGAP = TW + GUT; // separación horizontal centro-centro
+            const ROWGAP = TH + GUT; // separación vertical centro-centro
+            const topRowY = h.y + HR + 114; // centro Y de la fila superior
+            const colOf = (i: number) => i % 2;
+            const rowOf = (i: number) => Math.floor(i / 2);
+            const SXof = (i: number) => h.x + (colOf(i) - 0.5) * COLGAP;
+            const SYof = (i: number) => topRowY + rowOf(i) * ROWGAP;
+            // Panel contenedor.
+            const padX = 18;
+            const headZone = 32; // banda superior para el rótulo
+            const botPad = 16;
+            const dockLeft = h.x - COLGAP / 2 - TW / 2 - padX;
+            const dockW = COLGAP + TW + 2 * padX;
+            const dockTop = topRowY - tileTopOff - headZone;
+            const dockH = ROWGAP + tileTopOff + tileBotOff + headZone + botPad;
             const stem = `M${h.x},${h.y + HR} L${h.x},${dockTop}`;
             return (
               <g>
@@ -1116,25 +1146,46 @@ export default function ProductNetwork({
                     y={dockTop}
                     width={dockW}
                     height={dockH}
-                    rx={26}
-                    fill="rgba(8,9,20,0.92)"
-                    stroke="rgba(255,255,255,0.09)"
+                    rx={28}
+                    fill="url(#dockGrad)"
+                    stroke="rgba(255,255,255,0.10)"
+                    strokeWidth="1"
+                    filter="url(#dockShadow)"
+                  />
+                  {/* filo superior iluminado → sensación de relieve/cristal */}
+                  <rect
+                    x={dockLeft + 1}
+                    y={dockTop + 1}
+                    width={dockW - 2}
+                    height={dockH - 2}
+                    rx={27}
+                    fill="none"
+                    stroke="rgba(255,255,255,0.05)"
                     strokeWidth="1"
                   />
+                  <circle
+                    cx={dockLeft + 20}
+                    cy={dockTop + 18}
+                    r="2.6"
+                    fill="rgba(125,211,252,0.9)"
+                    filter="url(#glow)"
+                  />
                   <text
-                    x={h.x}
-                    y={dockTop + 19}
-                    textAnchor="middle"
+                    x={dockLeft + 30}
+                    y={dockTop + 21.5}
                     fontSize="9.5"
                     fontWeight={700}
                     letterSpacing="2.5"
-                    fill="rgba(255,255,255,0.32)"
+                    fill="rgba(255,255,255,0.42)"
                   >
                     HERRAMIENTAS
                   </text>
                 </g>
                 {tools.map((t, i) => {
-                  const SX = cx(i);
+                  const SX = SXof(i);
+                  const SY = SYof(i);
+                  const tileX = SX - TW / 2;
+                  const tileY = SY - tileTopOff;
                   return (
                     <g
                       key={t.key}
@@ -1164,6 +1215,31 @@ export default function ProductNetwork({
                           window.dispatchEvent(new CustomEvent(t.ev));
                         }}
                       >
+                        {/* Celda tintada con el color de la herramienta: la
+                            convierte en una paleta y separa visualmente la
+                            acción destructiva (Pausar todo → celda roja). */}
+                        <rect
+                          x={tileX}
+                          y={tileY}
+                          width={TW}
+                          height={TH}
+                          rx={16}
+                          fill={`rgba(${t.rgb},0.06)`}
+                          stroke={`rgba(${t.rgb},0.20)`}
+                          strokeWidth="1"
+                        />
+                        {/* Capa de brillo que aparece al pasar el cursor. */}
+                        <rect
+                          className="tool-tile-hi"
+                          x={tileX}
+                          y={tileY}
+                          width={TW}
+                          height={TH}
+                          rx={16}
+                          fill={`rgba(${t.rgb},0.13)`}
+                          stroke={`rgba(${t.rgb},0.55)`}
+                          strokeWidth="1.2"
+                        />
                         <circle cx={SX} cy={SY} r={SR + 14} fill="transparent" />
                         <circle
                           cx={SX}

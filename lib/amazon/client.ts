@@ -1,6 +1,7 @@
 import "server-only";
 import { getSpApiBaseUrl, type SpApiEnv, type SpApiRegion } from "./endpoints";
 import { refreshAccessToken } from "./lwa";
+import { acquireThrottle, observeThrottleHeader, opKeyFor } from "./throttle";
 import { SpApiError } from "./types";
 
 interface TokenCacheEntry {
@@ -56,10 +57,13 @@ export class SpApiClient {
     if (options.query) {
       for (const [k, v] of Object.entries(options.query)) url.searchParams.set(k, v);
     }
+    const opKey = opKeyFor(method, path);
 
     let lastErr: SpApiError | null = null;
     for (let attempt = 0; attempt <= SpApiClient.MAX_RETRIES; attempt++) {
       const accessToken = await this.getAccessToken();
+      // Pacing proactivo: espera (si toca) a tener cuota antes de salir.
+      await acquireThrottle(opKey);
       let res: Response;
       try {
         res = await fetch(url.toString(), {
@@ -81,6 +85,9 @@ export class SpApiClient {
         throw lastErr;
       }
 
+      // Ajusta el cubo a la cuota real que reporta Amazon.
+      observeThrottleHeader(opKey, res.headers.get("x-amzn-RateLimit-Limit"));
+
       if (res.ok) {
         if (res.status === 204) return undefined as T;
         return (await res.json()) as T;
@@ -97,12 +104,13 @@ export class SpApiClient {
       }
       lastErr = new SpApiError(res.status, code, text, requestId);
 
-      // 429 / 5xx → throttling: esperar y reintentar
+      // 429 / 5xx → throttling: esperar y reintentar.
+      // OJO: solo honramos `Retry-After` (segundos). `x-amzn-RateLimit-Limit`
+      // es una TASA (req/s, p.ej. 0,5), NO segundos — usarla como Retry-After
+      // hacía esperar 500 ms ante un límite de 0,5 req/s (infra-espera). La
+      // tasa ya se aplica de forma proactiva en observeThrottleHeader (arriba).
       if (SpApiClient.RETRYABLE.has(res.status) && attempt < SpApiClient.MAX_RETRIES) {
-        const wait = SpApiClient.backoffMs(
-          attempt,
-          res.headers.get("retry-after") ?? res.headers.get("x-amzn-RateLimit-Limit"),
-        );
+        const wait = SpApiClient.backoffMs(attempt, res.headers.get("retry-after"));
         await SpApiClient.sleep(wait);
         continue;
       }
@@ -121,5 +129,13 @@ export class SpApiClient {
 
   put<T>(path: string, body: unknown, query?: Record<string, string>): Promise<T> {
     return this.request<T>("PUT", path, { body, query });
+  }
+
+  post<T>(path: string, body: unknown, query?: Record<string, string>): Promise<T> {
+    return this.request<T>("POST", path, { body, query });
+  }
+
+  delete<T>(path: string, query?: Record<string, string>): Promise<T> {
+    return this.request<T>("DELETE", path, { query });
   }
 }

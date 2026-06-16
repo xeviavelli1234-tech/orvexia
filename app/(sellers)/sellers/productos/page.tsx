@@ -24,6 +24,7 @@ import LazyOverlays from "./LazyOverlays";
 import { RunNowButton } from "@/app/(sellers)/sellers/dashboard/RunNowButton";
 import { DisconnectButton } from "@/app/(sellers)/sellers/dashboard/DisconnectButton";
 import { prisma } from "@/lib/prisma";
+import { utcToMadridLocalInput } from "@/lib/tz";
 import {
   getBillingState,
   repricingActiveLimit,
@@ -218,6 +219,7 @@ export default async function ProductosPage() {
     defaultNoCompetition: account.defaultNoCompetition,
     defaultStepUpType: account.defaultStepUpType,
     defaultStepUpValue: account.defaultStepUpValue,
+    defaultBuyBoxProbeUp: account.defaultBuyBoxProbeUp,
     alertsEnabled: account.alertsEnabled,
     alertEmail: account.alertEmail ?? "",
     alertOnBuyBoxLost: account.alertOnBuyBoxLost,
@@ -526,10 +528,10 @@ export default async function ProductosPage() {
             items={nodes}
             toolboxInitial={{
               vacationFrom: account.vacationFrom
-                ? account.vacationFrom.toISOString().slice(0, 16)
+                ? utcToMadridLocalInput(account.vacationFrom)
                 : null,
               vacationTo: account.vacationTo
-                ? account.vacationTo.toISOString().slice(0, 16)
+                ? utcToMadridLocalInput(account.vacationTo)
                 : null,
               vacationNote: account.vacationNote,
             }}

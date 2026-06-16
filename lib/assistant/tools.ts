@@ -302,7 +302,13 @@ export async function executeTool(
     }
 
     if (name === "run_repricer") {
-      const s = await runRepricer();
+      // Acotar SIEMPRE a la cuenta del usuario: nunca disparar el ciclo global.
+      const acc = await getSellerAccountByUserId(userId);
+      if (!acc || !acc.active) return "No tienes una cuenta de Amazon activa.";
+      if (acc.mode === "manual") {
+        return "Tu cuenta está en modo manual (CSV): no hay reprecio automático contra Amazon.";
+      }
+      const s = await runRepricer(new Date(), { force: true, accountId: acc.id });
       return `Ciclo ejecutado: ${s.listingsProcessed} procesados, ${s.listingsRepriced} reprecciados, ${s.errors} errores.`;
     }
 

@@ -435,6 +435,8 @@ model SellerAccount {
   defaultNoCompetition NoCompetitionMode @default(MAX)
   defaultStepUpType    UndercutType      @default(AMOUNT)
   defaultStepUpValue   Float             @default(0.05)
+  // BUYBOX_WINNER: si tenemos la Buy Box, sondear al alza para recuperar margen.
+  defaultBuyBoxProbeUp Boolean           @default(false)
 
   // ── Programación horaria, simulación y throttling ──
   scheduleEnabled   Boolean @default(false)
@@ -552,6 +554,7 @@ model SellerListing {
   noCompetition NoCompetitionMode @default(MAX)
   stepUpType    UndercutType      @default(AMOUNT) // STEP_UP: paso € o %
   stepUpValue   Float             @default(0.05) // STEP_UP: tamaño del paso
+  buyBoxProbeUp Boolean           @default(false) // BUYBOX_WINNER: sondear al alza con la Buy Box ganada
 
   // ── Filtros de competencia ──
   useAccountDefaults Boolean           @default(false) // hereda estrategia de la cuenta
