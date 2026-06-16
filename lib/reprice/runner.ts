@@ -8,7 +8,6 @@ import { persistPatchOutcome } from "./resilience";
 import { fetchAllListings } from "@/lib/amazon/listings";
 import { upsertListingsBatch } from "@/lib/db/sellerListing";
 import { isFixtureMode } from "@/lib/amazon/fixtures";
-import { type SellerPlan } from "@/lib/billing";
 import { sendRepricerAlertEmail, sendTrialEndingEmail } from "@/lib/email";
 import { parseTags } from "@/lib/tags";
 import { shouldRunAccount } from "./gating";
@@ -114,13 +113,27 @@ export interface RunSummary {
  *  5. Registra RepricingRun por cuenta.
  */
 /** TTL del lock de ciclo: si una ejecución muere, el lock caduca solo. */
-const LOCK_TTL_MS = 5 * 60_000;
+export const LOCK_TTL_MS = 5 * 60_000;
 
 export async function runRepricer(
   now: Date = new Date(),
-  opts: { force?: boolean } = {},
+  opts: {
+    force?: boolean;
+    accountId?: string;
+    ignoreInterval?: boolean;
+    /** Acota el ciclo a estos ASIN (reprecio por evento ANY_OFFER_CHANGED:
+     *  solo el producto cuya oferta cambió, no todo el catálogo). Vacío/ausente
+     *  = todos los listings de la cuenta (cron normal). */
+    asins?: string[];
+  } = {},
 ): Promise<RunSummary> {
   const force = opts.force === true;
+  const ignoreInterval = opts.ignoreInterval === true;
+  // Reprecio parcial (por evento ANY_OFFER_CHANGED, acotado a ciertos ASIN): NO
+  // debe reiniciar el reloj del ciclo COMPLETO de la cuenta (lastRunAt), o los
+  // listings sin evento se barrerían menos. Solo el barrido completo (cron)
+  // avanza lastRunAt.
+  const partialReprice = !!(opts.asins && opts.asins.length > 0);
   const summary: RunSummary = {
     accountsProcessed: 0,
     listingsProcessed: 0,
@@ -131,8 +144,15 @@ export async function runRepricer(
   // Excluimos cuentas en modo manual: no tienen credenciales SP-API y su
   // flujo de "reprecio" es bajo demanda (botón "Generar plan") y nunca
   // escribe en Amazon ni en ninguna tienda externa.
+  // accountId acota el ciclo a UNA cuenta (disparo manual desde el panel o el
+  // asistente). Sin él, ciclo global (cron de Vercel). Las cuentas en modo
+  // manual nunca entran (no tienen credenciales SP-API).
   const accounts = await prisma.sellerAccount.findMany({
-    where: { active: true, mode: { not: "manual" } },
+    where: {
+      active: true,
+      mode: { not: "manual" },
+      ...(opts.accountId ? { id: opts.accountId } : {}),
+    },
     include: { user: { select: { email: true } } },
   });
 
@@ -179,7 +199,7 @@ export async function runRepricer(
         scheduleEndHour: account.scheduleEndHour,
       },
       now,
-      { force },
+      { force, ignoreInterval },
     );
     if (!gate.run) continue;
 
@@ -293,6 +313,11 @@ export async function runRepricer(
           repricingEnabled: true,
           priceMin: { not: null },
           priceMax: { not: null },
+          // Reprecio por evento: solo el/los ASIN que cambiaron. Sin asins
+          // (cron normal) procesa todo el catálogo.
+          ...(opts.asins && opts.asins.length > 0
+            ? { asin: { in: opts.asins } }
+            : {}),
         },
       });
 
@@ -388,6 +413,7 @@ export async function runRepricer(
                 noCompetition: account.defaultNoCompetition,
                 stepUpType: account.defaultStepUpType,
                 stepUpValue: account.defaultStepUpValue,
+                buyBoxProbeUp: account.defaultBuyBoxProbeUp,
               }
             : {
                 strategy: listing.strategy,
@@ -396,6 +422,7 @@ export async function runRepricer(
                 noCompetition: listing.noCompetition,
                 stepUpType: listing.stepUpType,
                 stepUpValue: listing.stepUpValue,
+                buyBoxProbeUp: listing.buyBoxProbeUp,
               };
 
           // Suelo de beneficio (estrategia MARGIN): precio mínimo rentable
@@ -426,6 +453,7 @@ export async function runRepricer(
             priceMax: listing.priceMax!,
             competitorPrice,
             buyBoxPrice: comp.buyBoxPrice ?? null,
+            weOwnBuyBox: comp.buyBox === "WON",
             strategy: eff.strategy,
             undercutType: eff.undercutType,
             undercutValue: eff.undercutValue,
@@ -435,6 +463,7 @@ export async function runRepricer(
             stepUpType: eff.stepUpType,
             stepUpValue: eff.stepUpValue,
             stepUpMult,
+            buyBoxProbeUp: eff.buyBoxProbeUp,
             minChangeAmount: account.minChangeAmount,
             minChangePct: account.minChangePct,
             priceWarLocked,
@@ -453,12 +482,18 @@ export async function runRepricer(
 
           // Debounce: no repetir un movimiento del mismo signo dentro de la
           // ventana configurada. Evita ping-pong frente a competidores que
-          // oscilan en cada ciclo. Las razones duras NO se debouncenan.
+          // oscilan en cada ciclo. Las razones duras NO se debouncenan. El
+          // sondeo de Buy Box (buybox_probe) tampoco: es una subida deliberada
+          // y monótona; debouncearla la dejaría clavada y no recuperaría margen.
           const HARD = new Set([
             "min_floor",
             "max_ceiling",
             "margin_floor",
             "price_war",
+            "buybox_probe",
+            // FIXED es objetivo absoluto: no debe debouncearse (igual que en el
+            // engine, donde fixed_price está en HARD_REASONS).
+            "fixed_price",
           ]);
           const newDir =
             !result.changed
@@ -495,7 +530,10 @@ export async function runRepricer(
               }),
               prisma.sellerListing.update({
                 where: { id: listing.id },
-                data: { priceWarStreak: nextWarStreak },
+                // No movimos el precio: un undercut DOWN suprimido por debounce
+                // NO es una "bajada arrastrada" real, así que NO avanzamos el
+                // contador de guerra de precios (lo dejamos como estaba).
+                data: { priceWarStreak: listing.priceWarStreak },
               }),
             ]);
             continue;
@@ -752,7 +790,11 @@ export async function runRepricer(
         }),
         prisma.sellerAccount.update({
           where: { id: account.id },
-          data: { lastRunAt: now, lockedAt: null }, // libera el lock
+          // Reprecio parcial por evento: libera el lock pero NO avanza lastRunAt
+          // (no es un ciclo completo de la cuenta). El barrido completo sí.
+          data: partialReprice
+            ? { lockedAt: null }
+            : { lastRunAt: now, lockedAt: null },
         }),
       ]);
     } catch (txErr) {

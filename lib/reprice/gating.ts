@@ -37,6 +37,9 @@ export interface AccountGatingState {
  *    respetando vacaciones (es una pausa total intencional) y el gating de
  *    plan (TRIAL caducado no debe escribir en Amazon).
  *  - force=false (cron): aplica todas las puertas.
+ *  - ignoreInterval=true (evento ANY_OFFER_CHANGED): salta SOLO el intervalo
+ *    (reacción inmediata al cambio de oferta), pero respeta schedule,
+ *    vacaciones y plan.
  *
  * Orden importa: primero plan (el peor caso del negocio), luego intervalo,
  * luego vacaciones, luego schedule. La razón devuelta refleja el primer
@@ -45,15 +48,16 @@ export interface AccountGatingState {
 export function shouldRunAccount(
   account: AccountGatingState,
   now: Date,
-  opts: { force?: boolean } = {},
+  opts: { force?: boolean; ignoreInterval?: boolean } = {},
 ): GatingDecision {
   const force = opts.force === true;
+  const ignoreInterval = opts.ignoreInterval === true;
 
   if (!isRepricingAllowed(account.plan as SellerPlan, account.trialEndsAt, now)) {
     return { run: false, reason: "plan_expired" };
   }
 
-  if (!force && account.lastRunAt) {
+  if (!force && !ignoreInterval && account.lastRunAt) {
     const nextDue =
       account.lastRunAt.getTime() + account.intervalSeconds * 1000;
     if (now.getTime() < nextDue) {

@@ -2,6 +2,21 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { computeNewPrice } from "./engine";
 
+test("FIXED converge al precio fijo aunque el cambio sea menor que el umbral", () => {
+  const r = computeNewPrice({
+    priceCurrent: 100,
+    priceMin: 10,
+    priceMax: 150,
+    competitorPrice: null,
+    strategy: "FIXED",
+    fixedPrice: 100.02,
+    minChangeAmount: 0.05,
+  });
+  assert.equal(r.newPrice, 100.02);
+  assert.equal(r.changed, true);
+  assert.equal(r.reason, "fixed_price");
+});
+
 test("competidor dentro de rango → nos ponemos 0,01 por debajo", () => {
   const r = computeNewPrice({
     priceCurrent: 100,
@@ -315,6 +330,175 @@ test("BUYBOX_WINNER sin Buy Box ni competidor → no_competition", () => {
   });
   assert.equal(r.newPrice, 120);
   assert.equal(r.reason, "no_competition");
+});
+
+test("BUYBOX_WINNER → si YA tenemos la Buy Box, mantener (no undercutearnos)", () => {
+  // buyBoxPrice es NUESTRO propio precio: sin weOwnBuyBox bajaríamos a 99,99
+  // cada ciclo hasta el suelo. Con weOwnBuyBox=true mantenemos.
+  const r = computeNewPrice({
+    priceCurrent: 100,
+    priceMin: 70,
+    priceMax: 120,
+    competitorPrice: 100,
+    buyBoxPrice: 100,
+    weOwnBuyBox: true,
+    strategy: "BUYBOX_WINNER",
+  });
+  assert.equal(r.changed, false);
+  assert.equal(r.newPrice, 100);
+  assert.equal(r.reason, "no_change");
+});
+
+test("BUYBOX_WINNER nuestra pero precio actual bajo el suelo → sube al suelo", () => {
+  const r = computeNewPrice({
+    priceCurrent: 60,
+    priceMin: 70,
+    priceMax: 120,
+    competitorPrice: 60,
+    buyBoxPrice: 60,
+    weOwnBuyBox: true,
+    strategy: "BUYBOX_WINNER",
+  });
+  assert.equal(r.newPrice, 70);
+  assert.equal(r.reason, "min_floor");
+  assert.equal(r.changed, true);
+});
+
+test("weOwnBuyBox solo afecta a BUYBOX_WINNER, no a BUYBOX clásico", () => {
+  // BUYBOX clásico compite contra el más barato (excluyéndonos ya en el runner),
+  // así que weOwnBuyBox no debe cambiar su comportamiento.
+  const r = computeNewPrice({
+    priceCurrent: 100,
+    priceMin: 70,
+    priceMax: 120,
+    competitorPrice: 90,
+    buyBoxPrice: 100,
+    weOwnBuyBox: true,
+    strategy: "BUYBOX",
+  });
+  assert.equal(r.newPrice, 89.99);
+  assert.equal(r.reason, "competitor_undercut");
+});
+
+// ── BUYBOX_WINNER: sondeo al alza (buyBoxProbeUp) ──────────────
+
+test("probe: tenemos la Buy Box + probeUp → subimos un paso (no mantener)", () => {
+  const r = computeNewPrice({
+    priceCurrent: 100,
+    priceMin: 70,
+    priceMax: 120,
+    competitorPrice: 100,
+    buyBoxPrice: 100,
+    weOwnBuyBox: true,
+    strategy: "BUYBOX_WINNER",
+    buyBoxProbeUp: true,
+    stepUpType: "AMOUNT",
+    stepUpValue: 2,
+  });
+  assert.equal(r.newPrice, 102);
+  assert.equal(r.changed, true);
+  assert.equal(r.reason, "buybox_probe");
+});
+
+test("probe: paso en porcentaje sobre el precio actual", () => {
+  const r = computeNewPrice({
+    priceCurrent: 100,
+    priceMin: 70,
+    priceMax: 130,
+    competitorPrice: 100,
+    buyBoxPrice: 100,
+    weOwnBuyBox: true,
+    strategy: "BUYBOX_WINNER",
+    buyBoxProbeUp: true,
+    stepUpType: "PERCENT",
+    stepUpValue: 5,
+  });
+  assert.equal(r.newPrice, 105);
+  assert.equal(r.reason, "buybox_probe");
+});
+
+test("probe: el paso no supera el techo → max_ceiling", () => {
+  const r = computeNewPrice({
+    priceCurrent: 119,
+    priceMin: 70,
+    priceMax: 120,
+    competitorPrice: 119,
+    buyBoxPrice: 119,
+    weOwnBuyBox: true,
+    strategy: "BUYBOX_WINNER",
+    buyBoxProbeUp: true,
+    stepUpType: "AMOUNT",
+    stepUpValue: 5, // 119+5=124 → acotado a 120
+  });
+  assert.equal(r.newPrice, 120);
+  assert.equal(r.reason, "max_ceiling");
+});
+
+test("probe: ya en el techo → no_change (no sigue subiendo)", () => {
+  const r = computeNewPrice({
+    priceCurrent: 120,
+    priceMin: 70,
+    priceMax: 120,
+    competitorPrice: 120,
+    buyBoxPrice: 120,
+    weOwnBuyBox: true,
+    strategy: "BUYBOX_WINNER",
+    buyBoxProbeUp: true,
+    stepUpValue: 2,
+  });
+  assert.equal(r.changed, false);
+  assert.equal(r.reason, "no_change");
+});
+
+test("probe DESACTIVADO + tenemos la Buy Box → mantener (comportamiento clásico)", () => {
+  const r = computeNewPrice({
+    priceCurrent: 100,
+    priceMin: 70,
+    priceMax: 120,
+    competitorPrice: 100,
+    buyBoxPrice: 100,
+    weOwnBuyBox: true,
+    strategy: "BUYBOX_WINNER",
+    buyBoxProbeUp: false,
+    stepUpValue: 2,
+  });
+  assert.equal(r.changed, false);
+  assert.equal(r.reason, "no_change");
+});
+
+test("probe: el suelo manda sobre el sondeo (precio bajo el mínimo → min_floor)", () => {
+  const r = computeNewPrice({
+    priceCurrent: 60,
+    priceMin: 70,
+    priceMax: 120,
+    competitorPrice: 60,
+    buyBoxPrice: 60,
+    weOwnBuyBox: true,
+    strategy: "BUYBOX_WINNER",
+    buyBoxProbeUp: true,
+    stepUpValue: 2,
+  });
+  assert.equal(r.newPrice, 70);
+  assert.equal(r.reason, "min_floor");
+  assert.equal(r.changed, true);
+});
+
+test("probe: solo aplica si tenemos la Buy Box; si la perdimos → undercut normal", () => {
+  // No tenemos la Buy Box (weOwnBuyBox=false): probeUp se ignora y competimos
+  // contra el precio de la Buy Box (95) con undercut clásico.
+  const r = computeNewPrice({
+    priceCurrent: 100,
+    priceMin: 70,
+    priceMax: 120,
+    competitorPrice: 90,
+    buyBoxPrice: 95,
+    weOwnBuyBox: false,
+    strategy: "BUYBOX_WINNER",
+    buyBoxProbeUp: true,
+    stepUpValue: 2,
+  });
+  assert.equal(r.newPrice, 94.99);
+  assert.equal(r.reason, "competitor_undercut");
 });
 
 // ── Histéresis (anti-flapping) ─────────────────────────────────

@@ -1,6 +1,7 @@
 import "server-only";
 import { SpApiClient } from "./client";
 import { MARKETPLACE_IDS } from "./endpoints";
+import { isAmazonRetail, parseAmazonRetailOverride } from "./amazon-retail";
 import { getFixtureCompetitivePrice, getFixtureOffers, isFixtureMode } from "./fixtures";
 import {
   selectCompetitor,
@@ -8,7 +9,11 @@ import {
   type CompetitionResult,
   type CompetitorOffer,
 } from "@/lib/reprice/competition";
-import type { SpApiCompetitivePrice } from "./types";
+import { SpApiError, type SpApiCompetitivePrice } from "./types";
+import {
+  submissionRejection,
+  type ListingsSubmissionResponse,
+} from "./listings-submission";
 
 interface PricingCtx {
   client: SpApiClient;
@@ -50,6 +55,9 @@ interface ItemOffersResponse {
   payload?: {
     Offers?: Array<{
       SellerId?: string;
+      /** SP-API marca NUESTRA oferta con MyOffer=true. Es el identificador
+       *  fiable: v0 anonimiza el SellerId de la competencia. */
+      MyOffer?: boolean;
       ListingPrice?: { Amount?: number };
       Shipping?: { Amount?: number };
       IsFulfilledByAmazon?: boolean;
@@ -81,14 +89,19 @@ export async function getCompetition(
     { MarketplaceId: marketplaceId, ItemCondition: "New" },
   );
 
+  // getItemOffers v0 no trae un flag de Amazon: lo detectamos por SellerId
+  // (tabla por marketplace + override AMAZON_RETAIL_SELLER_IDS). Si el SellerId
+  // no viene en la oferta, queda false → sin regresión respecto al anterior.
+  const amazonRetailIds = parseAmazonRetailOverride(
+    process.env.AMAZON_RETAIL_SELLER_IDS,
+  );
   const offers: CompetitorOffer[] = (res.payload?.Offers ?? []).map((o) => {
     const fb = o.SellerFeedbackRating?.SellerPositiveFeedbackRating;
     return {
       sellerId: o.SellerId,
+      isMyOffer: o.MyOffer === true,
       price: (o.ListingPrice?.Amount ?? 0) + (o.Shipping?.Amount ?? 0),
-      // Amazon retail no es fácil de identificar de forma fiable vía v0;
-      // el filtro "ignorar Amazon" se evalúa igualmente (best-effort false).
-      isAmazon: false,
+      isAmazon: isAmazonRetail(o.SellerId, marketplaceId, amazonRetailIds),
       isFba: !!o.IsFulfilledByAmazon,
       rating: typeof fb === "number" ? Math.round((fb / 20) * 100) / 100 : null,
       isBuyBoxWinner: !!o.IsBuyBoxWinner,
@@ -122,7 +135,7 @@ export async function patchListingPrice(
   const marketplaceId = ctx.marketplaceId ?? MARKETPLACE_IDS.ES;
   const productType = params.productType ?? "PRODUCT";
 
-  await ctx.client.patch(
+  const res = await ctx.client.patch<ListingsSubmissionResponse>(
     `/listings/2021-08-01/items/${encodeURIComponent(params.amazonSellerId)}/${encodeURIComponent(params.sku)}`,
     {
       productType,
@@ -144,6 +157,20 @@ export async function patchListingPrice(
     },
     { marketplaceIds: marketplaceId, issueLocale: "es_ES" },
   );
+
+  // Amazon responde 200 aunque RECHACE el cambio (status INVALID / issues
+  // ERROR). Si no lanzáramos, el runner lo daría por aplicado y actualizaría
+  // priceCurrent con un precio que NO está vivo en Amazon. Lanzar lo encauza
+  // por classifyError → INVALID → persistPatchOutcome (sin reintentar, pausa
+  // el listing y audita el motivo real que devuelve Amazon).
+  const rejection = submissionRejection(res);
+  if (rejection) {
+    throw new SpApiError(
+      422,
+      rejection.code,
+      `PATCH rechazado por Amazon — ${rejection.detail}`,
+    );
+  }
 
   return { applied: true, mode: "live" };
 }

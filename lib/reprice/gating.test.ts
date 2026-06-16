@@ -87,6 +87,50 @@ test("force=true ignora el intervalo no cumplido", () => {
   assert.equal(r.run, true);
 });
 
+// ── ignoreInterval (disparo por evento ANY_OFFER_CHANGED) ──────
+
+test("ignoreInterval=true salta el intervalo no cumplido", () => {
+  const lastRun = new Date(now.getTime() - 1_000);
+  const r = shouldRunAccount(
+    base({ lastRunAt: lastRun, intervalSeconds: 900 }),
+    now,
+    { ignoreInterval: true },
+  );
+  assert.equal(r.run, true);
+});
+
+test("ignoreInterval NO salta el schedule (a diferencia de force)", () => {
+  // Evento a las 12:00 Madrid con franja 18-22 → sigue fuera de horario.
+  const lastRun = new Date(now.getTime() - 1_000);
+  const r = shouldRunAccount(
+    base({
+      lastRunAt: lastRun,
+      intervalSeconds: 900,
+      scheduleEnabled: true,
+      scheduleStartHour: 18,
+      scheduleEndHour: 22,
+    }),
+    now,
+    { ignoreInterval: true },
+  );
+  assert.equal(r.run, false);
+  if (!r.run) assert.equal(r.reason, "out_of_schedule");
+});
+
+test("ignoreInterval respeta el plan caducado", () => {
+  const expired = new Date(now.getTime() - 86_400_000);
+  const r = shouldRunAccount(
+    base({
+      plan: "TRIAL",
+      trialEndsAt: expired,
+      lastRunAt: new Date(now.getTime() - 1_000),
+    }),
+    now,
+    { ignoreInterval: true },
+  );
+  assert.equal(r.run, false);
+});
+
 // ── Vacaciones ─────────────────────────────────────────────────
 
 test("ventana de vacaciones que incluye 'now' → vacation", () => {

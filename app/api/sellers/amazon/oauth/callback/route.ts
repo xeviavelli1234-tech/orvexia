@@ -65,5 +65,27 @@ export async function GET(req: Request) {
     return NextResponse.redirect(dashboardUrl(req, "error_persist"));
   }
 
+  // Suscripción a ANY_OFFER_CHANGED (best-effort, GATED). Solo si hay destino
+  // configurado y estamos en producción: en sandbox/demo no hay eventos reales.
+  // Nunca bloquea la conexión.
+  const destinationId = process.env.SP_API_NOTIF_DESTINATION_ID;
+  if (destinationId && spApiEnv === "production") {
+    try {
+      const { SpApiClient } = await import("@/lib/amazon/client");
+      const { ensureAnyOfferChangedSubscription } = await import(
+        "@/lib/amazon/notifications"
+      );
+      await ensureAnyOfferChangedSubscription(
+        new SpApiClient(refreshToken, spApiEnv),
+        destinationId,
+      );
+    } catch (e) {
+      console.warn(
+        "[oauth/callback] suscripción ANY_OFFER_CHANGED falló (best-effort):",
+        e,
+      );
+    }
+  }
+
   return NextResponse.redirect(dashboardUrl(req, "connected"));
 }

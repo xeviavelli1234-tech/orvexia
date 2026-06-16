@@ -13,6 +13,10 @@
       "schedule": "*/5 * * * *"
     },
     {
+      "path": "/api/cron/reprice-events",
+      "schedule": "* * * * *"
+    },
+    {
       "path": "/api/cron/assistant-learn",
       "schedule": "30 3 * * *"
     },

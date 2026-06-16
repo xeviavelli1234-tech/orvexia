@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getSession } from "@/lib/session";
+import { madridLocalToUtc } from "@/lib/tz";
 import { recordAudit, listAudit, type AuditEntry } from "@/lib/db/audit";
 import {
   setListingEnabled,
@@ -254,6 +255,7 @@ const settingsSchema = z.object({
   defaultNoCompetition: z.enum(["MAX", "HOLD", "STEP_UP"]),
   defaultStepUpType: z.enum(["AMOUNT", "PERCENT"]),
   defaultStepUpValue: z.number().min(0).max(99999),
+  defaultBuyBoxProbeUp: z.boolean(),
   alertsEnabled: z.boolean(),
   alertEmail: z.string().max(200).nullable(),
   alertOnBuyBoxLost: z.boolean(),
@@ -299,6 +301,7 @@ export async function updateAccountSettingsAction(
     defaultNoCompetition: String(formData.get("defaultNoCompetition") ?? "MAX"),
     defaultStepUpType: String(formData.get("defaultStepUpType") ?? "AMOUNT"),
     defaultStepUpValue: numF("defaultStepUpValue", 0.05),
+    defaultBuyBoxProbeUp: formData.get("defaultBuyBoxProbeUp") === "true",
     alertsEnabled: formData.get("alertsEnabled") === "true",
     alertEmail: ((): string | null => {
       const v = formData.get("alertEmail");
@@ -595,9 +598,12 @@ export async function setVacationModeAction(formData: FormData): Promise<ActionR
   let vacationFrom: Date | null = null;
   let vacationTo: Date | null = null;
   if (fromRaw && toRaw) {
-    const f = new Date(fromRaw);
-    const t = new Date(toRaw);
-    if (!Number.isFinite(f.getTime()) || !Number.isFinite(t.getTime())) {
+    // El datetime-local es hora de pared de Madrid: lo convertimos al instante
+    // UTC correcto (respetando horario de verano). new Date() lo interpretaría
+    // como UTC del servidor y desplazaría la ventana 1-2 h.
+    const f = madridLocalToUtc(fromRaw);
+    const t = madridLocalToUtc(toRaw);
+    if (!f || !t) {
       return { ok: false, error: "fechas_invalidas" };
     }
     if (t.getTime() <= f.getTime()) {
@@ -965,6 +971,7 @@ export async function importConfigAction(
       noCompetition: enumOf(get("nocompetition"), ["MAX", "HOLD", "STEP_UP"]),
       stepUpType: enumOf(get("stepuptype"), ["AMOUNT", "PERCENT"]),
       stepUpValue: num(get("stepupvalue")) ?? undefined,
+      buyBoxProbeUp: bool(get("buyboxprobeup")),
       ignoreAmazon: bool(get("ignoreamazon")),
       fulfillmentFilter: enumOf(get("fulfillmentfilter"), ["ANY", "FBA", "FBM"]),
       minSellerRating: num(get("minsellerrating")),

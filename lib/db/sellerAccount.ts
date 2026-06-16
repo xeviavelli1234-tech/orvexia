@@ -167,6 +167,7 @@ export async function setAccountSettings(params: {
   defaultNoCompetition: "MAX" | "HOLD" | "STEP_UP";
   defaultStepUpType: "AMOUNT" | "PERCENT";
   defaultStepUpValue: number;
+  defaultBuyBoxProbeUp: boolean;
   alertsEnabled: boolean;
   alertEmail: string | null;
   alertOnBuyBoxLost: boolean;
@@ -207,6 +208,7 @@ export async function setAccountSettings(params: {
       defaultNoCompetition: params.defaultNoCompetition,
       defaultStepUpType: params.defaultStepUpType,
       defaultStepUpValue: Math.max(0, params.defaultStepUpValue),
+      defaultBuyBoxProbeUp: params.defaultBuyBoxProbeUp,
       alertsEnabled: params.alertsEnabled,
       alertEmail: params.alertEmail?.trim() ? params.alertEmail.trim() : null,
       alertOnBuyBoxLost: params.alertOnBuyBoxLost,

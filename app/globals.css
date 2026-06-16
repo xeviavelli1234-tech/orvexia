@@ -966,6 +966,17 @@ body {
   animation-delay: var(--td, 0s);
 }
 
+/* Celda de herramienta: la capa de brillo se revela al pasar el cursor.
+   Se combina con el scale(1.12) de .hex-node para un realce limpio. */
+.tool-tile-hi {
+  opacity: 0;
+  transition: opacity 0.2s var(--ease-out);
+  pointer-events: none;
+}
+.hex-node:hover .tool-tile-hi {
+  opacity: 1;
+}
+
 /* Anillo girando alrededor del icono de Amazon */
 @keyframes hub-spin {
   to { transform: rotate(360deg); }

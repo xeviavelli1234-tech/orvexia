@@ -440,6 +440,7 @@ export interface ImportRow {
   noCompetition?: "MAX" | "HOLD" | "STEP_UP";
   stepUpType?: "AMOUNT" | "PERCENT";
   stepUpValue?: number;
+  buyBoxProbeUp?: boolean;
   ignoreAmazon?: boolean;
   fulfillmentFilter?: "ANY" | "FBA" | "FBM";
   minSellerRating?: number | null;
@@ -479,6 +480,7 @@ export async function importListingConfig(
     if (row.noCompetition) data.noCompetition = row.noCompetition;
     if (row.stepUpType) data.stepUpType = row.stepUpType;
     if (row.stepUpValue !== undefined) data.stepUpValue = row.stepUpValue;
+    if (row.buyBoxProbeUp !== undefined) data.buyBoxProbeUp = row.buyBoxProbeUp;
     if (row.ignoreAmazon !== undefined) data.ignoreAmazon = row.ignoreAmazon;
     if (row.fulfillmentFilter) data.fulfillmentFilter = row.fulfillmentFilter;
     if (row.minSellerRating !== undefined) data.minSellerRating = row.minSellerRating;
