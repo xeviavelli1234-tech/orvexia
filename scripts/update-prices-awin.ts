@@ -216,8 +216,14 @@ function buildPlan(
     const entry = aw ? feed.get(aw) : undefined;
 
     if (!entry) {
+      // Sin entrada en el feed por la clave heurística del slug NO significa
+      // "agotado": el slug puede no codificar el aw_product_id (p.ej. ofertas de
+      // ECI con id propio como eci-A47069523-...) o el aw_product_id pudo rotar
+      // fuera del feed. Marcar inStock=false aquí hacía desaparecer del
+      // comparador ofertas disponibles. Solo contamos; dejamos la oferta intacta
+      // (el cron de producción lib/import/awin.ts gestiona el agotado real con
+      // su ventana de staleness y guarda de tamaño de feed).
       missing++;
-      if (offer.inStock) stockOffOnly.push({ offerId: offer.id, label });
       continue;
     }
 

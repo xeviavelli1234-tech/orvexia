@@ -148,8 +148,9 @@ export async function sendDiscountAvailableEmail(options: {
     ? `<span style="display:inline-block;background:#DCFCE7;color:#166534;font-size:13px;font-weight:700;padding:4px 10px;border-radius:999px;margin-left:8px;">−${options.discountPercent}%</span>`
     : "";
 
-  const productImageHtml = options.productImage
-    ? `<img src="${options.productImage}" alt="${options.productName}" style="width:80px;height:80px;object-fit:contain;border-radius:10px;border:1px solid #E2E8F0;margin-right:16px;" />`
+  const imgSrc = safeUrl(options.productImage);
+  const productImageHtml = imgSrc
+    ? `<img src="${escapeHtml(imgSrc)}" alt="${escapeHtml(options.productName)}" style="width:80px;height:80px;object-fit:contain;border-radius:10px;border:1px solid #E2E8F0;margin-right:16px;" />`
     : "";
 
   const html = `<!DOCTYPE html>
@@ -163,7 +164,7 @@ export async function sendDiscountAvailableEmail(options: {
               <td style="background:linear-gradient(135deg,#1e293b,#0ea5e9);color:#e2f3ff;padding:28px 28px 18px 28px;">
                 <div style="font-size:13px;letter-spacing:0.08em;text-transform:uppercase;opacity:.9;font-weight:600;">${appName}</div>
                 <div style="font-size:22px;font-weight:700;margin-top:6px;">¡Tu producto está en oferta!</div>
-                <div style="margin-top:6px;font-size:14px;line-height:1.5;color:#cfe9ff;">Hola ${options.userName}, el producto que guardaste acaba de entrar en oferta.</div>
+                <div style="margin-top:6px;font-size:14px;line-height:1.5;color:#cfe9ff;">Hola ${escapeHtml(options.userName)}, el producto que guardaste acaba de entrar en oferta.</div>
               </td>
             </tr>
             <tr>
@@ -171,8 +172,8 @@ export async function sendDiscountAvailableEmail(options: {
                 <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:18px;display:flex;align-items:center;">
                   ${productImageHtml}
                   <div>
-                    <div style="font-size:15px;font-weight:700;color:#0F172A;margin-bottom:4px;">${options.productName}</div>
-                    <div style="font-size:12px;color:#64748B;margin-bottom:10px;">${options.store}</div>
+                    <div style="font-size:15px;font-weight:700;color:#0F172A;margin-bottom:4px;">${escapeHtml(options.productName)}</div>
+                    <div style="font-size:12px;color:#64748B;margin-bottom:10px;">${escapeHtml(options.store)}</div>
                     <div style="display:flex;align-items:center;">
                       ${priceHtml}
                       ${discountBadge}
@@ -180,7 +181,7 @@ export async function sendDiscountAvailableEmail(options: {
                   </div>
                 </div>
                 <div style="margin-top:20px;">
-                  <a href="${options.externalUrl}" style="display:inline-block;background:#2563EB;color:#ffffff;text-decoration:none;padding:13px 20px;border-radius:12px;font-weight:700;font-size:15px;">Ver oferta →</a>
+                  <a href="${escapeHtml(safeUrl(options.externalUrl))}" style="display:inline-block;background:#2563EB;color:#ffffff;text-decoration:none;padding:13px 20px;border-radius:12px;font-weight:700;font-size:15px;">Ver oferta →</a>
                 </div>
                 <p style="margin:20px 0 6px 0;font-size:13px;color:#475569;">
                   También puedes ver todos tus productos guardados en el
@@ -226,8 +227,9 @@ export async function sendBetterDealEmail(options: {
     ? `<span style="display:inline-block;background:#DCFCE7;color:#166534;font-size:13px;font-weight:700;padding:4px 10px;border-radius:999px;margin-left:8px;">−${options.discountPercent}%</span>`
     : "";
 
-  const productImageHtml = options.productImage
-    ? `<img src="${options.productImage}" alt="${options.productName}" style="width:80px;height:80px;object-fit:contain;border-radius:10px;border:1px solid #E2E8F0;margin-right:16px;" />`
+  const imgSrc = safeUrl(options.productImage);
+  const productImageHtml = imgSrc
+    ? `<img src="${escapeHtml(imgSrc)}" alt="${escapeHtml(options.productName)}" style="width:80px;height:80px;object-fit:contain;border-radius:10px;border:1px solid #E2E8F0;margin-right:16px;" />`
     : "";
 
   const html = `<!DOCTYPE html>
@@ -241,7 +243,7 @@ export async function sendBetterDealEmail(options: {
               <td style="background:linear-gradient(135deg,#1e293b,#0ea5e9);color:#e2f3ff;padding:28px 28px 18px 28px;">
                 <div style="font-size:13px;letter-spacing:0.08em;text-transform:uppercase;opacity:.9;font-weight:600;">${appName}</div>
                 <div style="font-size:22px;font-weight:700;margin-top:6px;">¡Mejor precio encontrado!</div>
-                <div style="margin-top:6px;font-size:14px;line-height:1.5;color:#cfe9ff;">Hola ${options.userName}, el producto que guardaste está aún más barato.</div>
+                <div style="margin-top:6px;font-size:14px;line-height:1.5;color:#cfe9ff;">Hola ${escapeHtml(options.userName)}, el producto que guardaste está aún más barato.</div>
               </td>
             </tr>
             <tr>
@@ -249,8 +251,8 @@ export async function sendBetterDealEmail(options: {
                 <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:18px;display:flex;align-items:center;">
                   ${productImageHtml}
                   <div>
-                    <div style="font-size:15px;font-weight:700;color:#0F172A;margin-bottom:4px;">${options.productName}</div>
-                    <div style="font-size:12px;color:#64748B;margin-bottom:10px;">${options.store}</div>
+                    <div style="font-size:15px;font-weight:700;color:#0F172A;margin-bottom:4px;">${escapeHtml(options.productName)}</div>
+                    <div style="font-size:12px;color:#64748B;margin-bottom:10px;">${escapeHtml(options.store)}</div>
                     <div style="display:flex;align-items:center;">
                       <span style="font-size:24px;font-weight:800;color:#0F172A;">${options.priceCurrent.toFixed(2)}€</span>
                       <span style="font-size:16px;color:#94A3B8;text-decoration:line-through;margin-left:8px;">${options.priceOld.toFixed(2)}€</span>
@@ -260,7 +262,7 @@ export async function sendBetterDealEmail(options: {
                   </div>
                 </div>
                 <div style="margin-top:20px;">
-                  <a href="${options.externalUrl}" style="display:inline-block;background:#2563EB;color:#ffffff;text-decoration:none;padding:13px 20px;border-radius:12px;font-weight:700;font-size:15px;">Ver oferta →</a>
+                  <a href="${escapeHtml(safeUrl(options.externalUrl))}" style="display:inline-block;background:#2563EB;color:#ffffff;text-decoration:none;padding:13px 20px;border-radius:12px;font-weight:700;font-size:15px;">Ver oferta →</a>
                 </div>
                 <p style="margin:20px 0 6px 0;font-size:13px;color:#475569;">
                   También puedes ver todos tus productos guardados en el
@@ -421,6 +423,14 @@ function escapeHtml(s: string): string {
       default: return c;
     }
   });
+}
+
+/** Devuelve la URL solo si es http(s); si no, cadena vacía. Evita embeber
+ *  javascript:/data: o romper el atributo. Combinar con escapeHtml. */
+function safeUrl(url: string | null | undefined): string {
+  if (!url) return "";
+  const t = url.trim();
+  return /^https?:\/\//i.test(t) ? t : "";
 }
 
 /**
@@ -624,8 +634,8 @@ export async function sendRepricerAlertEmail(options: {
       (a) => `<tr>
         <td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;font-size:12px;color:${tone[a.kind]};font-weight:700;white-space:nowrap;">${ALERT_LABEL[a.kind]}</td>
         <td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;font-size:13px;color:#0f172a;">
-          <div style="font-weight:600;">${a.title}</div>
-          <div style="font-size:11px;color:#64748b;">SKU ${a.sku} · ${a.detail}</div>
+          <div style="font-weight:600;">${escapeHtml(a.title)}</div>
+          <div style="font-size:11px;color:#64748b;">SKU ${escapeHtml(a.sku)} · ${escapeHtml(a.detail)}</div>
         </td></tr>`,
     )
     .join("");

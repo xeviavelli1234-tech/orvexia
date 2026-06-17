@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { upsertSellerAccount } from "@/lib/db/sellerAccount";
+import { isAdminUser } from "@/lib/admin";
 
 /**
  * Self-authorization de producción (app privada, cuenta propia).
@@ -18,6 +19,17 @@ export async function POST(req: Request) {
   const session = await getSession();
   if (!session) {
     return NextResponse.redirect(new URL("/login?next=/dashboard/repricer", req.url));
+  }
+
+  // Este endpoint provisiona las credenciales SP-API del SERVIDOR (el refresh
+  // token REAL de producción del operador) en la cuenta del usuario que llama.
+  // Es SOLO para el dueño: sin este gate, cualquier usuario registrado quedaría
+  // con el token real y podría reprecir las fichas Amazon del operador y quemar
+  // su cuota. El "Solo dueño" de la UI no basta (es ocultación en cliente).
+  if (!(await isAdminUser(session.userId))) {
+    return NextResponse.redirect(
+      new URL("/dashboard/repricer?status=error_forbidden", req.url),
+    );
   }
 
   const refreshToken = process.env.SP_API_REFRESH_TOKEN;

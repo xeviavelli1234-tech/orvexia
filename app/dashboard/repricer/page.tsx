@@ -48,6 +48,10 @@ const STATUS_MSG: Record<
     kind: "err",
     text: "SP_API_ENV no está en 'production'. Revisa las variables de entorno.",
   },
+  error_forbidden: {
+    kind: "err",
+    text: "Esta conexión es solo para el administrador. Añade tu email a ADMIN_EMAILS.",
+  },
 };
 
 /**
