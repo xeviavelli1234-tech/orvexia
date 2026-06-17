@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { jsonLdScript } from "@/lib/json-ld";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getCategoryBySlug, CATEGORY_SLUGS } from "@/lib/catalog/categories";
@@ -88,7 +89,7 @@ export default async function MejorPrecioPage({ params }: { params: Promise<{ sl
 
   return (
     <main className="min-h-screen max-w-7xl mx-auto px-4 sm:px-6 py-8">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbsJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(breadcrumbsJsonLd) }} />
 
       <nav className="flex items-center gap-2 font-mono-ui text-[10px] uppercase tracking-wider text-white/40 mb-4">
         <Link href="/" className="hover:text-cyan-300">~/</Link>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { jsonLdScript } from "@/lib/json-ld";
 import Image from "next/image";
 import type { GuideConfig } from "@/lib/guides/config";
 import { GUIDES } from "@/lib/guides/config";
@@ -63,7 +64,7 @@ function FaqJsonLd({ faqs }: { faqs: GuideConfig["faqs"] }) {
       acceptedAnswer: { "@type": "Answer", text: f.a },
     })),
   };
-  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }} />;
+  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(data) }} />;
 }
 
 function ItemListJsonLd({ picks, label, slug }: { picks: Pick[]; label: string; slug: string }) {
@@ -79,7 +80,7 @@ function ItemListJsonLd({ picks, label, slug }: { picks: Pick[]; label: string; 
       name: p.product.name,
     })),
   };
-  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }} />;
+  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(data) }} />;
 }
 
 // ── Sub-componentes ────────────────────────────────────────────────────────

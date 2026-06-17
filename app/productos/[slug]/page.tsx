@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { jsonLdScript } from "@/lib/json-ld";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { captureException } from "@/lib/monitoring";
@@ -360,9 +361,9 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   return (
     <main className="min-h-screen">
       {productJsonLd && (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(productJsonLd) }} />
       )}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbsJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(breadcrumbsJsonLd) }} />
 
       {/* BREADCRUMB */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 pb-2">

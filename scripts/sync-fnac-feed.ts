@@ -3,11 +3,12 @@
  * Sincroniza precios, stock e imágenes de productos Fnac desde el feed de Awin.
  *
  * Uso:
- *   npx tsx scripts/sync-fnac-feed.ts              ← descarga el feed desde Awin
+ *   npx tsx scripts/sync-fnac-feed.ts              ← descarga el feed (requiere AWIN_FEED_URL)
  *   npx tsx scripts/sync-fnac-feed.ts --dry-run     ← muestra cambios sin guardar
  *   npx tsx scripts/sync-fnac-feed.ts --local       ← usa C:\Users\xavie\Downloads\datafeed_2854543.csv.gz
  *
- * Env: AWIN_FEED_URL en .env.local (opcional, tiene fallback)
+ * Env: AWIN_FEED_URL en .env.local (REQUERIDA para la descarga remota; sin ella
+ * usa --local). Nunca se hardcodea la apikey en el repo.
  */
 
 import { PrismaClient } from "../app/generated/prisma/client";
@@ -43,9 +44,10 @@ const LOCAL_FILE =
   LOCAL_FILE_DEFAULTS.find((p) => fs.existsSync(p)) ??
   LOCAL_FILE_DEFAULTS[0];
 
-const AWIN_FEED_URL =
-  process.env.AWIN_FEED_URL ??
-  "https://productdata.awin.com/datafeed/download/apikey/430f220fd423780e222c2683298de01b/language/es/fid/92667,92668,92680,92681/rid/0/hasEnhancedFeeds/0/columns/aw_deep_link,product_name,aw_product_id,merchant_product_id,merchant_image_url,description,merchant_category,search_price,merchant_name,merchant_id,category_name,category_id,aw_image_url,currency,store_price,delivery_cost,merchant_deep_link,language,last_updated,display_price,data_feed_id,product_price_old,savings_percent,saving,rrp_price,base_price,base_price_amount,stock_status,in_stock,is_for_sale,web_offer,large_image,alternate_image_three,alternate_image_four,alternate_image,alternate_image_two,merchant_thumb_url,aw_thumb_url,number_available,brand_name,model_number/format/csv/delimiter/%2C/compression/gzip/adultcontent/1/";
+// NUNCA hardcodear la apikey del feed en el repo: se lee solo del entorno (como
+// lib/import/awin.ts). Si falta, el script usa el fichero local; si tampoco hay,
+// falla al descargar en vez de filtrar una credencial commiteada.
+const AWIN_FEED_URL = process.env.AWIN_FEED_URL ?? "";
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
 

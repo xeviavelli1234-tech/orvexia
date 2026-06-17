@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { jsonLdScript } from "@/lib/json-ld";
 import Link from "next/link";
 import Image from "next/image";
 import { prisma } from "@/lib/prisma";
@@ -132,7 +133,7 @@ export default async function CompararPage({ params }: { params: Promise<{ slug:
 
   return (
     <main className="min-h-screen max-w-6xl mx-auto px-4 sm:px-6 py-8">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
 
       <nav className="flex items-center gap-2 font-mono-ui text-[10px] uppercase tracking-wider text-white/40 mb-4">
         <Link href="/" className="hover:text-cyan-300">~/</Link>
