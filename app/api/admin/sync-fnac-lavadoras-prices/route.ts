@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { cronAuthError } from "@/lib/cron/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -18,21 +19,14 @@ const UPDATES: Update[] = [
 ];
 
 export async function GET(req: NextRequest) {
-  // Este endpoint REESCRIBE precios → fail-closed. Sin CRON_SECRET
-  // configurado, en producción se rechaza (antes era fail-open: cualquiera
-  // podía mutar precios si faltaba el secret). Acepta el secret por header o
-  // query param para conservar el uso manual existente.
-  const secret = process.env.CRON_SECRET;
-  if (!secret) {
-    if (process.env.NODE_ENV === "production") {
-      return NextResponse.json({ error: "not_configured" }, { status: 503 });
-    }
-  } else {
-    const provided =
-      req.headers.get("x-cron-secret") ?? req.nextUrl.searchParams.get("secret");
-    if (provided !== secret) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  // Este endpoint REESCRIBE precios → fail-closed con CRON_SECRET, SOLO por
+  // header (x-cron-secret o Authorization: Bearer). NUNCA por query param: en la
+  // URL el secreto (que es el MISMO que protege todos los crons, incluido el
+  // repricer global) se filtraría a logs de Vercel/CDN, historial y Referer.
+  // Uso manual: curl -H "x-cron-secret: $CRON_SECRET" ...
+  const authErr = cronAuthError(req);
+  if (authErr !== null) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: authErr });
   }
 
   const results: { slug: string; ok: boolean; reason?: string }[] = [];

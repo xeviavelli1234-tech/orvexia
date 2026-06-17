@@ -23,6 +23,21 @@ async function handle(req: NextRequest, params: Record<string, string>) {
   void _drop;
 
   try {
+    // clickref es un valor arbitrario del proveedor (el macro !!!clickref!!! de
+    // Awin, normalmente vacío o un token no-cuid). clickEventId es una FK a
+    // AffiliateClickEvent: solo lo enlazamos si ese id EXISTE de verdad; si no,
+    // null. Antes se escribía el clickref crudo → violación de FK → 500 y la
+    // conversión (con su comisión) se perdía.
+    const clickref = data.clickref?.trim() || null;
+    let clickEventId: string | null = null;
+    if (clickref) {
+      const ev = await prisma.affiliateClickEvent.findUnique({
+        where: { id: clickref },
+        select: { id: true },
+      });
+      clickEventId = ev?.id ?? null;
+    }
+
     const conv = await prisma.affiliateConversion.upsert({
       where: {
         network_transactionId: {
@@ -38,7 +53,7 @@ async function handle(req: NextRequest, params: Record<string, string>) {
         commission:    data.commission,
         currency:      data.currency,
         status:        statusMap(data.status),
-        clickEventId:  data.clickref ?? null,
+        clickEventId,
         rawPayload:    raw,
       },
       update: {
@@ -46,7 +61,9 @@ async function handle(req: NextRequest, params: Record<string, string>) {
         commission:   data.commission,
         currency:     data.currency,
         status:       statusMap(data.status),
-        clickEventId: data.clickref ?? undefined,
+        // Solo (re)enlazamos si resolvimos un click real; si no, no tocamos el
+        // valor existente.
+        clickEventId: clickEventId ?? undefined,
         rawPayload:   raw,
       },
       select: { id: true, status: true },
