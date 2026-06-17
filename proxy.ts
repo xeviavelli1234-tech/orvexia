@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
-import { SESSION_COOKIE } from "@/lib/session";
+import { SESSION_COOKIE, SESSION_AUDIENCE } from "@/lib/session";
 import { getSessionSecret } from "@/lib/auth-secret";
 
 async function isAuthenticated(request: NextRequest): Promise<boolean> {
@@ -13,7 +13,7 @@ async function isAuthenticated(request: NextRequest): Promise<boolean> {
     // las rutas protegidas redirigen a login y la home pública sigue viva. Lo
     // que NO hacemos es verificar contra un secreto público de fallback, que
     // permitiría forjar sesiones.
-    await jwtVerify(token, getSessionSecret());
+    await jwtVerify(token, getSessionSecret(), { audience: SESSION_AUDIENCE });
     return true;
   } catch {
     return false;

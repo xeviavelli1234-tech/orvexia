@@ -1,4 +1,5 @@
-import "server-only";
+// Parseo PURO de catálogo CSV (sin server-only ni I/O → testeable en Node),
+// igual que su dependencia lib/catalog/csv-import. Solo se usa server-side.
 import { splitCsvFields, splitCsvLines } from "@/lib/catalog/csv-import";
 
 export interface ManualListingRow {
@@ -15,6 +16,9 @@ export interface ManualListingRow {
 export interface ParseResult {
   rows: ManualListingRow[];
   errors: { line: number; message: string }[];
+  /** Columnas canónicas presentes en el CSV. Permite distinguir "columna
+   *  ausente" (no tocar el campo) de "celda vacía" (poner null) al actualizar. */
+  columns: string[];
 }
 
 const HEADER_ALIASES: Record<string, string> = {
@@ -87,14 +91,24 @@ function parseNumber(raw: string | undefined): number | null {
   if (raw === undefined) return null;
   const s = raw.trim().replace(/^"|"$/g, "");
   if (!s) return null;
-  // Accept both "1.234,56" (Spanish) and "1234.56" (English).
-  // Heuristic: if there's a comma and no dot, treat comma as decimal. If both
-  // present, the comma is thousands and the dot decimal.
+  // Acepta "1.234,56" (es-ES) y "1234.56" (en-US).
   const hasComma = s.includes(",");
-  const hasDot = s.includes(".");
+  const dots = (s.match(/\./g) || []).length;
   let normalized = s;
-  if (hasComma && !hasDot) normalized = s.replace(/\./g, "").replace(",", ".");
-  else if (hasComma && hasDot) normalized = s.replace(/,/g, "");
+  if (hasComma) {
+    // Con coma, la coma es el decimal y el punto separador de miles.
+    normalized = s.replace(/\./g, "").replace(",", ".");
+  } else if (dots > 1) {
+    // Varios puntos sin coma → todos son miles ("1.299.999" → 1299999).
+    normalized = s.replace(/\./g, "");
+  } else if (dots === 1) {
+    // Un solo punto sin coma: ambiguo. En es-ES un grupo de EXACTAMENTE 3
+    // dígitos tras el punto es separador de miles ("1.299" → 1299); cualquier
+    // otra cosa es decimal ("449.00", "1.5"). Sin esto, 1.299 € entraba como
+    // 1,299 € (error ~1000x) en catálogos en formato español.
+    const after = s.slice(s.indexOf(".") + 1);
+    if (/^\d{3}$/.test(after)) normalized = s.replace(".", "");
+  }
   const n = Number(normalized);
   return Number.isFinite(n) ? n : null;
 }
@@ -127,6 +141,7 @@ export function parseManualCatalogCsv(text: string): ParseResult {
     return {
       rows,
       errors: [{ line: 0, message: "El archivo está vacío." }],
+      columns: [],
     };
   }
 
@@ -145,7 +160,7 @@ export function parseManualCatalogCsv(text: string): ParseResult {
       });
     }
   }
-  if (errors.length > 0) return { rows, errors };
+  if (errors.length > 0) return { rows, errors, columns: [...colIndex.keys()] };
 
   for (let li = 1; li < lines.length; li++) {
     const raw = lines[li];
@@ -197,7 +212,7 @@ export function parseManualCatalogCsv(text: string): ParseResult {
     });
   }
 
-  return { rows, errors };
+  return { rows, errors, columns: [...colIndex.keys()] };
 }
 
 /**

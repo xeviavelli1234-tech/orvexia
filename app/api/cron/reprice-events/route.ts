@@ -81,25 +81,38 @@ export async function GET(req: NextRequest) {
   const mappedSellerIds = new Set(accountBySeller.keys());
   const attemptedSellerIds = new Set<string>();
 
-  // Reprecia cada cuenta afectada (1 vez), acotado por cap y por tiempo. Las
-  // cuentas mapeadas pero NO intentadas conservan sus mensajes (reintento).
+  // Reprecia cada cuenta afectada (1 vez), acotado por cap y por tiempo.
+  //  - Sin ASIN concreto → descartamos: NO reprecir todo el catálogo cada minuto
+  //    saltándonos el intervalo (el cron de 5 min ya hace el barrido completo).
+  //  - Lock ocupado por otro ciclo → CONSERVAMOS el mensaje (no lo marcamos
+  //    intentado) para reintentar; así una colisión de lock no pierde el evento.
+  //  - Procesada o gateada (vacaciones/plan) → marcamos intentada (no reintentar).
   let triggered = 0;
+  let calls = 0;
   for (const [sellerId, accountId] of accountBySeller) {
-    if (attemptedSellerIds.size >= MAX_ACCOUNTS || Date.now() - start > DEADLINE_MS) {
-      break;
-    }
-    attemptedSellerIds.add(sellerId);
-    // Reprecio acotado a los ASIN del evento; si no llegó ningún ASIN, cae a
-    // todo el catálogo (mejor reprecir de más que perder la reacción).
+    if (calls >= MAX_ACCOUNTS || Date.now() - start > DEADLINE_MS) break;
     const asins = [...(asinsBySeller.get(sellerId) ?? [])];
+    if (asins.length === 0) {
+      attemptedSellerIds.add(sellerId); // sin ASIN: descartar (lo cubre el cron de 5 min)
+      continue;
+    }
+    calls += 1;
     try {
-      await runRepricer(now, {
+      const summary = await runRepricer(now, {
         accountId,
         ignoreInterval: true,
-        asins: asins.length > 0 ? asins : undefined,
+        asins,
       });
-      triggered += 1;
+      if (summary.accountsLocked > 0) {
+        // Lock ocupado: conservamos el mensaje para reintento (no lo borramos).
+        continue;
+      }
+      attemptedSellerIds.add(sellerId);
+      triggered += summary.accountsProcessed;
     } catch (e) {
+      // Error inesperado: marcamos intentada para no quedar en bucle; el cron de
+      // 5 min es la red de seguridad.
+      attemptedSellerIds.add(sellerId);
       console.error("[reprice-events] reprice failed:", accountId, e);
     }
   }

@@ -8,7 +8,7 @@ import { getCompetition, patchListingPrice } from "@/lib/amazon/pricing";
 import { runPatchWithBackoff } from "@/lib/reprice/backoff";
 import { persistPatchOutcome } from "@/lib/reprice/resilience";
 import { isFixtureMode } from "@/lib/amazon/fixtures";
-import { isRepricingAllowed, type SellerPlan } from "@/lib/billing";
+import { shouldRunAccount } from "@/lib/reprice/gating";
 import { computeNewPrice } from "@/lib/reprice/engine";
 import { minPriceForMargin } from "@/lib/reprice/margin";
 import { LOCK_TTL_MS } from "@/lib/reprice/runner";
@@ -39,8 +39,13 @@ export async function POST(req: NextRequest) {
   }
 
   const now = new Date();
-  if (!isRepricingAllowed(account.plan as SellerPlan, account.trialEndsAt, now)) {
-    return NextResponse.json({ error: "plan_limit" }, { status: 402 });
+  // Misma puerta que el cron con force=true: respeta el plan y, sobre todo, las
+  // VACACIONES (pausa total que el usuario declaró y que ni force salta). Salta
+  // intervalo/horario, que es lo correcto para un disparo manual.
+  const gate = shouldRunAccount(account, now, { force: true });
+  if (!gate.run) {
+    const status = gate.reason === "plan_expired" ? 402 : 409;
+    return NextResponse.json({ error: gate.reason }, { status });
   }
 
   const body = await req.json().catch(() => ({})) as { listingId?: string };
@@ -253,6 +258,47 @@ export async function POST(req: NextRequest) {
         ok: true,
         changed: false,
         reason: result.reason,
+        priceBefore: listing.priceCurrent,
+        priceAfter: listing.priceCurrent,
+        competitorPrice: comp.price,
+      });
+    }
+
+    // Guerra de precios + acción PAUSE: pausamos el listing en vez de aplicar el
+    // suelo en Amazon (igual que el cron, runner.ts). El usuario lo configuró
+    // así para investigar; un reprecio manual no debe saltarse esa decisión.
+    if (result.reason === "price_war" && account.priceWarAction === "PAUSE") {
+      await prisma.$transaction([
+        prisma.sellerListing.update({
+          where: { id: listing.id },
+          data: {
+            repricingEnabled: false,
+            autoPausedAt: now,
+            autoPausedReason: "price_war",
+            priceWarStreak: 0,
+          },
+        }),
+        prisma.repricingEvent.create({
+          data: {
+            runId: run.id,
+            listingId: listing.id,
+            priceBefore: listing.priceCurrent,
+            priceAfter: listing.priceCurrent,
+            competitorPrice: comp.price,
+            reason: "price_war_paused",
+            success: true,
+            buyBox: comp.buyBox,
+          },
+        }),
+        prisma.repricingRun.update({
+          where: { id: run.id },
+          data: { finishedAt: new Date(), listingsProcessed: 1, listingsRepriced: 0, errors: 0 },
+        }),
+      ]);
+      return NextResponse.json({
+        ok: true,
+        changed: false,
+        reason: "price_war_paused",
         priceBefore: listing.priceCurrent,
         priceAfter: listing.priceCurrent,
         competitorPrice: comp.price,

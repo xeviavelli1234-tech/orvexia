@@ -17,6 +17,7 @@ import { VERIFICATION_CODE_TTL_MS } from "@/lib/auth-constants";
 import { randomInt } from "crypto";
 import { sendVerificationEmail } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
+import { rateLimit } from "@/lib/rate-limit";
 import { headers } from "next/headers";
 import { readRequestMeta } from "@/lib/security/request";
 import {
@@ -132,6 +133,15 @@ export async function loginAction(
   const { email, password } = result.data;
 
   const meta = await currentMeta();
+  // Anti fuerza bruta / credential stuffing: limita intentos por email y por IP
+  // ANTES del bcrypt.compare (que es caro). Best-effort en memoria por instancia,
+  // igual que /api/auth/verify-code.
+  if (
+    rateLimit("login", email.toLowerCase(), 8, 10 * 60_000) ||
+    rateLimit("login-ip", String(meta.ip ?? ""), 40, 10 * 60_000)
+  ) {
+    return { message: "Demasiados intentos. Espera unos minutos e inténtalo de nuevo." };
+  }
   const user = await getUserByEmail(email);
   if (!user || !user.password) {
     await recordLoginAttempt({
@@ -204,6 +214,13 @@ export async function verifyTwoFactorAction(
   const pending = await getPending2fa();
   if (!pending) {
     return { message: "La verificación ha caducado. Inicia sesión de nuevo." };
+  }
+  // Anti fuerza bruta del código TOTP (6 dígitos): tras varios intentos
+  // invalidamos el reto pendiente y exigimos re-login (cierra la ventana de
+  // adivinación dentro de los 10 min de vida del cookie pendiente).
+  if (rateLimit("totp-verify", pending.userId, 5, 10 * 60_000)) {
+    await clearPending2fa();
+    return { message: "Demasiados intentos. Inicia sesión de nuevo." };
   }
   const code = String(formData.get("code") ?? "").trim();
   if (!code) return { requires2fa: true, message: "Introduce el código." };

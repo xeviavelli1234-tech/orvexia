@@ -99,6 +99,10 @@ type SpApiEnv = "sandbox" | "production";
 
 export interface RunSummary {
   accountsProcessed: number;
+  /** Cuentas saltadas porque su lock de ciclo estaba ocupado (otro ciclo las
+   *  procesaba). El cron de eventos lo usa para CONSERVAR el mensaje y reintentar
+   *  en vez de darlo por procesado y borrarlo. */
+  accountsLocked: number;
   listingsProcessed: number;
   listingsRepriced: number;
   errors: number;
@@ -136,6 +140,7 @@ export async function runRepricer(
   const partialReprice = !!(opts.asins && opts.asins.length > 0);
   const summary: RunSummary = {
     accountsProcessed: 0,
+    accountsLocked: 0,
     listingsProcessed: 0,
     listingsRepriced: 0,
     errors: 0,
@@ -213,7 +218,10 @@ export async function runRepricer(
       },
       data: { lockedAt: now },
     });
-    if (claim.count === 0) continue;
+    if (claim.count === 0) {
+      summary.accountsLocked += 1;
+      continue;
+    }
 
     summary.accountsProcessed += 1;
 

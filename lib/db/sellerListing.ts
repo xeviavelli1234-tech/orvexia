@@ -461,6 +461,46 @@ export async function importListingConfig(
       skipped += 1;
       continue;
     }
+    // Mismas invariantes que setListingStrategy, validando el ESTADO RESULTANTE
+    // (no solo lo que la fila cambia). FIXED sin fixedPrice>0 se iría al techo;
+    // MARGIN sin cost>0 se queda sin suelo (vende a pérdida). Cubre también el
+    // caso de una fila que NO toca la estrategia pero BORRA (a null) el
+    // fixedPrice/cost de un listing ya FIXED/MARGIN. El valor efectivo es el de
+    // la fila o, si no viene, el ya guardado.
+    if (
+      row.strategy !== undefined ||
+      row.fixedPrice !== undefined ||
+      row.cost !== undefined
+    ) {
+      const current = await prisma.sellerListing.findFirst({
+        where: { sku: row.sku, sellerAccount: { userId } },
+        select: { strategy: true, fixedPrice: true, cost: true },
+      });
+      const effStrategy = row.strategy ?? current?.strategy;
+      if (effStrategy === "FIXED") {
+        const eff =
+          row.fixedPrice !== undefined ? row.fixedPrice : current?.fixedPrice ?? null;
+        if (!(eff != null && eff > 0)) {
+          skipped += 1;
+          continue;
+        }
+      }
+      if (effStrategy === "MARGIN") {
+        const eff = row.cost !== undefined ? row.cost : current?.cost ?? null;
+        if (!(eff != null && eff > 0)) {
+          skipped += 1;
+          continue;
+        }
+      }
+    }
+    if (row.priceMin != null && row.priceMax != null && row.priceMin > row.priceMax) {
+      skipped += 1;
+      continue;
+    }
+    if (row.undercutValue !== undefined && !(row.undercutValue >= 0)) {
+      skipped += 1;
+      continue;
+    }
     const data: Record<string, unknown> = {};
     if (row.priceMin !== undefined) data.priceMin = row.priceMin;
     if (row.priceMax !== undefined) data.priceMax = row.priceMax;

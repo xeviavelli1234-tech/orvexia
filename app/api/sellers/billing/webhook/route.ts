@@ -64,17 +64,36 @@ export async function POST(req: Request) {
         });
         if (acc) {
           // active/trialing → PRO. past_due se mantiene en PRO (periodo de
-          // gracia: Stripe reintenta el cobro). El resto degrada a TRIAL.
+          // gracia: Stripe reintenta el cobro). El resto (unpaid, canceled,
+          // paused, incomplete_expired…) degrada a TRIAL EXPIRADO.
           const live =
             sub.status === "active" ||
             sub.status === "trialing" ||
             sub.status === "past_due";
-          const plan = live ? "PRO" : "TRIAL";
-          if (acc.plan !== plan) {
-            await prisma.sellerAccount.update({
-              where: { id: acc.id },
-              data: { plan, intervalSeconds: intervalForPlan(plan) },
-            });
+          if (live) {
+            if (acc.plan !== "PRO") {
+              await prisma.sellerAccount.update({
+                where: { id: acc.id },
+                data: { plan: "PRO", intervalSeconds: intervalForPlan("PRO") },
+              });
+            }
+          } else {
+            // CRÍTICO de facturación: al degradar a TRIAL forzamos trialEndsAt al
+            // pasado (igual que .deleted). Sin esto, una cuenta que dejó de pagar
+            // (unpaid/canceled vía .updated, sin .deleted) quedaba en TRIAL con
+            // trialEndsAt todavía en el futuro → seguía repreciando GRATIS.
+            const future =
+              !acc.trialEndsAt || acc.trialEndsAt.getTime() > Date.now();
+            if (acc.plan !== "TRIAL" || future) {
+              await prisma.sellerAccount.update({
+                where: { id: acc.id },
+                data: {
+                  plan: "TRIAL",
+                  intervalSeconds: intervalForPlan("TRIAL"),
+                  trialEndsAt: new Date(0),
+                },
+              });
+            }
           }
         }
         break;
@@ -96,6 +115,10 @@ export async function POST(req: Request) {
               plan: "TRIAL",
               intervalSeconds: intervalForPlan("TRIAL"),
               trialEndsAt: new Date(0),
+              // Desvincula la suscripción cancelada: evita que un
+              // customer.subscription.updated reentregado/tardío vuelva a casar
+              // con esta cuenta vía stripeSubscriptionId y la "resucite" a PRO.
+              stripeSubscriptionId: null,
             },
           });
         }

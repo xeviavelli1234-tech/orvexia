@@ -11,33 +11,32 @@ export interface OrdersSyncResult {
   errors: string[];
 }
 
-/**
- * Sincroniza pedidos SP-API Orders de TODAS las cuentas activas. Idempotente:
- * usa amazonOrderId como clave única para no duplicar. Vincula cada item con
- * SellerListing.sku cuando exista.
- *
- * En modo fixtures crea pedidos sintéticos (solo si no existen ya) para
- * alimentar gráficas y heatmap visualmente.
- */
-export async function syncAllAccountsOrders(opts?: {
-  sinceDays?: number;
-}): Promise<OrdersSyncResult> {
-  const result: OrdersSyncResult = {
-    accountsProcessed: 0,
-    ordersImported: 0,
-    itemsImported: 0,
-    errors: [],
-  };
-  const sinceDays = opts?.sinceDays ?? 14;
+interface OrderAccountRow {
+  id: string;
+  refreshToken: string;
+  spApiEnv: string;
+  marketplaceId: string;
+}
 
-  const accounts = await prisma.sellerAccount.findMany({
-    where: { active: true },
-    select: { id: true, refreshToken: true, spApiEnv: true, marketplaceId: true },
-  });
+const ORDER_ACCOUNT_SELECT = {
+  id: true,
+  refreshToken: true,
+  spApiEnv: true,
+  marketplaceId: true,
+} as const;
 
-  for (const acc of accounts) {
-    result.accountsProcessed++;
-    try {
+function emptyOrdersResult(): OrdersSyncResult {
+  return { accountsProcessed: 0, ordersImported: 0, itemsImported: 0, errors: [] };
+}
+
+/** Procesa los pedidos de UNA cuenta, acumulando en `result`. */
+async function processAccountOrders(
+  acc: OrderAccountRow,
+  sinceDays: number,
+  result: OrdersSyncResult,
+): Promise<void> {
+  result.accountsProcessed++;
+  try {
       const client = new SpApiClient(
         decryptToken(acc.refreshToken),
         acc.spApiEnv as "sandbox" | "production",
@@ -98,12 +97,45 @@ export async function syncAllAccountsOrders(opts?: {
         result.ordersImported++;
         result.itemsImported += created.items.length;
       }
-    } catch (e) {
-      const msg = e instanceof Error ? e.message.slice(0, 200) : String(e);
-      result.errors.push(`[${acc.id}] ${msg}`);
-    }
+  } catch (e) {
+    const msg = e instanceof Error ? e.message.slice(0, 200) : String(e);
+    result.errors.push(`[${acc.id}] ${msg}`);
   }
+}
 
+/**
+ * Sincroniza pedidos SP-API Orders de TODAS las cuentas activas (cron).
+ * Idempotente: amazonOrderId como clave única. Vincula items con SellerListing.
+ */
+export async function syncAllAccountsOrders(opts?: {
+  sinceDays?: number;
+}): Promise<OrdersSyncResult> {
+  const result = emptyOrdersResult();
+  const sinceDays = opts?.sinceDays ?? 14;
+  const accounts = await prisma.sellerAccount.findMany({
+    where: { active: true },
+    select: ORDER_ACCOUNT_SELECT,
+  });
+  for (const acc of accounts) await processAccountOrders(acc, sinceDays, result);
+  return result;
+}
+
+/**
+ * Sincroniza pedidos SOLO de la cuenta indicada. Para la acción por-usuario:
+ * cada vendedor sincroniza LA SUYA, sin disparar fetches a Amazon con las
+ * credenciales de otros tenants.
+ */
+export async function syncOrdersForAccount(
+  accountId: string,
+  opts?: { sinceDays?: number },
+): Promise<OrdersSyncResult> {
+  const result = emptyOrdersResult();
+  const sinceDays = opts?.sinceDays ?? 14;
+  const acc = await prisma.sellerAccount.findFirst({
+    where: { id: accountId, active: true },
+    select: ORDER_ACCOUNT_SELECT,
+  });
+  if (acc) await processAccountOrders(acc, sinceDays, result);
   return result;
 }
 

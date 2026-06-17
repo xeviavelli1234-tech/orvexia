@@ -94,25 +94,28 @@ export async function POST(req: Request) {
   // ── Upsert por (sellerAccountId, sku) ────────────────────────────────
   let inserted = 0;
   let updated = 0;
+  const cols = new Set(parsed.columns);
   for (const row of parsed.rows) {
     const existing = await prisma.sellerListing.findUnique({
       where: { sellerAccountId_sku: { sellerAccountId: account.id, sku: row.sku } },
       select: { id: true },
     });
     if (existing) {
-      await prisma.sellerListing.update({
-        where: { id: existing.id },
-        data: {
-          title: row.title,
-          imageUrl: row.imageUrl,
-          priceCurrent: row.priceCurrent,
-          priceMin: row.priceMin ?? null,
-          priceMax: row.priceMax ?? null,
-          cost: row.cost ?? null,
-          currency: row.currency,
-          source: "manual",
-        },
-      });
+      // Solo escribimos las columnas opcionales que VENÍAN en el CSV: si el
+      // vendedor resube solo sku,title,price NO debemos borrar (a null) el
+      // rango/coste/imagen que ya tenía configurados (eso desactivaría el
+      // repricer en silencio al perder priceMin/priceMax).
+      const data: Record<string, unknown> = {
+        title: row.title,
+        priceCurrent: row.priceCurrent,
+        source: "manual",
+      };
+      if (cols.has("priceMin")) data.priceMin = row.priceMin ?? null;
+      if (cols.has("priceMax")) data.priceMax = row.priceMax ?? null;
+      if (cols.has("cost")) data.cost = row.cost ?? null;
+      if (cols.has("currency")) data.currency = row.currency;
+      if (cols.has("imageUrl")) data.imageUrl = row.imageUrl;
+      await prisma.sellerListing.update({ where: { id: existing.id }, data });
       updated++;
     } else {
       await prisma.sellerListing.create({

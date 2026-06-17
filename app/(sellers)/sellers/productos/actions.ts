@@ -668,8 +668,16 @@ export async function syncOrdersAction(): Promise<ActionResult & { imported?: nu
   const session = await getSession();
   if (!session) return { ok: false, error: "unauthorized" };
   try {
-    const { syncAllAccountsOrders } = await import("@/lib/reprice/orders-sync");
-    const result = await syncAllAccountsOrders({ sinceDays: 30 });
+    const { getSellerAccountByUserId } = await import("@/lib/db/sellerAccount");
+    const { rateLimit } = await import("@/lib/rate-limit");
+    const account = await getSellerAccountByUserId(session.userId);
+    if (!account) return { ok: false, error: "no_account" };
+    // Solo SU cuenta (antes sincronizaba TODAS) + freno: pega a SP-API Orders.
+    if (rateLimit("orders-sync", session.userId, 4, 10 * 60_000)) {
+      return { ok: false, error: "rate_limited" };
+    }
+    const { syncOrdersForAccount } = await import("@/lib/reprice/orders-sync");
+    const result = await syncOrdersForAccount(account.id, { sinceDays: 30 });
     await recordAudit(
       session.userId,
       "orders.sync",

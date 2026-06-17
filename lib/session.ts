@@ -3,6 +3,11 @@ import { cookies } from "next/headers";
 import { getSessionSecret } from "./auth-secret";
 
 export const SESSION_COOKIE = "auth-session";
+// Audiencia del JWT de SESIÓN COMPLETA. El token intermedio de 2FA usa otra
+// audiencia distinta y se firma con el MISMO secreto, así que SIN este
+// discriminador un token 'auth-2fa' (paso 1, solo contraseña verificada) pasaba
+// como sesión válida → bypass total del segundo factor.
+export const SESSION_AUDIENCE = "session";
 
 // El secreto de firma/verificación de los JWT vive en lib/auth-secret.ts, en
 // su propio módulo para poder compartirlo con el middleware (proxy.ts).
@@ -23,6 +28,7 @@ export async function createSession(
     email: payload.email,
   })
     .setProtectedHeader({ alg: "HS256" })
+    .setAudience(SESSION_AUDIENCE)
     .setIssuedAt()
     .setExpirationTime("7d")
     .sign(getSessionSecret());
@@ -45,7 +51,9 @@ export async function getSession(): Promise<SessionPayload | null> {
   if (!token) return null;
 
   try {
-    const { payload } = await jwtVerify(token, getSessionSecret());
+    const { payload } = await jwtVerify(token, getSessionSecret(), {
+      audience: SESSION_AUDIENCE,
+    });
     return {
       userId: payload.userId as string,
       name: payload.name as string,
@@ -63,6 +71,9 @@ export async function deleteSession(): Promise<void> {
 
 // ── Reto 2FA pendiente entre paso 1 (contraseña) y paso 2 (código) ──
 const PENDING_2FA_COOKIE = "auth-2fa";
+// Audiencia distinta a la de sesión: impide que este token intermedio se acepte
+// como sesión completa aunque comparta secreto de firma.
+const PENDING_2FA_AUDIENCE = "pending-2fa";
 
 export interface Pending2fa {
   userId: string;
@@ -77,6 +88,7 @@ export async function createPending2fa(p: Pending2fa): Promise<void> {
     next: p.next ?? "",
   })
     .setProtectedHeader({ alg: "HS256" })
+    .setAudience(PENDING_2FA_AUDIENCE)
     .setIssuedAt()
     .setExpirationTime("10m")
     .sign(getSessionSecret());
@@ -95,7 +107,9 @@ export async function getPending2fa(): Promise<Pending2fa | null> {
   const token = cookieStore.get(PENDING_2FA_COOKIE)?.value;
   if (!token) return null;
   try {
-    const { payload } = await jwtVerify(token, getSessionSecret());
+    const { payload } = await jwtVerify(token, getSessionSecret(), {
+      audience: PENDING_2FA_AUDIENCE,
+    });
     return {
       userId: payload.userId as string,
       rememberMe: !!payload.rememberMe,
