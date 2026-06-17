@@ -474,7 +474,7 @@ function scoreBestTopic(question: string) {
 export const TOOLS_GUIDE = `PUEDES EJECUTAR ACCIONES con herramientas cuando el usuario lo pida claramente (configurar, activar, pausar, lanzar ciclo, consultar su catálogo):
 - Resuelve el producto por nombre/SKU/ASIN con find_products antes de modificar; nunca inventes identificadores.
 - Si hay varias coincidencias, pregunta cuál antes de actuar.
-- set_range fija Mín/Máx (al fijar ambos se ACTIVA el reprecio automáticamente).
+- set_range fija Mín/Máx (NO activa el reprecio por sí solo; para activar usa toggle_repricing).
 - set_strategy fija la estrategia (BUYBOX/MATCH/FIXED/MARGIN) y sus parámetros.
 - toggle_repricing activa/pausa.
 - run_repricer lanza un ciclo inmediato.

@@ -71,7 +71,7 @@ async function maybeSendAlerts(
     }
     for (const [kind, arr] of byKind) {
       const cat =
-        kind === "buy_box_lost"
+        kind === "buybox_lost"
           ? "buybox_lost"
           : kind === "price_floor"
             ? "price_floor"
@@ -541,7 +541,7 @@ export async function runRepricer(
                 // No movimos el precio: un undercut DOWN suprimido por debounce
                 // NO es una "bajada arrastrada" real, así que NO avanzamos el
                 // contador de guerra de precios (lo dejamos como estaba).
-                data: { priceWarStreak: listing.priceWarStreak },
+                data: { priceWarStreak: listing.priceWarStreak, consecutiveErrors: 0 },
               }),
             ]);
             continue;
@@ -563,7 +563,10 @@ export async function runRepricer(
               }),
               prisma.sellerListing.update({
                 where: { id: listing.id },
-                data: { priceWarStreak: nextWarStreak },
+                // Ciclo sano (competencia consultada OK, sin error de PATCH):
+                // resetea el contador de errores consecutivos para honrar la
+                // semántica de "N PATCH fallidos CONSECUTIVOS" de la autopausa.
+                data: { priceWarStreak: nextWarStreak, consecutiveErrors: 0 },
               }),
             ]);
             continue;
@@ -629,7 +632,10 @@ export async function runRepricer(
               }),
               prisma.sellerListing.update({
                 where: { id: listing.id },
-                data: { priceWarStreak: nextWarStreak },
+                // Ciclo sano (competencia consultada OK, sin error de PATCH):
+                // resetea el contador de errores consecutivos para honrar la
+                // semántica de "N PATCH fallidos CONSECUTIVOS" de la autopausa.
+                data: { priceWarStreak: nextWarStreak, consecutiveErrors: 0 },
               }),
             ]);
             repriced += 1;

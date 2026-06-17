@@ -247,7 +247,7 @@ export async function POST(req: NextRequest) {
         }),
         prisma.sellerListing.update({
           where: { id: listing.id },
-          data: { priceWarStreak: nextWarStreak },
+          data: { priceWarStreak: nextWarStreak, consecutiveErrors: 0 },
         }),
         prisma.repricingRun.update({
           where: { id: run.id },
@@ -324,7 +324,7 @@ export async function POST(req: NextRequest) {
         }),
         prisma.sellerListing.update({
           where: { id: listing.id },
-          data: { priceWarStreak: nextWarStreak },
+          data: { priceWarStreak: nextWarStreak, consecutiveErrors: 0 },
         }),
         prisma.repricingRun.update({
           where: { id: run.id },

@@ -6,8 +6,10 @@ import {
   type AlertCategory,
   type ChannelAlertFlags,
 } from "./notify-external-filter";
+import { isSafeChannelUrl } from "./channel-url";
 
 export { shouldDispatchToChannel, type AlertCategory, type ChannelAlertFlags };
+export { isSafeChannelUrl };
 
 const log = logger.child("notify-external");
 
@@ -101,15 +103,23 @@ async function dispatch(
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 10_000);
   try {
+    // Defensa en profundidad (además de validar al añadir el canal): no hacemos
+    // fetch a destinos internos ni a hosts fuera de la allowlist del canal.
+    if (!isSafeChannelUrl(kind, webhookUrl)) {
+      throw new Error("unsafe_url");
+    }
     let url = webhookUrl;
     let body: unknown;
     if (kind === "telegram") {
       // webhookUrl = base bot URL (con token), extraTarget = chat_id
       const base = webhookUrl.endsWith("/") ? webhookUrl.slice(0, -1) : webhookUrl;
       url = `${base}/sendMessage`;
+      // parse_mode HTML exige escapar < > & o Telegram responde 400 y se pierde
+      // la alerta. El texto no lleva HTML intencional, así que escapamos.
+      const safe = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
       body = {
         chat_id: extraTarget,
-        text,
+        text: safe,
         parse_mode: "HTML",
         disable_web_page_preview: true,
       };

@@ -31,7 +31,7 @@ export const TOOLS = [
   {
     name: "set_range",
     description:
-      "Fija el precio mínimo y máximo de un producto. Al fijar ambos se ACTIVA el reprecio automáticamente.",
+      "Fija el precio mínimo y máximo de un producto. NO activa el reprecio por sí solo: para activarlo usa toggle_repricing.",
     input_schema: {
       type: "object" as const,
       properties: {
@@ -241,7 +241,7 @@ export async function executeTool(
       if (!(min > 0) || !(max > 0) || min > max)
         return "Rango inválido: min y max deben ser > 0 y min ≤ max.";
       await setListingRange({ listingId: r.listing!.id, userId, priceMin: min, priceMax: max });
-      return `Rango fijado en "${r.listing!.title.slice(0, 40)}": ${min}–${max} ${r.listing!.currency}. Reprecio activado.`;
+      return `Rango fijado en "${r.listing!.title.slice(0, 40)}": ${min}–${max} ${r.listing!.currency}. Para que reprecie, actívalo (toggle_repricing o el interruptor del panel).`;
     }
 
     if (name === "set_strategy") {

@@ -227,8 +227,11 @@ export async function getSalesVelocity(
   days = 30,
 ): Promise<{ unitsPerDay: number; totalUnits: number; days: number } | null> {
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  // Filtramos por la fecha de COMPRA real (order.purchaseDate), no por createdAt
+  // (que es la hora de IMPORTACIÓN: el primer sync trae 14 días de golpe con
+  // createdAt≈ahora y desvirtuaría la velocidad de venta).
   const items = await prisma.repriceOrderItem.findMany({
-    where: { listingId, createdAt: { gte: since } },
+    where: { listingId, order: { purchaseDate: { gte: since } } },
     select: { quantity: true },
   });
   if (items.length === 0) return { unitsPerDay: 0, totalUnits: 0, days };

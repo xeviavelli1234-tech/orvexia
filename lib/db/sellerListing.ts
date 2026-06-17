@@ -56,7 +56,12 @@ export async function upsertListingsBatch(params: {
 
     // 2) Detección de cambio manual ANTES de upsert (compara contra lo que esperábamos)
     let manualPatch: Record<string, unknown> | null = null;
-    if (previous && previous.lastExpectedPrice != null && previous.lastExpectedAt) {
+    if (
+      previous &&
+      previous.lastExpectedPrice != null &&
+      previous.lastExpectedAt &&
+      item.priceCurrent > 0 // sin precio (listing sin stock) NO es un cambio manual
+    ) {
       const stale = Date.now() - previous.lastExpectedAt.getTime() > STALE_WINDOW_MS;
       const diff = Math.abs(item.priceCurrent - previous.lastExpectedPrice);
       if (!stale && diff > PRICE_EPSILON) {
@@ -88,12 +93,18 @@ export async function upsertListingsBatch(params: {
         currency: item.currency,
       },
       update: {
-        asin: item.asin,
         title: item.title,
         imageUrl: item.imageUrl ?? undefined,
         productType: item.productType ?? undefined,
-        priceCurrent: item.priceCurrent,
-        currency: item.currency,
+        // No pisar datos buenos con una respuesta parcial/sin-precio de Amazon:
+        // un asin vacío o un precio 0 (listing sin stock / oferta incompleta) NO
+        // deben sobrescribir el valor previo válido — si lo hicieran, el motor
+        // dejaría de reprecir ese producto y saltaría una falsa alarma de
+        // "cambio manual". Se conserva el último bueno hasta un sync con datos.
+        ...(item.asin ? { asin: item.asin } : {}),
+        ...(item.priceCurrent > 0
+          ? { priceCurrent: item.priceCurrent, currency: item.currency }
+          : {}),
         ...(manualPatch ?? {}),
       },
       select: { createdAt: true, updatedAt: true },
@@ -103,14 +114,20 @@ export async function upsertListingsBatch(params: {
     else updated += 1;
   }
 
-  // Amazon es la fuente de verdad: borra listings que ya no están en el
-  // catálogo del seller (p.ej. restos del modo demo al pasar a producción,
-  // o productos retirados de Amazon). Si el fetch vino vacío, limpia todo.
+  // Amazon es la fuente de verdad: borra listings que ya no están en el catálogo
+  // del seller (restos del modo demo, productos retirados). PERO si el fetch
+  // volvió VACÍO NO purgamos nada: una cuenta activa siempre tiene >=1 listing,
+  // así que un fetch vacío es casi siempre un fallo transitorio de Amazon
+  // (consistencia eventual, glitch, nextToken cortado), no un catálogo realmente
+  // vacío. Borrar aquí destruiría TODA la config del seller (irreversible).
   const keepSkus = params.items.map((i) => i.sku);
+  if (keepSkus.length === 0) {
+    return { inserted, updated, deleted: 0, manualPriceDetections };
+  }
   const deleted = await prisma.sellerListing.deleteMany({
     where: {
       sellerAccountId: params.sellerAccountId,
-      sku: { notIn: keepSkus.length > 0 ? keepSkus : ["__none__"] },
+      sku: { notIn: keepSkus },
     },
   });
 
@@ -130,14 +147,18 @@ export async function setListingRange(params: {
   });
   if (!existing) throw new Error("listing_not_found_or_not_owned");
 
-  const repricingEnabled = params.priceMin != null && params.priceMax != null;
+  // El rango por sí solo NO activa el reprecio: activar pasa SIEMPRE por
+  // setListingEnabled, que aplica el tope de SKUs del plan (TRIAL=50) y exige
+  // priceCurrent>0 + ASIN. Aquí solo desactivamos si el rango queda incompleto
+  // (sin min/max el motor no puede reprecir).
+  const rangeIncomplete = params.priceMin == null || params.priceMax == null;
 
   return prisma.sellerListing.update({
     where: { id: params.listingId },
     data: {
       priceMin: params.priceMin,
       priceMax: params.priceMax,
-      repricingEnabled,
+      ...(rangeIncomplete ? { repricingEnabled: false } : {}),
     },
   });
 }

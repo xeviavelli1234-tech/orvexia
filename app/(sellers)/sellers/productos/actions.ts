@@ -401,7 +401,10 @@ export async function addNotificationChannelAction(formData: FormData): Promise<
   if (!["slack", "telegram", "discord", "webhook"].includes(kind)) {
     return { ok: false, error: "kind_invalido" };
   }
-  if (!/^https?:\/\//i.test(webhookUrl)) {
+  const { isSafeChannelUrl } = await import("@/lib/reprice/notify-external");
+  if (!isSafeChannelUrl(kind, webhookUrl)) {
+    // Bloquea destinos internos (anti-SSRF) y hosts fuera de la allowlist del
+    // canal (slack/discord/telegram); el webhook genérico exige https público.
     return { ok: false, error: "url_invalida" };
   }
   if (kind === "telegram" && !extraTarget) {
