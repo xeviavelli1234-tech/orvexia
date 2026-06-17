@@ -31,6 +31,24 @@ export async function POST(req: Request) {
     return NextResponse.redirect(new URL("/dashboard?status=connect_first", req.url));
   }
 
+  // Idempotencia de suscripción: si la cuenta ya es PRO (suscripción activa, en
+  // prueba o en gracia past_due) no creamos una segunda. Sin esta guarda, un POST
+  // repetido a este endpoint (doble submit, back+resubmit, POST manual con la
+  // cookie) abría una 2ª suscripción al mismo precio sobre el mismo customer: el
+  // webhook sobrescribía stripeSubscriptionId con la nueva y la antigua quedaba
+  // HUÉRFANA cobrando 19 €/mes sin poder cancelarse desde la app.
+  //
+  // La discriminación es por `plan` (la señal autoritativa: el webhook lo pone
+  // PRO mientras la suscripción está viva y lo degrada a TRIAL al churn), NO por
+  // stripeSubscriptionId: un impago vía customer.subscription.updated deja la
+  // cuenta en TRIAL pero podría conservar un stripeSubscriptionId obsoleto, y
+  // bloquear por ese id dejaría al cliente sin poder volver a pagar nunca.
+  if (account.plan === "PRO") {
+    return NextResponse.redirect(
+      new URL("/sellers/facturacion?status=already_subscribed", req.url),
+    );
+  }
+
   try {
     const stripe = await getStripe();
     const base = getBaseUrl(req);

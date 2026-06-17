@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { createSession } from "@/lib/session";
+import { createSession, createPending2fa } from "@/lib/session";
 import { readRequestMeta } from "@/lib/security/request";
 import { headers } from "next/headers";
 import {
@@ -47,7 +47,7 @@ export default async function MagicLogin({
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, email: true, name: true },
+    select: { id: true, email: true, name: true, totpEnabled: true },
   });
 
   if (!match || !user) {
@@ -62,11 +62,20 @@ export default async function MagicLogin({
     return failure("Enlace caducado o no válido. Pide uno nuevo desde la pantalla de inicio de sesión.");
   }
 
-  // Consumimos el token
+  // Consumimos el token (un solo uso; el enlace ya demostró control del email).
   await prisma.magicLink.update({
     where: { id: match.id },
     data: { usedAt: new Date() },
   });
+
+  // 2FA activado: el enlace mágico es el PRIMER factor (control del email), pero
+  // exigimos también el segundo (TOTP). NO creamos sesión completa todavía —
+  // diferimos a /login/2fa, igual que el login por contraseña. Sin esto, quien
+  // controlase el buzón eludía por completo el 2FA que el usuario activó.
+  if (user.totpEnabled) {
+    await createPending2fa({ userId: user.id, rememberMe: true, next: null });
+    redirect("/login/2fa");
+  }
 
   await createSession({ userId: user.id, email: user.email, name: user.name }, true);
   await recordLoginAttempt({

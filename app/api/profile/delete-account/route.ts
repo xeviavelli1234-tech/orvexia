@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession, deleteSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
+import { deleteSellerAccount } from "@/lib/db/sellerAccount";
 import bcrypt from "bcryptjs";
 
 export async function POST(req: NextRequest) {
@@ -31,6 +32,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Contraseña incorrecta" }, { status: 400 });
     }
   }
+
+  // Borra primero TODOS los datos del repricer. El borrado del usuario solo
+  // cascada a SellerAccount y sus hijos con FK; las tablas que enlazan por
+  // sellerAccountId suelto (canales con secretos de webhook, pedidos con PII
+  // del comprador, dumpers, cuota, explicaciones) quedarían huérfanas. Esta
+  // llamada las purga en transacción y elimina la cuenta de repricer.
+  await deleteSellerAccount(session.userId);
 
   // Delete all user data (cascade handles saved products / alerts)
   await prisma.user.delete({ where: { id: session.userId } });

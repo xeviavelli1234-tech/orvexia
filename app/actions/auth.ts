@@ -206,6 +206,40 @@ export async function loginAction(
   redirect(next ?? "/dashboard");
 }
 
+/**
+ * Consume un código de recuperación 2FA de forma ATÓMICA y devuelve si era
+ * válido. Sin el bloqueo de fila, dos peticiones concurrentes con dos códigos
+ * válidos distintos hacían read-modify-write sobre el JSON de hashes con
+ * last-write-wins, "resucitando" un código ya gastado. `SELECT … FOR UPDATE`
+ * serializa a los consumidores: el segundo relee la lista ya recortada por el
+ * primero, garantizando el uso único.
+ */
+async function consumeRecoveryCode(userId: string, code: string): Promise<boolean> {
+  return prisma.$transaction(async (tx) => {
+    const rows = await tx.$queryRaw<{ totpRecovery: string | null }[]>`
+      SELECT "totpRecovery" FROM "User" WHERE "id" = ${userId} FOR UPDATE`;
+    const raw = rows[0]?.totpRecovery;
+    if (!raw) return false;
+    let hashes: string[];
+    try {
+      hashes = JSON.parse(raw);
+    } catch {
+      return false; // recovery malformado → ignora
+    }
+    for (let i = 0; i < hashes.length; i++) {
+      if (await bcrypt.compare(code.toUpperCase(), hashes[i])) {
+        hashes.splice(i, 1); // consumir
+        await tx.user.update({
+          where: { id: userId },
+          data: { totpRecovery: JSON.stringify(hashes) },
+        });
+        return true;
+      }
+    }
+    return false;
+  });
+}
+
 /** Paso 2 del login cuando hay 2FA: verifica código TOTP o de recuperación. */
 export async function verifyTwoFactorAction(
   _prev: ActionResult,
@@ -238,24 +272,9 @@ export async function verifyTwoFactorAction(
     ok = false;
   }
 
-  // Código de recuperación de un solo uso.
+  // Código de recuperación de un solo uso (consumo atómico, ver helper).
   if (!ok && user.totpRecovery) {
-    try {
-      const hashes: string[] = JSON.parse(user.totpRecovery);
-      for (let i = 0; i < hashes.length; i++) {
-        if (await bcrypt.compare(code.toUpperCase(), hashes[i])) {
-          ok = true;
-          hashes.splice(i, 1); // consumir
-          await prisma.user.update({
-            where: { id: user.id },
-            data: { totpRecovery: JSON.stringify(hashes) },
-          });
-          break;
-        }
-      }
-    } catch {
-      /* recovery malformado → ignora */
-    }
+    ok = await consumeRecoveryCode(user.id, code);
   }
 
   const meta = await currentMeta();

@@ -144,12 +144,52 @@ export async function exportSellerData(userId: string) {
 }
 
 /**
- * RGPD — borrado total: elimina la cuenta de repricer y, en cascada,
- * sus listings, ciclos y eventos. El token de Amazon se destruye con
- * la fila. No borra la cuenta de usuario (login) del comparador.
+ * RGPD — borrado total: elimina la cuenta de repricer y TODOS sus datos.
+ * Los hijos con FK (listings, ciclos, eventos, auditLogs) caen en cascada,
+ * pero varias tablas se enlazan por `sellerAccountId` SUELTO (sin FK ni
+ * onDelete:Cascade) y NO caerían solas: canales de notificación (guardan el
+ * webhookUrl en claro = SECRETO de Slack/Telegram/Discord), pedidos reales
+ * (buyerEmail = PII del comprador), dumpers detectados, uso de cuota y
+ * explicaciones de eventos. Las borramos a mano dentro de la MISMA transacción
+ * para que el "derecho al olvido" no deje huérfanos con secretos ni PII.
+ * El token de Amazon se destruye con la fila de la cuenta. No borra la cuenta
+ * de usuario (login) del comparador.
  */
 export async function deleteSellerAccount(userId: string) {
-  return prisma.sellerAccount.deleteMany({ where: { userId } });
+  const account = await prisma.sellerAccount.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+  if (!account) return { count: 0 };
+  const sellerAccountId = account.id;
+
+  return prisma.$transaction(
+    async (tx) => {
+      // EventExplanation se enlaza por eventId (sin FK). La borramos con un
+      // DELETE por subconsulta, NO recogiendo los ids en memoria para un IN(...):
+      // una cuenta con mucho histórico tiene cientos de miles de eventos y ese
+      // IN reventaría el límite de parámetros de Postgres (~65535). Va ANTES de
+      // que la cascada de la cuenta borre los eventos.
+      await tx.$executeRaw`
+        DELETE FROM "EventExplanation"
+        WHERE "eventId" IN (
+          SELECT e."id" FROM "RepricingEvent" e
+          JOIN "RepricingRun" r ON e."runId" = r."id"
+          WHERE r."sellerAccountId" = ${sellerAccountId}
+        )`;
+      // Tablas con sellerAccountId suelto (sin FK/cascade): bórralas a mano.
+      // RepriceOrderItem cae por su FK a RepriceOrder.
+      await tx.repriceOrder.deleteMany({ where: { sellerAccountId } });
+      await tx.notificationChannel.deleteMany({ where: { sellerAccountId } });
+      await tx.detectedDumper.deleteMany({ where: { sellerAccountId } });
+      await tx.repriceQuotaUsage.deleteMany({ where: { sellerAccountId } });
+      // La cuenta y sus hijos con FK (listings, runs, events, auditLogs) en cascada.
+      return tx.sellerAccount.deleteMany({ where: { id: sellerAccountId } });
+    },
+    // Un borrado total puede cascadear mucho histórico; damos holgura sobre el
+    // timeout por defecto (5s) de la transacción interactiva.
+    { timeout: 30_000 },
+  );
 }
 
 export async function setAccountSettings(params: {

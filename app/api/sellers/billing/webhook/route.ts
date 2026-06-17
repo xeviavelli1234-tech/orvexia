@@ -84,13 +84,18 @@ export async function POST(req: Request) {
             // trialEndsAt todavía en el futuro → seguía repreciando GRATIS.
             const future =
               !acc.trialEndsAt || acc.trialEndsAt.getTime() > Date.now();
-            if (acc.plan !== "TRIAL" || future) {
+            if (acc.plan !== "TRIAL" || future || acc.stripeSubscriptionId) {
               await prisma.sellerAccount.update({
                 where: { id: acc.id },
                 data: {
                   plan: "TRIAL",
                   intervalSeconds: intervalForPlan("TRIAL"),
                   trialEndsAt: new Date(0),
+                  // Desvincula la suscripción muerta (espejo de .deleted): sin
+                  // esto la cuenta quedaba en TRIAL con un stripeSubscriptionId
+                  // obsoleto que (a) bloqueaba re-suscribirse y (b) podía casar
+                  // con un .updated tardío y "resucitarla" a PRO.
+                  stripeSubscriptionId: null,
                 },
               });
             }
