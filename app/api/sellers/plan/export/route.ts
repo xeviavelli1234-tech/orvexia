@@ -1,6 +1,7 @@
 import { getSession } from "@/lib/session";
 import { getSellerAccountByUserId } from "@/lib/db/sellerAccount";
 import { prisma } from "@/lib/prisma";
+import { isSellerIpDenied } from "@/lib/security/seller-access";
 
 /**
  * GET /api/sellers/plan/export
@@ -12,6 +13,9 @@ export async function GET() {
   const session = await getSession();
   if (!session) {
     return new Response("unauthorized", { status: 401 });
+  }
+  if (await isSellerIpDenied(session.userId)) {
+    return new Response("ip_not_allowed", { status: 403 });
   }
   const account = await getSellerAccountByUserId(session.userId);
   if (!account) return new Response("no_account", { status: 404 });

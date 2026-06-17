@@ -4,6 +4,7 @@ import { getSellerAccountByUserId } from "@/lib/db/sellerAccount";
 import { prisma } from "@/lib/prisma";
 import { suggestPrice, type PricingInput } from "@/lib/assistant/pricing";
 import { rateLimit } from "@/lib/rate-limit";
+import { isSellerIpDenied } from "@/lib/security/seller-access";
 
 export const maxDuration = 60;
 
@@ -21,6 +22,9 @@ export async function POST(req: Request) {
   void req;
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (await isSellerIpDenied(session.userId)) {
+    return NextResponse.json({ error: "ip_not_allowed" }, { status: 403 });
+  }
   // Generar plan ejecuta suggestPrice() por cada listing; costoso en CPU
   // y, si se conecta IA externa, en tokens. 3 ejecuciones cada 10 min.
   if (rateLimit("plan-generate", session.userId, 3, 10 * 60_000)) {

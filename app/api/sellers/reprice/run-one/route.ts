@@ -14,6 +14,7 @@ import { minPriceForMargin } from "@/lib/reprice/margin";
 import { LOCK_TTL_MS } from "@/lib/reprice/runner";
 import { parseTags } from "@/lib/tags";
 import { rateLimit } from "@/lib/rate-limit";
+import { isSellerIpDenied } from "@/lib/security/seller-access";
 
 export const maxDuration = 30;
 
@@ -21,6 +22,9 @@ export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+  if (await isSellerIpDenied(session.userId)) {
+    return NextResponse.json({ error: "ip_not_allowed" }, { status: 403 });
   }
   // Límite: 12 reprecios manuales por minuto y usuario (best-effort, en
   // memoria por instancia; la garantía REAL anti doble-PATCH es el lock por

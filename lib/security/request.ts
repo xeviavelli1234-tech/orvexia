@@ -12,13 +12,20 @@ export interface RequestMeta {
 
 export function readRequestMeta(req: Request): RequestMeta {
   const h = req.headers;
-  const ipFromXff =
-    h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
+  // Prioriza SIEMPRE las cabeceras que pone la PLATAFORMA (no falsificables por
+  // el cliente): en Vercel `x-vercel-forwarded-for`, tras Cloudflare
+  // `cf-connecting-ip`. `x-real-ip` y `x-forwarded-for` SÍ son inyectables por el
+  // cliente en este despliegue (Vercel no descarta los valores que vienen del
+  // cliente), así que solo se usan como último recurso (dev / proxy propio).
+  // Leerlas primero permitía spoofear meta.ip y evadir la allowlist de IP y los
+  // rate-limits por IP (login, magic, forgot, affiliate-click).
+  const firstHop = (v: string | null | undefined): string | null =>
+    v?.split(",")[0]?.trim() || null;
   const ip =
-    h.get("x-real-ip") ??
-    ipFromXff ??
-    h.get("cf-connecting-ip") ??
-    h.get("x-vercel-forwarded-for")?.split(",")[0]?.trim() ??
+    firstHop(h.get("x-vercel-forwarded-for")) ??
+    firstHop(h.get("cf-connecting-ip")) ??
+    firstHop(h.get("x-real-ip")) ??
+    firstHop(h.get("x-forwarded-for")) ??
     null;
   const country =
     h.get("x-vercel-ip-country") ??

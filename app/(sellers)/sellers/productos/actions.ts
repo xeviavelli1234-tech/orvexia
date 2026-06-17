@@ -26,6 +26,7 @@ import {
   deleteSellerAccount,
 } from "@/lib/db/sellerAccount";
 import { prisma } from "@/lib/prisma";
+import { isSellerIpDenied } from "@/lib/security/seller-access";
 
 const rangeSchema = z
   .object({
@@ -53,6 +54,7 @@ function toNullableFloat(v: FormDataEntryValue | null): number | null {
 export async function updateListingRangeAction(formData: FormData): Promise<ActionResult> {
   const session = await getSession();
   if (!session) return { ok: false, error: "unauthorized" };
+  if (await isSellerIpDenied(session.userId)) return { ok: false, error: "ip_not_allowed" };
 
   const parsed = rangeSchema.safeParse({
     listingId: String(formData.get("listingId") ?? ""),
@@ -105,6 +107,7 @@ export async function updateListingStrategyAction(
 ): Promise<ActionResult> {
   const session = await getSession();
   if (!session) return { ok: false, error: "unauthorized" };
+  if (await isSellerIpDenied(session.userId)) return { ok: false, error: "ip_not_allowed" };
 
   const num = (k: string) => {
     const v = formData.get(k);
@@ -158,6 +161,7 @@ const toggleSchema = z.object({
 export async function toggleListingAction(formData: FormData): Promise<ActionResult> {
   const session = await getSession();
   if (!session) return { ok: false, error: "unauthorized" };
+  if (await isSellerIpDenied(session.userId)) return { ok: false, error: "ip_not_allowed" };
 
   const parsed = toggleSchema.safeParse({
     listingId: String(formData.get("listingId") ?? ""),
@@ -201,6 +205,7 @@ export async function updateListingCompetitionAction(
 ): Promise<ActionResult> {
   const session = await getSession();
   if (!session) return { ok: false, error: "unauthorized" };
+  if (await isSellerIpDenied(session.userId)) return { ok: false, error: "ip_not_allowed" };
 
   const ratingRaw = formData.get("minSellerRating");
   const ratingStr = ratingRaw == null ? "" : String(ratingRaw).trim().replace(",", ".");
@@ -275,6 +280,7 @@ export async function updateAccountSettingsAction(
 ): Promise<ActionResult> {
   const session = await getSession();
   if (!session) return { ok: false, error: "unauthorized" };
+  if (await isSellerIpDenied(session.userId)) return { ok: false, error: "ip_not_allowed" };
 
   const numI = (k: string, d: number) => {
     const v = formData.get(k);
@@ -347,6 +353,11 @@ export async function updateIpAllowlistAction(
 ): Promise<ActionResult> {
   const session = await getSession();
   if (!session) return { ok: false, error: "unauthorized" };
+  // NO gateamos esta acción con isSellerIpDenied a propósito: editar/limpiar la
+  // propia allowlist es el camino de RECUPERACIÓN. Si la IP del usuario rota
+  // fuera de la lista (cambio de red/ISP/VPN), debe poder corregirla o
+  // desactivarla desde la IP nueva; gatearla causaría un auto-lockout duro sin
+  // salida in-app. Sigue exigiendo sesión válida (control de autenticación).
 
   const raw = String(formData.get("ipAllowlist") ?? "").trim();
   // Normaliza: quita espacios extra, repite con comas.
@@ -389,6 +400,7 @@ export async function updateIpAllowlistAction(
 export async function addNotificationChannelAction(formData: FormData): Promise<ActionResult> {
   const session = await getSession();
   if (!session) return { ok: false, error: "unauthorized" };
+  if (await isSellerIpDenied(session.userId)) return { ok: false, error: "ip_not_allowed" };
   const acc = await prisma.sellerAccount.findUnique({
     where: { userId: session.userId },
     select: { id: true },
@@ -427,6 +439,7 @@ export async function addNotificationChannelAction(formData: FormData): Promise<
 export async function deleteNotificationChannelAction(formData: FormData): Promise<ActionResult> {
   const session = await getSession();
   if (!session) return { ok: false, error: "unauthorized" };
+  if (await isSellerIpDenied(session.userId)) return { ok: false, error: "ip_not_allowed" };
   const id = String(formData.get("id") ?? "");
   if (!id) return { ok: false, error: "bad_input" };
   // ownership
@@ -449,6 +462,7 @@ export async function deleteNotificationChannelAction(formData: FormData): Promi
 export async function testNotificationChannelAction(formData: FormData): Promise<ActionResult> {
   const session = await getSession();
   if (!session) return { ok: false, error: "unauthorized" };
+  if (await isSellerIpDenied(session.userId)) return { ok: false, error: "ip_not_allowed" };
   const id = String(formData.get("id") ?? "");
   if (!id) return { ok: false, error: "bad_input" };
   const ch = await prisma.notificationChannel.findUnique({
@@ -476,6 +490,7 @@ export async function testNotificationChannelAction(formData: FormData): Promise
 export async function addListingNoteAction(formData: FormData): Promise<ActionResult & { id?: string }> {
   const session = await getSession();
   if (!session) return { ok: false, error: "unauthorized" };
+  if (await isSellerIpDenied(session.userId)) return { ok: false, error: "ip_not_allowed" };
   const listingId = String(formData.get("listingId") ?? "");
   const content = String(formData.get("content") ?? "").trim().slice(0, 2000);
   if (!listingId || !content) return { ok: false, error: "bad_input" };
@@ -492,6 +507,7 @@ export async function addListingNoteAction(formData: FormData): Promise<ActionRe
 export async function deleteListingNoteAction(formData: FormData): Promise<ActionResult> {
   const session = await getSession();
   if (!session) return { ok: false, error: "unauthorized" };
+  if (await isSellerIpDenied(session.userId)) return { ok: false, error: "ip_not_allowed" };
   const id = String(formData.get("id") ?? "");
   if (!id) return { ok: false, error: "bad_input" };
   // Solo el autor puede borrar
@@ -508,6 +524,7 @@ export async function deleteListingNoteAction(formData: FormData): Promise<Actio
 export async function listListingNotesAction(listingId: string) {
   const session = await getSession();
   if (!session) return [];
+  if (await isSellerIpDenied(session.userId)) return [];
   const listing = await getListingForUser({ listingId, userId: session.userId });
   if (!listing) return [];
   const notes = await prisma.listingNote.findMany({
@@ -531,6 +548,7 @@ export async function listListingNotesAction(listingId: string) {
 export async function cloneListingConfigAction(formData: FormData): Promise<ActionResult & { applied?: number }> {
   const session = await getSession();
   if (!session) return { ok: false, error: "unauthorized" };
+  if (await isSellerIpDenied(session.userId)) return { ok: false, error: "ip_not_allowed" };
   const sourceId = String(formData.get("sourceId") ?? "");
   const targetIdsRaw = String(formData.get("targetIds") ?? "");
   if (!sourceId || !targetIdsRaw) return { ok: false, error: "bad_input" };
@@ -594,6 +612,7 @@ export async function cloneListingConfigAction(formData: FormData): Promise<Acti
 export async function setVacationModeAction(formData: FormData): Promise<ActionResult> {
   const session = await getSession();
   if (!session) return { ok: false, error: "unauthorized" };
+  if (await isSellerIpDenied(session.userId)) return { ok: false, error: "ip_not_allowed" };
   const fromRaw = String(formData.get("vacationFrom") ?? "").trim();
   const toRaw = String(formData.get("vacationTo") ?? "").trim();
   const note = String(formData.get("vacationNote") ?? "").trim().slice(0, 200);
@@ -646,6 +665,7 @@ export async function setVacationModeAction(formData: FormData): Promise<ActionR
 export async function clearDemoListingsAction(): Promise<ActionResult & { deleted?: number }> {
   const session = await getSession();
   if (!session) return { ok: false, error: "unauthorized" };
+  if (await isSellerIpDenied(session.userId)) return { ok: false, error: "ip_not_allowed" };
   const acc = await prisma.sellerAccount.findUnique({
     where: { userId: session.userId },
     select: { id: true },
@@ -670,6 +690,7 @@ export async function clearDemoListingsAction(): Promise<ActionResult & { delete
 export async function syncOrdersAction(): Promise<ActionResult & { imported?: number }> {
   const session = await getSession();
   if (!session) return { ok: false, error: "unauthorized" };
+  if (await isSellerIpDenied(session.userId)) return { ok: false, error: "ip_not_allowed" };
   try {
     const { getSellerAccountByUserId } = await import("@/lib/db/sellerAccount");
     const { rateLimit } = await import("@/lib/rate-limit");
@@ -700,6 +721,7 @@ export async function syncOrdersAction(): Promise<ActionResult & { imported?: nu
 export async function ackManualPriceAction(formData: FormData): Promise<ActionResult> {
   const session = await getSession();
   if (!session) return { ok: false, error: "unauthorized" };
+  if (await isSellerIpDenied(session.userId)) return { ok: false, error: "ip_not_allowed" };
   const listingId = String(formData.get("listingId") ?? "");
   if (!listingId) return { ok: false, error: "bad_input" };
   const listing = await getListingForUser({ listingId, userId: session.userId });
@@ -729,6 +751,7 @@ export async function ackManualPriceAction(formData: FormData): Promise<ActionRe
 export async function resumeAutoPausedAction(formData: FormData): Promise<ActionResult> {
   const session = await getSession();
   if (!session) return { ok: false, error: "unauthorized" };
+  if (await isSellerIpDenied(session.userId)) return { ok: false, error: "ip_not_allowed" };
   const listingId = String(formData.get("listingId") ?? "");
   if (!listingId) return { ok: false, error: "bad_input" };
   const listing = await getListingForUser({ listingId, userId: session.userId });
@@ -754,6 +777,7 @@ export async function resumeAutoPausedAction(formData: FormData): Promise<Action
 export async function pauseAllAction(): Promise<ActionResult> {
   const session = await getSession();
   if (!session) return { ok: false, error: "unauthorized" };
+  if (await isSellerIpDenied(session.userId)) return { ok: false, error: "ip_not_allowed" };
   try {
     await pauseAllForUser(session.userId);
     await recordAudit(
@@ -779,6 +803,7 @@ export async function bulkListingsAction(
 ): Promise<ActionResult> {
   const session = await getSession();
   if (!session) return { ok: false, error: "unauthorized" };
+  if (await isSellerIpDenied(session.userId)) return { ok: false, error: "ip_not_allowed" };
   const parsed = bulkSchema.safeParse({ ids, action });
   if (!parsed.success) return { ok: false, error: "validation_failed" };
   try {
@@ -811,6 +836,7 @@ export async function updateListingTagsAction(
 ): Promise<ActionResult> {
   const session = await getSession();
   if (!session) return { ok: false, error: "unauthorized" };
+  if (await isSellerIpDenied(session.userId)) return { ok: false, error: "ip_not_allowed" };
   const parsed = tagsSchema.safeParse({
     listingId: String(formData.get("listingId") ?? ""),
     tags: String(formData.get("tags") ?? ""),
@@ -840,6 +866,7 @@ export async function updateListingParentAction(
 ): Promise<ActionResult> {
   const session = await getSession();
   if (!session) return { ok: false, error: "unauthorized" };
+  if (await isSellerIpDenied(session.userId)) return { ok: false, error: "ip_not_allowed" };
   const parsed = parentSchema.safeParse({
     listingId: String(formData.get("listingId") ?? ""),
     parentAsin: String(formData.get("parentAsin") ?? ""),
@@ -864,6 +891,7 @@ export async function getAuditLogAction(): Promise<
 > {
   const session = await getSession();
   if (!session) return { ok: false, error: "unauthorized" };
+  if (await isSellerIpDenied(session.userId)) return { ok: false, error: "ip_not_allowed" };
   try {
     return { ok: true, entries: await listAudit(session.userId, 200) };
   } catch (e) {
@@ -884,6 +912,7 @@ export async function bulkTagAction(
 ): Promise<ActionResult & { count?: number }> {
   const session = await getSession();
   if (!session) return { ok: false, error: "unauthorized" };
+  if (await isSellerIpDenied(session.userId)) return { ok: false, error: "ip_not_allowed" };
   const parsed = bulkTagSchema.safeParse({ ids, tag: tag.trim(), mode });
   if (!parsed.success) return { ok: false, error: "validation_failed" };
   try {
@@ -913,6 +942,7 @@ export async function importConfigAction(
 ): Promise<ActionResult & { updated?: number; skipped?: number }> {
   const session = await getSession();
   if (!session) return { ok: false, error: "unauthorized" };
+  if (await isSellerIpDenied(session.userId)) return { ok: false, error: "ip_not_allowed" };
 
   const lines = csv.split(/\r?\n/).filter((l) => l.trim() !== "");
   if (lines.length < 2) return { ok: false, error: "csv_vacio" };
@@ -1013,6 +1043,7 @@ export async function exportMyDataAction(): Promise<
 > {
   const session = await getSession();
   if (!session) return { ok: false, error: "unauthorized" };
+  if (await isSellerIpDenied(session.userId)) return { ok: false, error: "ip_not_allowed" };
   try {
     const data = await exportSellerData(session.userId);
     if (!data) return { ok: false, error: "no_account" };
@@ -1028,6 +1059,7 @@ export async function deleteMyAccountAction(
 ): Promise<ActionResult> {
   const session = await getSession();
   if (!session) return { ok: false, error: "unauthorized" };
+  if (await isSellerIpDenied(session.userId)) return { ok: false, error: "ip_not_allowed" };
   if (confirm !== "ELIMINAR") return { ok: false, error: "confirm_required" };
   try {
     await deleteSellerAccount(session.userId);

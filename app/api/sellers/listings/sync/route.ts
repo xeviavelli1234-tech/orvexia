@@ -7,6 +7,7 @@ import { SpApiClient } from "@/lib/amazon/client";
 import { decryptToken } from "@/lib/crypto";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
+import { isSellerIpDenied } from "@/lib/security/seller-access";
 
 type SpApiEnv = "sandbox" | "production";
 
@@ -14,6 +15,9 @@ export async function POST() {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+  if (await isSellerIpDenied(session.userId)) {
+    return NextResponse.json({ error: "ip_not_allowed" }, { status: 403 });
   }
   // Sync recorre todo el catálogo del vendedor en SP-API: 4 al hora máximo.
   if (rateLimit("listings-sync", session.userId, 4, 60 * 60_000)) {

@@ -4,6 +4,7 @@ import { getSellerAccountByUserId } from "@/lib/db/sellerAccount";
 import { prisma } from "@/lib/prisma";
 import { parseManualCatalogCsv, buildSampleCatalogCsv } from "@/lib/sellers/manualImport";
 import { rateLimit } from "@/lib/rate-limit";
+import { isSellerIpDenied } from "@/lib/security/seller-access";
 
 const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
 const MAX_ROWS = 10_000;
@@ -39,6 +40,9 @@ export async function GET() {
 export async function POST(req: Request) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (await isSellerIpDenied(session.userId)) {
+    return NextResponse.json({ error: "ip_not_allowed" }, { status: 403 });
+  }
   // 6 imports cada 10 min. Subir un CSV cuesta parseo + N upserts; protege
   // contra scripts y errores de drag-and-drop repetidos.
   if (rateLimit("manual-import", session.userId, 6, 10 * 60_000)) {

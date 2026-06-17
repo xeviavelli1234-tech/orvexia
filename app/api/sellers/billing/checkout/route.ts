@@ -5,11 +5,16 @@ import { getStripe, isStripeConfigured, STRIPE_PRICE_ID } from "@/lib/stripe";
 import { getBaseUrl } from "@/lib/url";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
+import { isSellerIpDenied } from "@/lib/security/seller-access";
 
 export async function POST(req: Request) {
   const session = await getSession();
   if (!session) {
     return NextResponse.redirect(new URL("/login?next=/sellers/facturacion", req.url));
+  }
+  // La allowlist de IP también protege esta superficie (el layout no cubre /api).
+  if (await isSellerIpDenied(session.userId)) {
+    return NextResponse.redirect(new URL("/sellers/facturacion", req.url));
   }
 
   // Evita abuso: crear sesiones de checkout es barato pero llama a Stripe.

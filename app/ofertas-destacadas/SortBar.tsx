@@ -6,7 +6,7 @@ import { useTransition } from "react";
 const PILLS = [
   { label: "Mejor descuento", value: "discount_desc" },
   { label: "Precio más bajo",  value: "price_asc"    },
-  { label: "Mejor valorados",  value: "savings_desc" },
+  { label: "Mayor ahorro",     value: "savings_desc" },
 ] as const;
 
 export function SortBar() {

@@ -12,7 +12,7 @@ import { prisma } from "@/lib/prisma";
 import { parse } from "csv-parse";
 import { createGunzip } from "node:zlib";
 import { Readable } from "node:stream";
-import { parsePricePositive } from "@/lib/format/parsePrice";
+import { parseFeedPrice } from "@/lib/format/parsePrice";
 
 export interface FeedConfig {
   /** Nombre canónico del store en BD (ej. "El Corte Inglés", "Fnac"). */
@@ -74,7 +74,9 @@ const STALE_DAYS = 14;
 
 // ── Utilidades de parseo ─────────────────────────────────────────────────────
 
-const parsePrice = parsePricePositive;
+// Feed Awin/europeo: el punto puede ser separador de miles ("EUR2.500"=2500€),
+// no decimal. parseFeedPrice desambigua; parsePricePositive (CSV admin) no.
+const parsePrice = parseFeedPrice;
 
 export function parseInStock(row: Record<string, string>): boolean {
   const inStock = row.in_stock?.trim();

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/session";
 import { setBillingProfile } from "@/lib/db/sellerAccount";
 import { recordAudit } from "@/lib/db/audit";
+import { isSellerIpDenied } from "@/lib/security/seller-access";
 
 export type BillingResult = { ok: true } | { ok: false; error: string };
 
@@ -12,6 +13,7 @@ export async function updateBillingProfileAction(
 ): Promise<BillingResult> {
   const session = await getSession();
   if (!session) return { ok: false, error: "unauthorized" };
+  if (await isSellerIpDenied(session.userId)) return { ok: false, error: "ip_not_allowed" };
   try {
     await setBillingProfile({
       userId: session.userId,

@@ -4,6 +4,7 @@ import { getSession } from "@/lib/session";
 import { getSellerAccountByUserId } from "@/lib/db/sellerAccount";
 import { cronAuthError } from "@/lib/cron/auth";
 import { rateLimit } from "@/lib/rate-limit";
+import { isSellerIpDenied } from "@/lib/security/seller-access";
 
 export const maxDuration = 60;
 
@@ -39,6 +40,9 @@ export async function POST() {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+  if (await isSellerIpDenied(session.userId)) {
+    return NextResponse.json({ error: "ip_not_allowed" }, { status: 403 });
   }
   // Un ciclo completo de cuenta cuesta cuota SP-API: defendemos el endpoint
   // contra clicks rápidos / scripting (el botón ya se desactiva mientras corre).

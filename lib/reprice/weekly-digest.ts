@@ -75,15 +75,25 @@ export async function generateAndSendWeeklyDigest(
 
   // Envío email
   const to = (acc.alertEmail && acc.alertEmail.trim()) || acc.user.email;
-  await sendRepricerWeeklyDigestEmail({
+  const emailRes = await sendRepricerWeeklyDigestEmail({
     to,
     name: acc.user.name,
     narrative,
     summary,
     aiUsed: false,
-  }).catch((e) =>
-    log.warn({ sellerAccountId, err: e }, "digest email failed"),
-  );
+  }).catch((e) => {
+    log.warn({ sellerAccountId, err: e }, "digest email failed");
+    return { emailSent: false as const, reason: "send_failed" as const };
+  });
+
+  // Solo fijamos el cooldown (weeklyDigestSentAt) si el email salió de verdad.
+  // Si Resend falla sin lanzar (emailSent=false), NO marcamos: así el ciclo
+  // siguiente reintenta en vez de perder el resumen 6 días en silencio (mismo
+  // patrón que check-discounts). El early-return va ANTES de la notificación
+  // externa para no dispararla dos veces (una ahora y otra en el reintento).
+  if (!emailRes.emailSent) {
+    return { sent: false, reason: emailRes.reason ?? "email_failed" };
+  }
 
   // Notificación externa (resumen acortado)
   const short = `📊 Resumen semanal Orvexia\nSalud: ${summary.healthLetter} (${summary.healthScore}/100) · Eventos: ${summary.eventsCount} · Errores: ${summary.errorsCount} · Pedidos: ${summary.ordersCount} · Sugerencias: ${summary.suggestionsCount}`;
@@ -168,9 +178,17 @@ export async function runWeeklyDigestForAll(): Promise<{
   let sent = 0;
   let skipped = 0;
   for (const acc of accounts) {
-    const r = await generateAndSendWeeklyDigest(acc.id);
-    if (r.sent) sent++;
-    else skipped++;
+    // Aísla el fallo por cuenta: una excepción (BD transitoria, datos raros de
+    // UNA cuenta) NO debe abortar el lote y privar del resumen a las cuentas
+    // siguientes (mismo patrón que processAccountOrders en orders-sync).
+    try {
+      const r = await generateAndSendWeeklyDigest(acc.id);
+      if (r.sent) sent++;
+      else skipped++;
+    } catch (e) {
+      skipped++;
+      log.warn({ sellerAccountId: acc.id, err: e }, "weekly digest failed for account");
+    }
   }
   return { accounts: accounts.length, sent, skipped };
 }

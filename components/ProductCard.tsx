@@ -250,7 +250,7 @@ export default function ProductCard({ product, priority = false }: Props) {
                   {formatEuro(mejorOferta.priceCurrent)}
                   <span className="text-xs sm:text-base font-bold text-fg-muted ml-0.5">€</span>
                 </span>
-                {!isOutOfStock && mejorOferta.priceOld && mejorOferta.priceOld > mejorOferta.priceCurrent && (
+                {savingsAmount > 0 && mejorOferta.priceOld && (
                   <span className="hidden sm:inline text-sm text-fg-faint line-through">{formatEuro(mejorOferta.priceOld)} €</span>
                 )}
               </div>

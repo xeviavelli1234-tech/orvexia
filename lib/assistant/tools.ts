@@ -10,6 +10,7 @@ import {
   setListingEnabled,
 } from "@/lib/db/sellerListing";
 import { runRepricer } from "@/lib/reprice/runner";
+import { rateLimit } from "@/lib/rate-limit";
 
 export const TOOLS = [
   {
@@ -307,6 +308,14 @@ export async function executeTool(
       if (!acc || !acc.active) return "No tienes una cuenta de Amazon activa.";
       if (acc.mode === "manual") {
         return "Tu cuenta está en modo manual (CSV): no hay reprecio automático contra Amazon.";
+      }
+      // Comparte el bucket de coste con el endpoint dedicado (reprice/run): cada
+      // ciclo forzado recorre el catálogo pegando a getItemOffers (cuota SP-API
+      // real). Misma clave (namespace "reprice-run" + userId) → ambas rutas suman
+      // como máximo 6 ciclos/min; si no, el chat era una vía paralela para
+      // disparar hasta 30/min y quemar cuota de Amazon.
+      if (rateLimit("reprice-run", userId, 6, 60_000)) {
+        return "Vas muy rápido lanzando ciclos de reprecio. Espera un momento y vuelve a intentarlo.";
       }
       const s = await runRepricer(new Date(), { force: true, accountId: acc.id });
       return `Ciclo ejecutado: ${s.listingsProcessed} procesados, ${s.listingsRepriced} reprecciados, ${s.errors} errores.`;

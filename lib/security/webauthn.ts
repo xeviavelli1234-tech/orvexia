@@ -46,13 +46,23 @@ export async function consumeChallenge(
   challenge: string,
   type: "registration" | "authentication",
 ): Promise<{ userId: string | null } | null> {
-  const row = await prisma.webAuthnChallenge.findFirst({
-    where: { challenge, type, expiresAt: { gt: new Date() } },
-    select: { id: true, userId: true },
-  });
-  if (!row) return null;
-  await prisma.webAuthnChallenge.delete({ where: { id: row.id } }).catch(() => {});
-  return { userId: row.userId };
+  // Consumo ATÓMICO: un único DELETE ... RETURNING. Bajo concurrencia, solo UNA
+  // petición elimina la fila y recibe el userId; un replay del mismo challenge
+  // re-evalúa el WHERE con la fila ya borrada y obtiene 0 filas → null. El
+  // read-then-delete anterior (findFirst + delete con el error tragado) permitía
+  // que dos peticiones en carrera con la MISMA assertion pasaran ambas el chequeo
+  // y crearan dos sesiones (replay), porque el counter de firma no protege a las
+  // passkeys sincronizadas con counter=0. Mismo bug-class que el consumo de
+  // códigos de recuperación 2FA, resuelto igual (operación atómica en una sola
+  // sentencia). `challenge` es @unique, así que devuelve a lo sumo una fila.
+  const rows = await prisma.$queryRaw<{ userId: string | null }[]>`
+    DELETE FROM "WebAuthnChallenge"
+    WHERE "challenge" = ${challenge}
+      AND "type" = ${type}
+      AND "expiresAt" > ${new Date()}
+    RETURNING "userId"`;
+  if (rows.length === 0) return null;
+  return { userId: rows[0].userId };
 }
 
 /** Limpieza periódica de challenges caducados (sin coste, idempotente). */

@@ -8,6 +8,7 @@ import {
 import { parseFollowUps } from "@/lib/assistant/learning";
 import { followUps as kbFollowUps } from "@/lib/assistant/kb";
 import { rateLimit } from "@/lib/rate-limit";
+import { isSellerIpDenied } from "@/lib/security/seller-access";
 
 export const maxDuration = 30;
 
@@ -64,6 +65,9 @@ function fuHeader(fus: string[]): string {
 export async function POST(req: Request) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (await isSellerIpDenied(session.userId)) {
+    return NextResponse.json({ error: "ip_not_allowed" }, { status: 403 });
+  }
   if (rateLimited(session.userId)) {
     return NextResponse.json(
       { error: "rate_limited", reply: "Vas muy rápido 🙂 Espera unos segundos y reinténtalo." },
