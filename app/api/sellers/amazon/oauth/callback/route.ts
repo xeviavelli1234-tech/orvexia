@@ -85,7 +85,11 @@ export async function GET(req: Request) {
     });
   } catch (e) {
     console.error("[oauth/callback] DB upsert failed:", e);
-    return NextResponse.redirect(dashboardUrl(req, "error_persist"));
+    // Distingue un ENCRYPTION_KEY ausente/inválido del fallo genérico de BD:
+    // ambos daban "error_persist" y eran indistinguibles desde la UI.
+    const msg = e instanceof Error ? e.message : String(e);
+    const status = msg.includes("ENCRYPTION_KEY") ? "error_encryption" : "error_persist";
+    return NextResponse.redirect(dashboardUrl(req, status));
   }
 
   // Sincronización inicial de listings (best-effort, solo producción). Sin

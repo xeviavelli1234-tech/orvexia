@@ -49,6 +49,10 @@ const STATUS_MSG: Record<
     kind: "err",
     text: "No pudimos guardar la conexión. Reintenta.",
   },
+  error_encryption: {
+    kind: "err",
+    text: "Falta o es inválida la variable ENCRYPTION_KEY en el servidor. Configúrala en Vercel y vuelve a desplegar.",
+  },
   error_selfconnect_env: {
     kind: "err",
     text: "Faltan SP_API_REFRESH_TOKEN o SP_API_SELLER_ID en las variables de entorno.",

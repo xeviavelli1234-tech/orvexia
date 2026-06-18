@@ -30,8 +30,35 @@ export async function upsertSellerAccount(params: {
   const now = new Date();
   const trialEndsAt = new Date(now.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
 
-  return prisma.sellerAccount.upsert({
-    where: { userId: params.userId },
+  // Reclaim: amazonSellerId es @unique. Si ESE vendedor ya está vinculado a
+  // OTRO usuario de Orvexia (típico: probaste con otra cuenta), el upsert por
+  // userId chocaría con el unique → error_persist. Como completar el OAuth
+  // PRUEBA que quien conecta controla esa cuenta de Amazon, liberamos el
+  // vínculo de la cuenta vieja (la dejamos en manual/desconectada) y se lo
+  // asignamos a la actual. Todo en una transacción para no dejar estado a
+  // medias. El refresh token plaintext NUNCA se persiste (demo usa placeholder).
+  const conflict =
+    params.refreshToken === "FIXTURE_NO_TOKEN"
+      ? null
+      : await prisma.sellerAccount.findUnique({
+          where: { amazonSellerId: params.amazonSellerId },
+          select: { id: true, userId: true },
+        });
+
+  return prisma.$transaction(async (tx) => {
+    if (conflict && conflict.userId !== params.userId) {
+      await tx.sellerAccount.update({
+        where: { id: conflict.id },
+        data: {
+          amazonSellerId: `RECLAIMED-${conflict.id}`,
+          mode: "manual",
+          active: false,
+          refreshToken: "MANUAL_NO_TOKEN",
+        },
+      });
+    }
+    return tx.sellerAccount.upsert({
+      where: { userId: params.userId },
     create: {
       userId: params.userId,
       amazonSellerId: params.amazonSellerId,
@@ -57,8 +84,9 @@ export async function upsertSellerAccount(params: {
       // Solo sobrescribe el marketplace si lo hemos derivado del vendedor;
       // si la derivación falla, conserva el que ya tuviera (p.ej. el que el
       // usuario eligió a mano en Ajustes).
-      ...(params.marketplaceId ? { marketplaceId: params.marketplaceId } : {}),
-    },
+        ...(params.marketplaceId ? { marketplaceId: params.marketplaceId } : {}),
+      },
+    });
   });
 }
 
