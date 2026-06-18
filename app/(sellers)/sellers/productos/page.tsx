@@ -16,6 +16,7 @@ import { ProfitButton } from "./ProfitOverlay";
 import { RealDataButton } from "./RealDataPanel";
 import { ToolboxButton } from "./ToolboxPanel";
 import DemoBanner from "./DemoBanner";
+import { ConnectedBanner } from "./ConnectedBanner";
 import { HelpButton } from "./HelpOverlay";
 import { AuditButton } from "./AuditOverlay";
 // Los Overlays grandes se cargan diferidos (next/dynamic + ssr:false).
@@ -44,9 +45,16 @@ import { Eyebrow, Stat } from "@/components/ui/Stat";
 export const metadata = { title: "Centro de control · Orvexia Repricer" };
 export const dynamic = "force-dynamic";
 
-export default async function ProductosPage() {
+export default async function ProductosPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string; synced?: string }>;
+}) {
   const session = await getSession();
   if (!session) redirect("/login?next=/sellers/productos");
+
+  const { status: connectStatus, synced } = await searchParams;
+  const syncedCount = synced ? Number.parseInt(synced, 10) : undefined;
 
   const account = await getSellerAccountByUserId(session.userId);
 
@@ -551,13 +559,16 @@ export default async function ProductosPage() {
       sidebar={sidebar}
       canvas={canvas}
       banner={
-        isDemoMode ? (
-          <DemoBanner
-            spApiEnv={account.spApiEnv}
-            envIsProduction={envIsProduction}
-            listingsCount={listings.length}
-          />
-        ) : null
+        <>
+          <ConnectedBanner status={connectStatus} synced={syncedCount} />
+          {isDemoMode ? (
+            <DemoBanner
+              spApiEnv={account.spApiEnv}
+              envIsProduction={envIsProduction}
+              listingsCount={listings.length}
+            />
+          ) : null}
+        </>
       }
       overlays={
         <>

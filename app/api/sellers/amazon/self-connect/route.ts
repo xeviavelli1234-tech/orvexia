@@ -47,12 +47,27 @@ export async function POST(req: Request) {
     );
   }
 
+  // Deriva el marketplace real del vendedor (best-effort; si falla, ES).
+  let marketplaceId: string | undefined;
   try {
-    await upsertSellerAccount({
+    const { SpApiClient } = await import("@/lib/amazon/client");
+    const { getSellerEuMarketplaces, pickPrimaryMarketplace } = await import(
+      "@/lib/amazon/sellers"
+    );
+    const client = new SpApiClient(refreshToken, "production");
+    marketplaceId = pickPrimaryMarketplace(await getSellerEuMarketplaces(client));
+  } catch (e) {
+    console.warn("[self-connect] no se pudo derivar marketplace; usando default:", e);
+  }
+
+  let account;
+  try {
+    account = await upsertSellerAccount({
       userId: session.userId,
       amazonSellerId: sellerId,
       refreshToken,
       spApiEnv: "production",
+      marketplaceId,
     });
   } catch (e) {
     console.error("[self-connect] failed:", e);
@@ -61,7 +76,31 @@ export async function POST(req: Request) {
     );
   }
 
+  // Sync inicial best-effort para no aterrizar en un panel vacío.
+  let syncedCount = 0;
+  try {
+    const { SpApiClient } = await import("@/lib/amazon/client");
+    const { fetchAllListings } = await import("@/lib/amazon/listings");
+    const { upsertListingsBatch } = await import("@/lib/db/sellerListing");
+    const { prisma } = await import("@/lib/prisma");
+    const client = new SpApiClient(refreshToken, "production");
+    const items = await fetchAllListings({
+      client,
+      amazonSellerId: sellerId,
+      marketplaceId: account.marketplaceId,
+      spApiEnv: "production",
+    });
+    await upsertListingsBatch({ sellerAccountId: account.id, items });
+    await prisma.sellerAccount.update({
+      where: { id: account.id },
+      data: { lastSyncAt: new Date() },
+    });
+    syncedCount = items.length;
+  } catch (e) {
+    console.warn("[self-connect] sync inicial best-effort falló:", e);
+  }
+
   return NextResponse.redirect(
-    new URL("/dashboard/repricer?status=connected", req.url),
+    new URL(`/sellers/productos?status=connected&synced=${syncedCount}`, req.url),
   );
 }

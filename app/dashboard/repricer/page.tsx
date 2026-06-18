@@ -4,6 +4,7 @@ import { getSession } from "@/lib/session";
 import { getSellerAccountByUserId } from "@/lib/db/sellerAccount";
 import { REPRICER_ENABLED, REPRICER_PUBLIC } from "@/lib/featureFlags";
 import RepricerComingSoon from "@/components/RepricerComingSoon";
+import { SwitchSourceForm } from "./SwitchSourceForm";
 
 export const metadata = {
   title: "Repricer · Orvexia",
@@ -28,6 +29,10 @@ const STATUS_MSG: Record<
     text: "Modo manual activado. Sube tu catálogo en CSV para empezar.",
   },
   disconnected: { kind: "info", text: "Cuenta de Amazon desconectada." },
+  switch_needs_confirm: {
+    kind: "info",
+    text: "Tu cuenta de Amazon sigue conectada. Para pasar a CSV o demo, confirma el cambio en el botón.",
+  },
   error_state_mismatch: {
     kind: "err",
     text: "Verificación CSRF fallida. Reintenta la conexión.",
@@ -87,6 +92,13 @@ export default async function RepricerPage({
   // origen (Amazon ⇄ CSV) o reconectar tras pasar a producción.
   if (account?.active && !relinking) redirect("/sellers/productos");
 
+  // Si llegamos aquí con una cuenta Amazon ACTIVA, es una revinculación: pasar
+  // a CSV/demo destruiría el sync, así que esos botones exigirán confirmación.
+  const amazonConnected = !!account?.active && account.mode === "amazon";
+  const switchConfirmMsg = amazonConnected
+    ? "Tu cuenta de Amazon está conectada. Cambiar a este origen reemplazará la conexión y dejará de sincronizar/repreciar tus listings reales. ¿Continuar?"
+    : undefined;
+
   return (
     <main className="min-h-screen px-4 sm:px-6 py-10">
       <div className="max-w-5xl mx-auto">
@@ -142,22 +154,28 @@ export default async function RepricerPage({
                     Conectar mi cuenta de Amazon
                   </a>
                 )}
-                <form action="/api/sellers/manual/connect" method="post">
+                <SwitchSourceForm
+                  action="/api/sellers/manual/connect"
+                  confirmMessage={switchConfirmMsg}
+                >
                   <button
                     type="submit"
                     className="rounded-xl border border-cyan-400/40 bg-cyan-400/10 text-cyan-100 px-6 py-3 text-sm font-semibold hover:bg-cyan-400/20 hover:border-cyan-400/60 transition-colors shadow-[0_0_18px_-8px_rgba(34,211,238,0.7)]"
                   >
                     Empezar sin Amazon
                   </button>
-                </form>
-                <form action="/api/sellers/demo/connect" method="post">
+                </SwitchSourceForm>
+                <SwitchSourceForm
+                  action="/api/sellers/demo/connect"
+                  confirmMessage={switchConfirmMsg}
+                >
                   <button
                     type="submit"
                     className="rounded-xl border border-white/20 text-white px-6 py-3 text-sm font-semibold hover:bg-white/[0.06] transition-colors"
                   >
                     Probar en modo demo
                   </button>
-                </form>
+                </SwitchSourceForm>
               </div>
               <p className="mt-4 text-xs text-white/45 max-w-lg mx-auto leading-relaxed">
                 <strong className="text-cyan-200/90">Modo sin Amazon:</strong>{" "}

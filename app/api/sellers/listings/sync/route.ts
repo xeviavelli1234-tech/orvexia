@@ -83,6 +83,9 @@ export async function POST() {
   return NextResponse.json({
     ok: true,
     count: items.length,
+    // Marketplace consultado: hace diagnosticable un count:0 (¿catálogo vacío
+    // o marketplace equivocado?). El sync filtra del lado de Amazon por este id.
+    marketplaceId: account.marketplaceId,
     inserted: result.inserted,
     updated: result.updated,
     deleted: result.deleted,

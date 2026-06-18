@@ -15,6 +15,9 @@ export async function upsertSellerAccount(params: {
   amazonSellerId: string;
   refreshToken: string; // plaintext, will be encrypted before persist
   spApiEnv: "sandbox" | "production";
+  // Marketplace real del vendedor, derivado de marketplaceParticipations. Si
+  // se omite, se usa ES (default histórico) en create y NO se toca en update.
+  marketplaceId?: string;
 }) {
   // El placeholder de modo demo NO es un secreto → se guarda tal cual,
   // sin requerir ENCRYPTION_KEY (así el demo funciona aunque la var no
@@ -32,7 +35,7 @@ export async function upsertSellerAccount(params: {
     create: {
       userId: params.userId,
       amazonSellerId: params.amazonSellerId,
-      marketplaceId: MARKETPLACE_IDS.ES,
+      marketplaceId: params.marketplaceId ?? MARKETPLACE_IDS.ES,
       refreshToken: encrypted,
       spApiEnv: params.spApiEnv,
       // Conectar Amazon (OAuth/self-connect/demo) SIEMPRE es modo "amazon".
@@ -51,6 +54,10 @@ export async function upsertSellerAccount(params: {
       // la UI sigue mostrando el catálogo CSV en vez de los listings reales.
       mode: "amazon",
       active: true,
+      // Solo sobrescribe el marketplace si lo hemos derivado del vendedor;
+      // si la derivación falla, conserva el que ya tuviera (p.ej. el que el
+      // usuario eligió a mano en Ajustes).
+      ...(params.marketplaceId ? { marketplaceId: params.marketplaceId } : {}),
     },
   });
 }
@@ -69,7 +76,21 @@ export async function deactivateSellerAccount(userId: string) {
  * físicas, etc. puedan subir su catálogo vía CSV y recibir un plan de precios
  * sugerido por la misma IA, sin escribir nunca en Amazon.
  */
-export async function upsertManualSellerAccount(userId: string) {
+export async function upsertManualSellerAccount(
+  userId: string,
+  opts?: { confirmSwitch?: boolean },
+) {
+  // Backstop: NO degradar a manual una cuenta Amazon ACTIVA sin confirmación
+  // explícita. Sin esto, un clic accidental en "Empezar sin Amazon" durante la
+  // revinculación (o un POST directo a /manual/connect) volteaba la cuenta a
+  // manual → listings/sync la rechazaba y el panel perdía los productos reales.
+  const existing = await prisma.sellerAccount.findUnique({
+    where: { userId },
+    select: { mode: true, active: true },
+  });
+  if (existing?.active && existing.mode === "amazon" && !opts?.confirmSwitch) {
+    throw new Error("amazon_active_requires_confirm");
+  }
   const now = new Date();
   const trialEndsAt = new Date(now.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
   const syntheticSellerId = `MANUAL-${userId.slice(0, 12)}`;
