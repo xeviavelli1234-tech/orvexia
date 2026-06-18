@@ -76,6 +76,15 @@ export default async function ProductosPage() {
   const active = listings.filter((l) => l.repricingEnabled).length;
   const catalogValue = listings.reduce((s, l) => s + (l.priceCurrent || 0), 0);
   const isManualMode = account.mode === "manual";
+  const envIsProduction = process.env.SP_API_ENV === "production";
+  const accountInProd = account.spApiEnv === "production";
+  // Modo manual no depende de SP-API → nunca mostrar el banner de demo.
+  const isDemoMode = !isManualMode && (!envIsProduction || !accountInProd);
+  const sourceLabel = isManualMode
+    ? "CSV externo (sin Amazon)"
+    : isDemoMode
+      ? "Amazon · datos demo"
+      : "Amazon · Seller Central";
   // Tope de activos según plan/tier — alimenta el banner de cuota en la
   // sidebar y se compara con `active` para detectar saturación.
   const activeLimit = repricingActiveLimit(
@@ -334,6 +343,31 @@ export default async function ProductosPage() {
         </div>
 
         <div
+          id="tour-link"
+          className="px-5 py-5 border-b border-white/10"
+        >
+          <Eyebrow>Origen de datos</Eyebrow>
+          <p className="mt-2 flex items-center gap-1.5 text-[11px] text-white/50">
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${
+                isDemoMode ? "bg-amber-400" : "bg-emerald-400"
+              }`}
+            />
+            {sourceLabel}
+          </p>
+          <Link
+            href="/dashboard/repricer?relink=1"
+            className="mt-3 block w-full rounded-xl bg-white px-4 py-2.5 text-center text-sm font-bold text-[#0b0d1c] shadow-[0_0_18px_-6px_rgba(255,255,255,0.5)] transition-colors hover:bg-white/90"
+          >
+            🔗 Vincular Amazon o CSV
+          </Link>
+          <p className="mt-1.5 text-[10px] leading-relaxed text-white/35">
+            Conecta tu cuenta de Amazon o importa un CSV externo. Cambia de
+            origen cuando quieras.
+          </p>
+        </div>
+
+        <div
           id="tour-actions"
           className="px-5 py-5 flex flex-col gap-3 border-b border-white/10"
         >
@@ -424,11 +458,6 @@ export default async function ProductosPage() {
       </>
     );
 
-  const envIsProduction = process.env.SP_API_ENV === "production";
-  const accountInProd = account.spApiEnv === "production";
-  // Modo manual no depende de SP-API → nunca mostrar el banner de demo.
-  const isDemoMode = !isManualMode && (!envIsProduction || !accountInProd);
-
   const canvas = hasListings ? (
     <ProductNetwork nodes={nodes} activeCount={active} />
   ) : (
@@ -493,6 +522,12 @@ export default async function ProductosPage() {
             </p>
           </>
         )}
+        <Link
+          href="/dashboard/repricer?relink=1"
+          className="mt-6 inline-block rounded-xl bg-white px-6 py-3 text-sm font-bold text-[#0b0d1c] shadow-[0_0_18px_-6px_rgba(255,255,255,0.5)] transition-colors hover:bg-white/90"
+        >
+          🔗 Vincular Amazon o CSV
+        </Link>
         <div className="mt-5 inline-block w-64">
           <HelpButton />
         </div>

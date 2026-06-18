@@ -154,6 +154,20 @@ export async function RepricerSection({
           </div>
         </div>
       </Link>
+
+      {/* Acceso directo a (re)vincular el origen de datos. Solo si ya hay
+          cuenta: sin conectar, el propio card ya lleva al hub de vinculación.
+          Va FUERA del <Link> de arriba para no anidar anclas. */}
+      {connected && (
+        <div className="mt-3 flex justify-end">
+          <Link
+            href="/dashboard/repricer?relink=1"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white/80 transition-colors hover:bg-white/[0.08] hover:text-white"
+          >
+            🔗 Vincular Amazon o CSV
+          </Link>
+        </div>
+      )}
     </section>
   );
 }

@@ -64,14 +64,15 @@ const STATUS_MSG: Record<
 export default async function RepricerPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; relink?: string }>;
 }) {
   if (!REPRICER_ENABLED) return <RepricerComingSoon />;
 
   const session = await getSession();
   if (!session) redirect("/login?next=/dashboard/repricer");
 
-  const { status } = await searchParams;
+  const { status, relink } = await searchParams;
+  const relinking = relink === "1";
   const statusCfg = status
     ? (STATUS_MSG[status] ??
       (status.startsWith("error_")
@@ -81,14 +82,30 @@ export default async function RepricerPage({
 
   const account = await getSellerAccountByUserId(session.userId);
 
-  // Si ya está conectado y activo, todo vive en el Centro de control.
-  if (account?.active) redirect("/sellers/productos");
+  // Si ya está conectado y activo, todo vive en el Centro de control — salvo
+  // que el usuario pida explícitamente revincular (?relink=1) para cambiar de
+  // origen (Amazon ⇄ CSV) o reconectar tras pasar a producción.
+  if (account?.active && !relinking) redirect("/sellers/productos");
 
   return (
     <main className="min-h-screen px-4 sm:px-6 py-10">
       <div className="max-w-5xl mx-auto">
         <Header />
         <StatusBanner cfg={statusCfg} />
+        {relinking && (
+          <div className="mt-5 rounded-lg border border-cyan-400/25 bg-cyan-400/[0.08] px-4 py-2.5 text-sm text-cyan-200 flex items-center justify-between gap-3 flex-wrap">
+            <span>
+              Estás cambiando el origen de datos. Elige cómo vincular tus
+              productos (Amazon o CSV); reemplazará la conexión actual.
+            </span>
+            <Link
+              href="/sellers/productos"
+              className="shrink-0 text-cyan-100 underline underline-offset-4 hover:text-white"
+            >
+              ← Volver al centro de control
+            </Link>
+          </div>
+        )}
         <div className="mt-6 neon-border rounded-3xl overflow-hidden">
           <div
             className="relative bg-grid-cyber rounded-[calc(1.5rem-1px)] p-10 sm:p-16 text-center"
