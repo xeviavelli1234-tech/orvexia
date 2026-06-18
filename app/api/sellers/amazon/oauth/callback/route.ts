@@ -9,7 +9,10 @@ import { OAUTH_STATE_COOKIE } from "../start/route";
 type SpApiEnv = "sandbox" | "production";
 
 function dashboardUrl(req: Request, status: string) {
-  return new URL(`/dashboard/repricer?status=${status}`, req.url);
+  // relink=1 evita que /dashboard/repricer rebote a /sellers/productos cuando ya
+  // hay una cuenta activa (p.ej. manual): sin él, el error de conexión se perdía
+  // y el usuario aterrizaba en modo manual sin saber qué falló.
+  return new URL(`/dashboard/repricer?relink=1&status=${status}`, req.url);
 }
 
 export async function GET(req: Request) {

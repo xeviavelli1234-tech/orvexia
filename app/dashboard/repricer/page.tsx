@@ -35,11 +35,15 @@ const STATUS_MSG: Record<
   },
   error_state_mismatch: {
     kind: "err",
-    text: "Verificación CSRF fallida. Reintenta la conexión.",
+    text: "La sesión de conexión no coincide (cookie de estado). Suele ser por el dominio (www vs sin www) o por tardar más de 10 min. Reintenta desde esta misma URL sin cambiar de dominio.",
   },
   error_token_exchange: {
     kind: "err",
-    text: "No pudimos canjear el código con Amazon.",
+    text: "Amazon rechazó el canje del código. Revisa que el Redirect URI del SP Portal sea EXACTAMENTE https://TU-DOMINIO/api/sellers/amazon/oauth/callback y que coincida con NEXT_PUBLIC_BASE_URL.",
+  },
+  error_missing_params: {
+    kind: "err",
+    text: "Amazon no devolvió el código de autorización. Reintenta la conexión.",
   },
   error_persist: {
     kind: "err",
