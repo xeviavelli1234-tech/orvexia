@@ -134,9 +134,6 @@ MOTOR
   4) acumula alertas; al final del ciclo envía un único email resumen (respetando el cooldown de 6 h).
 - Lock anti-solape, retardo configurable entre PATCHes (anti QuotaExceeded), horario programable, modo dry-run, auto-sync del catálogo cada N horas.
 
-MODO DEMO (cuenta no en producción)
-- La competencia es **simulada** y el PATCH a Amazon es **no-op** (solo se persiste en nuestra BD). Todo lo demás funciona igual. Ideal para aprender. Para datos reales y modificar precios: app de Amazon publicada + SP_API_ENV=production en Vercel.
-
 BUY BOX REAL (SP-API)
 - El motor usa IsBuyBoxWinner del SP-API real para determinar WON/LOST/UNKNOWN y guarda el precio REAL de la oferta ganadora (no se infiere).
 
@@ -275,9 +272,9 @@ const TOPICS: Topic[] = [
       "No puedo darte asesoramiento fiscal o legal. Para temas de autónomo, IVA o facturación profesional, consulta con una gestoría. Lo que sí puedo es ayudarte con el funcionamiento del repricer.",
   },
   {
-    keys: ["demo", "prueba sin", "sin amazon", "datos de prueba"],
+    keys: ["sin amazon", "prueba sin", "csv", "catálogo csv", "csv externo", "sin conectar amazon"],
     answer:
-      "El **modo demo** te deja probar todo el flujo (sincronizar, configurar, repreciar) con datos de prueba **sin tocar tu cuenta real de Amazon**. Ideal para aprender antes de conectar la cuenta de verdad.",
+      "Si no vendes en Amazon (o aún no quieres conectarlo), usa el **modo sin Amazon**: sube tu catálogo en **CSV** y el motor te devuelve un plan de precios sugerido por SKU. Nunca escribe en Amazon ni en ninguna tienda externa. Cuando quieras, conecta tu cuenta de Amazon para reprecio automático real.",
   },
   {
     keys: ["comparador", "comparar", "qué es orvexia", "que es orvexia", "para qué sirve", "para que sirve", "la web"],
@@ -410,11 +407,6 @@ const TOPICS: Topic[] = [
       "Cuando un producto **no tiene competencia**, en lugar de saltar al máximo de golpe puedes elegir **\"Subida gradual\"** (step-up): cada ciclo sube un paso configurable (importe € o %) hacia el máximo. Útil para no asustar al mercado y maximizar margen progresivamente.",
   },
   {
-    keys: ["modo demo", "demo", "competencia simulada", "sin tocar amazon", "production", "producción"],
-    answer:
-      "El **modo demo** está activo si tu cuenta no está en producción (`SP_API_ENV ≠ production`). La competencia es **simulada** (no es el precio real de Amazon) y el cambio de precio es un **no-op** (se persiste en nuestra BD para que veas el resultado, pero NO toca tu listing real). Para datos reales: app publicada en Amazon + `SP_API_ENV=production` en Vercel + token real.",
-  },
-  {
     keys: ["recordatorio", "fin de prueba", "termina la prueba", "se acaba el trial", "expira"],
     answer:
       "Tres días antes de que termine tu prueba te llega **un email recordatorio** con enlace a Facturación. Si no pasas a Pro y el trial expira, el motor no reprecia hasta que actualices el plan (la configuración no se pierde).",
@@ -424,7 +416,7 @@ const TOPICS: Topic[] = [
 export function answerLocally(question: string): string {
   const t = bestTopic(question);
   if (t) return t.answer;
-  return "Puedo explicarte cualquier parte del repricer: **estrategias** (Ganar Buy Box, Igualar, Fijo, Por margen, Subida gradual), **rango Mín/Máx**, **calculadora de costes/margen**, **panel de rentabilidad**, **analíticas y gráficas**, **etiquetas/grupos**, **variaciones ASIN**, **reglas por competidor**, **multi-marketplace EU**, **alertas por email**, **modo tabla / búsqueda en el grafo**, **2FA**, **factura con IVA**, **RGPD (exportar/borrar)**, **logs de auditoría**, **planes por volumen** y el **modo demo**. ¿Sobre cuál quieres saber?";
+  return "Puedo explicarte cualquier parte del repricer: **estrategias** (Ganar Buy Box, Igualar, Fijo, Por margen, Subida gradual), **rango Mín/Máx**, **calculadora de costes/margen**, **panel de rentabilidad**, **analíticas y gráficas**, **etiquetas/grupos**, **variaciones ASIN**, **reglas por competidor**, **multi-marketplace EU**, **alertas por email**, **modo tabla / búsqueda en el grafo**, **2FA**, **factura con IVA**, **RGPD (exportar/borrar)**, **logs de auditoría** y **planes por volumen**. ¿Sobre cuál quieres saber?";
 }
 
 export interface StaticMatch {

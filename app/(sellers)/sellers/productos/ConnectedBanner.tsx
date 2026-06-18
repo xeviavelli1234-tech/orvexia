@@ -25,8 +25,6 @@ export function ConnectedBanner({
         : "✅ Cuenta de Amazon conectada. Pulsa “Sincronizar con Amazon” para traer tus productos.";
   } else if (status === "manual_connected") {
     text = "✅ Modo CSV activado. Sube tu catálogo para empezar.";
-  } else if (status === "demo_connected") {
-    text = "✅ Modo demo activado. Datos de prueba, sin tocar Amazon real.";
   }
   if (!text) return null;
 

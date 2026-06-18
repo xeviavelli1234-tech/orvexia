@@ -294,8 +294,7 @@ function RealDataPanelInner({ open, onClose }: { open: boolean; onClose: () => v
               {data.sales.ordersTotal === 0 && (
                 <div className="rounded-lg border border-amber-400/25 bg-amber-500/[0.06] p-3 text-xs text-amber-200/85">
                   No hay pedidos importados todavía. Pulsa <strong>↺ Sincronizar pedidos</strong>{" "}
-                  para traerlos desde Amazon. En modo demo se generan pedidos sintéticos.
-                  Para datos reales necesitas la app SP-API con rol <em>Orders</em> aprobado.
+                  para traerlos desde Amazon. Necesitas la app SP-API con rol <em>Orders</em> aprobado.
                 </div>
               )}
             </>

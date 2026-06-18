@@ -678,7 +678,7 @@ export default async function HomePage() {
                       href="/dashboard"
                       className="inline-flex items-center justify-center font-semibold px-6 h-12 rounded-xl text-sm text-white/80 hover:text-white border border-white/15 hover:border-white/40 hover:bg-white/[0.04] transition-all active:scale-[0.97] font-mono-ui uppercase tracking-wider"
                     >
-                      ./dashboard.demo
+                      ./dashboard
                     </Link>
                   </div>
                 </div>
@@ -901,7 +901,7 @@ export default async function HomePage() {
                   <p className="text-sm sm:text-base leading-relaxed text-white/55 mb-7">
                     Define un precio mínimo y máximo por producto. Nuestro motor ajusta
                     tus precios cada 5 minutos para que ganes la Buy Box sin regalar
-                    margen. Pruébalo en modo demo, sin conectar nada.
+                    margen. Conecta tu cuenta de Amazon o sube tu catálogo en CSV.
                   </p>
                   <div className="flex flex-wrap items-center gap-3">
                     <Link
@@ -912,10 +912,10 @@ export default async function HomePage() {
                       <span aria-hidden>→</span>
                     </Link>
                     <Link
-                      href="/dashboard"
+                      href="/register"
                       className="inline-flex items-center gap-2 rounded-xl border border-white/20 text-white px-6 py-3 text-sm font-semibold hover:bg-white/[0.06] transition-colors"
                     >
-                      Probar modo demo
+                      Crear cuenta gratis
                     </Link>
                   </div>
                 </div>
@@ -924,7 +924,7 @@ export default async function HomePage() {
                   {[
                     { v: "5 min", l: "ciclo reprecio" },
                     { v: "min/máx", l: "bajo tu control" },
-                    { v: "2 min", l: "setup demo" },
+                    { v: "2 min", l: "puesta en marcha" },
                   ].map((s) => (
                     <div
                       key={s.l}

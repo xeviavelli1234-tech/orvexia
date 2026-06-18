@@ -90,10 +90,16 @@ export async function upsertSellerAccount(params: {
   });
 }
 
+/**
+ * Desconecta la cuenta de Amazon: para el reprecio (active:false) Y borra el
+ * refresh token cifrado del servidor (no retenemos credenciales de Amazon tras
+ * desconectar). Conserva productos e historial por si el usuario reconecta.
+ * El token vuelve en el siguiente OAuth/self-connect.
+ */
 export async function deactivateSellerAccount(userId: string) {
   return prisma.sellerAccount.update({
     where: { userId },
-    data: { active: false },
+    data: { active: false, refreshToken: "DISCONNECTED" },
   });
 }
 

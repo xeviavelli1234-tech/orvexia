@@ -6,7 +6,6 @@ import { REPRICER_ENABLED, REPRICER_PUBLIC } from "@/lib/featureFlags";
 
 const STATUS_MESSAGES: Record<string, { kind: "ok" | "err" | "info"; text: string }> = {
   connected: { kind: "ok", text: "Cuenta de Amazon conectada correctamente." },
-  demo_connected: { kind: "ok", text: "Modo demo activado. Todo funciona con datos de prueba." },
   disconnected: { kind: "info", text: "Cuenta de Amazon desconectada." },
   error_state_mismatch: { kind: "err", text: "La verificación CSRF falló. Reintenta la conexión." },
   error_token_exchange: { kind: "err", text: "No pudimos canjear el código con Amazon." },
@@ -120,11 +119,6 @@ export async function RepricerSection({
                 <span className="font-mono-ui text-[10px] uppercase tracking-wider text-cyan-300/80">
                   ▸ módulo b2b
                 </span>
-                {connected && account!.spApiEnv !== "production" && (
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-white/50 bg-white/[0.06] px-2 py-0.5 rounded-full">
-                    Modo demo
-                  </span>
-                )}
               </div>
               <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-white">
                 Orvexia <span className="text-gradient-neon">Repricer</span>
@@ -138,8 +132,8 @@ export async function RepricerSection({
                   </>
                 ) : (
                   <>
-                    Reprecia tus productos de Amazon automáticamente. Pruébalo en modo
-                    demo sin conectar nada.
+                    Reprecia tus productos de Amazon automáticamente, o sube tu
+                    catálogo en CSV.
                   </>
                 )}
               </p>

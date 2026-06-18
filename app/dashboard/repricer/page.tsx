@@ -20,10 +20,6 @@ const STATUS_MSG: Record<
     kind: "ok",
     text: "Cuenta de Amazon conectada correctamente.",
   },
-  demo_connected: {
-    kind: "ok",
-    text: "Modo demo activado. Datos de prueba, sin tocar Amazon real.",
-  },
   manual_connected: {
     kind: "ok",
     text: "Modo manual activado. Sube tu catálogo en CSV para empezar.",
@@ -148,8 +144,8 @@ export default async function RepricerPage({
                 Activa tu repricer
               </h2>
               <p className="mt-3 text-white/55 text-sm max-w-md mx-auto leading-relaxed">
-                Conecta tu cuenta de Amazon Seller, sube tu propio catálogo en
-                CSV, o pruébalo con datos de demo.
+                Conecta tu cuenta de Amazon Seller o sube tu propio catálogo en
+                CSV.
               </p>
               <div className="mt-7 flex flex-wrap gap-3 justify-center">
                 {/* OAuth multi-cliente: SOLO cuando la app SP-API está
@@ -173,17 +169,6 @@ export default async function RepricerPage({
                     Empezar sin Amazon
                   </button>
                 </SwitchSourceForm>
-                <SwitchSourceForm
-                  action="/api/sellers/demo/connect"
-                  confirmMessage={switchConfirmMsg}
-                >
-                  <button
-                    type="submit"
-                    className="rounded-xl border border-white/20 text-white px-6 py-3 text-sm font-semibold hover:bg-white/[0.06] transition-colors"
-                  >
-                    Probar en modo demo
-                  </button>
-                </SwitchSourceForm>
               </div>
               <p className="mt-4 text-xs text-white/45 max-w-lg mx-auto leading-relaxed">
                 <strong className="text-cyan-200/90">Modo sin Amazon:</strong>{" "}
@@ -196,8 +181,7 @@ export default async function RepricerPage({
                 <p className="mt-3 text-xs text-white/40 max-w-md mx-auto">
                   La conexión de tu cuenta de Amazon estará disponible en
                   cuanto Amazon apruebe la publicación de la app. Mientras
-                  tanto puedes usar el <strong>modo sin Amazon</strong> o el
-                  <strong> modo demo</strong>.
+                  tanto puedes usar el <strong>modo sin Amazon</strong> (CSV).
                 </p>
               )}
               {process.env.SP_API_ENV === "production" && (

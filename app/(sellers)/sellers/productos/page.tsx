@@ -15,7 +15,6 @@ import { CatalogButton, PanicButton } from "./CatalogOverlay";
 import { ProfitButton } from "./ProfitOverlay";
 import { RealDataButton } from "./RealDataPanel";
 import { ToolboxButton } from "./ToolboxPanel";
-import DemoBanner from "./DemoBanner";
 import { ConnectedBanner } from "./ConnectedBanner";
 import { HelpButton } from "./HelpOverlay";
 import { AuditButton } from "./AuditOverlay";
@@ -85,15 +84,9 @@ export default async function ProductosPage({
   const active = listings.filter((l) => l.repricingEnabled).length;
   const catalogValue = listings.reduce((s, l) => s + (l.priceCurrent || 0), 0);
   const isManualMode = account.mode === "manual";
-  const envIsProduction = process.env.SP_API_ENV === "production";
-  const accountInProd = account.spApiEnv === "production";
-  // Modo manual no depende de SP-API → nunca mostrar el banner de demo.
-  const isDemoMode = !isManualMode && (!envIsProduction || !accountInProd);
   const sourceLabel = isManualMode
     ? "CSV externo (sin Amazon)"
-    : isDemoMode
-      ? "Amazon · datos demo"
-      : "Amazon · Seller Central";
+    : "Amazon · Seller Central";
   // Tope de activos según plan/tier — alimenta el banner de cuota en la
   // sidebar y se compara con `active` para detectar saturación.
   const activeLimit = repricingActiveLimit(
@@ -357,11 +350,7 @@ export default async function ProductosPage({
         >
           <Eyebrow>Origen de datos</Eyebrow>
           <p className="mt-2 flex items-center gap-1.5 text-[11px] text-white/50">
-            <span
-              className={`h-1.5 w-1.5 rounded-full ${
-                isDemoMode ? "bg-amber-400" : "bg-emerald-400"
-              }`}
-            />
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
             {sourceLabel}
           </p>
           <Link
@@ -377,11 +366,6 @@ export default async function ProductosPage({
           {hasListings && (
             <div className="mt-3">
               <ClearCatalogButton count={listings.length} />
-              {isDemoMode && (
-                <p className="mt-1 text-[10px] leading-relaxed text-white/35">
-                  Borra los productos de ejemplo para empezar limpio.
-                </p>
-              )}
             </div>
           )}
         </div>
@@ -503,25 +487,6 @@ export default async function ProductosPage({
               precios&raquo; y &laquo;Exportar plan CSV&raquo; para aplicarlo donde vendas.
             </p>
           </>
-        ) : isDemoMode ? (
-          <>
-            <div className="font-mono-ui text-[10px] uppercase tracking-wider text-amber-300 mb-2">
-              ▸ app sp-api · pendiente de aprobación
-            </div>
-            <div className="text-2xl font-extrabold tracking-tight text-gradient-neon">
-              Esperando luz verde de Amazon
-            </div>
-            <p className="mt-3 text-white/70">
-              Tu panel está limpio. En cuanto Amazon apruebe tu app SP-API y
-              configures <code className="text-amber-300">SP_API_ENV=production</code> en
-              Vercel, podrás reconectar y se traerán tus listings reales de Seller Central.
-            </p>
-            <p className="mt-2 text-xs text-white/40">
-              Mientras tanto puedes <strong className="text-white">Sincronizar</strong>{" "}
-              para sembrar 4 productos demo (Bosch, Balay, LG, Samsung) y probar
-              estrategias, calculadora de margen, rentabilidad, IA, etc.
-            </p>
-          </>
         ) : (
           <>
             <div className="text-2xl font-extrabold tracking-tight text-gradient-neon">
@@ -558,18 +523,7 @@ export default async function ProductosPage({
     <ControlCenterShell
       sidebar={sidebar}
       canvas={canvas}
-      banner={
-        <>
-          <ConnectedBanner status={connectStatus} synced={syncedCount} />
-          {isDemoMode ? (
-            <DemoBanner
-              spApiEnv={account.spApiEnv}
-              envIsProduction={envIsProduction}
-              listingsCount={listings.length}
-            />
-          ) : null}
-        </>
-      }
+      banner={<ConnectedBanner status={connectStatus} synced={syncedCount} />}
       overlays={
         <>
           <AssistantWidget />
