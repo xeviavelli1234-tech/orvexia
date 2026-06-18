@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { clearDemoListingsAction } from "./actions";
+import { clearAllListingsAction } from "./actions";
 
 interface Props {
   spApiEnv: string;
@@ -36,7 +36,7 @@ export default function DemoBanner({ spApiEnv, envIsProduction, listingsCount }:
     )
       return;
     startTransition(async () => {
-      await clearDemoListingsAction();
+      await clearAllListingsAction();
       router.refresh();
     });
   }

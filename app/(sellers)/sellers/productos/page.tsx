@@ -5,6 +5,7 @@ import { getSellerAccountByUserId } from "@/lib/db/sellerAccount";
 import { listListingsByAccount } from "@/lib/db/sellerListing";
 import { SyncButton } from "./SyncButton";
 import { UploadCsvButton } from "./UploadCsvButton";
+import { ClearCatalogButton } from "./ClearCatalogButton";
 import { GeneratePlanButton, ExportPlanButton } from "./PlanButtons";
 import ProductNetwork, { type NetNode } from "./ProductNetwork";
 import AssistantWidget from "./AssistantWidget";
@@ -365,6 +366,16 @@ export default async function ProductosPage() {
             Conecta tu cuenta de Amazon o importa un CSV externo. Cambia de
             origen cuando quieras.
           </p>
+          {hasListings && (
+            <div className="mt-3">
+              <ClearCatalogButton count={listings.length} />
+              {isDemoMode && (
+                <p className="mt-1 text-[10px] leading-relaxed text-white/35">
+                  Borra los productos de ejemplo para empezar limpio.
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         <div

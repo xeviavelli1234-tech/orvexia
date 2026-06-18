@@ -656,13 +656,14 @@ export async function setVacationModeAction(formData: FormData): Promise<ActionR
 }
 
 /**
- * Borra todos los SellerListing del seller (datos demo). Se usa cuando el
- * usuario está esperando aprobación de Amazon y prefiere ver el panel
- * vacío en vez de los fixtures. No toca la cuenta ni el token: al hacer
- * Sincronizar de nuevo, vuelven a sembrarse (mientras siga modo demo) o
- * llegan los reales (si ya está en producción).
+ * Vacía el catálogo: borra TODOS los SellerListing de la cuenta. Sirve para
+ * dejar el panel limpio en cualquier modo:
+ *   - demo (esperando aprobación de Amazon) → quita los fixtures de ejemplo,
+ *   - manual (CSV) → quita productos importados o restos al cambiar de origen,
+ *   - producción → se vuelven a traer al Sincronizar.
+ * No toca la cuenta ni el token.
  */
-export async function clearDemoListingsAction(): Promise<ActionResult & { deleted?: number }> {
+export async function clearAllListingsAction(): Promise<ActionResult & { deleted?: number }> {
   const session = await getSession();
   if (!session) return { ok: false, error: "unauthorized" };
   if (await isSellerIpDenied(session.userId)) return { ok: false, error: "ip_not_allowed" };
@@ -676,8 +677,8 @@ export async function clearDemoListingsAction(): Promise<ActionResult & { delete
   });
   await recordAudit(
     session.userId,
-    "listings.demo_cleared",
-    `Borrados ${res.count} productos demo`,
+    "listings.cleared",
+    `Vaciado del catálogo: ${res.count} producto(s) borrados`,
   );
   revalidatePath("/sellers/productos");
   return { ok: true, deleted: res.count };
