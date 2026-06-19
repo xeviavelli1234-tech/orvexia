@@ -75,7 +75,7 @@ export function ZoomBtn({ children, label, onClick }: ZoomBtnProps) {
       aria-label={label}
       title={label}
       onClick={onClick}
-      className="h-9 w-9 grid place-items-center rounded-lg border border-white/15 bg-[rgba(8,8,20,0.7)] backdrop-blur text-white/80 text-lg leading-none hover:bg-white/10 hover:text-white transition-colors"
+      className="h-9 w-9 grid place-items-center rounded-lg border border-white/12 bg-[rgba(8,9,20,0.92)] backdrop-blur-xl text-white/80 text-lg leading-none shadow-[0_18px_50px_-18px_rgba(0,0,0,0.8)] hover:bg-white/10 hover:text-white transition-colors"
     >
       {children}
     </button>

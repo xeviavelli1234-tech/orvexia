@@ -147,8 +147,12 @@ export const STATE_COLOR: Record<
     halo: "rgba(249,115,22,0.55)",
     dot: "#fb923c",
   },
-  paused: { stroke: "rgba(96,165,250,0.7)", halo: "rgba(99,102,241,0.4)" },
-  noprice: { stroke: "rgba(160,160,180,0.4)", halo: "rgba(120,120,140,0.25)" },
+  // Pausado: una sola familia slate (azul-gris neutro). Antes el trazo azul
+  // con halo índigo daba un violeta sucio y chocaba con el cian de "active".
+  paused: { stroke: "rgba(148,163,184,0.7)", halo: "rgba(148,163,184,0.32)" },
+  // Sin oferta: subimos el halo de 0.25 a 0.4 para que no desaparezca sobre
+  // el fondo animado.
+  noprice: { stroke: "rgba(160,160,180,0.45)", halo: "rgba(148,148,168,0.4)" },
 };
 
 export const LIVE_CORE: ReadonlySet<State> = new Set<State>([

@@ -152,7 +152,7 @@ function WaveFieldImpl() {
       const v1x = w * (0.3 + Math.sin(tm * 0.13) * 0.06) + offX;
       const v1y = h * (0.42 + Math.cos(tm * 0.11) * 0.05) + offY;
       const g1 = ctx.createRadialGradient(v1x, v1y, 0, v1x, v1y, Math.max(w, h) * 0.8);
-      g1.addColorStop(0, "rgba(38,76,160,0.34)");
+      g1.addColorStop(0, "rgba(38,76,160,0.24)");
       g1.addColorStop(1, "rgba(8,10,30,0)");
       ctx.fillStyle = g1;
       ctx.fillRect(0, 0, w, h);
@@ -160,7 +160,7 @@ function WaveFieldImpl() {
       const v2x = w * (0.74 + Math.cos(tm * 0.1) * 0.06) + offX;
       const v2y = h * (0.64 + Math.sin(tm * 0.12) * 0.05) + offY;
       const g2 = ctx.createRadialGradient(v2x, v2y, 0, v2x, v2y, Math.max(w, h) * 0.72);
-      g2.addColorStop(0, "rgba(110,46,168,0.28)");
+      g2.addColorStop(0, "rgba(110,46,168,0.20)");
       g2.addColorStop(1, "rgba(8,10,30,0)");
       ctx.fillStyle = g2;
       ctx.fillRect(0, 0, w, h);

@@ -306,9 +306,6 @@ export default function ProductNetwork({
     // Constantes del layout.
     const CX = VB_W / 2;
     const CY = VB_H / 2;
-    const R_ATTENTION = 230; // crítico: pegado al centro, imposible de ignorar
-    const R_COMPETING = 470; // medio
-    const R_CALM = 700;      // externo: el ojo descansa
     const PHASE_BASE = -Math.PI / 2; // arranca arriba
 
     // Clasificar nodos en buckets respetando el orden recibido.
@@ -376,11 +373,28 @@ export default function ProductNetwork({
       const sorted = sortByOrigin(list);
       const n = sorted.length;
       if (n === 0) return;
-      // Si solo hay 1, lo ponemos arriba del bucket. Si hay muchos,
-      // distribuimos uniformemente con un pequeño desfase por anillo.
-      const step = (2 * Math.PI) / Math.max(n, 1);
+      // Distribución angular adaptativa:
+      //  · 1 nodo → arriba del hub.
+      //  · 2-3 nodos → "corona" centrada arriba que abraza el hub (evita los
+      //    polos opuestos de n=2 y los nodos sueltos y lejanos de n=3 a radio
+      //    grande, que dejaban el lienzo medio vacío).
+      //  · ≥4 → círculo completo uniforme, como el diseño original (ahora a un
+      //    radio que sí cabe en pantalla). Así un anillo de 8 calmas se cierra
+      //    en redondo en vez de quedarse en un arco superior.
+      const FULL = 2 * Math.PI;
+      let angleAt: (i: number) => number;
+      if (n <= 3) {
+        const desired = (4.8 * R) / Math.max(radius, 1);
+        const span = n <= 1 ? 0 : Math.min(FULL * 0.7, n * desired);
+        const step = n > 1 ? span / (n - 1) : 0;
+        const start = PHASE_BASE + ringPhase - span / 2;
+        angleAt = (i) => (n === 1 ? PHASE_BASE + ringPhase : start + i * step);
+      } else {
+        const step = FULL / n;
+        angleAt = (i) => PHASE_BASE + ringPhase + i * step;
+      }
       for (let i = 0; i < n; i++) {
-        const a = PHASE_BASE + ringPhase + i * step;
+        const a = angleAt(i);
         const node = sorted[i];
         P[idxOf.get(node.id)!] = {
           x: CX + Math.cos(a) * radius,
@@ -389,6 +403,47 @@ export default function ProductNetwork({
         };
       }
     }
+
+    // ── Radios adaptativos por nº de nodos ────────────────────────────────
+    // Los radios fijos (230/470/700) lanzaban 2-5 productos a los polos de
+    // una órbita gigante: R_CALM=700 superaba la media-altura útil del lienzo
+    // (~457), así que los nodos caían fuera de pantalla y el centro quedaba
+    // vacío. Ahora cada anillo POBLADO se reparte de dentro (urgente) hacia
+    // fuera (calma): pegado al hub cuando hay pocos, abriéndose en bandas
+    // distintas solo cuando hay densidad suficiente para necesitarlo.
+    const occupied = [
+      { key: "att" as const, n: buckets.attention.length },
+      { key: "cmp" as const, n: buckets.competing.length },
+      { key: "calm" as const, n: buckets.calm.length },
+    ].filter((b) => b.n > 0);
+    const ringSlots = occupied.length;
+    // Media-altura útil menos el nodo y su etiqueta inferior: ni el hexágono
+    // ni el precio que cuelga debajo se salen del lienzo.
+    const SAFE = Math.min(CY, VB_H - CY) - (R + 44); // 443
+    const HUB_CLEAR = 200; // radio del anillo más interno (despeja el hub)
+    const RING_GAP = 2 * R + 39; // 115 px entre anillos consecutivos
+    const PITCH = 2.5 * R; // 95 px: separación mínima en anillos densos
+    const ringNeed = (n: number) => (n <= 1 ? 0 : (n * PITCH) / (2 * Math.PI));
+    const maxNeed = occupied.reduce((mx, b) => Math.max(mx, ringNeed(b.n)), 0);
+    // El radio exterior crece con (a) cuántas bandas hay que separar y
+    // (b) cuánta circunferencia pide el anillo más poblado — siempre ≤ SAFE.
+    const outerR = Math.min(
+      SAFE,
+      Math.max(HUB_CLEAR + (ringSlots - 1) * RING_GAP, maxNeed),
+    );
+    const radiusAt = (i: number) =>
+      ringSlots <= 1
+        ? outerR
+        : HUB_CLEAR + ((outerR - HUB_CLEAR) * i) / (ringSlots - 1);
+    let R_ATTENTION = 0;
+    let R_COMPETING = 0;
+    let R_CALM = 0;
+    occupied.forEach((b, i) => {
+      const r = radiusAt(i);
+      if (b.key === "att") R_ATTENTION = r;
+      else if (b.key === "cmp") R_COMPETING = r;
+      else R_CALM = r;
+    });
 
     // Pequeño desfase por anillo: rompe la alineación radial que cansa al ojo.
     placeRing(buckets.attention, R_ATTENTION, 0, 0);
@@ -467,6 +522,17 @@ export default function ProductNetwork({
   }, [nodes]);
 
   const sel = nodes.find((x) => x.id === selId) ?? null;
+
+  // ¿El usuario pidió menos movimiento? Lo leemos una vez (memo) para gatear
+  // las animaciones SMIL que el bloque CSS @media reduce no alcanza (p.ej. el
+  // punto viajero de las líneas de energía).
+  const reduceMotion = useMemo(
+    () =>
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+    [],
+  );
 
   // Búsqueda / filtro del grafo: ids que pasan los filtros activos.
   const allTags = useMemo(
@@ -759,11 +825,13 @@ export default function ProductNetwork({
       {/* Fondo animado — atenuado al 55% para que los nodos sean los
           protagonistas. Antes el WaveField competía visualmente con los
           hexágonos cuando había >20 productos en escena. */}
-      <div className="pointer-events-none absolute inset-0 opacity-55">
+      <div className="pointer-events-none absolute inset-0 opacity-[0.44]">
         <WaveField />
       </div>
-      {/* Viñeta muy suave solo en los bordes (centro despejado) */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_58%,rgba(2,2,12,0.5))]" />
+      {/* Viñeta muy suave solo en los bordes (centro despejado). El stop
+          transparente empieza antes (50%) para oscurecer un poco más cerca
+          del hub y que los nodos despeguen del fondo. */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_50%,rgba(2,2,12,0.5))]" />
 
       <svg
         ref={svgRef}
@@ -811,6 +879,16 @@ export default function ProductNetwork({
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
+          {/* Glow ajustado para puntos pequeños (dots de estado, punto
+              viajero): con stdDeviation=6 se hinchaban hasta convertirse en
+              manchas. Aquí 2.2 los deja "encendidos" pero nítidos. */}
+          <filter id="glow-sm" x="-80%" y="-80%" width="260%" height="260%">
+            <feGaussianBlur stdDeviation="2.2" result="b" />
+            <feMerge>
+              <feMergeNode in="b" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
           {layout.pos.map((p) => (
             <clipPath id={`c-${p.id}`} key={p.id}>
               <circle cx={p.x} cy={p.y} r={R - 10} />
@@ -828,6 +906,8 @@ export default function ProductNetwork({
           {(() => {
             const { cx, cy, rings, bucketCounts } = layout;
             const rs: Array<{
+              key: string;
+              spin: string;
               r: number;
               stroke: string;
               dot: string;
@@ -835,6 +915,8 @@ export default function ProductNetwork({
               count: number;
             }> = [
               {
+                key: "att",
+                spin: "ring-spin-1",
                 r: rings.attention,
                 stroke: "rgba(248,113,113,0.36)",
                 dot: "#f87171",
@@ -842,6 +924,8 @@ export default function ProductNetwork({
                 count: bucketCounts.attention,
               },
               {
+                key: "cmp",
+                spin: "ring-spin-2",
                 r: rings.competing,
                 stroke: "rgba(34,211,238,0.28)",
                 dot: "#22d3ee",
@@ -849,6 +933,8 @@ export default function ProductNetwork({
                 count: bucketCounts.competing,
               },
               {
+                key: "calm",
+                spin: "ring-spin-3",
                 r: rings.calm,
                 stroke: "rgba(52,211,153,0.22)",
                 dot: "#34d399",
@@ -858,16 +944,14 @@ export default function ProductNetwork({
             ];
             return (
               <g>
-                {rs.map((ring, i) => (
+                {/* Solo anillos poblados: con 2 productos no pintamos tres
+                    aros vacíos anidados, sino el único aro que orbitan. La
+                    clase de giro va por identidad de bucket (no por índice)
+                    para que un aro suelto conserve su velocidad. */}
+                {rs.filter((ring) => ring.count > 0).map((ring) => (
                   <circle
-                    key={`ring-${i}`}
-                    className={
-                      i === 0
-                        ? "ring-spin-1"
-                        : i === 1
-                          ? "ring-spin-2"
-                          : "ring-spin-3"
-                    }
+                    key={`ring-${ring.key}`}
+                    className={ring.spin}
                     cx={cx}
                     cy={cy}
                     r={ring.r}
@@ -881,6 +965,32 @@ export default function ProductNetwork({
               </g>
             );
           })()}
+
+          {/* ── Radios tenues hub → nodo ──────────────────────────────────
+              Devuelven al grafo la lectura de "red": antes los nodos
+              flotaban como islas desconectadas, sobre todo con pocos
+              productos. Son líneas estáticas (sin animación) → coste por
+              frame cero, y van bajo los nodos para no interceptar clics.
+              Los nodos de atención ya reciben su línea de energía animada
+              encima, así que no duplicamos su radio. */}
+          {layout.pos
+            .filter((p) => p.hubId !== 0)
+            .map((p) => (
+              <line
+                key={`spk-${p.id}`}
+                x1={layout.cx}
+                y1={layout.cy}
+                x2={p.x}
+                y2={p.y}
+                stroke={
+                  p.hubId === 1
+                    ? "rgba(34,211,238,0.13)"
+                    : "rgba(94,234,212,0.10)"
+                }
+                strokeWidth="1"
+                vectorEffect="non-scaling-stroke"
+              />
+            ))}
 
           {/* ── Líneas de energía centro → nodos en estado crítico ────────
               Conectan el hub central con cada nodo del bucket "atención".
@@ -903,16 +1013,23 @@ export default function ProductNetwork({
                     fill="none"
                     vectorEffect="non-scaling-stroke"
                   />
-                  <circle r={3} fill="#f87171" filter="url(#glow)">
-                    <animateMotion
-                      dur="2.2s"
-                      repeatCount="indefinite"
-                      path={d}
-                      keyPoints="0;1"
-                      keyTimes="0;1"
-                      calcMode="linear"
-                    />
-                  </circle>
+                  {/* El punto viajero respeta prefers-reduced-motion: si está
+                      activo, lo dejamos fijo en el nodo (la pista de color se
+                      conserva, el movimiento perpetuo no). */}
+                  {reduceMotion ? (
+                    <circle cx={p.x} cy={p.y} r={3} fill="#f87171" filter="url(#glow-sm)" />
+                  ) : (
+                    <circle r={3} fill="#f87171" filter="url(#glow-sm)">
+                      <animateMotion
+                        dur="2.2s"
+                        repeatCount="indefinite"
+                        path={d}
+                        keyPoints="0;1"
+                        keyTimes="0;1"
+                        calcMode="linear"
+                      />
+                    </circle>
+                  )}
                 </g>
               );
             })}
@@ -999,8 +1116,11 @@ export default function ProductNetwork({
                       fontSize="28"
                       fontWeight={900}
                       fill="#f87171"
-                      className="text-glow-cyan"
-                      style={{ filter: "drop-shadow(0 0 8px rgba(248,113,113,0.6))" }}
+                      style={{
+                        filter: "drop-shadow(0 0 8px rgba(248,113,113,0.6))",
+                        fontVariantNumeric: "tabular-nums",
+                        fontFamily: "var(--font-mono, ui-monospace, monospace)",
+                      }}
                     >
                       {attentionCount}
                     </text>
@@ -1025,6 +1145,7 @@ export default function ProductNetwork({
                       fontSize="22"
                       fontWeight={800}
                       fill="#5EEAD4"
+                      style={{ fontVariantNumeric: "tabular-nums", fontFamily: "var(--font-mono, ui-monospace, monospace)" }}
                     >
                       {hubInfo.count}
                     </text>
@@ -1061,13 +1182,14 @@ export default function ProductNetwork({
                       textAnchor="middle"
                       fontSize="10.5"
                       fontWeight={700}
+                      letterSpacing="0.3"
                       fill={
                         hasUrgent
                           ? "rgba(254,202,202,0.95)"
                           : "rgba(110,231,219,0.95)"
                       }
                     >
-                      {hubOpen ? "▲  Ocultar opciones" : "▼  Pulsa: opciones"}
+                      {hubOpen ? "Ocultar opciones ▲" : "Ver opciones ▼"}
                     </text>
                   </g>
                 )}
@@ -1382,7 +1504,7 @@ export default function ProductNetwork({
                     fill={LIVE_CORE.has(st) ? "url(#coreOn)" : "url(#coreAmb)"} />
                 )}
                 {col.dot && (
-                  <circle cx={p.x + R - 6} cy={p.y - R + 6} r="4.5" fill={col.dot} filter="url(#glow)" />
+                  <circle cx={p.x + R - 6} cy={p.y - R + 6} r="4.5" fill={col.dot} filter="url(#glow-sm)" />
                 )}
                 {/* Badge de origen: pequeño marcador en la esquina inferior
                     izquierda del hexágono. Naranja = Amazon, cyan = Tu
@@ -1402,12 +1524,13 @@ export default function ProductNetwork({
                         strokeWidth="1.4"
                       />
                       {isAmz ? (
-                        // letra "a" minimalista para Amazon
+                        // letra "a" minimalista para Amazon, centrada en el disco
                         <text
                           x={p.x - R + 7}
-                          y={p.y + R - 4.5}
+                          y={p.y + R - 7}
                           textAnchor="middle"
-                          fontSize="8"
+                          dominantBaseline="central"
+                          fontSize="7.5"
                           fontWeight={800}
                           fill={fill}
                         >
@@ -1432,7 +1555,8 @@ export default function ProductNetwork({
                     fill="rgba(255,255,255,0.92)">{clip(p.title, 22)}</text>
                   <text x={p.x} y={p.y + R + 34} textAnchor="middle" fontSize="12.5" fontWeight={700}
                     fill={p.priceCurrent > 0 ? "#7dd3fc" : "rgba(180,180,200,0.6)"}
-                    className={p.priceCurrent > 0 ? "text-glow-cyan" : undefined}>
+                    className={p.priceCurrent > 0 ? "text-glow-sm" : undefined}
+                    style={{ fontVariantNumeric: "tabular-nums", fontFamily: "var(--font-mono, ui-monospace, monospace)" }}>
                     {p.priceCurrent > 0 ? `${fmt(p.priceCurrent)} ${sym(p.currency)}` : "Sin precio"}
                   </text>
                 </g>
@@ -1458,42 +1582,50 @@ export default function ProductNetwork({
             const SPRD = (37 * Math.PI) / 180;             // separación angular
             const LBL_R = MR + SR + 20;                    // radio de la etiqueta
 
-            // Busca el ángulo `base` (en pasos de 30°) con mayor distancia
-            // mínima a los nodos vecinos. Solo nodos en un radio de 220 px
-            // cuentan (a más lejos no estorban). Si no hay vecinos, usa la
-            // dirección clásica hub→nodo.
+            // Busca el ángulo `base` (en pasos de 30°) que: (1) mantiene las
+            // tres etiquetas DENTRO del lienzo — un menú que se sale por el
+            // borde superior era el fallo más visible con un nodo arriba —,
+            // (2) maximiza la distancia a los vecinos cercanos (≤220 px) y
+            // (3) tiende hacia fuera del hub. Siempre evaluamos los 12
+            // ángulos: el antiguo atajo "sin vecinos → dirección hub→nodo"
+            // apuntaba justo al borde más cercano.
             const VICIN = 220;
+            const PAD = 120; // margen seguro de las puntas de etiqueta al borde
             const neighbours = layout.pos.filter(
               (q) => q.id !== pd.id && Math.hypot(q.x - pd.x, q.y - pd.y) < VICIN,
             );
-            let base: number;
-            if (neighbours.length === 0) {
-              const dx = pd.x - hb.x, dy = pd.y - hb.y;
-              base = Math.atan2(dy, dx);
-            } else {
-              let bestAng = 0;
-              let bestScore = -Infinity;
-              for (let deg = 0; deg < 360; deg += 30) {
-                const a = (deg * Math.PI) / 180;
-                // Centro del abanico a MR del nodo seleccionado.
-                const cx = pd.x + Math.cos(a) * MR;
-                const cy = pd.y + Math.sin(a) * MR;
-                // Distancia mínima a cualquier vecino + bonus por estar lejos
-                // del hub (evita que el menú salga "hacia adentro" del cluster).
-                let minD = Infinity;
-                for (const n of neighbours) {
-                  const d = Math.hypot(n.x - cx, n.y - cy);
-                  if (d < minD) minD = d;
-                }
-                const awayFromHub = Math.hypot(cx - hb.x, cy - hb.y);
-                const score = minD + awayFromHub * 0.15;
-                if (score > bestScore) {
-                  bestScore = score;
-                  bestAng = a;
-                }
+            let bestAng = -Math.PI / 2;
+            let bestScore = -Infinity;
+            for (let deg = 0; deg < 360; deg += 30) {
+              const a = (deg * Math.PI) / 180;
+              // Centro del abanico a MR del nodo seleccionado.
+              const cx = pd.x + Math.cos(a) * MR;
+              const cy = pd.y + Math.sin(a) * MR;
+              // Cuántas de las 3 puntas de etiqueta caen fuera del margen.
+              let offscreen = 0;
+              for (const t of [a - SPRD, a, a + SPRD]) {
+                const lx = pd.x + Math.cos(t) * LBL_R;
+                const ly = pd.y + Math.sin(t) * LBL_R;
+                if (lx < PAD || lx > VB_W - PAD || ly < PAD || ly > VB_H - PAD)
+                  offscreen++;
               }
-              base = bestAng;
+              // Distancia mínima a cualquier vecino (999 si no hay).
+              let minD = Infinity;
+              for (const n of neighbours) {
+                const d = Math.hypot(n.x - cx, n.y - cy);
+                if (d < minD) minD = d;
+              }
+              const clear = neighbours.length ? minD : 999;
+              const awayFromHub = Math.hypot(cx - hb.x, cy - hb.y);
+              // El castigo por salirse domina: un ángulo en pantalla siempre
+              // gana a uno fuera, y entre los válidos manda el despeje.
+              const score = clear + awayFromHub * 0.15 - offscreen * 400;
+              if (score > bestScore) {
+                bestScore = score;
+                bestAng = a;
+              }
             }
+            const base = bestAng;
             const angles = [base - SPRD, base, base + SPRD];
 
             const selSt  = nodeState(pd);
@@ -1653,7 +1785,7 @@ export default function ProductNetwork({
       {nodes.length > 0 && (
         <div
           id="tour-toolbar"
-          className="absolute top-3 left-3 z-20 flex flex-wrap items-center gap-1.5 rounded-xl border border-white/10 bg-[rgba(8,9,20,0.92)] px-2.5 py-2 backdrop-blur-xl"
+          className="absolute top-3 left-3 z-20 flex flex-wrap items-center gap-1.5 rounded-xl border border-white/12 bg-[rgba(8,9,20,0.92)] px-2.5 py-2 backdrop-blur-xl shadow-[0_18px_50px_-18px_rgba(0,0,0,0.8)] max-w-[calc(100%-1.5rem)] lg:max-w-[820px]"
         >
           <div className="flex overflow-hidden rounded-lg border border-white/15">
             {(["graph", "table"] as const).map((m) => (
@@ -1723,7 +1855,7 @@ export default function ProductNetwork({
               toolbar para que NUNCA se solape con nodos del canvas. Cada
               chip filtra por estado al hacer clic. */}
           {mode === "graph" && (
-            <div className="ml-1 flex items-center gap-1.5 border-l border-white/10 pl-2.5">
+            <div className="ml-1 flex items-center gap-1.5 border-l border-white/10 pl-2.5 max-lg:ml-0 max-lg:w-full max-lg:border-l-0 max-lg:border-t max-lg:border-white/10 max-lg:pl-0 max-lg:mt-1.5 max-lg:pt-1.5">
               {[
                 {
                   key: "att" as const,
@@ -1928,8 +2060,8 @@ export default function ProductNetwork({
                           <span className="inline-flex items-center gap-1 rounded-full border border-red-400/25 bg-red-500/[0.08] px-2 py-0.5 text-[10px] font-semibold text-red-300">
                             perdida
                             {p.buyBoxPrice ? (
-                              <span className="font-mono text-[9.5px] text-red-200/70">
-                                {fmt(p.buyBoxPrice)}€
+                              <span className="font-mono text-[9.5px] text-red-200/70 tabular-nums">
+                                {fmt(p.buyBoxPrice)} {sym(p.currency)}
                               </span>
                             ) : null}
                           </span>
@@ -2082,7 +2214,13 @@ export default function ProductNetwork({
           label="Ver leyenda de colores de estado"
           onClick={() => setShowStates((v) => !v)}
         >
-          <span className="text-[13px] leading-none">🎨</span>
+          {/* Tres muestras de color = "leyenda de estados", en el idioma
+              cromático del propio grafo. */}
+          <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden>
+            <circle cx="9" cy="8" r="4" fill="#34d399" />
+            <circle cx="15.5" cy="11" r="4" fill="#fbbf24" />
+            <circle cx="10" cy="15.5" r="4" fill="#f87171" />
+          </svg>
         </ZoomBtn>
         <ZoomBtn
           label="Repetir tutorial guiado"
@@ -2090,7 +2228,22 @@ export default function ProductNetwork({
             window.dispatchEvent(new CustomEvent("orvexia:open-tour"))
           }
         >
-          <span className="text-[13px] leading-none">🎓</span>
+          {/* Birrete = tutorial / aprender. */}
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.9"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
+            <path d="M12 5 22 9 12 13 2 9 12 5Z" />
+            <path d="M6 10.5V14.5C6 16 9 17.5 12 17.5C15 17.5 18 16 18 14.5V10.5" />
+            <path d="M22 9V13.5" />
+          </svg>
         </ZoomBtn>
       </div>
       )}

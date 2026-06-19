@@ -487,6 +487,9 @@ body {
 
 .text-glow-brand { text-shadow: 0 0 24px rgba(129,140,248,0.45), 0 0 60px rgba(99,102,241,0.20); }
 .text-glow-cyan  { text-shadow: 0 0 24px rgba(94,234,212,0.55), 0 0 60px rgba(34,211,238,0.25); }
+/* Glow proporcional a la altura del glifo: para texto pequeño (precios de
+   nodo ~12px) el de 24px borraba los dígitos que el vendedor debe leer. */
+.text-glow-sm    { text-shadow: 0 0 6px rgba(94,234,212,0.50); }
 
 /* HUD frame with 4 corner brackets — drop inside any positioned container */
 .hud-corners > .hud-tl,
