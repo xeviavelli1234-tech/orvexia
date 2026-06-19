@@ -614,6 +614,13 @@ export default function ProductNetwork({
       suppressClick.current = false;
       return;
     }
+    // Segundo clic sobre el mismo producto = cerrar sus opciones (toggle),
+    // igual que el hub con "Ocultar opciones". Deselecciona y guarda el
+    // abanico/inspector.
+    if (selId === n.id) {
+      setSelId(null);
+      return;
+    }
     setSelId(n.id);
     setErr(null);
     setMin(n.priceMin != null ? String(n.priceMin) : "");
@@ -1617,9 +1624,16 @@ export default function ProductNetwork({
               }
               const clear = neighbours.length ? minD : 999;
               const awayFromHub = Math.hypot(cx - hb.x, cy - hb.y);
+              // Penalización por apuntar hacia ABAJO: el título/precio del nodo
+              // cuelga justo debajo, y el panel del abanico lo taparía. Sesga
+              // la elección hacia los lados/arriba salvo que abajo sea lo único
+              // libre. Solo afecta a nodos que de otro modo abrirían hacia
+              // abajo (sin(a)>0); los demás casos quedan idénticos.
+              const downBias = Math.max(0, Math.sin(a)) * 65;
               // El castigo por salirse domina: un ángulo en pantalla siempre
               // gana a uno fuera, y entre los válidos manda el despeje.
-              const score = clear + awayFromHub * 0.15 - offscreen * 400;
+              const score =
+                clear + awayFromHub * 0.15 - offscreen * 400 - downBias;
               if (score > bestScore) {
                 bestScore = score;
                 bestAng = a;
@@ -1646,8 +1660,64 @@ export default function ProductNetwork({
                 onClick: () => window.dispatchEvent(new CustomEvent("orvexia:open-profit")) },
             ];
 
+            // ── Panel de cristal tras el abanico ──────────────────────────
+            // Mismo material que el dock de herramientas (dockGrad + sombra),
+            // para que las opciones del producto y las del hub hablen el mismo
+            // idioma visual. Calculamos la caja que envuelve los 3 iconos y
+            // sus etiquetas; el nodo queda fuera (el abanico sale a MR del
+            // nodo), así que el panel no tapa el hexágono ni su precio.
+            const CHAR_W = 7; // ancho aprox. por carácter de etiqueta (12.5px)
+            let pminX = Infinity, pminY = Infinity, pmaxX = -Infinity, pmaxY = -Infinity;
+            angles.forEach((a, i) => {
+              const ix = pd.x + Math.cos(a) * MR;
+              const iy = pd.y + Math.sin(a) * MR;
+              const lx = pd.x + Math.cos(a) * LBL_R;
+              const ly = pd.y + Math.sin(a) * LBL_R;
+              const ca = Math.cos(a);
+              const w = opts[i].label.length * CHAR_W;
+              const lx0 = ca > 0.28 ? lx : ca < -0.28 ? lx - w : lx - w / 2;
+              const lx1 = ca > 0.28 ? lx + w : ca < -0.28 ? lx : lx + w / 2;
+              pminX = Math.min(pminX, ix - (SR + 9), lx0);
+              pmaxX = Math.max(pmaxX, ix + (SR + 9), lx1);
+              pminY = Math.min(pminY, iy - (SR + 9), ly - 9);
+              pmaxY = Math.max(pmaxY, iy + (SR + 9), ly + 9);
+            });
+            const PAD_X = 18, PAD_Y = 15;
+            const panX = pminX - PAD_X;
+            const panY = pminY - PAD_Y;
+            const panW = pmaxX - pminX + 2 * PAD_X;
+            const panH = pmaxY - pminY + 2 * PAD_Y;
+
             return (
               <g>
+                {/* Panel de cristal tras las opciones (mismo material que el
+                    dock de herramientas). Se dibuja primero → queda detrás del
+                    abanico y de los anillos de selección. */}
+                <g className="tool-in">
+                  <rect
+                    x={panX}
+                    y={panY}
+                    width={panW}
+                    height={panH}
+                    rx={22}
+                    fill="url(#dockGrad)"
+                    stroke="rgba(255,255,255,0.10)"
+                    strokeWidth="1"
+                    filter="url(#dockShadow)"
+                  />
+                  {/* Filo superior iluminado → relieve de cristal, idéntico al
+                      dock. */}
+                  <rect
+                    x={panX + 1}
+                    y={panY + 1}
+                    width={panW - 2}
+                    height={panH - 2}
+                    rx={21}
+                    fill="none"
+                    stroke="rgba(255,255,255,0.05)"
+                    strokeWidth="1"
+                  />
+                </g>
                 {/* Doble anillo de selección — color del estado del nodo.
                     El externo gira despacio (hub-ring), el interno respira
                     (select-breathe) con curva ease-in-out para que el latido
