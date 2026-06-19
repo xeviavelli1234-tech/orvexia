@@ -20,9 +20,9 @@ export default async function DashboardPage({
   const { status } = await searchParams;
 
   return (
-    <>
-      <DashboardClient user={{ name: user.name, email: user.email }} />
-      <RepricerSection userId={session.userId} status={status} />
-    </>
+    <DashboardClient
+      user={{ name: user.name, email: user.email }}
+      repricer={<RepricerSection userId={session.userId} status={status} />}
+    />
   );
 }
