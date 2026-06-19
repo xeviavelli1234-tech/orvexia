@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, type ReactNode } from "react";
 import Link from "next/link";
 import ProductModal from "@/components/ProductModal";
 import { SaveButton } from "@/components/SaveButton";
@@ -95,7 +95,13 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export function DashboardClient({ user }: { user: { name: string; email: string } }) {
+export function DashboardClient({
+  user,
+  repricer,
+}: {
+  user: { name: string; email: string };
+  repricer?: ReactNode;
+}) {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -258,6 +264,7 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
             <div className="flex flex-col gap-2"><Sk className="h-5 w-44" /><Sk className="h-3 w-64" /></div>
           </div>
         </div>
+        {repricer}
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[1, 2, 3].map((i) => <Sk key={i} className="h-20" />)}
@@ -284,7 +291,9 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
   // ─── ERROR ─────────────────────────────────────────────────────────────────
   if (error) {
     return (
-      <main className="min-h-screen bg-bg-subtle flex items-center justify-center">
+      <main className="min-h-screen bg-bg-subtle">
+        {repricer}
+        <div className="flex items-center justify-center py-10">
         <div className="text-center px-6 py-16 max-w-sm">
           <p className="text-5xl mb-4">⚠️</p>
           <h2 className="text-lg font-bold text-fg mb-2">No se pudo cargar el dashboard</h2>
@@ -297,6 +306,7 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
           >
             Reintentar
           </button>
+        </div>
         </div>
       </main>
     );
@@ -384,7 +394,18 @@ export function DashboardClient({ user }: { user: { name: string; email: string 
         </div>
       </div>
 
+      {/* ── REPRICER — MÓDULO PRINCIPAL ──────────────────────────────────── */}
+      {repricer}
+
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-7 space-y-7">
+
+        {/* ── COMPARADOR (SECUNDARIO) — etiqueta de área ───────────────────── */}
+        <div className="flex items-center gap-3 pt-1">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-fg-subtle whitespace-nowrap">
+            Comparador · seguimiento de precios
+          </span>
+          <span className="h-px flex-1 bg-border" />
+        </div>
 
         {/* ── TRIGGERED ALERTS BANNER ──────────────────────────────────────── */}
         {triggeredAlerts.length > 0 && (
