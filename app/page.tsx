@@ -392,7 +392,7 @@ export default async function HomePage() {
               Software para vender mejor en Amazon y comprar al mejor precio. Empezamos por el repricer automático y seguimos sumando servicios.
             </p>
 
-            {/* CTAs */}
+            {/* CTAs — dos rutas: plataforma (vendedor) primero, comparador (comprador) después */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-12">
               <span className="aura-cta inline-flex rounded-xl">
                 <Link
@@ -403,10 +403,10 @@ export default async function HomePage() {
                 </Link>
               </span>
               <Link
-                href={repricerLive ? "/sellers" : "/register"}
+                href="#comparador"
                 className="inline-flex items-center justify-center font-semibold px-6 h-12 rounded-xl text-sm text-white/80 hover:text-white border border-white/15 hover:border-white/40 hover:bg-white/[0.04] transition-all active:scale-[0.97] font-mono-ui uppercase tracking-wider"
               >
-                {repricerLive ? "./repricer" : "Crear cuenta gratis"}
+                Comparar precios
               </Link>
             </div>
 
@@ -444,12 +444,12 @@ export default async function HomePage() {
               {Array.from({ length: 2 }).map((_, dup) => (
                 <div key={dup} className="flex">
                   {[
-                    "▲ Precio justo · verificado contra 90d histórico",
-                    "◆ Alertas de precio gratis · sin spam",
-                    "● 0% comisión al usuario · precio final inalterado",
-                    "▲ Recomendaciones neutrales · algoritmo abierto",
-                    "◆ 4 nodos de tiendas sincronizando precios",
-                    "● Datos en tiempo real · TTL 5 min",
+                    "▲ Repricer · gana la Buy Box sin regalar margen",
+                    "◆ Reprecio automático cada 5 min · min/máx bajo tu control",
+                    "● Comparador · precios verificados contra 90d histórico",
+                    "▲ Alertas de precio gratis · sin spam",
+                    "◆ 0% comisión · el precio final no se altera",
+                    "● 4 tiendas sincronizando precios en tiempo real",
                   ].map((t, i) => (
                     <span key={`${dup}-${i}`} className="px-6 text-white/40 flex items-center gap-2">
                       <span className="text-cyan-300/70">{t.slice(0, 1)}</span>
@@ -464,7 +464,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── SERVICIOS — PLATAFORMA (PRINCIPAL) ──────────────────────────── */}
-      <section id="servicios" className="relative px-4 sm:px-6 pt-20 pb-16 overflow-hidden scroll-mt-24">
+      <section id="servicios" className="relative px-4 sm:px-6 pt-20 pb-20 overflow-hidden scroll-mt-24">
         <div className="hidden sm:block absolute inset-0 bg-grid-cyber-fine opacity-30 pointer-events-none" />
         <div className="relative max-w-7xl mx-auto">
           <SectionHeading
@@ -798,7 +798,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── FAQ — KNOWLEDGE BASE ────────────────────────────────────────── */}
-      <section className="relative px-4 sm:px-6 pt-12 pb-24 overflow-hidden" aria-labelledby="faq-title">
+      <section className="relative px-4 sm:px-6 pt-20 pb-28 overflow-hidden" aria-labelledby="faq-title">
         <div className="absolute inset-0 pointer-events-none">
           <div className="hidden sm:block absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] rounded-full" style={{ background: "radial-gradient(ellipse, rgba(99,102,241,0.10), transparent 70%)" }} />
         </div>
