@@ -8,7 +8,7 @@ import DealsCountdown from "@/components/DealsCountdown";
 import { REPRICER_ENABLED, REPRICER_PUBLIC } from "@/lib/featureFlags";
 import { HeroSearch } from "@/components/HeroSearch";
 import { getRealDeals, type DealProduct } from "@/lib/deals";
-import { HudFrame } from "./_components/HomePrimitives";
+import { HudFrame, SectionHeading, Kicker } from "./_components/HomePrimitives";
 
 // Semilla diaria estable (fecha peninsular). El set de ofertas es el mismo
 // para todos durante el día y cambia a medianoche Europe/Madrid.
@@ -127,56 +127,6 @@ async function getStats() {
     return { productCount: 0, withDiscount: 0, storeCount: 0 };
   }
 }
-
-const CATEGORIES = [
-  { key: "TELEVISORES",          label: "Televisores",  icon: "📺", accent: "#818CF8", code: "TV-01" },
-  { key: "LAVADORAS",            label: "Lavadoras",    icon: "🫧", accent: "#A78BFA", code: "WS-02" },
-  { key: "FRIGORIFICOS",         label: "Frigoríficos", icon: "🧊", accent: "#22D3EE", code: "FR-03" },
-  { key: "LAVAVAJILLAS",         label: "Lavavajillas", icon: "🍽️", accent: "#5EEAD4", code: "DW-04" },
-  { key: "SECADORAS",            label: "Secadoras",    icon: "💨", accent: "#FBBF24", code: "DR-05" },
-  { key: "HORNOS",               label: "Hornos",       icon: "🔥", accent: "#F87171", code: "OV-06" },
-  { key: "CAFETERAS",            label: "Cafeteras",    icon: "☕", accent: "#FB923C", code: "CF-07" },
-  { key: "AIRES_ACONDICIONADOS", label: "Aire acond.",  icon: "❄️", accent: "#38BDF8", code: "AC-08" },
-];
-
-const HOW_IT_WORKS = [
-  {
-    n: "01",
-    title: "Busca",
-    desc: "Escribe el electrodoméstico y compara precios al instante en las principales tiendas.",
-    accent: "#818CF8",
-    cmd: "init.search",
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
-      </svg>
-    ),
-  },
-  {
-    n: "02",
-    title: "Compara",
-    desc: "Ve el historial de precios, detecta el mejor momento y elige la tienda más económica.",
-    accent: "#5EEAD4",
-    cmd: "exec.compare",
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v18h18M7 17v-5M12 17V8M17 17v-3" />
-      </svg>
-    ),
-  },
-  {
-    n: "03",
-    title: "Ahorra",
-    desc: "Compra directamente en la tienda al mejor precio. Sin intermediarios, sin comisiones.",
-    accent: "#A3E635",
-    cmd: "deploy.save",
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
-      </svg>
-    ),
-  },
-];
 
 const REGISTER_PERKS: { title: string; desc: string; accent: string; code: string; icon: React.ReactNode }[] = [
   {
@@ -412,11 +362,16 @@ export default async function HomePage() {
 
             {/* Eyebrow tag */}
             <div className="flex justify-center mb-7">
-              <div className="relative inline-flex items-center gap-2 px-3.5 h-7 rounded-full bg-white/[0.04] border border-white/10 backdrop-blur font-mono-ui">
-                <span className="text-[10px] text-cyan-300/90">[ ORVEXIA · OS ]</span>
-                <span className="text-white/25">·</span>
-                <span className="text-[10px] text-white/60">PLATAFORMA DE PRECIOS</span>
-              </div>
+              <Kicker
+                accent="#22D3EE"
+                label={
+                  <>
+                    <span className="text-cyan-300/90">[ ORVEXIA · OS ]</span>
+                    <span className="text-white/25">·</span>
+                    <span className="text-white/60">Plataforma de precios</span>
+                  </>
+                }
+              />
             </div>
 
             {/* Headline */}
@@ -512,17 +467,12 @@ export default async function HomePage() {
       <section id="servicios" className="relative px-4 sm:px-6 pt-20 pb-16 overflow-hidden scroll-mt-24">
         <div className="hidden sm:block absolute inset-0 bg-grid-cyber-fine opacity-30 pointer-events-none" />
         <div className="relative max-w-7xl mx-auto">
-          <div className="text-center mb-10">
-            <p className="font-mono-ui text-[10px] uppercase tracking-[0.2em] mb-2 text-cyan-300/80">
-              ▸ /services · plataforma Orvexia
-            </p>
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-3">
-              Nuestros <span className="text-gradient-neon">servicios</span>
-            </h2>
-            <p className="text-sm leading-relaxed max-w-lg mx-auto text-white/50">
-              Una suite que crece. Hoy automatizamos tus precios en Amazon; pronto, mucho más.
-            </p>
-          </div>
+          <SectionHeading
+            accent="#5EEAD4"
+            kicker="▸ /services · plataforma Orvexia"
+            title={<>Nuestros <span className="text-gradient-neon">servicios</span></>}
+            subtitle="Una suite que crece. Hoy automatizamos tus precios en Amazon; pronto, mucho más."
+          />
 
           {/* Servicio destacado: Repricer */}
           <div className="neon-border rounded-3xl overflow-hidden mb-5">
@@ -664,25 +614,24 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── COMPARADOR (SECUNDARIO) ─────────────────────────────────────── */}
-      <section id="comparador" className="relative px-4 sm:px-6 pt-16 pb-4 overflow-hidden scroll-mt-24 border-t border-white/[0.06]">
-        <div className="relative max-w-5xl mx-auto text-center">
-          <span className="inline-flex items-center gap-2 font-mono-ui text-[10px] uppercase mb-5 px-3 h-7 rounded-full text-lime-300 bg-lime-400/[0.08] border border-lime-400/25">
-            <span className="w-1.5 h-1.5 rounded-full bg-lime-400" />
-            ▸ /comparador · para compradores
-          </span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-3">
-            Compara precios. <span className="text-gradient-neon">Ahorra siempre.</span>
-          </h2>
-          <p className="text-sm leading-relaxed max-w-xl mx-auto text-white/55 mb-8">
-            Monitorizamos precios en las principales tiendas de España para que compres en el momento y al precio correcto.
-          </p>
+      {/* ── COMPARADOR (COMPACTO) — buscador + solo ofertas top ─────────── */}
+      <section id="comparador" className="relative px-4 sm:px-6 pt-20 pb-20 overflow-hidden scroll-mt-24 border-t border-white/[0.06]">
+        <div className="hidden sm:block absolute inset-0 bg-grid-cyber-fine opacity-25 pointer-events-none" />
+        <div className="hidden sm:block absolute -top-10 right-0 w-[620px] h-[620px] rounded-full opacity-50 pointer-events-none" style={{ background: "radial-gradient(circle, rgba(163,230,53,0.10), transparent 65%)" }} />
+
+        <div className="relative max-w-6xl mx-auto">
+          <SectionHeading
+            accent="#A3E635"
+            kicker="▸ /comparador · para compradores"
+            title={<>Las mejores ofertas, <span className="text-gradient-neon">hoy</span></>}
+            subtitle="Comparamos precios en las principales tiendas de España y te mostramos solo lo que de verdad está rebajado."
+          />
 
           {/* Search with HUD frame */}
           <div className="relative z-40 max-w-2xl mx-auto">
-            <HudFrame className="relative text-cyan-400/70">
+            <HudFrame className="relative text-lime-400/70">
               <div className="rounded-2xl p-px"
-                   style={{ background: "linear-gradient(135deg, rgba(94,234,212,0.35), rgba(129,140,248,0.35), rgba(240,171,252,0.35))" }}>
+                   style={{ background: "linear-gradient(135deg, rgba(163,230,53,0.35), rgba(94,234,212,0.35), rgba(129,140,248,0.35))" }}>
                 <div className="rounded-[15px] bg-black/40 backdrop-blur-md p-3">
                   <HeroSearch />
                 </div>
@@ -691,7 +640,7 @@ export default async function HomePage() {
           </div>
 
           {/* Store chips */}
-          <div className="flex flex-wrap items-center justify-center gap-2 mt-8">
+          <div className="flex flex-wrap items-center justify-center gap-2 mt-6">
             <span className="font-mono-ui text-[10px] text-white/30 mr-1">[SYNC ⇄]</span>
             {STORES.map((s) => (
               <span key={s} className="text-[11px] font-medium px-3 h-7 inline-flex items-center rounded-full text-white/65 border border-white/[0.10] bg-white/[0.025] backdrop-blur-sm">
@@ -700,174 +649,54 @@ export default async function HomePage() {
               </span>
             ))}
           </div>
-        </div>
-      </section>
 
-      {/* ── CATEGORIES ──────────────────────────────────────────────────── */}
-      <section className="relative px-4 sm:px-6 pt-20 pb-16 overflow-hidden">
-        <div className="hidden sm:block absolute inset-0 bg-grid-cyber-fine opacity-30 pointer-events-none" />
-        <div className="hidden sm:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[400px] rounded-full pointer-events-none" style={{ background: "radial-gradient(ellipse, rgba(129,140,248,0.12), transparent 70%)" }} />
-
-        <div className="relative max-w-7xl mx-auto">
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-9">
-            <div>
-              <p className="font-mono-ui text-[10px] uppercase tracking-[0.2em] mb-2 text-cyan-300/80">
-                ▸ /catalog · 08 categorías
-              </p>
-              <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
-                Explora por <span className="text-gradient-neon">categoría</span>
-              </h2>
-            </div>
-            <Link href="/categorias" className="group inline-flex items-center gap-2 font-mono-ui text-[11px] uppercase font-bold px-5 h-10 rounded-full text-cyan-200 border border-cyan-400/30 bg-cyan-400/[0.06] hover:bg-cyan-400/[0.12] hover:border-cyan-400/60 transition-all">
-              Ver todas
-              <span className="transition-transform group-hover:translate-x-0.5">→</span>
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5 sm:gap-3">
-            {CATEGORIES.map((cat) => (
-              <Link
-                key={cat.key}
-                href={`/categorias?cat=${cat.key}`}
-                className="group relative"
-              >
-                <HudFrame className="relative h-full" >
-                  <div className="relative h-full rounded-xl bg-white/[0.025] border border-white/[0.08] hover:border-white/30 backdrop-blur-sm overflow-hidden p-4 flex flex-col items-center gap-3 transition-all duration-300 hover:-translate-y-1"
-                       style={{ ['--accent' as string]: cat.accent }}>
-                    <div
-                      className="absolute -top-12 left-1/2 -translate-x-1/2 w-32 h-32 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-                      style={{ background: `radial-gradient(circle, ${cat.accent}33, transparent 70%)` }}
-                    />
-                    <div
-                      className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-300 relative z-10"
-                      style={{
-                        background: `color-mix(in srgb, ${cat.accent} 14%, transparent)`,
-                        border: `1px solid color-mix(in srgb, ${cat.accent} 35%, transparent)`,
-                        boxShadow: `0 0 24px -6px ${cat.accent}55`,
-                      }}
-                    >
-                      {cat.icon}
-                    </div>
-                    <span className="text-[12px] font-bold text-center leading-tight text-white/85 relative z-10">{cat.label}</span>
-                    <span className="font-mono-ui text-[9px] text-white/30 relative z-10">{cat.code}</span>
-                  </div>
-                </HudFrame>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── TOP DEALS — LIVE MARKET ────────────────────────────────────── */}
-      <section className="relative px-4 sm:px-6 py-16 overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="hidden sm:block absolute top-0 right-0 w-[600px] h-[600px] rounded-full opacity-60" style={{ background: "radial-gradient(circle, rgba(240,171,252,0.10), transparent 65%)" }} />
-        </div>
-
-        <div className="relative max-w-7xl mx-auto">
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-9">
-            <div>
-              <p className="font-mono-ui text-[10px] uppercase tracking-[0.2em] mb-2 text-fuchsia-300/80 flex items-center gap-2">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-fuchsia-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-fuchsia-400" />
-                </span>
-                ▸ /live · mercado en tiempo real
-              </p>
-              <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
-                Ofertas <span className="text-gradient-neon">destacadas</span>
-              </h2>
-              <p className="mt-2 text-sm text-white/45 max-w-md">
-                Top descuentos verificados contra el histórico de 90 días. Cero precios inflados.
-              </p>
-              <DealsCountdown dayKey={dayKey} />
-            </div>
-            <Link
-              href="/ofertas-destacadas"
-              className="group inline-flex items-center gap-2 font-mono-ui text-[11px] uppercase font-bold px-5 h-10 rounded-full text-fuchsia-200 border border-fuchsia-400/30 bg-fuchsia-400/[0.06] hover:bg-fuchsia-400/[0.12] hover:border-fuchsia-400/60 transition-all"
-            >
-              Ver todas
-              <span className="transition-transform group-hover:translate-x-0.5">→</span>
-            </Link>
-          </div>
-
-          {productos.length === 0 ? (
-            <HudFrame className="text-white/30">
-              <div className="flex flex-col items-center justify-center py-24 rounded-2xl bg-white/[0.02] border border-white/[0.08]">
-                <span className="text-4xl mb-3">📦</span>
-                <p className="font-mono-ui text-[11px] uppercase text-white/40">no_deals · stand_by</p>
+          {/* Solo las ofertas top de hoy (4) */}
+          {productos.length > 0 && (
+            <div className="mt-14">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+                <p className="font-mono-ui text-[10px] uppercase tracking-[0.2em] text-fuchsia-300/80 flex items-center gap-2">
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-fuchsia-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-fuchsia-400" />
+                  </span>
+                  ▸ /live · ofertas top de hoy
+                </p>
+                <DealsCountdown dayKey={dayKey} />
               </div>
-            </HudFrame>
-          ) : (
-            <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-5">
-              {productos.map((producto, i) => (
-                <div key={producto.id} className="group relative">
-                  {/* Index marker */}
-                  <div className="absolute -top-1.5 -left-1.5 sm:-top-2 sm:-left-2 z-10 flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 h-5 sm:h-6 rounded sm:rounded-md bg-black/80 border border-white/15 backdrop-blur-sm font-mono-ui text-[8px] sm:text-[9px] uppercase text-white/65">
-                    <span className="text-cyan-300">#</span>
-                    {String(i + 1).padStart(2, "0")}
+
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+                {productos.slice(0, 4).map((producto, i) => (
+                  <div key={producto.id} className="group relative">
+                    <div className="absolute -top-1.5 -left-1.5 sm:-top-2 sm:-left-2 z-10 flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 h-5 sm:h-6 rounded sm:rounded-md bg-black/80 border border-white/15 backdrop-blur-sm font-mono-ui text-[8px] sm:text-[9px] uppercase text-white/65">
+                      <span className="text-cyan-300">#</span>
+                      {String(i + 1).padStart(2, "0")}
+                    </div>
+                    <div className="rounded-lg sm:rounded-2xl overflow-hidden ring-1 ring-white/[0.06] group-hover:ring-cyan-400/30 transition-all duration-300 shadow-lg shadow-black/30">
+                      <MysteryDealCard product={producto} priority={i === 0} revealKey={dayKey} />
+                    </div>
                   </div>
-                  <div className="rounded-lg sm:rounded-2xl overflow-hidden ring-1 ring-white/[0.06] group-hover:ring-cyan-400/30 transition-all duration-300 shadow-lg shadow-black/30">
-                    <MysteryDealCard product={producto} priority={i === 0} revealKey={dayKey} />
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           )}
-        </div>
-      </section>
 
-      {/* ── HOW IT WORKS — PROTOCOL ─────────────────────────────────────── */}
-      <section className="relative px-4 sm:px-6 py-20 overflow-hidden">
-        <div className="absolute inset-0 bg-dots-soft opacity-50 pointer-events-none" />
-
-        <div className="relative max-w-7xl mx-auto">
-          <div className="text-center mb-14">
-            <p className="font-mono-ui text-[10px] uppercase tracking-[0.2em] mb-3 text-emerald-300/80">
-              ▸ /protocol · 03 pasos
-            </p>
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-3">
-              Protocolo de <span className="text-gradient-neon">ahorro</span>
-            </h2>
-            <p className="text-sm leading-relaxed max-w-md mx-auto text-white/50">
-              Tres pasos. Cero fricción. Compra al precio justo en menos de un minuto.
-            </p>
-          </div>
-
-          <div className="relative grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-0">
-            {/* Connector line */}
-            <div className="hidden md:block absolute top-[68px] left-[16%] right-[16%] h-px"
-                 style={{ background: "linear-gradient(90deg, transparent, rgba(129,140,248,0.35) 20%, rgba(94,234,212,0.35) 50%, rgba(163,230,53,0.35) 80%, transparent)" }} />
-
-            {HOW_IT_WORKS.map((step, idx) => (
-              <div key={step.n} className="relative md:px-4">
-                {/* Step node */}
-                <div className="flex justify-center mb-5 md:mb-7 relative z-10">
-                  <div className="relative w-14 h-14 rounded-2xl flex items-center justify-center bg-void-deep border-2"
-                       style={{ borderColor: step.accent, boxShadow: `0 0 32px -6px ${step.accent}77` }}>
-                    <span style={{ color: step.accent }}>{step.icon}</span>
-                    <div className="absolute -inset-1 rounded-2xl opacity-30 blur-md -z-10" style={{ background: step.accent }} />
-                  </div>
-                </div>
-
-                <HudFrame className="text-white/20">
-                  <div className="relative rounded-2xl bg-white/[0.02] border border-white/[0.08] backdrop-blur-sm p-6 sm:p-7 text-center hover:border-white/20 hover:-translate-y-0.5 transition-all duration-300 h-full">
-                    <div className="flex items-center justify-center gap-2 mb-3 font-mono-ui text-[10px] uppercase">
-                      <span className="text-white/40">step</span>
-                      <span style={{ color: step.accent }}>{step.n}</span>
-                      <span className="text-white/30">·</span>
-                      <span className="text-white/50">{step.cmd}()</span>
-                    </div>
-                    <h3 className="text-xl font-extrabold mb-2 text-white tracking-tight">{step.title}</h3>
-                    <p className="text-sm leading-relaxed text-white/55 max-w-xs mx-auto">{step.desc}</p>
-
-                    {idx < HOW_IT_WORKS.length - 1 && (
-                      <div className="md:hidden mt-4 flex justify-center text-white/30">↓</div>
-                    )}
-                  </div>
-                </HudFrame>
-              </div>
-            ))}
+          {/* CTA — al comparador completo */}
+          <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <span className="aura-cta inline-flex rounded-xl">
+              <Link
+                href="/ofertas-destacadas"
+                className="group inline-flex items-center justify-center gap-2 font-bold px-6 h-12 rounded-xl text-sm bg-white text-black hover:bg-white/90 transition-all active:scale-[0.97]"
+              >
+                Ver todas las ofertas
+                <span className="transition-transform group-hover:translate-x-0.5">→</span>
+              </Link>
+            </span>
+            <Link
+              href="/categorias"
+              className="inline-flex items-center justify-center font-semibold px-6 h-12 rounded-xl text-sm text-white/80 hover:text-white border border-white/15 hover:border-white/40 hover:bg-white/[0.04] transition-all active:scale-[0.97] font-mono-ui uppercase tracking-wider"
+            >
+              ./categorias
+            </Link>
           </div>
         </div>
       </section>
@@ -968,100 +797,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── RECOMENDADOS — AI ENGINE ───────────────────────────────────── */}
-      <section className="relative px-4 sm:px-6 py-20 overflow-hidden">
-        <div className="absolute inset-0 bg-grid-cyber-fine opacity-25 pointer-events-none" />
-        <div className="hidden sm:block absolute top-1/2 left-1/3 -translate-y-1/2 w-[500px] h-[500px] rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(251,191,36,0.10), transparent 65%)" }} />
-
-        <div className="relative max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
-            <div>
-              <span className="inline-flex items-center gap-2 font-mono-ui text-[10px] uppercase mb-6 px-3 h-7 rounded-full text-amber-300 bg-amber-400/[0.08] border border-amber-400/25">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 pulse-dot" />
-                ▸ /engine · recomendaciones
-              </span>
-              <h2 className="font-extrabold leading-[1.05] mb-4 tracking-tight text-white" style={{ fontSize: "clamp(1.8rem, 2.8vw, 2.4rem)" }}>
-                Curación por <span className="text-gradient-neon">algoritmo</span>, no por publicidad.
-              </h2>
-              <p className="text-sm leading-relaxed mb-8 text-white/55 max-w-md">
-                Cruzamos valoraciones reales con descuentos verificados del momento. Si tienes cuenta, el motor aprende de tus favoritos y sugiere productos de las categorías que más te interesan.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <span className="aura-cta inline-flex rounded-xl">
-                  <Link
-                    href="/recomendados"
-                    className="group inline-flex items-center justify-center gap-2 font-bold px-6 h-12 rounded-xl text-sm bg-amber-400 text-amber-950 hover:bg-amber-300 transition-all active:scale-[0.97]"
-                  >
-                    Ejecutar motor
-                    <span className="transition-transform group-hover:translate-x-0.5">→</span>
-                  </Link>
-                </span>
-                <Link
-                  href="/categorias"
-                  className="inline-flex items-center justify-center font-semibold px-6 h-12 rounded-xl text-sm text-white/75 hover:text-white border border-white/15 hover:border-white/40 transition-all font-mono-ui uppercase tracking-wider"
-                >
-                  ./categorias
-                </Link>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-3">
-              {[
-                {
-                  accent: "#A78BFA",
-                  title: "Rating ≥ 4.3 con +100 reseñas",
-                  desc: "Solo aparecen productos con valoraciones sólidas de compradores verificados, sin inflados.",
-                  code: "filter.rating ≥ 4.3 && reviews ≥ 100",
-                  icon: (
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z" />
-                    </svg>
-                  ),
-                },
-                {
-                  accent: "#5EEAD4",
-                  title: "Descuentos reales verificados",
-                  desc: "Cruzamos el historial de precios para distinguir descuentos genuinos de precios inflados.",
-                  code: "check.price < median(history, 90d)",
-                  icon: (
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
-                    </svg>
-                  ),
-                },
-                {
-                  accent: "#F0ABFC",
-                  title: "Sin publicidad pagada",
-                  desc: "Ningún partner puede comprar visibilidad. El orden lo decide solo el algoritmo.",
-                  code: "exclude.sponsored = true",
-                  icon: (
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z" />
-                    </svg>
-                  ),
-                },
-              ].map((item) => (
-                <HudFrame key={item.title} className="text-white/15">
-                  <div className="group flex items-start gap-4 p-5 rounded-2xl bg-white/[0.02] border border-white/[0.08] hover:border-white/20 hover:bg-white/[0.04] transition-all">
-                    <div
-                      className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
-                      style={{ background: `${item.accent}1A`, color: item.accent, border: `1px solid ${item.accent}45`, boxShadow: `0 0 20px -6px ${item.accent}66` }}
-                    >
-                      {item.icon}
-                    </div>
-                    <div className="min-w-0">
-                      <h4 className="text-[14px] font-bold mb-1 text-white">{item.title}</h4>
-                      <p className="text-xs leading-relaxed text-white/50 mb-2">{item.desc}</p>
-                      <code className="font-mono-ui text-[10px] text-white/35 break-all">{item.code}</code>
-                    </div>
-                  </div>
-                </HudFrame>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* ── FAQ — KNOWLEDGE BASE ────────────────────────────────────────── */}
       <section className="relative px-4 sm:px-6 pt-12 pb-24 overflow-hidden" aria-labelledby="faq-title">
         <div className="absolute inset-0 pointer-events-none">
@@ -1069,17 +804,12 @@ export default async function HomePage() {
         </div>
 
         <div className="relative max-w-3xl mx-auto">
-          <div className="text-center mb-12">
-            <p className="font-mono-ui text-[10px] uppercase tracking-[0.2em] mb-3 text-brand-300">
-              ▸ /knowledge_base · v1
-            </p>
-            <h2 id="faq-title" className="text-3xl sm:text-4xl font-extrabold mb-3 text-white tracking-tight">
-              Preguntas <span className="text-gradient-neon">frecuentes</span>
-            </h2>
-            <p className="text-sm leading-relaxed max-w-md mx-auto text-white/50">
-              Lo que la gente nos pregunta antes de empezar a comparar.
-            </p>
-          </div>
+          <SectionHeading
+            accent="#818CF8"
+            kicker="▸ /knowledge_base · v1"
+            title={<span id="faq-title">Preguntas <span className="text-gradient-neon">frecuentes</span></span>}
+            subtitle="Lo que la gente nos pregunta antes de empezar a comparar."
+          />
 
           <div className="flex flex-col gap-2.5">
             {FAQS.map((faq, i) => (
