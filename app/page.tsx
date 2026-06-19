@@ -228,6 +228,71 @@ const REGISTER_PERKS: { title: string; desc: string; accent: string; code: strin
 
 const STORES = ["Amazon", "PcComponentes", "Fnac", "El Corte Inglés"];
 
+// ── Servicios de la plataforma (estilo «suite») ──────────────────────────
+// El Repricer se renderiza como tarjeta destacada (ver JSX). Aquí van los
+// servicios secundarios de la rejilla: futuros (status "soon") + el comparador
+// (disponible, pero secundario). Pensado para crecer: añade objetos al array.
+type ServiceStatus = "available" | "soon";
+interface ServiceCard {
+  id: string;
+  name: string;
+  code: string;
+  status: ServiceStatus;
+  tagline: string;
+  desc: string;
+  href?: string;
+  cta?: string;
+  accent: string;
+  icon: React.ReactNode;
+}
+
+const SECONDARY_SERVICES: ServiceCard[] = [
+  {
+    id: "insights",
+    name: "Orvexia Insights",
+    code: "SRV-02",
+    status: "soon",
+    tagline: "Analítica de precios y demanda",
+    desc: "Histórico de 90 días, señales de compra y analítica de tu catálogo para decidir con datos, no con intuición.",
+    accent: "#818CF8",
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v18h18M7 17v-5M12 17V8M17 17v-3" />
+      </svg>
+    ),
+  },
+  {
+    id: "assistant",
+    name: "Orvexia Asistente",
+    code: "SRV-03",
+    status: "soon",
+    tagline: "Copiloto de precios con IA",
+    desc: "Un asistente que aprende de tu catálogo y te sugiere la estrategia de precio óptima en lenguaje natural.",
+    accent: "#F0ABFC",
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.456-2.456L14.25 6l1.035-.259a3.375 3.375 0 0 0 2.456-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456Z" />
+      </svg>
+    ),
+  },
+  {
+    id: "comparador",
+    name: "Orvexia Comparador",
+    code: "SRV-04",
+    status: "available",
+    tagline: "Compara y compra al mejor precio",
+    desc: "Compara electrodomésticos en las principales tiendas de España y compra en el momento justo. Gratis, sin recargos.",
+    href: "#comparador",
+    cta: "Explorar",
+    accent: "#A3E635",
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+      </svg>
+    ),
+  },
+];
+
 const FAQS: { q: string; a: React.ReactNode }[] = [
   {
     q: "¿Cuánto cuesta usar Orvexia?",
@@ -277,6 +342,11 @@ export default async function HomePage() {
 
   const now = new Date();
   const buildId = now.toISOString().slice(2, 16).replace(/[-:T]/g, "").slice(0, 10);
+
+  // El Repricer solo se promociona como «Disponible» cuando está habilitado y
+  // marcado público (REPRICER_PUBLIC=true). Antes de la revisión de Amazon se
+  // muestra como «Acceso anticipado» para no promocionarlo abiertamente.
+  const repricerLive = REPRICER_ENABLED && REPRICER_PUBLIC;
 
   return (
     <main className="bg-void-deep min-h-screen text-white/90 selection:bg-brand-700/60 selection:text-brand-50">
@@ -336,8 +406,8 @@ export default async function HomePage() {
           </div>
         </div>
 
-        {/* Hero content */}
-        <div className="relative px-4 sm:px-6 pt-16 pb-28 sm:pt-24 sm:pb-36">
+        {/* Hero content — PLATAFORMA */}
+        <div className="relative px-4 sm:px-6 pt-16 pb-24 sm:pt-24 sm:pb-28">
           <div className="max-w-5xl mx-auto">
 
             {/* Eyebrow tag */}
@@ -345,7 +415,7 @@ export default async function HomePage() {
               <div className="relative inline-flex items-center gap-2 px-3.5 h-7 rounded-full bg-white/[0.04] border border-white/10 backdrop-blur font-mono-ui">
                 <span className="text-[10px] text-cyan-300/90">[ ORVEXIA · OS ]</span>
                 <span className="text-white/25">·</span>
-                <span className="text-[10px] text-white/60">PRICE INTELLIGENCE</span>
+                <span className="text-[10px] text-white/60">PLATAFORMA DE PRECIOS</span>
               </div>
             </div>
 
@@ -358,33 +428,35 @@ export default async function HomePage() {
                 letterSpacing: "-0.05em",
               }}
             >
-              <span className="block">Compara precios.</span>
-              <span className="block text-gradient-neon text-glow-brand">Ahorra siempre.</span>
+              <span className="block">Una plataforma.</span>
+              <span className="block text-gradient-neon text-glow-brand">Todas tus herramientas.</span>
             </h1>
 
             <p className="text-center mb-10 max-w-xl mx-auto leading-relaxed text-white/55"
                style={{ fontSize: "clamp(0.95rem, 1.2vw, 1.05rem)" }}>
-              Monitorizamos precios en las principales tiendas de España para que compres siempre en el momento y al precio correcto.
+              Software para vender mejor en Amazon y comprar al mejor precio. Empezamos por el repricer automático y seguimos sumando servicios.
             </p>
 
-            {/* Search with HUD frame */}
-            <div className="relative z-40 max-w-2xl mx-auto mb-12">
-              <HudFrame className="relative text-cyan-400/70">
-                <div className="rounded-2xl p-px"
-                     style={{ background: "linear-gradient(135deg, rgba(94,234,212,0.35), rgba(129,140,248,0.35), rgba(240,171,252,0.35))" }}>
-                  <div className="rounded-[15px] bg-black/40 backdrop-blur-md p-3">
-                    <HeroSearch />
-                  </div>
-                </div>
-              </HudFrame>
-              <div className="mt-2 flex items-center justify-between text-[10px] font-mono-ui text-white/35">
-                <span>QUERY · readyState=1</span>
-                <span className="text-cyan-300/70">↵ exec</span>
-              </div>
+            {/* CTAs */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-12">
+              <span className="aura-cta inline-flex rounded-xl">
+                <Link
+                  href="#servicios"
+                  className="inline-flex items-center justify-center font-bold px-6 h-12 rounded-xl text-sm bg-white text-black hover:bg-white/90 transition-all active:scale-[0.97]"
+                >
+                  Ver servicios →
+                </Link>
+              </span>
+              <Link
+                href={repricerLive ? "/sellers" : "/register"}
+                className="inline-flex items-center justify-center font-semibold px-6 h-12 rounded-xl text-sm text-white/80 hover:text-white border border-white/15 hover:border-white/40 hover:bg-white/[0.04] transition-all active:scale-[0.97] font-mono-ui uppercase tracking-wider"
+              >
+                {repricerLive ? "./repricer" : "Crear cuenta gratis"}
+              </Link>
             </div>
 
-            {/* Stats — terminal style */}
-            <div className="grid grid-cols-3 gap-2 sm:gap-4 max-w-3xl mx-auto mb-10">
+            {/* Stats — terminal style (compactas) */}
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 max-w-2xl mx-auto">
               {[
                 { value: stats.productCount.toLocaleString("es-ES"), label: "productos indexados", code: "DB.products", color: "#5eead4" },
                 { value: stats.withDiscount.toLocaleString("es-ES"), label: "ofertas con descuento", code: "DB.deals",    color: "#a3e635" },
@@ -405,17 +477,6 @@ export default async function HomePage() {
                     </div>
                   </HudFrame>
                 </div>
-              ))}
-            </div>
-
-            {/* Store chips */}
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              <span className="font-mono-ui text-[10px] text-white/30 mr-1">[SYNC ⇄]</span>
-              {STORES.map((s) => (
-                <span key={s} className="text-[11px] font-medium px-3 h-7 inline-flex items-center rounded-full text-white/65 border border-white/[0.10] bg-white/[0.025] backdrop-blur-sm">
-                  <span className="w-1 h-1 rounded-full bg-emerald-400 mr-2" />
-                  {s}
-                </span>
               ))}
             </div>
           </div>
@@ -443,6 +504,201 @@ export default async function HomePage() {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── SERVICIOS — PLATAFORMA (PRINCIPAL) ──────────────────────────── */}
+      <section id="servicios" className="relative px-4 sm:px-6 pt-20 pb-16 overflow-hidden scroll-mt-24">
+        <div className="hidden sm:block absolute inset-0 bg-grid-cyber-fine opacity-30 pointer-events-none" />
+        <div className="relative max-w-7xl mx-auto">
+          <div className="text-center mb-10">
+            <p className="font-mono-ui text-[10px] uppercase tracking-[0.2em] mb-2 text-cyan-300/80">
+              ▸ /services · plataforma Orvexia
+            </p>
+            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-3">
+              Nuestros <span className="text-gradient-neon">servicios</span>
+            </h2>
+            <p className="text-sm leading-relaxed max-w-lg mx-auto text-white/50">
+              Una suite que crece. Hoy automatizamos tus precios en Amazon; pronto, mucho más.
+            </p>
+          </div>
+
+          {/* Servicio destacado: Repricer */}
+          <div className="neon-border rounded-3xl overflow-hidden mb-5">
+            <div
+              className="relative bg-grid-cyber overflow-hidden rounded-[calc(1.5rem-1px)] p-7 sm:p-10 lg:p-12"
+              style={{ background: "linear-gradient(150deg, #0b0d1c 0%, #08091a 50%, #050913 100%)" }}
+            >
+              <div className="absolute inset-0 bg-grid-cyber-fine opacity-40 pointer-events-none" />
+              <div
+                className="hidden sm:block absolute -top-24 -right-24 w-80 h-80 rounded-full halo-breathe pointer-events-none"
+                style={{ background: "radial-gradient(circle, rgba(94,234,212,0.20), transparent 65%)" }}
+              />
+              <div className="relative grid grid-cols-1 lg:grid-cols-[1.25fr_1fr] gap-8 lg:gap-12 items-center">
+                <div>
+                  <div className="flex items-center gap-3 mb-5">
+                    <div
+                      className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                      style={{ background: "rgba(94,234,212,0.12)", border: "1px solid rgba(94,234,212,0.35)", boxShadow: "0 0 24px -6px rgba(94,234,212,0.55)", color: "#5EEAD4" }}
+                    >
+                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+                      </svg>
+                    </div>
+                    {repricerLive ? (
+                      <span className="inline-flex items-center gap-1.5 font-mono-ui text-[10px] uppercase px-2.5 h-6 rounded-full text-emerald-300 bg-emerald-400/[0.1] border border-emerald-400/25">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> Disponible
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 font-mono-ui text-[10px] uppercase px-2.5 h-6 rounded-full text-amber-300 bg-amber-400/[0.1] border border-amber-400/25">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400" /> Acceso anticipado
+                      </span>
+                    )}
+                    <span className="font-mono-ui text-[9px] uppercase text-white/30 ml-auto">SRV-01</span>
+                  </div>
+                  <h3 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-2">
+                    Orvexia Repricer
+                  </h3>
+                  <p className="text-sm font-semibold text-cyan-200/80 mb-3">
+                    Reprecio automático para Amazon
+                  </p>
+                  <p className="text-sm sm:text-base leading-relaxed text-white/55 mb-7 max-w-md">
+                    Define un precio mínimo y máximo por producto. Nuestro motor ajusta tus
+                    precios cada 5 minutos para que ganes la Buy Box sin regalar margen.
+                    Conecta tu cuenta de Amazon o sube tu catálogo en CSV.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Link
+                      href="/sellers"
+                      className="inline-flex items-center gap-2 rounded-xl bg-white text-[#0b0d1c] px-6 py-3 text-sm font-bold hover:bg-white/90 transition-colors"
+                    >
+                      {repricerLive ? "Abrir servicio" : "Ver el servicio"}
+                      <span aria-hidden>→</span>
+                    </Link>
+                    <Link
+                      href="/register"
+                      className="inline-flex items-center gap-2 rounded-xl border border-white/20 text-white px-6 py-3 text-sm font-semibold hover:bg-white/[0.06] transition-colors"
+                    >
+                      Crear cuenta gratis
+                    </Link>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3 sm:gap-4">
+                  {[
+                    { v: "5 min", l: "ciclo reprecio" },
+                    { v: "min/máx", l: "bajo tu control" },
+                    { v: "2 min", l: "puesta en marcha" },
+                  ].map((s) => (
+                    <div
+                      key={s.l}
+                      className="rounded-xl bg-white/[0.025] border border-white/[0.08] backdrop-blur-sm p-3 sm:p-4 text-center"
+                    >
+                      <div className="font-extrabold text-base sm:text-xl tracking-tight text-white leading-none">
+                        {s.v}
+                      </div>
+                      <div className="mt-1.5 text-[10px] sm:text-[11px] text-white/45 leading-tight">
+                        {s.l}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Resto de servicios — rejilla estilo «apps» */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {SECONDARY_SERVICES.map((s) => {
+              const inner = (
+                <div className="group relative h-full rounded-2xl bg-white/[0.025] border border-white/[0.08] hover:border-white/25 backdrop-blur-sm overflow-hidden p-6 transition-all duration-300 hover:-translate-y-1">
+                  <div
+                    className="absolute -top-10 -right-10 w-28 h-28 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                    style={{ background: `radial-gradient(circle, ${s.accent}33, transparent 70%)` }}
+                  />
+                  <div className="flex items-center justify-between mb-4">
+                    <div
+                      className="w-11 h-11 rounded-xl flex items-center justify-center"
+                      style={{ background: `${s.accent}1A`, color: s.accent, border: `1px solid ${s.accent}45`, boxShadow: `0 0 20px -6px ${s.accent}66` }}
+                    >
+                      {s.icon}
+                    </div>
+                    {s.status === "available" ? (
+                      <span className="inline-flex items-center gap-1.5 font-mono-ui text-[9px] uppercase px-2 h-5 rounded-full text-emerald-300 bg-emerald-400/[0.1] border border-emerald-400/25">
+                        <span className="w-1 h-1 rounded-full bg-emerald-400" /> Disponible
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center font-mono-ui text-[9px] uppercase px-2 h-5 rounded-full text-white/45 bg-white/[0.04] border border-white/10">
+                        Próximamente
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="text-[15px] font-bold text-white mb-1.5">{s.name}</h3>
+                  <p className="text-[12px] font-semibold mb-2" style={{ color: s.accent }}>{s.tagline}</p>
+                  <p className="text-[12px] leading-relaxed text-white/50 mb-5">{s.desc}</p>
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono-ui text-[9px] uppercase text-white/25">{s.code}</span>
+                    {s.status === "available" ? (
+                      <span className="inline-flex items-center gap-1 text-[12px] font-bold text-white/85 group-hover:text-white">
+                        {s.cta ?? "Abrir"}
+                        <span className="transition-transform group-hover:translate-x-0.5">→</span>
+                      </span>
+                    ) : (
+                      <span className="font-mono-ui text-[10px] uppercase text-white/30">en construcción</span>
+                    )}
+                  </div>
+                </div>
+              );
+              return s.href ? (
+                <Link key={s.id} href={s.href} className="block h-full scroll-mt-24">
+                  {inner}
+                </Link>
+              ) : (
+                <div key={s.id} className="h-full">
+                  {inner}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ── COMPARADOR (SECUNDARIO) ─────────────────────────────────────── */}
+      <section id="comparador" className="relative px-4 sm:px-6 pt-16 pb-4 overflow-hidden scroll-mt-24 border-t border-white/[0.06]">
+        <div className="relative max-w-5xl mx-auto text-center">
+          <span className="inline-flex items-center gap-2 font-mono-ui text-[10px] uppercase mb-5 px-3 h-7 rounded-full text-lime-300 bg-lime-400/[0.08] border border-lime-400/25">
+            <span className="w-1.5 h-1.5 rounded-full bg-lime-400" />
+            ▸ /comparador · para compradores
+          </span>
+          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-3">
+            Compara precios. <span className="text-gradient-neon">Ahorra siempre.</span>
+          </h2>
+          <p className="text-sm leading-relaxed max-w-xl mx-auto text-white/55 mb-8">
+            Monitorizamos precios en las principales tiendas de España para que compres en el momento y al precio correcto.
+          </p>
+
+          {/* Search with HUD frame */}
+          <div className="relative z-40 max-w-2xl mx-auto">
+            <HudFrame className="relative text-cyan-400/70">
+              <div className="rounded-2xl p-px"
+                   style={{ background: "linear-gradient(135deg, rgba(94,234,212,0.35), rgba(129,140,248,0.35), rgba(240,171,252,0.35))" }}>
+                <div className="rounded-[15px] bg-black/40 backdrop-blur-md p-3">
+                  <HeroSearch />
+                </div>
+              </div>
+            </HudFrame>
+          </div>
+
+          {/* Store chips */}
+          <div className="flex flex-wrap items-center justify-center gap-2 mt-8">
+            <span className="font-mono-ui text-[10px] text-white/30 mr-1">[SYNC ⇄]</span>
+            {STORES.map((s) => (
+              <span key={s} className="text-[11px] font-medium px-3 h-7 inline-flex items-center rounded-full text-white/65 border border-white/[0.10] bg-white/[0.025] backdrop-blur-sm">
+                <span className="w-1 h-1 rounded-full bg-emerald-400 mr-2" />
+                {s}
+              </span>
+            ))}
           </div>
         </div>
       </section>
@@ -865,86 +1121,6 @@ export default async function HomePage() {
           </p>
         </div>
       </section>
-
-      {/* ── FOR SELLERS — REPRICER CROSS-SELL ───────────────────────────── */}
-      {REPRICER_ENABLED && REPRICER_PUBLIC && (
-      <section className="relative px-4 sm:px-6 pb-24 overflow-hidden">
-        <div className="relative max-w-7xl mx-auto">
-          <div className="neon-border rounded-3xl overflow-hidden">
-            <div
-              className="relative bg-grid-cyber overflow-hidden rounded-[calc(1.5rem-1px)] p-8 sm:p-12 lg:p-16"
-              style={{ background: "linear-gradient(150deg, #0b0d1c 0%, #08091a 50%, #050913 100%)" }}
-            >
-              <div className="absolute inset-0 bg-grid-cyber-fine opacity-40 pointer-events-none" />
-              <div
-                className="hidden sm:block absolute -top-32 -left-32 w-80 h-80 rounded-full halo-breathe pointer-events-none"
-                style={{ background: "radial-gradient(circle, rgba(94,234,212,0.20), transparent 65%)" }}
-              />
-              <div
-                className="hidden sm:block absolute -bottom-24 -right-24 w-72 h-72 rounded-full halo-breathe pointer-events-none"
-                style={{ background: "radial-gradient(circle, rgba(129,140,248,0.22), transparent 65%)", animationDelay: "2s" }}
-              />
-
-              <div className="relative flex flex-col lg:flex-row items-start lg:items-center justify-between gap-10">
-                <div className="max-w-xl">
-                  <span className="inline-flex items-center gap-2 font-mono-ui text-[10px] uppercase mb-6 px-3 h-7 rounded-full bg-white/[0.06] border border-white/[0.12] text-white/70">
-                    <span className="w-1 h-1 rounded-full bg-cyan-300" />
-                    ▸ /sellers · b2b
-                  </span>
-                  <h2
-                    className="font-extrabold leading-[1.05] mb-4 tracking-tight text-white"
-                    style={{ fontSize: "clamp(1.9rem, 3.4vw, 2.8rem)" }}
-                  >
-                    ¿Vendes en Amazon?<br />
-                    <span className="text-gradient-neon">Reprecia en automático.</span>
-                  </h2>
-                  <p className="text-sm sm:text-base leading-relaxed text-white/55 mb-7">
-                    Define un precio mínimo y máximo por producto. Nuestro motor ajusta
-                    tus precios cada 5 minutos para que ganes la Buy Box sin regalar
-                    margen. Conecta tu cuenta de Amazon o sube tu catálogo en CSV.
-                  </p>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <Link
-                      href="/sellers"
-                      className="inline-flex items-center gap-2 rounded-xl bg-white text-[#0b0d1c] px-6 py-3 text-sm font-bold hover:bg-white/90 transition-colors"
-                    >
-                      Descubrir Orvexia Repricer
-                      <span aria-hidden>→</span>
-                    </Link>
-                    <Link
-                      href="/register"
-                      className="inline-flex items-center gap-2 rounded-xl border border-white/20 text-white px-6 py-3 text-sm font-semibold hover:bg-white/[0.06] transition-colors"
-                    >
-                      Crear cuenta gratis
-                    </Link>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-3 sm:gap-4 w-full lg:w-auto lg:min-w-[320px]">
-                  {[
-                    { v: "5 min", l: "ciclo reprecio" },
-                    { v: "min/máx", l: "bajo tu control" },
-                    { v: "2 min", l: "puesta en marcha" },
-                  ].map((s) => (
-                    <div
-                      key={s.l}
-                      className="rounded-xl bg-white/[0.025] border border-white/[0.08] backdrop-blur-sm p-3 sm:p-4 text-center"
-                    >
-                      <div className="font-extrabold text-base sm:text-xl tracking-tight text-white leading-none">
-                        {s.v}
-                      </div>
-                      <div className="mt-1.5 text-[10px] sm:text-[11px] text-white/45 leading-tight">
-                        {s.l}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-      )}
 
     </main>
   );
