@@ -1582,67 +1582,7 @@ export default function ProductNetwork({
             if (!selId) return null;
             const pd = layout.pos.find((q) => q.id === selId);
             if (!pd) return null;
-            const hb = layout.hubs.find((h) => h.id === pd.hubId) ?? layout.hub;
-
-            const SR   = 25;                               // radio del icono
-            const MR   = R + 76;                           // distancia nodo→icono
-            const SPRD = (37 * Math.PI) / 180;             // separación angular
-            const LBL_R = MR + SR + 20;                    // radio de la etiqueta
-
-            // Busca el ángulo `base` (en pasos de 30°) que: (1) mantiene las
-            // tres etiquetas DENTRO del lienzo — un menú que se sale por el
-            // borde superior era el fallo más visible con un nodo arriba —,
-            // (2) maximiza la distancia a los vecinos cercanos (≤220 px) y
-            // (3) tiende hacia fuera del hub. Siempre evaluamos los 12
-            // ángulos: el antiguo atajo "sin vecinos → dirección hub→nodo"
-            // apuntaba justo al borde más cercano.
-            const VICIN = 220;
-            const PAD = 120; // margen seguro de las puntas de etiqueta al borde
-            const neighbours = layout.pos.filter(
-              (q) => q.id !== pd.id && Math.hypot(q.x - pd.x, q.y - pd.y) < VICIN,
-            );
-            let bestAng = -Math.PI / 2;
-            let bestScore = -Infinity;
-            for (let deg = 0; deg < 360; deg += 30) {
-              const a = (deg * Math.PI) / 180;
-              // Centro del abanico a MR del nodo seleccionado.
-              const cx = pd.x + Math.cos(a) * MR;
-              const cy = pd.y + Math.sin(a) * MR;
-              // Cuántas de las 3 puntas de etiqueta caen fuera del margen.
-              let offscreen = 0;
-              for (const t of [a - SPRD, a, a + SPRD]) {
-                const lx = pd.x + Math.cos(t) * LBL_R;
-                const ly = pd.y + Math.sin(t) * LBL_R;
-                if (lx < PAD || lx > VB_W - PAD || ly < PAD || ly > VB_H - PAD)
-                  offscreen++;
-              }
-              // Distancia mínima a cualquier vecino (999 si no hay).
-              let minD = Infinity;
-              for (const n of neighbours) {
-                const d = Math.hypot(n.x - cx, n.y - cy);
-                if (d < minD) minD = d;
-              }
-              const clear = neighbours.length ? minD : 999;
-              const awayFromHub = Math.hypot(cx - hb.x, cy - hb.y);
-              // Penalización por apuntar hacia ABAJO: el título/precio del nodo
-              // cuelga justo debajo, y el panel del abanico lo taparía. Sesga
-              // la elección hacia los lados/arriba salvo que abajo sea lo único
-              // libre. Solo afecta a nodos que de otro modo abrirían hacia
-              // abajo (sin(a)>0); los demás casos quedan idénticos.
-              const downBias = Math.max(0, Math.sin(a)) * 65;
-              // El castigo por salirse domina: un ángulo en pantalla siempre
-              // gana a uno fuera, y entre los válidos manda el despeje.
-              const score =
-                clear + awayFromHub * 0.15 - offscreen * 400 - downBias;
-              if (score > bestScore) {
-                bestScore = score;
-                bestAng = a;
-              }
-            }
-            const base = bestAng;
-            const angles = [base - SPRD, base, base + SPRD];
-
-            const selSt  = nodeState(pd);
+            const selSt = nodeState(pd);
             const selCol = STATE_COLOR[selSt];
 
             const opts: Array<{
@@ -1660,78 +1600,108 @@ export default function ProductNetwork({
                 onClick: () => window.dispatchEvent(new CustomEvent("orvexia:open-profit")) },
             ];
 
-            // ── Panel de cristal tras el abanico ──────────────────────────
-            // Mismo material que el dock de herramientas (dockGrad + sombra),
-            // para que las opciones del producto y las del hub hablen el mismo
-            // idioma visual. Calculamos la caja que envuelve los 3 iconos y
-            // sus etiquetas; el nodo queda fuera (el abanico sale a MR del
-            // nodo), así que el panel no tapa el hexágono ni su precio.
-            const CHAR_W = 7; // ancho aprox. por carácter de etiqueta (12.5px)
-            let pminX = Infinity, pminY = Infinity, pmaxX = -Infinity, pmaxY = -Infinity;
-            angles.forEach((a, i) => {
-              const ix = pd.x + Math.cos(a) * MR;
-              const iy = pd.y + Math.sin(a) * MR;
-              const lx = pd.x + Math.cos(a) * LBL_R;
-              const ly = pd.y + Math.sin(a) * LBL_R;
-              const ca = Math.cos(a);
-              const w = opts[i].label.length * CHAR_W;
-              const lx0 = ca > 0.28 ? lx : ca < -0.28 ? lx - w : lx - w / 2;
-              const lx1 = ca > 0.28 ? lx + w : ca < -0.28 ? lx : lx + w / 2;
-              pminX = Math.min(pminX, ix - (SR + 9), lx0);
-              pmaxX = Math.max(pmaxX, ix + (SR + 9), lx1);
-              pminY = Math.min(pminY, iy - (SR + 9), ly - 9);
-              pmaxY = Math.max(pmaxY, iy + (SR + 9), ly + 9);
-            });
-            const PAD_X = 18, PAD_Y = 15;
-            const panX = pminX - PAD_X;
-            const panY = pminY - PAD_Y;
-            const panW = pmaxX - pminX + 2 * PAD_X;
-            const panH = pmaxY - pminY + 2 * PAD_Y;
+            // ── Geometría del dock de opciones ────────────────────────────
+            // Panel rectangular (mismo material que HERRAMIENTAS) colocado
+            // JUNTO al nodo, nunca encima. Un abanico radial respaldado por un
+            // rectángulo dejaba siempre una esquina vacía sobre el propio nodo;
+            // un dock con desplazamiento lo evita por construcción.
+            const padX = 16, padTop = 12, padBottom = 14;
+            const headerH = 24;
+            const tileH = 52, tileGap = 10;
+            const panelW = 214;
+            const tileW = panelW - 2 * padX;
+            const panelH =
+              padTop + headerH + opts.length * tileH +
+              (opts.length - 1) * tileGap + padBottom;
+
+            // ── Lado del nodo donde colocar el panel ──────────────────────
+            // Probamos los 4 lados y elegimos el que cabe en pantalla, queda
+            // más lejos de los vecinos y no es "abajo" (donde cuelga el
+            // título/precio del nodo).
+            const NODE_CLEAR = R + 30; // despeja hexágono + anillo de selección
+            const GAP = 16;
+            const off = NODE_CLEAR + GAP;
+            const MARGIN = 20; // margen del panel al borde del lienzo
+            const sides = [
+              { x: pd.x + off,          y: pd.y - panelH / 2,   bias: 0 },
+              { x: pd.x - off - panelW, y: pd.y - panelH / 2,   bias: 0 },
+              { x: pd.x - panelW / 2,   y: pd.y - off - panelH, bias: -50 },
+              { x: pd.x - panelW / 2,   y: pd.y + off,          bias: -400 },
+            ];
+            const neigh = layout.pos.filter(
+              (q) => q.id !== pd.id && Math.hypot(q.x - pd.x, q.y - pd.y) < 420,
+            );
+            let bestSide = sides[0];
+            let bestScore = -Infinity;
+            for (const s of sides) {
+              const cx = s.x + panelW / 2;
+              const cy = s.y + panelH / 2;
+              const corners: Array<[number, number]> = [
+                [s.x, s.y],
+                [s.x + panelW, s.y],
+                [s.x, s.y + panelH],
+                [s.x + panelW, s.y + panelH],
+              ];
+              let outside = 0;
+              for (const [px, py] of corners) {
+                if (px < MARGIN || px > VB_W - MARGIN || py < MARGIN || py > VB_H - MARGIN)
+                  outside++;
+              }
+              let minD = Infinity;
+              for (const n of neigh) {
+                const d = Math.hypot(n.x - cx, n.y - cy);
+                if (d < minD) minD = d;
+              }
+              const clear = neigh.length ? minD : 9999;
+              const score = clear + s.bias - outside * 6000;
+              if (score > bestScore) {
+                bestScore = score;
+                bestSide = s;
+              }
+            }
+            // Garantizamos que el panel quede entero dentro del lienzo.
+            const panelX = Math.max(MARGIN, Math.min(VB_W - MARGIN - panelW, bestSide.x));
+            const panelY = Math.max(MARGIN, Math.min(VB_H - MARGIN - panelH, bestSide.y));
+            const tilesTop = panelY + padTop + headerH;
+
+            // ── Conector nodo → panel (rayo recortado al borde del panel) ──
+            const pcx = panelX + panelW / 2;
+            const pcy = panelY + panelH / 2;
+            const sang = Math.atan2(pcy - pd.y, pcx - pd.x);
+            const stemX1 = pd.x + Math.cos(sang) * (R + 10);
+            const stemY1 = pd.y + Math.sin(sang) * (R + 10);
+            const sdx = pcx - pd.x;
+            const sdy = pcy - pd.y;
+            const ts: number[] = [];
+            if (sdx !== 0)
+              for (const X of [panelX, panelX + panelW]) {
+                const t = (X - pd.x) / sdx;
+                const y = pd.y + t * sdy;
+                if (t > 0 && y >= panelY - 1 && y <= panelY + panelH + 1) ts.push(t);
+              }
+            if (sdy !== 0)
+              for (const Y of [panelY, panelY + panelH]) {
+                const t = (Y - pd.y) / sdy;
+                const x = pd.x + t * sdx;
+                if (t > 0 && x >= panelX - 1 && x <= panelX + panelW + 1) ts.push(t);
+              }
+            const te = ts.length ? Math.min(...ts) : 0;
+            const stemX2 = pd.x + te * sdx;
+            const stemY2 = pd.y + te * sdy;
 
             return (
               <g>
-                {/* Panel de cristal tras las opciones (mismo material que el
-                    dock de herramientas). Se dibuja primero → queda detrás del
-                    abanico y de los anillos de selección. */}
-                <g className="tool-in">
-                  <rect
-                    x={panX}
-                    y={panY}
-                    width={panW}
-                    height={panH}
-                    rx={22}
-                    fill="url(#dockGrad)"
-                    stroke="rgba(255,255,255,0.10)"
-                    strokeWidth="1"
-                    filter="url(#dockShadow)"
-                  />
-                  {/* Filo superior iluminado → relieve de cristal, idéntico al
-                      dock. */}
-                  <rect
-                    x={panX + 1}
-                    y={panY + 1}
-                    width={panW - 2}
-                    height={panH - 2}
-                    rx={21}
-                    fill="none"
-                    stroke="rgba(255,255,255,0.05)"
-                    strokeWidth="1"
-                  />
-                </g>
                 {/* Doble anillo de selección — color del estado del nodo.
                     El externo gira despacio (hub-ring), el interno respira
-                    (select-breathe) con curva ease-in-out para que el latido
-                    se sienta orgánico, no robotizado. */}
+                    (select-breathe). */}
                 <circle cx={pd.x} cy={pd.y} r={R + 26}
                   fill="none" stroke={selCol.halo} strokeWidth="2.6"
                   strokeDasharray="7 5" className="hub-ring" filter="url(#glow)" />
                 <circle cx={pd.x} cy={pd.y} r={R + 15}
                   fill="none" stroke={selCol.stroke} strokeWidth="1.6"
                   filter="url(#glow)" className="select-breathe" />
-                {/* Ripple: anillo que se expande desde el nodo recién
-                    seleccionado. key={selId} fuerza remount → la animación
-                    se reproduce cada vez que el usuario selecciona uno
-                    distinto, no solo la primera vez. */}
+                {/* Ripple: anillo que se expande al seleccionar (key={selId}
+                    fuerza remount → reproduce la animación en cada cambio). */}
                 <circle
                   key={selId}
                   cx={pd.x}
@@ -1743,89 +1713,95 @@ export default function ProductNetwork({
                   className="node-ripple"
                 />
 
-                {/* Iconos en abanico radial */}
-                {opts.map((o, i) => {
-                  const a   = angles[i];
-                  const ix  = pd.x + Math.cos(a) * MR;
-                  const iy  = pd.y + Math.sin(a) * MR;
-                  const lx  = pd.x + Math.cos(a) * LBL_R;
-                  const ly  = pd.y + Math.sin(a) * LBL_R;
-                  const ca  = Math.cos(a);
-                  const anc = ca > 0.28 ? "start" : ca < -0.28 ? "end" : "middle";
-                  // Extremos de la línea radial (borde hex → borde icono)
-                  const l1x = pd.x + Math.cos(a) * (R + 11);
-                  const l1y = pd.y + Math.sin(a) * (R + 11);
-                  const l2x = pd.x + Math.cos(a) * (MR - SR - 6);
-                  const l2y = pd.y + Math.sin(a) * (MR - SR - 6);
-                  return (
-                    <g key={o.key} className="tool-in"
-                      style={{ "--td": `${i * 0.08}s` } as CSSProperties}>
+                {/* Conector nodo → panel (mismo lenguaje que el tallo hub→dock:
+                    trazo tenue + flujo de datos animado). */}
+                <line x1={stemX1} y1={stemY1} x2={stemX2} y2={stemY2}
+                  stroke={selCol.halo} strokeWidth="1.4"
+                  vectorEffect="non-scaling-stroke" />
+                <line x1={stemX1} y1={stemY1} x2={stemX2} y2={stemY2}
+                  className="net-flow" stroke={selCol.stroke} strokeWidth="1.6"
+                  strokeLinecap="round" vectorEffect="non-scaling-stroke" />
 
-                      {/* Línea radial punteada */}
-                      <line x1={l1x} y1={l1y} x2={l2x} y2={l2y}
-                        stroke={`rgba(${o.rgb},0.30)`} strokeWidth="1.4"
-                        strokeDasharray="4 5" strokeLinecap="round"
-                        vectorEffect="non-scaling-stroke" />
+                {/* Dock de opciones del producto — colocado al lado del nodo,
+                    nunca encima. Mismo material/recipe que HERRAMIENTAS. */}
+                <g className="tool-in">
+                  <rect x={panelX} y={panelY} width={panelW} height={panelH} rx={24}
+                    fill="url(#dockGrad)" stroke="rgba(255,255,255,0.10)"
+                    strokeWidth="1" filter="url(#dockShadow)" />
+                  {/* Filo superior iluminado → relieve de cristal */}
+                  <rect x={panelX + 1} y={panelY + 1} width={panelW - 2} height={panelH - 2}
+                    rx={23} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+                  {/* Cabecera, como "HERRAMIENTAS" en el dock del hub */}
+                  <circle cx={panelX + 20} cy={panelY + padTop + 9} r="2.6"
+                    fill={selCol.dot ?? "rgba(125,211,252,0.9)"} filter="url(#glow-sm)" />
+                  <text x={panelX + 30} y={panelY + padTop + 12.5} fontSize="9.5"
+                    fontWeight={700} letterSpacing="2.5" fill="rgba(255,255,255,0.45)">
+                    OPCIONES
+                  </text>
 
-                      <g className="hex-node" style={{ cursor: "pointer" }}
+                  {opts.map((o, i) => {
+                    const tileX = panelX + padX;
+                    const tileY = tilesTop + i * (tileH + tileGap);
+                    const icx = tileX + 26;
+                    const icy = tileY + tileH / 2;
+                    return (
+                      <g
+                        key={o.key}
+                        className="opt-tile"
                         onClick={() => {
                           if (suppressClick.current) { suppressClick.current = false; return; }
                           o.onClick();
-                        }}>
-                        {/* Área de clic ampliada */}
-                        <circle cx={ix} cy={iy} r={SR + 17} fill="transparent" />
-                        {/* Halo difuso */}
-                        <circle cx={ix} cy={iy} r={SR + 11} fill="none"
-                          stroke={`rgba(${o.rgb},0.14)`} strokeWidth="1"
-                          filter="url(#glow)" />
-                        {/* Anillo punteado exterior */}
-                        <circle cx={ix} cy={iy} r={SR + 5} fill="none"
-                          stroke={`rgba(${o.rgb},0.38)`} strokeWidth="0.9"
-                          strokeDasharray="3 3" />
-                        {/* Círculo principal */}
-                        <circle cx={ix} cy={iy} r={SR}
-                          fill="rgba(4,5,16,0.97)"
-                          stroke={`rgba(${o.rgb},0.88)`} strokeWidth="2" />
-
-                        {/* Icono */}
+                        }}
+                      >
+                        {/* Celda tintada con el color de la opción */}
+                        <rect x={tileX} y={tileY} width={tileW} height={tileH} rx={14}
+                          fill={`rgba(${o.rgb},0.06)`} stroke={`rgba(${o.rgb},0.20)`} strokeWidth="1" />
+                        {/* Realce al pasar el cursor */}
+                        <rect className="tool-tile-hi" x={tileX} y={tileY} width={tileW}
+                          height={tileH} rx={14} fill={`rgba(${o.rgb},0.13)`}
+                          stroke={`rgba(${o.rgb},0.55)`} strokeWidth="1.2" />
+                        {/* Disco del icono */}
+                        <circle cx={icx} cy={icy} r={16} fill="rgba(4,5,16,0.85)"
+                          stroke={`rgba(${o.rgb},0.7)`} strokeWidth="1.4" />
                         {o.icon === "bars" && (
-                          <g stroke={`rgb(${o.rgb})`} strokeWidth="2.5" strokeLinecap="round">
-                            <line x1={ix - 9} y1={iy + 7} x2={ix - 9} y2={iy + 1} />
-                            <line x1={ix}     y1={iy + 7} x2={ix}     y2={iy - 7} />
-                            <line x1={ix + 9} y1={iy + 7} x2={ix + 9} y2={iy - 2} />
+                          <g stroke={`rgb(${o.rgb})`} strokeWidth="2.2" strokeLinecap="round">
+                            <line x1={icx - 7} y1={icy + 6} x2={icx - 7} y2={icy + 1} />
+                            <line x1={icx}     y1={icy + 6} x2={icx}     y2={icy - 6} />
+                            <line x1={icx + 7} y1={icy + 6} x2={icx + 7} y2={icy - 2} />
                           </g>
                         )}
                         {o.icon === "coin" && (
                           <>
-                            <circle cx={ix} cy={iy} r={12} fill="none"
-                              stroke={`rgb(${o.rgb})`} strokeWidth="1.7" />
-                            <text x={ix} y={iy + 0.5} textAnchor="middle"
-                              dominantBaseline="central" fontSize="15" fontWeight={800}
+                            <circle cx={icx} cy={icy} r={9} fill="none"
+                              stroke={`rgb(${o.rgb})`} strokeWidth="1.6" />
+                            <text x={icx} y={icy + 0.5} textAnchor="middle"
+                              dominantBaseline="central" fontSize="12" fontWeight={800}
                               fill={`rgb(${o.rgb})`}>€</text>
                           </>
                         )}
                         {o.icon === "pause" && (
                           <g fill={`rgb(${o.rgb})`}>
-                            <rect x={ix - 8}   y={iy - 9} width="5.5" height="18" rx="1.5" />
-                            <rect x={ix + 2.5} y={iy - 9} width="5.5" height="18" rx="1.5" />
+                            <rect x={icx - 6}   y={icy - 7} width="4.5" height="14" rx="1.2" />
+                            <rect x={icx + 1.5} y={icy - 7} width="4.5" height="14" rx="1.2" />
                           </g>
                         )}
                         {o.icon === "play" && (
-                          <path d={`M${ix - 7},${iy - 9} L${ix + 10},${iy} L${ix - 7},${iy + 9} Z`}
+                          <path d={`M${icx - 5},${icy - 7} L${icx + 8},${icy} L${icx - 5},${icy + 7} Z`}
                             fill={`rgb(${o.rgb})`} />
                         )}
-
-                        {/* Etiqueta radial */}
-                        <text x={lx} y={ly}
-                          textAnchor={anc} dominantBaseline="central"
-                          fontSize="12.5" fontWeight={700}
-                          fill={`rgba(${o.rgb},0.93)`}>
+                        {/* Etiqueta */}
+                        <text x={icx + 30} y={icy} dominantBaseline="central"
+                          fontSize="13" fontWeight={700} fill={`rgba(${o.rgb},0.95)`}>
                           {o.label}
                         </text>
+                        {/* Chevron: afford "abre algo" */}
+                        <path d={`M${tileX + tileW - 20},${icy - 5} l5,5 l-5,5`}
+                          fill="none" stroke={`rgba(${o.rgb},0.5)`} strokeWidth="1.6"
+                          strokeLinecap="round" strokeLinejoin="round" />
                       </g>
-                    </g>
-                  );
-                })}
+                    );
+                  })}
+                </g>
               </g>
             );
           })()}

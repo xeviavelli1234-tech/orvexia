@@ -980,6 +980,16 @@ body {
   opacity: 1;
 }
 
+/* Celdas del dock de opciones del producto. Revelan el realce al pasar el
+   cursor SIN escalar (a diferencia de .hex-node): son tiles anchos y el
+   scale(1.12) los deformaría / sacaría del panel. */
+.opt-tile {
+  cursor: pointer;
+}
+.opt-tile:hover .tool-tile-hi {
+  opacity: 1;
+}
+
 /* Anillo girando alrededor del icono de Amazon */
 @keyframes hub-spin {
   to { transform: rotate(360deg); }
