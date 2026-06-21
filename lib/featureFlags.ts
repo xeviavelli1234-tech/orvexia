@@ -5,10 +5,11 @@
 export const REPRICER_ENABLED = true;
 
 // Visibilidad pública del módulo Repricer.
-//  - false (def.): NO se promociona en la web (sin banda en la home ni
-//    tarjeta en el dashboard) y las páginas llevan noindex. Sigue siendo
-//    accesible escribiendo la URL directa y con login (uso privado /
-//    pre-lanzamiento mientras Amazon revisa la publicación).
-//  - true: visible y promocionado públicamente (lanzamiento).
-// Se controla por env en Vercel: REPRICER_PUBLIC=true
-export const REPRICER_PUBLIC = process.env.REPRICER_PUBLIC === "true";
+//  - true (def.): visible y promocionado públicamente (banda en la home y
+//    tarjeta en el dashboard) e indexable por buscadores. El modo manual/CSV
+//    es autoservicio completo; la conexión OAuth de Amazon va gateada aparte
+//    por SP_API_APP_PUBLISHED (este flag NO la activa).
+//  - false: NO se promociona (sin banda en la home ni tarjeta en el dashboard)
+//    y las páginas llevan noindex. Sigue accesible por URL directa con login.
+// Kill-switch por env en Vercel: REPRICER_PUBLIC=false (+ redeploy) lo oculta.
+export const REPRICER_PUBLIC = process.env.REPRICER_PUBLIC !== "false";
