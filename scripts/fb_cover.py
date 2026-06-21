@@ -18,12 +18,12 @@ F = "/usr/share/fonts/truetype/dejavu/"
 def font(name, size):
     return ImageFont.truetype(F + name, size)
 
-f_kicker = font("DejaVuSansMono.ttf", 26)
-f_h1     = font("DejaVuSans-Bold.ttf", 104)
-f_sub    = font("DejaVuSans.ttf", 40)
-f_tag    = font("DejaVuSans-Bold.ttf", 34)
-f_url    = font("DejaVuSansMono.ttf", 30)
-f_badge  = font("DejaVuSans-Bold.ttf", 26)
+f_kicker = font("DejaVuSansMono.ttf", 24)
+f_h1     = font("DejaVuSans-Bold.ttf", 78)
+f_sub    = font("DejaVuSans.ttf", 34)
+f_tag    = font("DejaVuSans-Bold.ttf", 30)
+f_url    = font("DejaVuSansMono.ttf", 27)
+f_badge  = font("DejaVuSans-Bold.ttf", 24)
 
 img = Image.new("RGB", (W, H), BG_MID)
 px = img.load()
@@ -78,31 +78,32 @@ def gradient_text(draw_img, xy, text, fnt, c1, c2):
     draw_img.paste(grad, (xy[0], xy[1]), mask)
     return tw
 
-# Márgenes: dejamos limpia la esquina inferior-izquierda (foto de perfil FB)
-LEFT = 110
-TOP = 90
+# Márgenes: dejamos limpia la esquina inferior-izquierda (foto de perfil FB).
+# Contenido más centrado horizontalmente para sobrevivir al recorte de móvil.
+LEFT = 120
+TOP = 120
 
 # Kicker
 draw.text((LEFT, TOP), "▸ ORVEXIA · OS", font=f_kicker, fill=(94, 234, 212, 220))
 
 # Titular: "Orvexia " (blanco) + "Repricer" (gradiente neón)
-y1 = TOP + 50
+y1 = TOP + 42
 w_a = draw.textlength("Orvexia ", font=f_h1)
 draw.text((LEFT, y1), "Orvexia ", font=f_h1, fill=WHITE)
-gradient_text(img, (LEFT + int(w_a), y1 + 8), "Repricer", f_h1, CYAN, INDIGO)
+gradient_text(img, (LEFT + int(w_a), y1 + 6), "Repricer", f_h1, CYAN, INDIGO)
 
 # Subtítulo
-y2 = y1 + 130
+y2 = y1 + 98
 draw.text((LEFT, y2), "Repricer automático para vendedores de Amazon España",
           font=f_sub, fill=(255, 255, 255, 205))
 
 # Tagline (cian)
-y3 = y2 + 62
+y3 = y2 + 50
 draw.text((LEFT, y3), "Gana la Buy Box sin destrozar tu margen.",
           font=f_tag, fill=CYAN)
 
 # Pill de URL
-y4 = y3 + 70
+y4 = y3 + 56
 url = "orvexia.es/repricer"
 uw = draw.textlength(url, font=f_url)
 pad = 24
