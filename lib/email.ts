@@ -125,6 +125,60 @@ export async function sendVerificationEmail(options: {
   }
 }
 
+/**
+ * Confirmación al capturar un lead en la web (simulador / lista de espera del
+ * repricer). Best-effort: nunca lanza. Si no hay Resend configurado, devuelve
+ * `not_configured` y el caller lo ignora.
+ */
+export async function sendLeadWelcomeEmail(options: {
+  to: string;
+}): Promise<EmailResult> {
+  const appName = process.env.NEXT_PUBLIC_APP_NAME || "Orvexia";
+  const repricerUrl = `${baseUrl()}/repricer`;
+  const accent = "#5EEAD4";
+
+  const html = `<!DOCTYPE html>
+  <html lang="es">
+    <head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /></head>
+    <body style="margin:0;padding:0;background:#0b1220;font-family:'Segoe UI',Arial,sans-serif;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:28px 0;">
+        <tr><td align="center">
+          <table role="presentation" width="520" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:18px;overflow:hidden;box-shadow:0 18px 35px rgba(0,0,0,0.18);">
+            <tr>
+              <td style="background:linear-gradient(135deg,#0b0d1c,#1e293b);color:#e2f3ff;padding:28px;">
+                <div style="font-size:13px;letter-spacing:0.08em;text-transform:uppercase;opacity:.9;font-weight:600;">${appName} Repricer</div>
+                <div style="font-size:22px;font-weight:700;margin-top:6px;">¡Te avisaremos! 🚀</div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:26px 28px;color:#0f172a;">
+                <p style="margin:0 0 14px 0;font-size:15px;line-height:1.6;color:#334155;">
+                  Gracias por tu interés en ${appName} Repricer. Te avisaremos en cuanto haya novedades
+                  y, si aún no lo has hecho, ya puedes empezar a repreciar tu catálogo en modo manual/CSV.
+                </p>
+                <a href="${repricerUrl}" style="display:inline-block;background:${accent};color:#06241f;text-decoration:none;padding:12px 18px;border-radius:12px;font-weight:800;font-size:14px;">Empezar gratis 14 días</a>
+                <p style="margin:18px 0 0 0;font-size:13px;color:#64748b;">Si no solicitaste esto, puedes ignorar este correo.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="background:#f1f5f9;color:#475569;padding:16px 28px;font-size:12px;">Enviado por ${appName}.</td>
+            </tr>
+          </table>
+        </td></tr>
+      </table>
+    </body>
+  </html>`;
+
+  const text = `Gracias por tu interés en ${appName} Repricer. Te avisaremos de las novedades. Puedes empezar gratis 14 días: ${repricerUrl}`;
+
+  try {
+    await tryResend(options.to, `Bienvenido a ${appName} Repricer`, html, text);
+    return { emailSent: true, reason: "ok" };
+  } catch (err) {
+    return logSendFailure("lead_welcome", options.to, err);
+  }
+}
+
 export async function sendDiscountAvailableEmail(options: {
   to: string;
   userName: string;

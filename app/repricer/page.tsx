@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { jsonLdScript } from "@/lib/json-ld";
+import PriceSimulator from "./PriceSimulator";
 
 const CANONICAL = "https://www.orvexia.es/repricer";
 const OG_DESC =
@@ -208,6 +209,13 @@ export default function RepricerPage() {
           <p className="mt-5 text-sm text-white/55 font-mono-ui">
             14 días de prueba gratis · luego 19 €/mes (IVA incl.) · cancela cuando quieras
           </p>
+        </div>
+      </section>
+
+      {/* Simulador público — gancho de conversión para tráfico frío */}
+      <section className="border-b border-white/[0.06] bg-void-deep">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-14">
+          <PriceSimulator />
         </div>
       </section>
 
