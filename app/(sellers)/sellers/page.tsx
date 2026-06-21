@@ -1,5 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PRO_PRICE_EUR } from "@/lib/billing";
+
+// /sellers y /repricer son dos landings del mismo producto. Para no canibalizar
+// el SEO (señales repartidas entre URLs que compiten por las mismas keywords),
+// canonicalizamos esta hacia /repricer, la página de marketing de referencia.
+export const metadata: Metadata = {
+  alternates: { canonical: "https://www.orvexia.es/repricer" },
+};
 
 export default function SellersLandingPage() {
   return (

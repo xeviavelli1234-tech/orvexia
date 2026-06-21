@@ -1,10 +1,101 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { jsonLdScript } from "@/lib/json-ld";
+
+const CANONICAL = "https://www.orvexia.es/repricer";
+const OG_DESC =
+  "Repricer automático para vendedores de Amazon España. Gana la Buy Box y protege tu margen con reglas que tú controlas. 14 días gratis, luego 19 €/mes sin permanencia.";
 
 export const metadata: Metadata = {
-  title: "Repricer para vendedores de Amazon",
+  title: "Repricer automático para Amazon España | Orvexia",
   description:
-    "Orvexia Repricer ajusta tus precios de Amazon en tiempo real para ganar la Buy Box y proteger tu margen, con reglas que tú controlas. Sincronización SP-API, alertas, analíticas y modo simulación.",
+    "Orvexia Repricer ajusta tus precios de Amazon en tiempo real para ganar la Buy Box y proteger tu margen, con reglas que tú controlas. Sincronización SP-API, alertas, analíticas y modo simulación. 14 días gratis.",
+  keywords: [
+    "repricer Amazon",
+    "repricer Amazon España",
+    "reprecio automático Amazon",
+    "ganar la Buy Box",
+    "software repricing Amazon",
+    "repricer Seller Central",
+    "ajustar precios Amazon automáticamente",
+  ],
+  alternates: { canonical: CANONICAL },
+  openGraph: {
+    type: "website",
+    url: CANONICAL,
+    siteName: "Orvexia",
+    title: "Repricer automático para Amazon España",
+    description: OG_DESC,
+    locale: "es_ES",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Repricer automático para Amazon España",
+    description: OG_DESC,
+  },
+};
+
+// Datos estructurados: ayudan a Google a mostrar precio, prueba gratuita y
+// preguntas frecuentes como rich results (mejora el CTR en la búsqueda).
+const softwareJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "Orvexia Repricer",
+  applicationCategory: "BusinessApplication",
+  operatingSystem: "Web",
+  url: CANONICAL,
+  description: OG_DESC,
+  offers: {
+    "@type": "Offer",
+    price: "19.00",
+    priceCurrency: "EUR",
+    description: "Plan Pro · 14 días de prueba gratis · IVA incluido · sin permanencia",
+    url: CANONICAL,
+  },
+  provider: {
+    "@type": "Organization",
+    name: "Orvexia",
+    url: "https://www.orvexia.es",
+  },
+};
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "¿Qué es un repricer de Amazon?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Es un software que ajusta automáticamente tus precios en Amazon para ganar la Buy Box sin bajar de tu precio mínimo rentable. Orvexia Repricer recalcula en cada ciclo analizando la competencia y la Buy Box, dentro de los límites que tú defines.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "¿Necesito una cuenta de Amazon Seller para usarlo?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Para el reprecio automático sí: conectas tu cuenta de Amazon España vía SP-API con permisos de Precios y Listing de producto. También puedes usar el modo sin Amazon: subes tu catálogo en CSV y el motor te devuelve un plan de precios sugerido para aplicar donde vendas.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "¿Cuánto cuesta Orvexia Repricer?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "14 días de prueba gratis y después 19 €/mes (IVA incluido), con SKUs ilimitados, reprecio cada 5 minutos y sin permanencia. Puedes cancelar cuando quieras.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "¿Es seguro? ¿Puede bajar mis precios sin control?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Tú pones suelos y techos por producto, así que nunca vendes por debajo de tu rentabilidad ni por encima de tu tope. Con el modo simulación calculas los cambios sin aplicarlos en Amazon hasta que los autorices, y cada cambio queda registrado y explicado.",
+      },
+    },
+  ],
 };
 
 const STEPS = [
@@ -64,6 +155,14 @@ const PLAN_INCLUYE = [
 export default function RepricerPage() {
   return (
     <main>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(softwareJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(faqJsonLd) }}
+      />
       {/* Hero */}
       <section className="relative overflow-hidden border-b border-white/[0.06]">
         <div className="absolute inset-0 bg-grid-cyber opacity-50 pointer-events-none" />
