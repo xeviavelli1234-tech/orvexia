@@ -218,3 +218,76 @@ export function aggregateProfit(records: SaleRecord[]): ProfitSummary {
     bySku,
   };
 }
+
+// ── Mapeo desde datos crudos de la DB → SaleRecord ────────────────
+
+/** Línea de pedido tal como llega de `RepriceOrderItem`. */
+export interface OrderItemInput {
+  sku: string;
+  asin?: string | null;
+  title?: string | null;
+  quantity: number;
+  /** Total bruto de la línea (IVA incl.), `RepriceOrderItem.itemPrice`. */
+  itemPrice?: number | null;
+  /** Precio unitario alternativo, `RepriceOrderItem.unitPrice`. */
+  unitPrice?: number | null;
+}
+
+/** Costes y datos de un `SellerListing` necesarios para valorar sus ventas. */
+export interface ListingCost {
+  cost?: number | null;
+  shippingCost?: number | null;
+  fbaFee?: number | null;
+  feePercent?: number | null;
+  vatRate?: number | null;
+  /** Precio actual del listing, usado como fallback si la venta no trae precio. */
+  priceCurrent?: number | null;
+  asin?: string | null;
+  title?: string | null;
+}
+
+const numOr = (x: number | null | undefined, def: number) =>
+  x != null && Number.isFinite(x) ? x : def;
+
+/**
+ * Convierte líneas de pedido crudas en `SaleRecord[]` listos para
+ * `aggregateProfit`, cruzando cada línea con los costes de su listing (por SKU).
+ *
+ * Precio de venta por unidad (IVA incl.): se prefiere `itemPrice / quantity`
+ * (bruto de línea) y, si no, `unitPrice`. Si la línea no trae precio, se deja
+ * que `lineProfit` use el `priceCurrent` del listing como estimación.
+ *
+ * Comisión e IVA: si el listing no los define, se asumen los de Amazon ES
+ * (15 % comisión, 21 % IVA), iguales a los defaults del repricer.
+ *
+ * Función pura: recibe ya resuelto el mapa de listings, no toca la DB.
+ */
+export function recordsFromOrderItems(
+  items: OrderItemInput[],
+  listingsBySku: Map<string, ListingCost>,
+): SaleRecord[] {
+  return items.map((it) => {
+    const listing = listingsBySku.get(it.sku);
+    const qty = Math.max(0, Math.floor(numOr(it.quantity, 0)));
+
+    const gross = numOr(it.itemPrice, 0);
+    const perUnit =
+      gross > 0 && qty > 0 ? gross / qty : numOr(it.unitPrice, 0) || null;
+
+    return {
+      sku: it.sku,
+      asin: it.asin ?? listing?.asin ?? "",
+      title: it.title ?? listing?.title ?? "",
+      quantity: qty,
+      unitPrice: perUnit,
+      fallbackPrice: listing?.priceCurrent ?? null,
+      cost: {
+        cost: numOr(listing?.cost, 0),
+        shipping: listing?.shippingCost ?? null,
+        fbaFee: listing?.fbaFee ?? null,
+        referralPct: numOr(listing?.feePercent, 15),
+        vatPct: numOr(listing?.vatRate, 21),
+      },
+    };
+  });
+}

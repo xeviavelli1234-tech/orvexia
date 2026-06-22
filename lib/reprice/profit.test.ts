@@ -1,6 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { lineProfit, aggregateProfit, type SaleRecord } from "./profit";
+import {
+  lineProfit,
+  aggregateProfit,
+  recordsFromOrderItems,
+  type SaleRecord,
+  type ListingCost,
+} from "./profit";
 import { profitAt } from "./margin";
 
 const COST = { cost: 10, shipping: 2, fbaFee: 3, referralPct: 15, vatPct: 21 };
@@ -122,4 +128,63 @@ test("sin ventas → resumen vacío con totales a 0", () => {
   assert.equal(totals.units, 0);
   assert.equal(totals.profit, 0);
   assert.equal(totals.marginPct, 0);
+});
+
+// ── recordsFromOrderItems ────────────────────────────────────────
+
+const LISTINGS = new Map<string, ListingCost>([
+  [
+    "A",
+    { cost: 10, shippingCost: 2, fbaFee: 3, feePercent: 15, vatRate: 21, priceCurrent: 55, title: "Lavadora" },
+  ],
+]);
+
+test("deriva el precio unitario del bruto de línea (itemPrice / quantity)", () => {
+  const recs = recordsFromOrderItems(
+    [{ sku: "A", quantity: 2, itemPrice: 110 }],
+    LISTINGS,
+  );
+  assert.equal(recs[0].unitPrice, 55); // 110 / 2
+  assert.equal(recs[0].cost.cost, 10);
+  assert.equal(recs[0].title, "Lavadora"); // hereda del listing
+});
+
+test("usa unitPrice si no hay itemPrice", () => {
+  const recs = recordsFromOrderItems(
+    [{ sku: "A", quantity: 1, itemPrice: null, unitPrice: 48 }],
+    LISTINGS,
+  );
+  assert.equal(recs[0].unitPrice, 48);
+});
+
+test("sin precio en la línea, deja fallbackPrice del listing (venta estimada)", () => {
+  const recs = recordsFromOrderItems([{ sku: "A", quantity: 1 }], LISTINGS);
+  assert.equal(recs[0].unitPrice, null);
+  assert.equal(recs[0].fallbackPrice, 55);
+  // y al agregarla, lineProfit la marca estimada usando el fallback
+  const a = aggregateProfit(recs).bySku[0];
+  assert.equal(a.hasEstimated, true);
+});
+
+test("SKU sin listing → comisión/IVA por defecto (15% / 21%), sin coste de producto", () => {
+  const recs = recordsFromOrderItems(
+    [{ sku: "DESCONOCIDO", quantity: 1, itemPrice: 100 }],
+    LISTINGS,
+  );
+  assert.equal(recs[0].cost.cost, 0);
+  assert.equal(recs[0].cost.referralPct, 15);
+  assert.equal(recs[0].cost.vatPct, 21);
+});
+
+test("el resultado encadena con aggregateProfit", () => {
+  const recs = recordsFromOrderItems(
+    [
+      { sku: "A", quantity: 2, itemPrice: 110, title: "Lavadora" },
+      { sku: "A", quantity: 1, itemPrice: 60 },
+    ],
+    LISTINGS,
+  );
+  const a = aggregateProfit(recs).bySku[0];
+  assert.equal(a.units, 3);
+  assert.equal(a.revenue, 170);
 });
