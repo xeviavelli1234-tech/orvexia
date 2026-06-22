@@ -7,7 +7,10 @@ import { SyncButton } from "./SyncButton";
 import { UploadCsvButton } from "./UploadCsvButton";
 import { ClearCatalogButton } from "./ClearCatalogButton";
 import { GeneratePlanButton, ExportPlanButton } from "./PlanButtons";
-import ProductNetwork, { type NetNode } from "./ProductNetwork";
+import type { NetNode } from "./network/types";
+import RepricerWorkspace from "./RepricerWorkspace";
+import type { DashboardData } from "./DashboardOverview";
+import { buildActivitySeries } from "@/lib/sellers/activity-series";
 import AssistantWidget from "./AssistantWidget";
 import type { OvEvent, OvProduct } from "./AnalyticsOverlay";
 import { SettingsButton, type AccountSettingsData } from "./AccountSettings";
@@ -61,14 +64,14 @@ export default async function ProductosPage({
     return (
       <div className="fixed inset-0 z-50 grid place-items-center bg-[#020207] px-6 text-center">
         <div className="max-w-md">
-          <h1 className="text-3xl font-extrabold tracking-tight text-gradient-neon">
+          <h1 className="text-3xl font-extrabold tracking-tight text-gradient-emerald">
             Centro de control
           </h1>
           <div className="mt-8 neon-border rounded-3xl p-10 glass">
             <p className="text-white/70">Primero conecta tu cuenta de Amazon.</p>
             <Link
               href="/dashboard/repricer"
-              className="mt-6 inline-block rounded-xl bg-[var(--brand-600)] text-white px-6 py-3 font-semibold hover:bg-[var(--brand-700)] transition-colors"
+              className="mt-6 inline-block rounded-xl bg-[#059669] text-white px-6 py-3 font-semibold hover:bg-[#047857] transition-colors"
             >
               Ir al panel
             </Link>
@@ -192,6 +195,27 @@ export default async function ProductosPage({
     };
   });
 
+  // Serie de 14 días (eventos / cambios / errores) para el área del dashboard.
+  const series = buildActivitySeries(rawEvents, 14);
+
+  const dashboardData: DashboardData = {
+    summary: {
+      productos: listings.length,
+      withPrice,
+      active,
+      activeLimit: Number.isFinite(activeLimit) ? activeLimit : null,
+      catalogValue,
+      currency: listings[0]?.currency ?? "EUR",
+      planLabel: billing.label,
+      isTrial: billing.plan === "TRIAL",
+      intervalMinutes: billing.intervalMinutes,
+      lastRunAt: lastRun?.startedAt.toISOString() ?? null,
+      runCount,
+    },
+    series,
+    tableEvents: events.slice(0, 12),
+  };
+
   const ovEvents: OvEvent[] = rawEvents.map((e) => ({
     listingId: e.listingId,
     title: e.listing?.title ?? "Producto",
@@ -256,9 +280,9 @@ export default async function ProductosPage({
           ← Dashboard
         </Link>
         <div className="mt-2 flex items-center gap-2">
-          <span className="h-2.5 w-2.5 rounded-full bg-cyan-400 shadow-[0_0_10px_2px_rgba(34,211,238,0.7)]" />
+          <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_10px_2px_rgba(16,185,129,0.7)]" />
           <h1 className="text-lg font-extrabold tracking-tight">
-            Centro de <span className="text-gradient-neon">control</span>
+            Centro de <span className="text-gradient-emerald">control</span>
           </h1>
         </div>
       </div>
@@ -324,7 +348,7 @@ export default async function ProductosPage({
                   {(tone === "red" || tone === "amber") && (
                     <Link
                       href="/sellers/facturacion"
-                      className="text-[10px] font-semibold text-cyan-300 hover:text-cyan-200"
+                      className="text-[10px] font-semibold text-teal-300 hover:text-teal-200"
                     >
                       Subir →
                     </Link>
@@ -355,7 +379,7 @@ export default async function ProductosPage({
           </p>
           <Link
             href="/dashboard/repricer?relink=1"
-            className="mt-3 block w-full rounded-xl bg-white px-4 py-2.5 text-center text-sm font-bold text-[#0b0d1c] shadow-[0_0_18px_-6px_rgba(255,255,255,0.5)] transition-colors hover:bg-white/90"
+            className="mt-3 block w-full rounded-xl bg-gradient-to-r from-emerald-400 to-teal-400 px-4 py-2.5 text-center text-sm font-bold text-[#04130d] shadow-[0_8px_24px_-10px_rgba(16,185,129,0.8)] transition-all hover:brightness-110"
           >
             🔗 Vincular Amazon o CSV
           </Link>
@@ -450,8 +474,8 @@ export default async function ProductosPage({
             <Legend color="bg-red-400" text="Buy Box perdida" />
             <Legend color="bg-amber-400" text="En precio mínimo" />
             <Legend color="bg-orange-500" text="Error de reprecio" />
-            <Legend color="bg-cyan-400" text="Repreciando (sin datos)" />
-            <Legend color="bg-blue-400" text="Configurable / pausado" />
+            <Legend color="bg-teal-400" text="Repreciando (sin datos)" />
+            <Legend color="bg-teal-400" text="Configurable / pausado" />
             <Legend color="bg-slate-500" text="Sin oferta en Amazon" />
           </div>
           <p className="mt-3 text-white/30">
@@ -462,16 +486,16 @@ export default async function ProductosPage({
     );
 
   const canvas = hasListings ? (
-    <ProductNetwork nodes={nodes} activeCount={active} />
+    <RepricerWorkspace nodes={nodes} activeCount={active} data={dashboardData} />
   ) : (
     <div className="absolute inset-0 grid place-items-center text-center px-6">
       <div className="max-w-md">
         {isManualMode ? (
           <>
-            <div className="font-mono-ui text-[10px] uppercase tracking-wider text-cyan-300 mb-2">
+            <div className="font-mono-ui text-[10px] uppercase tracking-wider text-teal-300 mb-2">
               ▸ modo manual · sin amazon
             </div>
-            <div className="text-2xl font-extrabold tracking-tight text-gradient-neon">
+            <div className="text-2xl font-extrabold tracking-tight text-gradient-emerald">
               Sube tu catálogo
             </div>
             <p className="mt-3 text-white/70">
@@ -482,14 +506,14 @@ export default async function ProductosPage({
               para importar tus productos.
             </p>
             <p className="mt-2 text-xs text-white/40">
-              Formato mínimo: <code className="text-cyan-300">sku, title, price</code>. Opcionales:{" "}
+              Formato mínimo: <code className="text-teal-300">sku, title, price</code>. Opcionales:{" "}
               <code className="text-white/70">min, max, cost</code>. Luego &laquo;Generar plan de
               precios&raquo; y &laquo;Exportar plan CSV&raquo; para aplicarlo donde vendas.
             </p>
           </>
         ) : (
           <>
-            <div className="text-2xl font-extrabold tracking-tight text-gradient-neon">
+            <div className="text-2xl font-extrabold tracking-tight text-gradient-emerald">
               Empieza aquí
             </div>
             <p className="mt-3 text-white/70">
@@ -508,7 +532,7 @@ export default async function ProductosPage({
         )}
         <Link
           href="/dashboard/repricer?relink=1"
-          className="mt-6 inline-block rounded-xl bg-white px-6 py-3 text-sm font-bold text-[#0b0d1c] shadow-[0_0_18px_-6px_rgba(255,255,255,0.5)] transition-colors hover:bg-white/90"
+          className="mt-6 inline-block rounded-xl bg-gradient-to-r from-emerald-400 to-teal-400 px-6 py-3 text-sm font-bold text-[#04130d] shadow-[0_8px_24px_-10px_rgba(16,185,129,0.8)] transition-all hover:brightness-110"
         >
           🔗 Vincular Amazon o CSV
         </Link>

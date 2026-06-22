@@ -753,7 +753,7 @@ export default function ProductNetwork({
       {/* ── Mobile list view (lg-: replaces the heavy SVG/canvas viz) ── */}
       {!sel && (
         <div className="lg:hidden absolute inset-0 overflow-y-auto overscroll-contain p-3 pb-24 bg-[#040513]">
-          <p className="font-mono-ui text-[10px] uppercase tracking-[0.18em] text-cyan-300/70 mb-2.5 px-1">
+          <p className="font-mono-ui text-[10px] uppercase tracking-[0.18em] text-teal-300/70 mb-2.5 px-1">
             ▸ /productos · {nodes.length}
           </p>
           <ul className="space-y-2">
@@ -761,12 +761,12 @@ export default function ProductNetwork({
               const st = nodeState(n);
               const color =
                 st === "won" ? "bg-emerald-400" :
-                st === "active" ? "bg-cyan-400" :
+                st === "active" ? "bg-teal-400" :
                 st === "floor" ? "bg-amber-400" :
                 st === "lost" ? "bg-red-400" :
                 st === "error" ? "bg-orange-500" :
                 st === "noprice" ? "bg-slate-500" :
-                "bg-blue-400";
+                "bg-teal-400";
               const stLabel =
                 st === "won" ? "Buy Box" :
                 st === "active" ? "Repreciando" :
@@ -784,7 +784,7 @@ export default function ProductNetwork({
                   <button
                     type="button"
                     onClick={() => setSelId(n.id)}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.025] hover:border-cyan-400/30 active:scale-[0.985] active:bg-white/[0.05] transition-all text-left"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.025] hover:border-teal-400/30 active:scale-[0.985] active:bg-white/[0.05] transition-all text-left"
                   >
                     <div className="h-12 w-12 shrink-0 rounded-lg border border-white/10 bg-white/[0.04] overflow-hidden grid place-items-center">
                       {n.imageUrl ? (
@@ -934,8 +934,8 @@ export default function ProductNetwork({
                 key: "cmp",
                 spin: "ring-spin-2",
                 r: rings.competing,
-                stroke: "rgba(34,211,238,0.28)",
-                dot: "#22d3ee",
+                stroke: "rgba(45,212,191,0.28)",
+                dot: "#2dd4bf",
                 label: "Compitiendo",
                 count: bucketCounts.competing,
               },
@@ -991,7 +991,7 @@ export default function ProductNetwork({
                 y2={p.y}
                 stroke={
                   p.hubId === 1
-                    ? "rgba(34,211,238,0.13)"
+                    ? "rgba(45,212,191,0.13)"
                     : "rgba(94,234,212,0.10)"
                 }
                 strokeWidth="1"
@@ -1254,7 +1254,7 @@ export default function ProductNetwork({
                 <path
                   d={stem}
                   fill="none"
-                  stroke="rgba(125,211,252,0.28)"
+                  stroke="rgba(94,234,212,0.28)"
                   strokeWidth="1.4"
                   vectorEffect="non-scaling-stroke"
                 />
@@ -1262,7 +1262,7 @@ export default function ProductNetwork({
                   className="net-flow"
                   d={stem}
                   fill="none"
-                  stroke="rgba(125,211,252,0.6)"
+                  stroke="rgba(94,234,212,0.6)"
                   strokeWidth="1.6"
                   strokeLinecap="round"
                   vectorEffect="non-scaling-stroke"
@@ -1296,7 +1296,7 @@ export default function ProductNetwork({
                     cx={dockLeft + 20}
                     cy={dockTop + 18}
                     r="2.6"
-                    fill="rgba(125,211,252,0.9)"
+                    fill="rgba(94,234,212,0.9)"
                     filter="url(#glow)"
                   />
                   <text
@@ -1733,7 +1733,7 @@ export default function ProductNetwork({
                     rx={23} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
                   {/* Cabecera, como "HERRAMIENTAS" en el dock del hub */}
                   <circle cx={panelX + 20} cy={panelY + padTop + 9} r="2.6"
-                    fill={selCol.dot ?? "rgba(125,211,252,0.9)"} filter="url(#glow-sm)" />
+                    fill={selCol.dot ?? "rgba(94,234,212,0.9)"} filter="url(#glow-sm)" />
                   <text x={panelX + 30} y={panelY + padTop + 12.5} fontSize="9.5"
                     fontWeight={700} letterSpacing="2.5" fill="rgba(255,255,255,0.45)">
                     OPCIONES
@@ -1841,7 +1841,7 @@ export default function ProductNetwork({
                 onClick={() => setMode(m)}
                 className={`px-2.5 py-1.5 text-[11px] font-semibold transition-colors ${
                   mode === m
-                    ? "bg-cyan-400/20 text-cyan-200"
+                    ? "bg-teal-400/20 text-teal-200"
                     : "text-white/55 hover:bg-white/10"
                 }`}
               >
@@ -1853,12 +1853,12 @@ export default function ProductNetwork({
             value={gq}
             onChange={(e) => setGq(e.target.value)}
             placeholder="Buscar título / SKU / ASIN…"
-            className="w-44 rounded-lg border border-white/15 bg-black/40 px-2.5 py-1.5 text-[12px] text-white placeholder:text-white/30 focus:border-cyan-400/60 focus:outline-none"
+            className="w-44 rounded-lg border border-white/15 bg-black/40 px-2.5 py-1.5 text-[12px] text-white placeholder:text-white/30 focus:border-teal-400/60 focus:outline-none"
           />
           <select
             value={gState}
             onChange={(e) => setGState(e.target.value as "ALL" | State)}
-            className="rounded-lg border border-white/15 bg-black/40 px-2 py-1.5 text-[12px] text-white focus:border-cyan-400/60 focus:outline-none"
+            className="rounded-lg border border-white/15 bg-black/40 px-2 py-1.5 text-[12px] text-white focus:border-teal-400/60 focus:outline-none"
           >
             <option value="ALL">Todos los estados</option>
             {STATE_LABEL.map(({ st, label }) => (
@@ -1871,7 +1871,7 @@ export default function ProductNetwork({
             <select
               value={gTag}
               onChange={(e) => setGTag(e.target.value)}
-              className="rounded-lg border border-white/15 bg-black/40 px-2 py-1.5 text-[12px] text-white focus:border-cyan-400/60 focus:outline-none"
+              className="rounded-lg border border-white/15 bg-black/40 px-2 py-1.5 text-[12px] text-white focus:border-teal-400/60 focus:outline-none"
             >
               <option value="">Todas las etiquetas</option>
               {allTags.map((t) => (
@@ -1916,9 +1916,9 @@ export default function ProductNetwork({
                   key: "cmp" as const,
                   label: "Compitiendo",
                   count: layout.hub.competingCount,
-                  dot: "#22d3ee",
-                  cls: "border-cyan-400/25 bg-cyan-400/[0.06] text-cyan-300",
-                  numCls: "text-cyan-200",
+                  dot: "#2dd4bf",
+                  cls: "border-teal-400/25 bg-teal-400/[0.06] text-teal-300",
+                  numCls: "text-teal-200",
                   states: ["active", "floor"] as State[],
                 },
                 {
@@ -2001,12 +2001,12 @@ export default function ProductNetwork({
                       onClick={() => open(p)}
                       className={`group border-b border-white/[0.05] cursor-pointer transition-colors ${
                         isActive
-                          ? "bg-cyan-400/[0.07]"
+                          ? "bg-teal-400/[0.07]"
                           : "hover:bg-white/[0.035]"
                       }`}
                       style={{
                         boxShadow: isActive
-                          ? "inset 3px 0 0 0 rgb(34,211,238)"
+                          ? "inset 3px 0 0 0 rgb(45,212,191)"
                           : undefined,
                       }}
                     >
@@ -2040,7 +2040,7 @@ export default function ProductNetwork({
                                 {tags.slice(0, 4).map((t) => (
                                   <span
                                     key={t}
-                                    className="rounded-md border border-cyan-400/20 bg-cyan-400/[0.08] px-1.5 py-0.5 text-[9px] text-cyan-200/90"
+                                    className="rounded-md border border-teal-400/20 bg-teal-400/[0.08] px-1.5 py-0.5 text-[9px] text-teal-200/90"
                                   >
                                     {t}
                                   </span>
@@ -2188,7 +2188,7 @@ export default function ProductNetwork({
                         setGState("ALL");
                         setGTag("");
                       }}
-                      className="mt-3 text-[11px] text-cyan-300 hover:text-cyan-200 underline underline-offset-4"
+                      className="mt-3 text-[11px] text-teal-300 hover:text-teal-200 underline underline-offset-4"
                     >
                       Limpiar filtros
                     </button>
@@ -2206,7 +2206,7 @@ export default function ProductNetwork({
         !sel &&
         nodes.length > 0 &&
         activeCount === 0 && (
-        <div className="absolute bottom-5 right-5 z-20 w-72 rounded-2xl border border-cyan-400/20 bg-[rgba(8,9,20,0.94)] p-4 backdrop-blur-xl shadow-[0_24px_60px_-20px_rgba(0,0,0,0.85)] fade-in">
+        <div className="absolute bottom-5 right-5 z-20 w-72 rounded-2xl border border-teal-400/20 bg-[rgba(8,9,20,0.94)] p-4 backdrop-blur-xl shadow-[0_24px_60px_-20px_rgba(0,0,0,0.85)] fade-in">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-white/55">
               Primeros pasos
@@ -2229,7 +2229,7 @@ export default function ProductNetwork({
               "Pulsa «Ejecutar reprecio ahora».",
             ].map((s, i) => (
               <li key={i} className="flex gap-2">
-                <span className="grid h-4 w-4 shrink-0 place-items-center rounded-full bg-cyan-400/15 text-[10px] font-bold text-cyan-300">
+                <span className="grid h-4 w-4 shrink-0 place-items-center rounded-full bg-teal-400/15 text-[10px] font-bold text-teal-300">
                   {i + 1}
                 </span>
                 {s}
@@ -2241,7 +2241,7 @@ export default function ProductNetwork({
             onClick={() =>
               window.dispatchEvent(new CustomEvent("orvexia:open-help"))
             }
-            className="mt-3 w-full rounded-lg border border-cyan-400/30 py-1.5 text-[11px] font-semibold text-cyan-200 hover:bg-cyan-400/10 transition-colors"
+            className="mt-3 w-full rounded-lg border border-teal-400/30 py-1.5 text-[11px] font-semibold text-teal-200 hover:bg-teal-400/10 transition-colors"
           >
             Ver guía completa
           </button>

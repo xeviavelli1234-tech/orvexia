@@ -17,7 +17,7 @@ export default function AnalyticsTrigger({
     <button
       type="button"
       onClick={() => openAnalytics()}
-      className="flex items-center justify-between rounded-xl border border-cyan-400/20 bg-cyan-400/[0.05] px-3 py-2.5 text-sm text-white/85 hover:bg-cyan-400/10 transition-colors text-left"
+      className="flex items-center justify-between rounded-xl border border-teal-400/20 bg-teal-400/[0.05] px-3 py-2.5 text-sm text-white/85 hover:bg-teal-400/10 transition-colors text-left"
     >
       <span className="flex items-center gap-2">
         <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />

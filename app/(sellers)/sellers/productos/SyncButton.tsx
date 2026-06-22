@@ -69,7 +69,7 @@ export function SyncButton({ lastSyncAt }: { lastSyncAt: Date | null }) {
         size="md"
         loading={loading}
         loadingText="Sincronizando…"
-        className="w-full shadow-[0_0_18px_-6px_rgba(99,102,241,0.7)]"
+        className="w-full shadow-[0_0_18px_-6px_rgba(16,185,129,0.7)]"
       >
         Sincronizar con Amazon
       </Button>

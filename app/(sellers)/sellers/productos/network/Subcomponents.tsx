@@ -30,7 +30,7 @@ export function CostField({
         inputMode="decimal"
         placeholder={placeholder}
         disabled={disabled}
-        className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-2 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
+        className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-2 py-2 text-sm text-white focus:border-teal-400/60 focus:outline-none"
       />
     </label>
   );
@@ -52,7 +52,7 @@ export function Row({ k, v, warn, accent }: RowProps) {
           warn
             ? "text-amber-300"
             : accent
-              ? "text-cyan-200"
+              ? "text-teal-200"
               : "text-white/85"
         }`}
       >

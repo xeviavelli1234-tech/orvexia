@@ -70,7 +70,7 @@ export default function ActivityPanel({
           <span
             className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
               plan.isTrial
-                ? "text-[var(--brand-300)] bg-[var(--brand-500)]/15"
+                ? "text-[#6ee7b7] bg-[#10b981]/15"
                 : "text-emerald-300 bg-emerald-400/15"
             }`}
           >
@@ -88,7 +88,7 @@ export default function ActivityPanel({
             </div>
             <div className="mt-1.5 h-1.5 rounded-full bg-white/10 overflow-hidden">
               <div
-                className="h-full rounded-full bg-[var(--brand-500)]"
+                className="h-full rounded-full bg-[#10b981]"
                 style={{ width: `${pct}%` }}
               />
             </div>
@@ -97,7 +97,7 @@ export default function ActivityPanel({
         <div className="mt-2 flex items-center justify-between text-[11px]">
           <span className="text-white/40">Ciclo cada {plan.intervalMinutes} min</span>
           {plan.isTrial && (
-            <a href={proHref} className="text-[var(--brand-300)] hover:text-white font-semibold">
+            <a href={proHref} className="text-[#6ee7b7] hover:text-white font-semibold">
               Pasar a Pro →
             </a>
           )}

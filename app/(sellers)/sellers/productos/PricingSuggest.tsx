@@ -127,7 +127,7 @@ export default function PricingSuggest({
       <button
         type="button"
         onClick={openModal}
-        className="mt-3 w-full inline-flex items-center justify-center gap-2 rounded-lg border border-cyan-400/40 bg-cyan-400/10 px-3 py-2 text-sm font-semibold text-cyan-200 hover:bg-cyan-400/20 transition-colors"
+        className="mt-3 w-full inline-flex items-center justify-center gap-2 rounded-lg border border-teal-400/40 bg-teal-400/10 px-3 py-2 text-sm font-semibold text-teal-200 hover:bg-teal-400/20 transition-colors"
       >
         <span aria-hidden>💡</span>
         Sugerir precio con IA
@@ -140,11 +140,11 @@ export default function PricingSuggest({
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-[560px] max-h-[90vh] overflow-y-auto rounded-2xl border border-cyan-400/25 bg-[rgba(7,7,18,0.97)] shadow-[0_20px_60px_-20px_rgba(34,211,238,0.55)]"
+            className="w-full max-w-[560px] max-h-[90vh] overflow-y-auto rounded-2xl border border-teal-400/25 bg-[rgba(7,7,18,0.97)] shadow-[0_20px_60px_-20px_rgba(45,212,191,0.55)]"
           >
             <header className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-3.5">
               <div>
-                <div className="font-mono-ui text-[10px] uppercase tracking-wider text-cyan-300">
+                <div className="font-mono-ui text-[10px] uppercase tracking-wider text-teal-300">
                   ▸ pricing engine · IA
                 </div>
                 <h3 className="text-base font-bold text-white">Sugerir precio</h3>
@@ -167,7 +167,7 @@ export default function PricingSuggest({
                   <select
                     value={urgency}
                     onChange={(e) => setUrgency(e.target.value as Urgency)}
-                    className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-2 py-1.5 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
+                    className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-2 py-1.5 text-sm text-white focus:border-teal-400/60 focus:outline-none"
                   >
                     <option value="low">Baja</option>
                     <option value="normal">Normal</option>
@@ -181,7 +181,7 @@ export default function PricingSuggest({
                   <select
                     value={aggression}
                     onChange={(e) => setAggression(e.target.value as Aggression)}
-                    className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-2 py-1.5 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
+                    className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-2 py-1.5 text-sm text-white focus:border-teal-400/60 focus:outline-none"
                   >
                     <option value="conservative">Conservadora</option>
                     <option value="balanced">Equilibrada</option>
@@ -195,7 +195,7 @@ export default function PricingSuggest({
                 onClick={run}
                 disabled={loading}
                 aria-busy={loading || undefined}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-cyan-500/90 px-3 py-2 text-sm font-semibold text-black hover:bg-cyan-400 transition-colors disabled:opacity-50"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-teal-500/90 px-3 py-2 text-sm font-semibold text-black hover:bg-teal-400 transition-colors disabled:opacity-50"
               >
                 {loading ? (
                   <>
@@ -217,10 +217,10 @@ export default function PricingSuggest({
                 <div
                   role="status"
                   aria-live="polite"
-                  className="rounded-xl border border-cyan-400/20 bg-cyan-400/[0.04] px-4 py-6 flex flex-col items-center justify-center gap-3"
+                  className="rounded-xl border border-teal-400/20 bg-teal-400/[0.04] px-4 py-6 flex flex-col items-center justify-center gap-3"
                 >
-                  <Spinner size="lg" className="text-cyan-300" />
-                  <p className="font-mono-ui text-[10px] uppercase tracking-[0.18em] text-cyan-300">
+                  <Spinner size="lg" className="text-teal-300" />
+                  <p className="font-mono-ui text-[10px] uppercase tracking-[0.18em] text-teal-300">
                     ▸ procesando señales
                   </p>
                   <p className="text-xs text-white/55 text-center max-w-[280px] leading-relaxed">
@@ -232,9 +232,9 @@ export default function PricingSuggest({
               {data && !loading && (
                 <div className="space-y-4">
                   {/* Recomendado */}
-                  <div className="rounded-xl border border-cyan-400/25 bg-[linear-gradient(135deg,rgba(34,211,238,0.10),rgba(99,102,241,0.06))] p-4">
+                  <div className="rounded-xl border border-teal-400/25 bg-[linear-gradient(135deg,rgba(45,212,191,0.10),rgba(16,185,129,0.06))] p-4">
                     <div className="flex items-baseline justify-between gap-3">
-                      <span className="text-[10px] uppercase tracking-[0.16em] text-cyan-200/80">
+                      <span className="text-[10px] uppercase tracking-[0.16em] text-teal-200/80">
                         Recomendado · {data.suggestion.strategy}
                       </span>
                       <span className="text-[11px] text-white/55">
@@ -252,7 +252,7 @@ export default function PricingSuggest({
                         </strong>
                       </span>
                     </div>
-                    <div className="mt-1 text-3xl font-extrabold text-cyan-300 tabular-nums">
+                    <div className="mt-1 text-3xl font-extrabold text-teal-300 tabular-nums">
                       {fmt(data.suggestion.recommended_price)} {sym(data.input.currency)}
                     </div>
                     <p className="mt-2 text-[13px] leading-relaxed text-white/80">
@@ -375,7 +375,7 @@ export default function PricingSuggest({
                             onApplyFixed(data.suggestion.recommended_price);
                             setOpen(false);
                           }}
-                          className="rounded-md border border-cyan-400/30 bg-cyan-500/10 px-2 py-2 text-xs text-cyan-200 hover:bg-cyan-500/20 transition-colors text-left"
+                          className="rounded-md border border-teal-400/30 bg-teal-500/10 px-2 py-2 text-xs text-teal-200 hover:bg-teal-500/20 transition-colors text-left"
                         >
                           <div className="font-semibold">→ Precio fijo</div>
                           <div className="text-[10px] opacity-70">recomendado</div>

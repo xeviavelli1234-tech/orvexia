@@ -35,7 +35,7 @@ function inline(s: string): React.ReactNode {
       );
     if (p.startsWith("`") && p.endsWith("`"))
       return (
-        <code key={i} className="rounded bg-white/10 px-1 py-0.5 text-[12px] text-cyan-200">
+        <code key={i} className="rounded bg-white/10 px-1 py-0.5 text-[12px] text-teal-200">
           {p.slice(1, -1)}
         </code>
       );
@@ -143,6 +143,25 @@ export default function AssistantWidget() {
   useEffect(() => {
     if (open) setUnread(false);
   }, [open]);
+
+  // Permite abrir el asistente desde otras partes del repricer (p.ej. la
+  // tarjeta del dashboard) y opcionalmente precargar una pregunta en el input.
+  useEffect(() => {
+    function onOpenAssistant(e: Event) {
+      setOpen(true);
+      const ask = (e as CustomEvent<{ ask?: string }>).detail?.ask;
+      if (typeof ask === "string" && ask.trim()) {
+        setInput(ask);
+        setTimeout(() => {
+          autosize();
+          taRef.current?.focus();
+        }, 60);
+      }
+    }
+    window.addEventListener("orvexia:open-assistant", onOpenAssistant);
+    return () =>
+      window.removeEventListener("orvexia:open-assistant", onOpenAssistant);
+  }, []);
 
   // Detecta si la IA está activa para mostrar el badge correcto
   useEffect(() => {
@@ -331,12 +350,12 @@ export default function AssistantWidget() {
   return (
     <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[60]">
       {open && (
-        <div className="mb-3 flex h-[min(33rem,80vh)] w-[calc(100vw-2rem)] sm:w-[24rem] max-w-[calc(100vw-2rem)] sm:max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-2xl border border-cyan-400/20 bg-[rgba(7,7,18,0.97)] backdrop-blur-2xl shadow-[0_24px_70px_-18px_rgba(34,211,238,0.45)] fade-in">
+        <div className="mb-3 flex h-[min(33rem,80vh)] w-[calc(100vw-2rem)] sm:w-[24rem] max-w-[calc(100vw-2rem)] sm:max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-2xl border border-teal-400/20 bg-[rgba(7,7,18,0.97)] backdrop-blur-2xl shadow-[0_24px_70px_-18px_rgba(45,212,191,0.45)] fade-in">
           <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-white/10">
             <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_8px_2px_rgba(34,211,238,0.7)]" />
+              <span className="h-2 w-2 rounded-full bg-teal-400 shadow-[0_0_8px_2px_rgba(45,212,191,0.7)]" />
               <span className="text-sm font-bold text-white/90">
-                Asistente <span className="text-gradient-neon">Orvexia</span>
+                Asistente <span className="text-gradient-emerald">Orvexia</span>
               </span>
               {(aiMode === "ai" || aiMode === "local") && (
                 <span
@@ -386,7 +405,7 @@ export default function AssistantWidget() {
                   key={i}
                   className={`group max-w-[90%] rounded-2xl px-3.5 py-2 text-[13px] leading-relaxed ${
                     m.role === "user"
-                      ? "ml-auto bg-[var(--brand-600)] text-white"
+                      ? "ml-auto bg-[#059669] text-white"
                       : "mr-auto bg-white/[0.05] text-white/85 border border-white/10"
                   }`}
                 >
@@ -398,7 +417,7 @@ export default function AssistantWidget() {
                     <div>
                       {render(m.content)}
                       {isLast && streaming && (
-                        <span className="ml-0.5 inline-block h-3.5 w-1.5 translate-y-0.5 animate-pulse bg-cyan-300/80" />
+                        <span className="ml-0.5 inline-block h-3.5 w-1.5 translate-y-0.5 animate-pulse bg-teal-300/80" />
                       )}
                       {!streaming && m.content && (
                         <div className="mt-1 flex items-center gap-2 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">
@@ -444,7 +463,7 @@ export default function AssistantWidget() {
                   <button
                     key={s}
                     onClick={() => send(s)}
-                    className="rounded-full border border-cyan-400/25 bg-cyan-400/5 px-2.5 py-1 text-[11px] text-cyan-200/90 hover:bg-cyan-400/10 transition-colors"
+                    className="rounded-full border border-teal-400/25 bg-teal-400/5 px-2.5 py-1 text-[11px] text-teal-200/90 hover:bg-teal-400/10 transition-colors"
                   >
                     {s}
                   </button>
@@ -476,7 +495,7 @@ export default function AssistantWidget() {
               rows={1}
               placeholder="Escribe o pide una acción… (Enter envía)"
               disabled={loading}
-              className="flex-1 resize-none rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-cyan-400/60 focus:outline-none max-h-[120px]"
+              className="flex-1 resize-none rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-teal-400/60 focus:outline-none max-h-[120px]"
             />
             {loading ? (
               <button
@@ -492,7 +511,7 @@ export default function AssistantWidget() {
                 type="submit"
                 disabled={!input.trim()}
                 aria-label="Enviar"
-                className="h-9 w-9 shrink-0 grid place-items-center rounded-lg bg-[var(--brand-600)] text-white hover:bg-[var(--brand-700)] transition-colors disabled:opacity-40"
+                className="h-9 w-9 shrink-0 grid place-items-center rounded-lg bg-[#059669] text-white hover:bg-[#047857] transition-colors disabled:opacity-40"
               >
                 ➤
               </button>
@@ -504,10 +523,10 @@ export default function AssistantWidget() {
       <button
         onClick={() => setOpen((o) => !o)}
         aria-label="Asistente Orvexia"
-        className="relative ml-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--brand-600)] text-white shadow-[0_8px_30px_-6px_rgba(99,102,241,0.85)] hover:bg-[var(--brand-700)] hover:scale-105 transition-all"
+        className="relative ml-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#059669] text-white shadow-[0_8px_30px_-6px_rgba(16,185,129,0.85)] hover:bg-[#047857] hover:scale-105 transition-all"
       >
         {unread && !open && (
-          <span className="absolute -top-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-cyan-400 ring-2 ring-[#020207] animate-pulse" />
+          <span className="absolute -top-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-teal-400 ring-2 ring-[#020207] animate-pulse" />
         )}
         {open ? (
           <span className="text-2xl leading-none">×</span>

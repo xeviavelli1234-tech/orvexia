@@ -189,7 +189,7 @@ export default function Inspector({
   }, [cost, ship, fba, vat, feeP, tMargin, sel]);
 
   return (
-    <div className="absolute inset-y-0 right-0 w-full sm:w-[380px] bg-[rgba(7,7,18,0.96)] backdrop-blur-2xl border-l border-cyan-400/15 shadow-[-30px_0_60px_-30px_rgba(34,211,238,0.35)] overflow-y-auto fade-in">
+    <div className="absolute inset-y-0 right-0 w-full sm:w-[380px] bg-[rgba(7,7,18,0.96)] backdrop-blur-2xl border-l border-teal-400/15 shadow-[-30px_0_60px_-30px_rgba(45,212,191,0.35)] overflow-y-auto fade-in">
       {/* Cabecera */}
       <div className="sticky top-0 z-10 flex items-start gap-3 px-5 py-4 bg-[rgba(7,7,18,0.96)] backdrop-blur-2xl border-b border-white/10">
         <div className="h-11 w-11 shrink-0 rounded-lg border border-white/10 bg-white/[0.04] overflow-hidden grid place-items-center">
@@ -206,7 +206,7 @@ export default function Inspector({
           </h3>
           <div className="mt-0.5 flex items-center gap-1.5 font-mono text-[10px] text-white/35 truncate">
             {selIsManual ? (
-              <span className="inline-flex items-center gap-1 rounded-sm border border-cyan-400/30 bg-cyan-400/[0.08] px-1 py-px text-cyan-200/85 text-[9px] uppercase tracking-wider">
+              <span className="inline-flex items-center gap-1 rounded-sm border border-teal-400/30 bg-teal-400/[0.08] px-1 py-px text-teal-200/85 text-[9px] uppercase tracking-wider">
                 Tu tienda
               </span>
             ) : (
@@ -226,11 +226,11 @@ export default function Inspector({
       </div>
 
       <div className="p-5">
-        <div className="rounded-xl border border-cyan-400/15 bg-[linear-gradient(135deg,rgba(34,211,238,0.10),rgba(99,102,241,0.06))] p-4">
+        <div className="rounded-xl border border-teal-400/15 bg-[linear-gradient(135deg,rgba(45,212,191,0.10),rgba(16,185,129,0.06))] p-4">
           <div className="text-[10px] uppercase tracking-[0.16em] text-white/45">
             Precio actual
           </div>
-          <div className="mt-1 text-3xl font-extrabold text-cyan-300 text-glow-cyan tabular-nums">
+          <div className="mt-1 text-3xl font-extrabold text-teal-300 text-glow-cyan tabular-nums">
             {sel.priceCurrent > 0 ? `${fmt(sel.priceCurrent)} ${sym(sel.currency)}` : "Sin oferta"}
           </div>
           <div className="mt-2 flex items-center gap-2 flex-wrap">
@@ -268,7 +268,7 @@ export default function Inspector({
             ? "text-emerald-300/90 border-emerald-400/25 bg-emerald-400/[0.06]"
             : dg.tone === "warn"
               ? "text-amber-300/90 border-amber-400/25 bg-amber-400/[0.06]"
-              : "text-cyan-200/90 border-cyan-400/20 bg-cyan-400/[0.05]";
+              : "text-teal-200/90 border-teal-400/20 bg-teal-400/[0.05]";
         return (
           <div
             className={`mt-4 flex gap-2 rounded-lg border px-3 py-2.5 text-[12px] leading-relaxed ${cls}`}
@@ -283,9 +283,9 @@ export default function Inspector({
 
       {/* Tarjeta de precio sugerido (modo manual con plan generado) */}
       {selIsManual && sel.suggestedPrice != null && sel.suggestedPrice > 0 && (
-        <div className="mt-4 rounded-xl border border-cyan-400/25 bg-[linear-gradient(135deg,rgba(34,211,238,0.10),rgba(99,102,241,0.06))] p-4">
+        <div className="mt-4 rounded-xl border border-teal-400/25 bg-[linear-gradient(135deg,rgba(45,212,191,0.10),rgba(16,185,129,0.06))] p-4">
           <div className="flex items-baseline justify-between gap-3">
-            <span className="text-[10px] uppercase tracking-[0.16em] text-cyan-200/80">
+            <span className="text-[10px] uppercase tracking-[0.16em] text-teal-200/80">
               Precio sugerido
               {sel.suggestedStrategy
                 ? ` · ${prettyStrategy(sel.suggestedStrategy)}`
@@ -309,7 +309,7 @@ export default function Inspector({
             )}
           </div>
           <div className="mt-1 flex items-baseline gap-2">
-            <span className="text-2xl font-extrabold text-cyan-200 tabular-nums">
+            <span className="text-2xl font-extrabold text-teal-200 tabular-nums">
               {fmt(sel.suggestedPrice)} {sym(sel.currency)}
             </span>
             {sel.priceCurrent > 0 && (
@@ -352,8 +352,8 @@ export default function Inspector({
           disabled={repricing || pending}
           className={`mt-4 w-full rounded-xl py-2.5 text-sm font-semibold transition-all border flex items-center justify-center gap-2
             ${repricing
-              ? "border-cyan-400/30 bg-cyan-400/[0.06] text-cyan-300/60 cursor-not-allowed"
-              : "border-cyan-400/50 bg-cyan-400/[0.08] text-cyan-200 hover:bg-cyan-400/[0.16] hover:border-cyan-400/70 hover:shadow-[0_0_16px_-4px_rgba(34,211,238,0.55)] active:scale-[0.98]"
+              ? "border-teal-400/30 bg-teal-400/[0.06] text-teal-300/60 cursor-not-allowed"
+              : "border-teal-400/50 bg-teal-400/[0.08] text-teal-200 hover:bg-teal-400/[0.16] hover:border-teal-400/70 hover:shadow-[0_0_16px_-4px_rgba(45,212,191,0.55)] active:scale-[0.98]"
             }`}
         >
           {repricing ? (
@@ -389,17 +389,17 @@ export default function Inspector({
               <span className="text-[10px] uppercase tracking-wider text-white/40">Mín €</span>
               <input value={min} onChange={(e) => setMin(e.target.value)}
                 inputMode="decimal" placeholder="0,00" disabled={pending}
-                className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none" />
+                className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white focus:border-teal-400/60 focus:outline-none" />
             </label>
             <label className="block">
               <span className="text-[10px] uppercase tracking-wider text-white/40">Máx €</span>
               <input value={max} onChange={(e) => setMax(e.target.value)}
                 inputMode="decimal" placeholder="0,00" disabled={pending}
-                className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none" />
+                className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white focus:border-teal-400/60 focus:outline-none" />
             </label>
           </div>
           <button onClick={saveRange} disabled={pending}
-            className="mt-3 w-full rounded-lg bg-[var(--brand-600)] text-white py-2 text-sm font-semibold hover:bg-[var(--brand-700)] transition-colors disabled:opacity-50">
+            className="mt-3 w-full rounded-lg bg-[#059669] text-white py-2 text-sm font-semibold hover:bg-[#047857] transition-colors disabled:opacity-50">
             {pending ? "Guardando…" : "Guardar rango"}
           </button>
 
@@ -455,7 +455,7 @@ export default function Inspector({
               value={strategy}
               onChange={(e) => setStrategy(e.target.value as Strategy)}
               disabled={pending}
-              className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
+              className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white focus:border-teal-400/60 focus:outline-none"
             >
               {!selIsManual && (
                 <option value="BUYBOX">Ganar Buy Box (bajar del más barato)</option>
@@ -480,7 +480,7 @@ export default function Inspector({
                     value={undType}
                     onChange={(e) => setUndType(e.target.value as UndercutType)}
                     disabled={pending}
-                    className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-2 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
+                    className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-2 py-2 text-sm text-white focus:border-teal-400/60 focus:outline-none"
                   >
                     <option value="AMOUNT">Importe €</option>
                     <option value="PERCENT">Porcentaje %</option>
@@ -496,7 +496,7 @@ export default function Inspector({
                     inputMode="decimal"
                     placeholder={undType === "PERCENT" ? "2" : "0,01"}
                     disabled={pending}
-                    className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
+                    className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white focus:border-teal-400/60 focus:outline-none"
                   />
                 </label>
               </div>
@@ -513,7 +513,7 @@ export default function Inspector({
                   inputMode="decimal"
                   placeholder="0,00"
                   disabled={pending}
-                  className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
+                  className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white focus:border-teal-400/60 focus:outline-none"
                 />
               </label>
             )}
@@ -536,7 +536,7 @@ export default function Inspector({
                 </div>
 
                 {costCalc && (
-                  <div className="rounded-lg border border-cyan-400/20 bg-cyan-400/[0.04] p-3 space-y-1.5 text-[12px]">
+                  <div className="rounded-lg border border-teal-400/20 bg-teal-400/[0.04] p-3 space-y-1.5 text-[12px]">
                     <Row k="Precio de equilibrio"
                       v={costCalc.breakEven != null
                         ? fmtEur(costCalc.breakEven)
@@ -569,7 +569,7 @@ export default function Inspector({
                             ),
                           )
                         }
-                        className="mt-1 w-full rounded-md border border-cyan-400/40 text-cyan-200 py-1.5 text-[11px] font-semibold hover:bg-cyan-400/10 transition-colors disabled:opacity-50"
+                        className="mt-1 w-full rounded-md border border-teal-400/40 text-teal-200 py-1.5 text-[11px] font-semibold hover:bg-teal-400/10 transition-colors disabled:opacity-50"
                       >
                         Usar como precio mínimo ↑
                       </button>
@@ -593,7 +593,7 @@ export default function Inspector({
                     value={noComp}
                     onChange={(e) => setNoComp(e.target.value as NoComp)}
                     disabled={pending}
-                    className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
+                    className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white focus:border-teal-400/60 focus:outline-none"
                   >
                     <option value="MAX">Subir al máximo</option>
                     <option value="HOLD">Mantener precio</option>
@@ -612,7 +612,7 @@ export default function Inspector({
                           setStepUType(e.target.value as UndercutType)
                         }
                         disabled={pending}
-                        className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-2 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
+                        className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-2 py-2 text-sm text-white focus:border-teal-400/60 focus:outline-none"
                       >
                         <option value="AMOUNT">Importe €</option>
                         <option value="PERCENT">Porcentaje %</option>
@@ -628,7 +628,7 @@ export default function Inspector({
                         inputMode="decimal"
                         placeholder={stepUType === "PERCENT" ? "1" : "0,05"}
                         disabled={pending}
-                        className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
+                        className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white focus:border-teal-400/60 focus:outline-none"
                       />
                     </label>
                     <p className="col-span-2 text-[10px] text-white/35">
@@ -643,7 +643,7 @@ export default function Inspector({
             <button
               onClick={saveStrategy}
               disabled={pending}
-              className="mt-3 w-full rounded-lg border border-cyan-400/40 text-cyan-200 py-2 text-sm font-semibold hover:bg-cyan-400/10 transition-colors disabled:opacity-50"
+              className="mt-3 w-full rounded-lg border border-teal-400/40 text-teal-200 py-2 text-sm font-semibold hover:bg-teal-400/10 transition-colors disabled:opacity-50"
             >
               {pending ? "Guardando…" : "Guardar estrategia"}
             </button>
@@ -659,7 +659,7 @@ export default function Inspector({
                 {parseTags(tags).map((t) => (
                   <span
                     key={t}
-                    className="inline-flex items-center gap-1 rounded-full border border-cyan-400/25 bg-cyan-400/10 px-2 py-0.5 text-[11px] text-cyan-200"
+                    className="inline-flex items-center gap-1 rounded-full border border-teal-400/25 bg-teal-400/10 px-2 py-0.5 text-[11px] text-teal-200"
                   >
                     {t}
                     <button
@@ -672,7 +672,7 @@ export default function Inspector({
                             .join(","),
                         )
                       }
-                      className="text-cyan-300/70 hover:text-white leading-none"
+                      className="text-teal-300/70 hover:text-white leading-none"
                       aria-label={`Quitar ${t}`}
                     >
                       ×
@@ -686,7 +686,7 @@ export default function Inspector({
               onChange={(e) => setTags(e.target.value)}
               placeholder="marca, temporada-alta, liquidación…"
               disabled={pending}
-              className="mt-2 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-cyan-400/60 focus:outline-none"
+              className="mt-2 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-teal-400/60 focus:outline-none"
             />
             <p className="mt-1 text-[10px] text-white/35">
               Separadas por comas. Sirven para filtrar y aplicar acciones
@@ -695,7 +695,7 @@ export default function Inspector({
             <button
               onClick={saveTags}
               disabled={pending}
-              className="mt-2 w-full rounded-lg border border-cyan-400/40 text-cyan-200 py-2 text-sm font-semibold hover:bg-cyan-400/10 transition-colors disabled:opacity-50"
+              className="mt-2 w-full rounded-lg border border-teal-400/40 text-teal-200 py-2 text-sm font-semibold hover:bg-teal-400/10 transition-colors disabled:opacity-50"
             >
               {pending ? "Guardando…" : "Guardar etiquetas"}
             </button>
@@ -710,7 +710,7 @@ export default function Inspector({
                   onChange={(e) => setParentA(e.target.value)}
                   placeholder="B0XXXXXXXX (vacío = producto único)"
                   disabled={pending}
-                  className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-cyan-400/60 focus:outline-none"
+                  className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-teal-400/60 focus:outline-none"
                 />
                 <p className="mt-1 text-[10px] text-white/35">
                   Agrupa tallas/colores bajo el mismo ASIN padre para
@@ -719,7 +719,7 @@ export default function Inspector({
                 <button
                   onClick={saveParent}
                   disabled={pending}
-                  className="mt-2 w-full rounded-lg border border-cyan-400/40 text-cyan-200 py-2 text-sm font-semibold hover:bg-cyan-400/10 transition-colors disabled:opacity-50"
+                  className="mt-2 w-full rounded-lg border border-teal-400/40 text-teal-200 py-2 text-sm font-semibold hover:bg-teal-400/10 transition-colors disabled:opacity-50"
                 >
                   {pending ? "Guardando…" : "Guardar variación"}
                 </button>
@@ -757,7 +757,7 @@ export default function Inspector({
                   value={fulfil}
                   onChange={(e) => setFulfil(e.target.value as Fulfillment)}
                   disabled={pending}
-                  className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-2 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
+                  className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-2 py-2 text-sm text-white focus:border-teal-400/60 focus:outline-none"
                 >
                   <option value="ANY">Cualquiera</option>
                   <option value="FBA">Solo FBA</option>
@@ -774,7 +774,7 @@ export default function Inspector({
                   inputMode="decimal"
                   placeholder="sin filtro"
                   disabled={pending}
-                  className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
+                  className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white focus:border-teal-400/60 focus:outline-none"
                 />
               </label>
             </div>
@@ -788,7 +788,7 @@ export default function Inspector({
                 onChange={(e) => setExclSellers(e.target.value)}
                 placeholder="A1B2C3D4E5, F6G7H8I9J0"
                 disabled={pending}
-                className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-cyan-400/60 focus:outline-none"
+                className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-teal-400/60 focus:outline-none"
               />
             </label>
             <label className="mt-2 block">
@@ -800,7 +800,7 @@ export default function Inspector({
                 onChange={(e) => setOnlySell(e.target.value)}
                 placeholder="vacío = todos"
                 disabled={pending}
-                className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-cyan-400/60 focus:outline-none"
+                className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-teal-400/60 focus:outline-none"
               />
             </label>
             <p className="mt-1 text-[10px] text-white/35">
@@ -812,7 +812,7 @@ export default function Inspector({
             <button
               onClick={saveCompetition}
               disabled={pending}
-              className="mt-3 w-full rounded-lg border border-cyan-400/40 text-cyan-200 py-2 text-sm font-semibold hover:bg-cyan-400/10 transition-colors disabled:opacity-50"
+              className="mt-3 w-full rounded-lg border border-teal-400/40 text-teal-200 py-2 text-sm font-semibold hover:bg-teal-400/10 transition-colors disabled:opacity-50"
             >
               {pending ? "Guardando…" : "Guardar competencia"}
             </button>

@@ -18,14 +18,14 @@ interface Step {
 const STEPS: Step[] = [
   {
     icon: "🎯",
-    accent: "from-indigo-500/30 to-fuchsia-500/30 border-indigo-400/30",
+    accent: "from-emerald-500/30 to-emerald-500/30 border-emerald-400/30",
     title: "Bienvenido al Centro de control",
     body: "Tu repricer de Amazon. Te enseño todo en 30 segundos. Puedes saltarlo cuando quieras y volver desde «Cómo funciona».",
   },
   {
     anchor: "tour-resumen",
     icon: "📊",
-    accent: "from-cyan-500/30 to-teal-500/30 border-cyan-400/30",
+    accent: "from-teal-500/30 to-teal-500/30 border-teal-400/30",
     title: "Tu resumen",
     body: "De un vistazo: productos en tu catálogo, cuántos tienen precio en Amazon, cuántos están repreciando y el valor total. Se actualiza tras cada sincronización.",
   },
@@ -46,13 +46,13 @@ const STEPS: Step[] = [
   {
     anchor: "tour-graph",
     icon: "📋",
-    accent: "from-sky-500/30 to-cyan-500/30 border-sky-400/30",
+    accent: "from-teal-500/30 to-teal-500/30 border-teal-400/30",
     title: "Tus productos",
     body: "Cada fila es un producto con un color que indica su estado: verde = Buy Box ganada · rojo = perdida · ámbar = en mínimo · azul = pausado · gris = sin oferta.",
   },
   {
     icon: "⚙️",
-    accent: "from-violet-500/30 to-indigo-500/30 border-violet-400/30",
+    accent: "from-emerald-500/30 to-emerald-500/30 border-emerald-400/30",
     title: "Configura tocando una fila",
     body: "Abre el panel: define Precio mín/máx, elige estrategia (Ganar Buy Box · Igualar · Por margen · Precio fijo) y activa el reprecio automático.",
   },
@@ -66,7 +66,7 @@ const STEPS: Step[] = [
   {
     anchor: "tour-activity",
     icon: "📈",
-    accent: "from-purple-500/30 to-violet-500/30 border-purple-400/30",
+    accent: "from-purple-500/30 to-emerald-500/30 border-purple-400/30",
     title: "Plan y actividad",
     body: "Tu plan (prueba/Pro) con días restantes. Mini-resumen: eventos, cambios, errores, % Buy Box. Acceso a Facturación y Factura.",
   },
@@ -78,7 +78,7 @@ const STEPS: Step[] = [
   },
   {
     icon: "🚀",
-    accent: "from-cyan-500/30 to-blue-500/30 border-cyan-400/30",
+    accent: "from-teal-500/30 to-teal-500/30 border-teal-400/30",
     title: "¡A vender!",
     body: "Recuerda: si te pierdes, vuelve a este tutorial desde «Cómo funciona». Pulsa el botón y empieza a recuperar la Buy Box.",
   },
@@ -207,7 +207,7 @@ export default function Tour() {
         aria-label="Tutorial del Centro de control"
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
-        className="relative w-full sm:max-w-md min-h-[88vh] sm:min-h-0 bg-[rgba(8,9,20,0.98)] rounded-t-3xl sm:rounded-3xl border-t sm:border border-cyan-400/15 shadow-[0_-24px_60px_-12px_rgba(0,0,0,0.8)] flex flex-col animate-slide-up sm:animate-fade-in"
+        className="relative w-full sm:max-w-md min-h-[88vh] sm:min-h-0 bg-[rgba(8,9,20,0.98)] rounded-t-3xl sm:rounded-3xl border-t sm:border border-teal-400/15 shadow-[0_-24px_60px_-12px_rgba(0,0,0,0.8)] flex flex-col animate-slide-up sm:animate-fade-in"
       >
         {/* Skip */}
         <button
@@ -225,9 +225,9 @@ export default function Tour() {
               key={k}
               className={`h-1.5 rounded-full transition-all duration-300 ${
                 k === i
-                  ? "w-6 bg-cyan-300"
+                  ? "w-6 bg-teal-300"
                   : k < i
-                    ? "w-1.5 bg-cyan-300/40"
+                    ? "w-1.5 bg-teal-300/40"
                     : "w-1.5 bg-white/15"
               }`}
             />
@@ -241,7 +241,7 @@ export default function Tour() {
           >
             {step.icon}
           </div>
-          <p className="font-mono-ui text-[10px] uppercase tracking-[0.18em] text-cyan-300/70 mb-2">
+          <p className="font-mono-ui text-[10px] uppercase tracking-[0.18em] text-teal-300/70 mb-2">
             ▸ paso {i + 1} de {STEPS.length}
           </p>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-white leading-tight tracking-tight mb-3">
@@ -273,7 +273,7 @@ export default function Tour() {
           <button
             type="button"
             onClick={last ? finish : next}
-            className="flex-1 h-12 rounded-xl bg-[var(--brand-600)] hover:bg-[var(--brand-700)] active:scale-[0.98] text-white font-bold text-sm transition-all shadow-[0_0_24px_-6px_rgba(99,102,241,0.6)]"
+            className="flex-1 h-12 rounded-xl bg-[#059669] hover:bg-[#047857] active:scale-[0.98] text-white font-bold text-sm transition-all shadow-[0_0_24px_-6px_rgba(16,185,129,0.6)]"
           >
             {last ? "¡Empezar!" : "Siguiente →"}
           </button>

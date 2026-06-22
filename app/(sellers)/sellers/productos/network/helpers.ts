@@ -128,9 +128,9 @@ export const STATE_COLOR: Record<
     dot: "#34d399",
   },
   active: {
-    stroke: "rgba(34,211,238,0.9)",
-    halo: "rgba(34,211,238,0.55)",
-    dot: "#22d3ee",
+    stroke: "rgba(45,212,191,0.9)",
+    halo: "rgba(45,212,191,0.55)",
+    dot: "#2dd4bf",
   },
   floor: {
     stroke: "rgba(251,191,36,0.95)",

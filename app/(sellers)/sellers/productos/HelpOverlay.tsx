@@ -42,8 +42,8 @@ const COLORS: Array<[string, string]> = [
   ["bg-red-400", "Buy Box perdida"],
   ["bg-amber-400", "En precio mínimo / techo"],
   ["bg-orange-500", "Error de reprecio"],
-  ["bg-cyan-400", "Repreciando (sin datos aún)"],
-  ["bg-blue-400", "Configurable / pausado"],
+  ["bg-teal-400", "Repreciando (sin datos aún)"],
+  ["bg-teal-400", "Configurable / pausado"],
   ["bg-slate-500", "Sin oferta / ASIN"],
 ];
 
@@ -73,12 +73,12 @@ export default function HelpOverlay() {
       onClick={() => setOpen(false)}
     >
       <div
-        className="mx-auto max-w-xl min-h-full sm:min-h-0 rounded-none sm:rounded-2xl border-0 sm:border sm:border-cyan-400/20 bg-[rgba(7,8,18,0.99)] sm:shadow-[0_30px_80px_-20px_rgba(34,211,238,0.4)] fade-in"
+        className="mx-auto max-w-xl min-h-full sm:min-h-0 rounded-none sm:rounded-2xl border-0 sm:border sm:border-teal-400/20 bg-[rgba(7,8,18,0.99)] sm:shadow-[0_30px_80px_-20px_rgba(45,212,191,0.4)] fade-in"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 z-10 flex items-center justify-between px-4 sm:px-5 py-3 sm:py-4 border-b border-white/10 bg-[rgba(7,8,18,0.99)] backdrop-blur-md sm:rounded-t-2xl">
           <h2 className="text-base font-extrabold tracking-tight">
-            Cómo funciona el <span className="text-gradient-neon">repricer</span>
+            Cómo funciona el <span className="text-gradient-emerald">repricer</span>
           </h2>
           <button
             onClick={() => setOpen(false)}
@@ -99,7 +99,7 @@ export default function HelpOverlay() {
             <ol className="space-y-2">
               {STEPS.map((s, i) => (
                 <li key={i} className="flex gap-3 text-sm text-white/75">
-                  <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-cyan-400/15 text-[11px] font-bold text-cyan-300">
+                  <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-teal-400/15 text-[11px] font-bold text-teal-300">
                     {i + 1}
                   </span>
                   {s}
@@ -139,7 +139,7 @@ export default function HelpOverlay() {
               setOpen(false);
               window.dispatchEvent(new CustomEvent("orvexia:open-tour"));
             }}
-            className="w-full rounded-lg border border-cyan-400/30 py-2 text-sm font-semibold text-cyan-200 hover:bg-cyan-400/10 transition-colors"
+            className="w-full rounded-lg border border-teal-400/30 py-2 text-sm font-semibold text-teal-200 hover:bg-teal-400/10 transition-colors"
           >
             ▶ Repetir tutorial guiado
           </button>
