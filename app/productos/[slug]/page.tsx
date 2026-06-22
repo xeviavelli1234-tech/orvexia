@@ -255,6 +255,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   //   • shippingDetails + hasMerchantReturnPolicy → desbloquea badge envío/devolución
   const inStockOffers = product.offers.filter((o) => o.inStock && o.priceCurrent > 0);
   // Validez: los precios se sincronizan a diario, así que damos +7 días de margen.
+  // eslint-disable-next-line react-hooks/purity -- Server Component: Date.now() es estable por request
   const priceValidUntil = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
     .toISOString().slice(0, 10);
 
