@@ -38,13 +38,15 @@ const REASON: Record<string, string> = {
   no_change: "Sin cambio",
 };
 
-const NAV_MAIN = [
+type NavItem = { href: string; label: string; icon: string; active?: boolean };
+
+const NAV_MAIN: NavItem[] = [
   { href: "/sellers/resumen", label: "Resumen", icon: "grid", active: true },
   { href: "/sellers/productos", label: "Productos", icon: "box" },
   { href: "/sellers/beneficios", label: "Beneficios", icon: "coin" },
   { href: "/sellers/analiticas", label: "Analíticas", icon: "chart" },
 ];
-const NAV_TOOLS = [
+const NAV_TOOLS: NavItem[] = [
   { href: "/sellers/asistente-aprendizaje", label: "Asistente IA", icon: "spark" },
   { href: "/sellers/facturacion", label: "Facturación", icon: "card" },
 ];
