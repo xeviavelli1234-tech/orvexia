@@ -30,8 +30,8 @@ export default function CentroControlLoading() {
 
       <section className="relative flex-1 min-h-0 bg-[radial-gradient(ellipse_at_50%_45%,#10173a_0%,#0a0d24_45%,#05060f_100%)] grid place-items-center">
         <div className="text-center">
-          <div className="mx-auto h-16 w-16 rounded-full border-2 border-cyan-400/30 border-t-cyan-400 animate-spin" />
-          <p className="mt-4 font-mono-ui text-[10px] uppercase tracking-wider text-cyan-300">
+          <div className="mx-auto h-16 w-16 rounded-full border-2 border-teal-400/30 border-t-teal-400 animate-spin" />
+          <p className="mt-4 font-mono-ui text-[10px] uppercase tracking-wider text-teal-300">
             ▸ cargando centro de control
           </p>
           <p className="mt-1 text-xs text-white/45">

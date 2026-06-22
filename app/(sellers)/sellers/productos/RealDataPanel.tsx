@@ -41,7 +41,7 @@ export function RealDataButton() {
       className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-sm text-white/80 hover:bg-white/[0.06] transition-colors text-left"
     >
       <span className="flex items-center gap-2">
-        <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
+        <span className="h-1.5 w-1.5 rounded-full bg-teal-400" />
         Datos reales
       </span>
       <span className="text-[11px] text-white/40">ventas · cuota →</span>
@@ -131,11 +131,11 @@ function RealDataPanelInner({ open, onClose }: { open: boolean; onClose: () => v
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-[min(800px,calc(100vw-2rem))] max-h-[90vh] overflow-y-auto rounded-2xl border border-cyan-400/25 bg-[rgba(7,7,18,0.97)] shadow-[0_20px_60px_-20px_rgba(34,211,238,0.55)]"
+        className="w-[min(800px,calc(100vw-2rem))] max-h-[90vh] overflow-y-auto rounded-2xl border border-teal-400/25 bg-[rgba(7,7,18,0.97)] shadow-[0_20px_60px_-20px_rgba(45,212,191,0.55)]"
       >
         <header className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-white/10 px-5 py-3.5 bg-[rgba(7,7,18,0.97)] backdrop-blur-xl">
           <div>
-            <p className="font-mono-ui text-[10px] uppercase tracking-wider text-cyan-300">
+            <p className="font-mono-ui text-[10px] uppercase tracking-wider text-teal-300">
               ▸ datos reales · ventas + cuota
             </p>
             <h3 className="text-base font-bold text-white">Datos reales del repricer</h3>
@@ -144,7 +144,7 @@ function RealDataPanelInner({ open, onClose }: { open: boolean; onClose: () => v
             <select
               value={days}
               onChange={(e) => setDays(Number(e.target.value))}
-              className="rounded-lg border border-white/15 bg-black/40 px-2 py-1 text-xs text-white focus:border-cyan-400/60 focus:outline-none"
+              className="rounded-lg border border-white/15 bg-black/40 px-2 py-1 text-xs text-white focus:border-teal-400/60 focus:outline-none"
             >
               <option value={7}>7 d</option>
               <option value={14}>14 d</option>
@@ -154,7 +154,7 @@ function RealDataPanelInner({ open, onClose }: { open: boolean; onClose: () => v
             <button
               onClick={doSync}
               disabled={syncing}
-              className="rounded-lg bg-cyan-500/90 px-3 py-1.5 text-xs font-semibold text-black hover:bg-cyan-400 transition-colors disabled:opacity-50"
+              className="rounded-lg bg-teal-500/90 px-3 py-1.5 text-xs font-semibold text-black hover:bg-teal-400 transition-colors disabled:opacity-50"
             >
               {syncing ? "Sincronizando…" : "↺ Sincronizar pedidos"}
             </button>

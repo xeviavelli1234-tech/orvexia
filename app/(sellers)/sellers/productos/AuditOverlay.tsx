@@ -95,13 +95,13 @@ export default function AuditOverlay() {
       onClick={() => setOpen(false)}
     >
       <div
-        className="mx-auto max-w-2xl min-h-full sm:min-h-0 rounded-none sm:rounded-2xl border-0 sm:border sm:border-cyan-400/20 bg-[rgba(7,8,18,0.99)] sm:shadow-[0_30px_80px_-20px_rgba(34,211,238,0.4)] fade-in"
+        className="mx-auto max-w-2xl min-h-full sm:min-h-0 rounded-none sm:rounded-2xl border-0 sm:border sm:border-teal-400/20 bg-[rgba(7,8,18,0.99)] sm:shadow-[0_30px_80px_-20px_rgba(45,212,191,0.4)] fade-in"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 z-10 flex items-start justify-between gap-2 px-4 sm:px-5 py-3 sm:py-4 border-b border-white/10 bg-[rgba(7,8,18,0.99)] backdrop-blur-md sm:rounded-t-2xl">
           <div className="min-w-0">
             <h2 className="text-base font-extrabold tracking-tight">
-              Registro de <span className="text-gradient-neon">actividad</span>
+              Registro de <span className="text-gradient-emerald">actividad</span>
             </h2>
             <p className="text-[11px] text-white/40 mt-0.5">
               Cambios de configuración de tu cuenta (auditoría)
@@ -137,7 +137,7 @@ export default function AuditOverlay() {
                   className="py-3 flex items-start justify-between gap-4"
                 >
                   <div className="min-w-0">
-                    <span className="inline-block rounded border border-cyan-400/20 bg-cyan-400/10 px-1.5 py-0.5 text-[10px] font-semibold text-cyan-200">
+                    <span className="inline-block rounded border border-teal-400/20 bg-teal-400/10 px-1.5 py-0.5 text-[10px] font-semibold text-teal-200">
                       {LABEL[e.action] ?? e.action}
                     </span>
                     <div className="mt-1 text-[13px] text-white/80 break-words">

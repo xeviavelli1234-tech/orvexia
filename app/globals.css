@@ -1314,6 +1314,242 @@ body::before {
 }
 
 /* ============================================================
+   Repricer — "Panel" bento dashboard (estilo Hynex)
+   Superficie limpia casi-negra + tarjetas con borde sutil y un
+   acento esmeralda/teal. Conviven con el grafo neón en su pestaña.
+   ============================================================ */
+
+/* Lienzo del workspace: negro azulado plano con halos esmeralda suaves
+   (sin el degradado espacial del grafo). */
+.hx-canvas {
+  background:
+    radial-gradient(130% 90% at 50% -15%, rgba(16,185,129,0.10), transparent 55%),
+    radial-gradient(80% 60% at 100% 0%, rgba(45,212,191,0.06), transparent 60%),
+    radial-gradient(90% 70% at 0% 100%, rgba(16,185,129,0.05), transparent 60%),
+    #070a11;
+}
+
+/* Tarjeta base del dashboard. Degradado vertical muy sutil + borde hairline
+   + sombra profunda; el highlight superior interior le da relieve premium. */
+.hx-card {
+  position: relative;
+  background: linear-gradient(180deg, rgba(20,28,28,0.55), rgba(12,18,18,0.42));
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 22px;
+  backdrop-filter: blur(7px) saturate(120%);
+  -webkit-backdrop-filter: blur(7px) saturate(120%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.05),
+    0 18px 44px -28px rgba(0,0,0,0.9);
+  transition: border-color .25s var(--ease-out), box-shadow .3s var(--ease-out), transform .25s var(--ease-out);
+}
+.hx-card-hover:hover {
+  border-color: rgba(45,212,191,0.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    0 0 0 1px rgba(45,212,191,0.10),
+    0 22px 60px -30px rgba(16,185,129,0.5);
+  transform: translateY(-2px);
+}
+/* Variante destacada (KPI principal / asistente). */
+.hx-card-emerald {
+  border-color: rgba(16,185,129,0.30);
+  background:
+    radial-gradient(120% 140% at 0% 0%, rgba(16,185,129,0.16), transparent 55%),
+    linear-gradient(180deg, rgba(18,30,26,0.55), rgba(10,18,16,0.42));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    0 24px 60px -30px rgba(16,185,129,0.5);
+}
+
+/* Texto degradado esmeralda→lima (titulares de KPI). */
+.text-gradient-emerald {
+  background: linear-gradient(110deg, #34d399 0%, #2dd4bf 45%, #a3e635 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* Segmented control de pestañas del workspace (Resumen / Grafo). */
+.hx-tab {
+  position: relative;
+  border-radius: 12px;
+  transition: color .2s var(--ease-out), background .2s var(--ease-out);
+}
+.hx-tab-active {
+  background: linear-gradient(180deg, rgba(16,185,129,0.22), rgba(16,185,129,0.10));
+  box-shadow: inset 0 0 0 1px rgba(45,212,191,0.45), 0 6px 18px -8px rgba(16,185,129,0.5);
+}
+
+/* Punto "en directo" en verde esmeralda (variante del live-dot cian). */
+@keyframes hx-live {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(45,212,191,0.6); }
+  60%      { box-shadow: 0 0 0 7px rgba(45,212,191,0); }
+}
+.hx-live-dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 999px;
+  background: #34d399;
+  animation: hx-live 1.9s var(--ease-out) infinite;
+}
+
+/* Aparición escalonada de las tarjetas del bento al entrar. */
+.hx-rise { animation: reveal-up .5s var(--ease-out) both; }
+
+/* ── Pulido premium ──────────────────────────────────────────
+   Sheen superior en cada tarjeta + chip de icono con degradado,
+   barrido de luz para el hero, flotación del cristal y hovers. */
+
+/* Reflejo sutil en el borde superior de cada tarjeta. */
+.hx-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), transparent 22%);
+  opacity: 0.7;
+}
+
+/* Chip de icono con degradado esmeralda y relieve. */
+.hx-icon {
+  background: linear-gradient(135deg, rgba(52,211,153,0.24), rgba(45,212,191,0.08));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.14),
+    inset 0 0 0 1px rgba(45,212,191,0.18),
+    0 6px 16px -8px rgba(16,185,129,0.55);
+  color: #6ee7b7;
+}
+
+/* Barrido de luz diagonal (hero IA). */
+@keyframes hx-sheen {
+  0%   { transform: translateX(-130%) skewX(-18deg); }
+  60%  { transform: translateX(240%) skewX(-18deg); }
+  100% { transform: translateX(240%) skewX(-18deg); }
+}
+.hx-sheen {
+  position: absolute;
+  top: 0; bottom: 0; width: 36%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent);
+  pointer-events: none;
+  animation: hx-sheen 7s var(--ease-in-out) infinite;
+}
+
+/* Flotación del cristal facetado. */
+@keyframes hx-float {
+  0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); }
+  50%      { transform: translateY(-7px) rotate(var(--r, 0deg)); }
+}
+.hx-facet { animation: hx-float var(--d, 5s) var(--ease-in-out) infinite; will-change: transform; }
+
+/* Fila de leyenda / tabla con realce al pasar el cursor. */
+.hx-row { transition: background-color .15s var(--ease-out); border-radius: 8px; }
+.hx-row:hover { background: rgba(45,212,191,0.06); }
+
+/* Brillo del valor numérico destacado. */
+.hx-num { font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+
+/* Chip de tendencia (delta). */
+.hx-delta-up   { color: #6ee7b7; background: rgba(16,185,129,0.12); }
+.hx-delta-down { color: #fda4af; background: rgba(244,63,94,0.12); }
+.hx-delta-flat { color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.06); }
+
+/* Borde gradiente esmeralda animado (hero IA). Hairline con barrido. */
+.hx-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(120deg, rgba(52,211,153,0.65), rgba(45,212,191,0.25), rgba(163,230,53,0.55), rgba(52,211,153,0.65));
+  background-size: 220% 220%;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0.6;
+  animation: hx-border-pan 9s linear infinite;
+}
+@keyframes hx-border-pan {
+  to { background-position: 220% 0; }
+}
+
+/* Línea de acento inferior que se ilumina al pasar el cursor sobre una tarjeta. */
+.hx-accent-line {
+  position: absolute;
+  left: 16px; right: 16px; bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(52,211,153,0.7), transparent);
+  opacity: 0;
+  transition: opacity .3s var(--ease-out);
+}
+.hx-card-hover:hover .hx-accent-line { opacity: 1; }
+
+/* ── Fondo decorativo animado del panel ──────────────────────
+   Auroras esmeralda que derivan + rejilla tenue + partículas.
+   Capa puramente decorativa (pointer-events:none) tras las tarjetas. */
+.hx-backdrop { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+.hx-backdrop > * { position: absolute; }
+
+.hx-blob { border-radius: 9999px; filter: blur(80px); will-change: transform; }
+@keyframes hx-drift-a {
+  0%, 100% { transform: translate3d(0,0,0) scale(1); }
+  50%      { transform: translate3d(7%, 5%, 0) scale(1.15); }
+}
+@keyframes hx-drift-b {
+  0%, 100% { transform: translate3d(0,0,0) scale(1); }
+  50%      { transform: translate3d(-6%, -7%, 0) scale(1.12); }
+}
+@keyframes hx-drift-c {
+  0%, 100% { transform: translate3d(0,0,0) scale(1); }
+  50%      { transform: translate3d(5%, -5%, 0) scale(1.1); }
+}
+.hx-blob-a { animation: hx-drift-a 24s var(--ease-in-out) infinite; }
+.hx-blob-b { animation: hx-drift-b 30s var(--ease-in-out) infinite; }
+.hx-blob-c { animation: hx-drift-c 36s var(--ease-in-out) infinite; }
+
+/* Rejilla esmeralda desvaída hacia los bordes. */
+.hx-grid {
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(45,212,191,0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(45,212,191,0.045) 1px, transparent 1px);
+  background-size: 46px 46px;
+  -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 18%, #000 0%, transparent 78%);
+          mask-image: radial-gradient(ellipse 90% 70% at 50% 18%, #000 0%, transparent 78%);
+}
+
+/* Partícula ascendente esmeralda (deriva lenta). */
+@keyframes hx-rise-dot {
+  0%   { transform: translateY(40px); opacity: 0; }
+  12%  { opacity: 0.8; }
+  88%  { opacity: 0.8; }
+  100% { transform: translateY(-120px); opacity: 0; }
+}
+.hx-dot {
+  width: 3px; height: 3px; border-radius: 9999px;
+  background: var(--c, #34d399);
+  box-shadow: 0 0 8px 1px var(--c, #34d399);
+  opacity: 0;
+  animation: hx-rise-dot var(--d, 14s) linear infinite;
+  animation-delay: var(--delay, 0s);
+}
+
+@media (max-width: 639px) {
+  /* En móvil quitamos blur pesado y animaciones del fondo. */
+  .hx-blob { filter: blur(50px); }
+  .hx-blob-a, .hx-blob-b, .hx-blob-c, .hx-dot { animation: none !important; }
+  .hx-card {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: linear-gradient(180deg, rgba(20,28,28,0.92), rgba(12,18,18,0.9));
+  }
+}
+
+/* ============================================================
    Reduced motion
    ============================================================ */
 @media (prefers-reduced-motion: reduce) {

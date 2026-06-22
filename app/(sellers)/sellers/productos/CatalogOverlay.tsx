@@ -20,7 +20,7 @@ export function CatalogButton() {
       className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-sm text-white/80 hover:bg-white/[0.06] transition-colors text-left"
     >
       <span className="flex items-center gap-2">
-        <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
+        <span className="h-1.5 w-1.5 rounded-full bg-teal-400" />
         Catálogo (lista, masiva, CSV)
       </span>
       <span className="text-[11px] text-white/40">→</span>
@@ -268,14 +268,14 @@ export default function CatalogOverlay({ items }: { items: NetNode[] }) {
       onClick={() => setOpen(false)}
     >
       <div
-        className="mx-auto max-w-5xl min-h-full sm:min-h-0 rounded-none sm:rounded-2xl border-0 sm:border sm:border-cyan-400/20 bg-[rgba(7,8,18,0.99)] sm:shadow-[0_30px_80px_-20px_rgba(34,211,238,0.4)] fade-in"
+        className="mx-auto max-w-5xl min-h-full sm:min-h-0 rounded-none sm:rounded-2xl border-0 sm:border sm:border-teal-400/20 bg-[rgba(7,8,18,0.99)] sm:shadow-[0_30px_80px_-20px_rgba(45,212,191,0.4)] fade-in"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 z-10 px-4 sm:px-5 py-3 sm:py-3.5 border-b border-white/10 bg-[rgba(7,8,18,0.99)] backdrop-blur-md sm:rounded-t-2xl">
           {/* Row 1: title + close */}
           <div className="flex items-center justify-between gap-2 mb-2.5 sm:mb-3">
             <h2 className="text-base font-extrabold tracking-tight">
-              Catálogo <span className="text-gradient-neon">· {items.length}</span>
+              Catálogo <span className="text-gradient-emerald">· {items.length}</span>
             </h2>
             <button
               onClick={() => setOpen(false)}
@@ -292,14 +292,14 @@ export default function CatalogOverlay({ items }: { items: NetNode[] }) {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Buscar título / SKU / ASIN…"
-            className="w-full rounded-lg border border-white/15 bg-black/40 px-3 h-10 text-sm text-white placeholder:text-white/30 focus:border-cyan-400/60 focus:outline-none mb-2"
+            className="w-full rounded-lg border border-white/15 bg-black/40 px-3 h-10 text-sm text-white placeholder:text-white/30 focus:border-teal-400/60 focus:outline-none mb-2"
           />
           {/* Row 3: filters + actions (horizontal scroll on mobile) */}
           <div className="flex items-center gap-1.5 sm:gap-2 -mx-4 sm:mx-0 px-4 sm:px-0 overflow-x-auto scrollbar-hide pb-0.5">
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value as Filter)}
-              className="flex-shrink-0 rounded-lg border border-white/15 bg-black/40 px-2.5 h-9 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
+              className="flex-shrink-0 rounded-lg border border-white/15 bg-black/40 px-2.5 h-9 text-sm text-white focus:border-teal-400/60 focus:outline-none"
             >
               <option value="all">Todos</option>
               <option value="active">Repreciando</option>
@@ -312,7 +312,7 @@ export default function CatalogOverlay({ items }: { items: NetNode[] }) {
               <select
                 value={tagFilter}
                 onChange={(e) => setTagFilter(e.target.value)}
-                className="flex-shrink-0 rounded-lg border border-white/15 bg-black/40 px-2.5 h-9 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
+                className="flex-shrink-0 rounded-lg border border-white/15 bg-black/40 px-2.5 h-9 text-sm text-white focus:border-teal-400/60 focus:outline-none"
                 title="Filtrar por etiqueta"
               >
                 <option value="">Todas las etiquetas</option>
@@ -347,7 +347,7 @@ export default function CatalogOverlay({ items }: { items: NetNode[] }) {
         </div>
 
         {msg && (
-          <div className="px-5 pt-3 text-[11px] text-cyan-200">{msg}</div>
+          <div className="px-5 pt-3 text-[11px] text-teal-200">{msg}</div>
         )}
 
         {/* Mobile card list */}
@@ -359,7 +359,7 @@ export default function CatalogOverlay({ items }: { items: NetNode[] }) {
               {/* Select-all row */}
               <label className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg border border-white/10 bg-white/[0.02]">
                 <span className="flex items-center gap-2.5">
-                  <input type="checkbox" checked={allSel} onChange={selectAll} className="w-4 h-4 accent-cyan-500" />
+                  <input type="checkbox" checked={allSel} onChange={selectAll} className="w-4 h-4 accent-teal-500" />
                   <span className="text-xs font-semibold text-white/75 uppercase tracking-wider">
                     {sel.size > 0 ? `${sel.size} seleccionados` : "Seleccionar todos"}
                   </span>
@@ -380,26 +380,26 @@ export default function CatalogOverlay({ items }: { items: NetNode[] }) {
                     ? "bg-emerald-400/15 text-emerald-200 border-emerald-400/30"
                     : st === "Sin oferta"
                       ? "bg-white/[0.06] text-white/55 border-white/15"
-                      : "bg-blue-400/15 text-blue-200 border-blue-400/30";
+                      : "bg-teal-400/15 text-teal-200 border-teal-400/30";
                 return (
                   <label
                     key={n.id}
                     className={`flex items-start gap-3 px-3 py-3 rounded-xl border transition-colors ${
-                      sel.has(n.id) ? "border-cyan-400/40 bg-cyan-400/[0.05]" : "border-white/[0.08] bg-white/[0.015]"
+                      sel.has(n.id) ? "border-teal-400/40 bg-teal-400/[0.05]" : "border-white/[0.08] bg-white/[0.015]"
                     }`}
                   >
                     <input
                       type="checkbox"
                       checked={sel.has(n.id)}
                       onChange={() => toggle(n.id)}
-                      className="mt-0.5 w-4 h-4 accent-cyan-500 flex-shrink-0"
+                      className="mt-0.5 w-4 h-4 accent-teal-500 flex-shrink-0"
                     />
                     <div className="flex-1 min-w-0">
                       <div className="text-sm text-white/90 line-clamp-2 leading-snug">{n.title}</div>
                       <div className="font-mono text-[10px] text-white/40 mt-0.5 truncate">
                         {n.sku}
                         {isVariationChild(n) && (
-                          <span className="ml-1.5 text-indigo-300/80">↳ {n.parentAsin}</span>
+                          <span className="ml-1.5 text-emerald-300/80">↳ {n.parentAsin}</span>
                         )}
                       </div>
                       {parseTags(n.tags).length > 0 && (
@@ -407,7 +407,7 @@ export default function CatalogOverlay({ items }: { items: NetNode[] }) {
                           {parseTags(n.tags).map((t) => (
                             <span
                               key={t}
-                              className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-1.5 py-0.5 text-[9px] text-cyan-200"
+                              className="rounded-full border border-teal-400/20 bg-teal-400/10 px-1.5 py-0.5 text-[9px] text-teal-200"
                             >
                               {t}
                             </span>
@@ -472,7 +472,7 @@ export default function CatalogOverlay({ items }: { items: NetNode[] }) {
                       <div className="font-mono text-[10px] text-white/35">
                         {n.sku}
                         {isVariationChild(n) && (
-                          <span className="ml-1.5 text-indigo-300/80">
+                          <span className="ml-1.5 text-emerald-300/80">
                             ↳ {n.parentAsin}
                           </span>
                         )}
@@ -482,7 +482,7 @@ export default function CatalogOverlay({ items }: { items: NetNode[] }) {
                           {parseTags(n.tags).map((t) => (
                             <span
                               key={t}
-                              className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-1.5 py-0.5 text-[9px] text-cyan-200"
+                              className="rounded-full border border-teal-400/20 bg-teal-400/10 px-1.5 py-0.5 text-[9px] text-teal-200"
                             >
                               {t}
                             </span>
@@ -503,7 +503,7 @@ export default function CatalogOverlay({ items }: { items: NetNode[] }) {
                             ? "text-emerald-300"
                             : st === "Sin oferta"
                               ? "text-white/40"
-                              : "text-blue-300"
+                              : "text-teal-300"
                         }
                       >
                         {st}
@@ -544,7 +544,7 @@ export default function CatalogOverlay({ items }: { items: NetNode[] }) {
               onChange={(e) => setTagInput(e.target.value)}
               placeholder="etiqueta…"
               list="catalog-tags"
-              className="w-32 rounded-lg border border-white/15 bg-black/40 px-2 py-1.5 text-xs text-white placeholder:text-white/30 focus:border-cyan-400/60 focus:outline-none"
+              className="w-32 rounded-lg border border-white/15 bg-black/40 px-2 py-1.5 text-xs text-white placeholder:text-white/30 focus:border-teal-400/60 focus:outline-none"
             />
             <datalist id="catalog-tags">
               {allTags.map((t) => (
@@ -583,7 +583,7 @@ function BulkBtn({
     <button
       onClick={onClick}
       disabled={disabled}
-      className="rounded-lg border border-cyan-400/30 bg-cyan-400/5 px-3 py-1.5 text-xs text-cyan-200 hover:bg-cyan-400/10 transition-colors disabled:opacity-50"
+      className="rounded-lg border border-teal-400/30 bg-teal-400/5 px-3 py-1.5 text-xs text-teal-200 hover:bg-teal-400/10 transition-colors disabled:opacity-50"
     >
       {children}
     </button>

@@ -108,7 +108,7 @@ export function UploadCsvButton({ lastSyncAt }: { lastSyncAt: Date | null }) {
           variant="primary"
           size="md"
           onClick={() => setOpen(true)}
-          className="w-full shadow-[0_0_18px_-6px_rgba(99,102,241,0.7)]"
+          className="w-full shadow-[0_0_18px_-6px_rgba(16,185,129,0.7)]"
         >
           Subir catálogo CSV
         </Button>
@@ -133,11 +133,11 @@ export function UploadCsvButton({ lastSyncAt }: { lastSyncAt: Date | null }) {
           >
             <div
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-[560px] max-h-[90vh] overflow-y-auto rounded-2xl border border-cyan-400/25 bg-[rgba(7,7,18,0.97)] shadow-[0_20px_60px_-20px_rgba(34,211,238,0.55)]"
+              className="w-full max-w-[560px] max-h-[90vh] overflow-y-auto rounded-2xl border border-teal-400/25 bg-[rgba(7,7,18,0.97)] shadow-[0_20px_60px_-20px_rgba(45,212,191,0.55)]"
             >
               <header className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-3.5">
                 <div>
-                  <div className="font-mono-ui text-[10px] uppercase tracking-wider text-cyan-300">
+                  <div className="font-mono-ui text-[10px] uppercase tracking-wider text-teal-300">
                     ▸ /manual · import
                   </div>
                   <h3 className="mt-0.5 text-base font-bold text-white">
@@ -158,8 +158,8 @@ export function UploadCsvButton({ lastSyncAt }: { lastSyncAt: Date | null }) {
 
               <div className="p-5 space-y-4">
                 <p className="text-xs text-white/55 leading-relaxed">
-                  Sube un archivo CSV con tu catálogo. Columnas mínimas: <code className="text-cyan-300">sku</code>,{" "}
-                  <code className="text-cyan-300">title</code>, <code className="text-cyan-300">price</code>. Opcionales:{" "}
+                  Sube un archivo CSV con tu catálogo. Columnas mínimas: <code className="text-teal-300">sku</code>,{" "}
+                  <code className="text-teal-300">title</code>, <code className="text-teal-300">price</code>. Opcionales:{" "}
                   <code className="text-white/70">min, max, cost, currency, image_url</code>.
                 </p>
 
@@ -177,8 +177,8 @@ export function UploadCsvButton({ lastSyncAt }: { lastSyncAt: Date | null }) {
                   }}
                   className={`flex flex-col items-center justify-center gap-2 cursor-pointer rounded-xl border-2 border-dashed px-4 py-10 text-center transition-colors ${
                     dragging
-                      ? "border-cyan-400/70 bg-cyan-400/[0.08]"
-                      : "border-white/15 bg-white/[0.02] hover:border-cyan-400/40 hover:bg-cyan-400/[0.04]"
+                      ? "border-teal-400/70 bg-teal-400/[0.08]"
+                      : "border-white/15 bg-white/[0.02] hover:border-teal-400/40 hover:bg-teal-400/[0.04]"
                   }`}
                 >
                   <input
@@ -207,7 +207,7 @@ export function UploadCsvButton({ lastSyncAt }: { lastSyncAt: Date | null }) {
                 <div className="flex flex-wrap items-center gap-3 text-xs">
                   <a
                     href="/api/sellers/manual/import"
-                    className="inline-flex items-center gap-1.5 text-cyan-300 hover:text-cyan-200 underline underline-offset-4"
+                    className="inline-flex items-center gap-1.5 text-teal-300 hover:text-teal-200 underline underline-offset-4"
                     download
                   >
                     ⬇︎ Descargar plantilla CSV

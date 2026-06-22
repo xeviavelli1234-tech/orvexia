@@ -40,9 +40,9 @@ export default function ControlCenterShell({ sidebar, canvas, overlays, banner }
           ← Dashboard
         </Link>
         <div className="flex items-center gap-2 min-w-0">
-          <span className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_10px_2px_rgba(34,211,238,0.7)] flex-shrink-0" />
+          <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_10px_2px_rgba(16,185,129,0.7)] flex-shrink-0" />
           <h1 className="text-sm font-extrabold tracking-tight truncate">
-            Centro de <span className="text-gradient-neon">control</span>
+            Centro de <span className="text-gradient-emerald">control</span>
           </h1>
         </div>
         <button
@@ -80,7 +80,7 @@ export default function ControlCenterShell({ sidebar, canvas, overlays, banner }
       >
         {/* Close button — mobile drawer only */}
         <div className="lg:hidden flex items-center justify-between px-4 pt-3 pb-1">
-          <span className="font-mono-ui text-[10px] uppercase tracking-[0.18em] text-cyan-300/80">▸ /tools</span>
+          <span className="font-mono-ui text-[10px] uppercase tracking-[0.18em] text-emerald-300/80">▸ /tools</span>
           <button
             type="button"
             onClick={() => setDrawerOpen(false)}
@@ -97,7 +97,7 @@ export default function ControlCenterShell({ sidebar, canvas, overlays, banner }
 
       {/* ── Canvas / graph area ───────────────────────────────────── */}
       <section
-        className="relative flex-1 min-h-0 bg-[radial-gradient(ellipse_at_50%_45%,#10173a_0%,#0a0d24_45%,#05060f_100%)] flex flex-col"
+        className="relative flex-1 min-h-0 bg-[radial-gradient(ellipse_at_50%_45%,#0c2620_0%,#081914_45%,#04090a_100%)] flex flex-col"
         id="tour-graph"
       >
         {banner}
