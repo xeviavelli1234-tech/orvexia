@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { lineProfit } from "./profit";
+import { lineProfit, aggregateProfit, type SaleRecord } from "./profit";
 import { profitAt } from "./margin";
 
 const COST = { cost: 10, shipping: 2, fbaFee: 3, referralPct: 15, vatPct: 21 };
@@ -50,4 +50,76 @@ test("una venta por debajo del coste da beneficio negativo", () => {
   // break-even ronda los ~19 €; vender a 12 € es pérdida
   const r = lineProfit({ quantity: 4, unitPrice: 12, cost: COST });
   assert.ok(r.profit < 0, `esperaba pérdida, fue ${r.profit}`);
+});
+
+// ── aggregateProfit ──────────────────────────────────────────────
+
+test("aggregateProfit agrupa por SKU y suma líneas del mismo SKU", () => {
+  const recs: SaleRecord[] = [
+    { sku: "A", title: "Lavadora", quantity: 2, unitPrice: 50, cost: COST },
+    { sku: "A", quantity: 1, unitPrice: 60, cost: COST },
+    { sku: "B", title: "Secadora", quantity: 1, unitPrice: 80, cost: COST },
+  ];
+  const { bySku, totals } = aggregateProfit(recs);
+
+  assert.equal(bySku.length, 2);
+  const a = bySku.find((r) => r.sku === "A")!;
+  assert.equal(a.lines, 2);
+  assert.equal(a.units, 3);
+  assert.equal(a.revenue, 160); // 2·50 + 1·60
+  assert.equal(a.title, "Lavadora"); // hereda el título de la línea que lo trae
+
+  assert.equal(totals.units, 4);
+  assert.equal(totals.revenue, 240);
+});
+
+test("los totales cuadran con la suma de los SKUs", () => {
+  const recs: SaleRecord[] = [
+    { sku: "A", quantity: 2, unitPrice: 50, cost: COST },
+    { sku: "B", quantity: 3, unitPrice: 70, cost: COST },
+  ];
+  const { bySku, totals } = aggregateProfit(recs);
+  const sum = bySku.reduce((s, r) => s + r.profit, 0);
+  assert.ok(Math.abs(sum - totals.profit) < 0.01);
+});
+
+test("el margen total es ponderado, no la media de márgenes por línea", () => {
+  // Un SKU rentable con mucho volumen + uno a pérdida con poco.
+  const recs: SaleRecord[] = [
+    { sku: "GANA", quantity: 10, unitPrice: 100, cost: COST },
+    { sku: "PIERDE", quantity: 1, unitPrice: 12, cost: COST },
+  ];
+  const { totals } = aggregateProfit(recs);
+  const expected = (totals.profit / totals.netRevenue) * 100;
+  assert.ok(Math.abs(totals.marginPct - expected) < 0.05);
+});
+
+test("bySku sale ordenado por beneficio descendente", () => {
+  const recs: SaleRecord[] = [
+    { sku: "BAJO", quantity: 1, unitPrice: 30, cost: COST },
+    { sku: "ALTO", quantity: 5, unitPrice: 120, cost: COST },
+    { sku: "MEDIO", quantity: 2, unitPrice: 60, cost: COST },
+  ];
+  const profits = aggregateProfit(recs).bySku.map((r) => r.profit);
+  const sorted = [...profits].sort((a, b) => b - a);
+  assert.deepEqual(profits, sorted);
+});
+
+test("marca unidades estimadas cuando falta unitPrice", () => {
+  const recs: SaleRecord[] = [
+    { sku: "A", quantity: 2, unitPrice: 50, cost: COST },
+    { sku: "A", quantity: 3, unitPrice: null, fallbackPrice: 55, cost: COST },
+  ];
+  const a = aggregateProfit(recs).bySku.find((r) => r.sku === "A")!;
+  assert.equal(a.hasEstimated, true);
+  assert.equal(a.estimatedUnits, 3);
+  assert.equal(a.units, 5);
+});
+
+test("sin ventas → resumen vacío con totales a 0", () => {
+  const { bySku, totals } = aggregateProfit([]);
+  assert.equal(bySku.length, 0);
+  assert.equal(totals.units, 0);
+  assert.equal(totals.profit, 0);
+  assert.equal(totals.marginPct, 0);
 });
