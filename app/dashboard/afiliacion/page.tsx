@@ -71,6 +71,9 @@ export default async function AfiliacionDashboardPage() {
   const admin = await isAdminUser(session.userId);
   if (!admin) notFound();
 
+  // Date.now() es estable durante el render de un Server Component (se evalúa
+  // una vez por request); lo capturamos una sola vez para las ventanas temporales.
+  const now = Date.now(); // eslint-disable-line react-hooks/purity
   const [
     clicks24h,
     clicks7d,
@@ -82,13 +85,13 @@ export default async function AfiliacionDashboardPage() {
     dailyClicks,
   ] = await Promise.all([
     prisma.affiliateClickEvent.count({
-      where: { clickedAt: { gte: new Date(Date.now() - 24 * 3600_000) } },
+      where: { clickedAt: { gte: new Date(now - 24 * 3600_000) } },
     }),
     prisma.affiliateClickEvent.count({
-      where: { clickedAt: { gte: new Date(Date.now() - 7 * 24 * 3600_000) } },
+      where: { clickedAt: { gte: new Date(now - 7 * 24 * 3600_000) } },
     }),
     prisma.affiliateClickEvent.count({
-      where: { clickedAt: { gte: new Date(Date.now() - 30 * 24 * 3600_000) } },
+      where: { clickedAt: { gte: new Date(now - 30 * 24 * 3600_000) } },
     }),
     prisma.affiliateConversion.groupBy({
       by: ["status"],

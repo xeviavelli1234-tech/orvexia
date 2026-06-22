@@ -24,8 +24,9 @@ export default function SellersHeader() {
     return () => { document.body.style.overflow = prev; };
   }, [open]);
 
-  // El Centro de control es pantalla completa y trae su propia barra.
+  // El Centro de control y el panel Resumen son pantalla completa y traen su propia barra.
   if (pathname.startsWith("/sellers/productos")) return null;
+  if (pathname.startsWith("/sellers/resumen")) return null;
 
   const isApp = APP_PREFIXES.some((p) => pathname.startsWith(p));
 
