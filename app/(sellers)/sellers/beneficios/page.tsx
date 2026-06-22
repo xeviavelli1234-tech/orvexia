@@ -52,19 +52,17 @@ export default async function BeneficiosPage({
             ← Centro de control
           </Link>
           <span className="text-white/20">/</span>
-          <h1 className="text-xl font-extrabold tracking-tight">
+          <h1 className="section-title text-2xl sm:text-3xl">
             Beneficio <span className="text-gradient-neon">real</span>
           </h1>
-          <div className="ml-auto flex items-center gap-1 rounded-lg border border-white/10 p-0.5 text-xs">
+          <div className="ml-auto flex items-center gap-1.5">
             {PERIODS.map((p) => {
               const active = p.d === days;
               return (
                 <Link
                   key={p.d}
                   href={`/sellers/beneficios?d=${p.d}`}
-                  className={`px-3 py-1 rounded-md transition-colors ${
-                    active ? "bg-emerald-500/80 text-black" : "text-white/55 hover:text-white"
-                  }`}
+                  className={`btn btn-sm ${active ? "btn-accent" : "btn-ghost"}`}
                 >
                   {p.label}
                 </Link>
@@ -72,7 +70,7 @@ export default async function BeneficiosPage({
             })}
           </div>
         </div>
-        <p className="mt-1 text-xs text-white/40">
+        <p className="mt-2 text-sm text-fg-subtle max-w-2xl">
           Beneficio realizado a partir de tus ventas reales en Amazon (últimos {days} días),
           descontando IVA, comisión de Amazon y tu coste por producto.
         </p>
@@ -113,8 +111,9 @@ export default async function BeneficiosPage({
         )}
 
         {/* Tabla por SKU */}
-        <section className="mt-6 rounded-2xl border border-white/10 bg-white/[0.02] p-5">
-          <h2 className="text-sm font-bold text-white/80 mb-4">Rentabilidad por producto</h2>
+        <section className="mt-6 card card-pad">
+          <p className="eyebrow mb-1">▸ por SKU</p>
+          <h2 className="text-base font-bold text-fg mb-4">Rentabilidad por producto</h2>
           {bySku.length === 0 ? (
             <p className="text-sm text-white/45">
               {report.hasAccount
@@ -144,7 +143,7 @@ export default async function BeneficiosPage({
                           <div className="font-mono text-[10px] text-white/35">
                             {s.asin || "sin ASIN"} · {s.sku}
                             {s.hasEstimated && (
-                              <span className="ml-1.5 text-amber-300/70">· estimado</span>
+                              <span className="badge badge-hot ml-2 !text-[10px] !py-0">estimado</span>
                             )}
                           </div>
                         </td>
@@ -199,16 +198,16 @@ function Kpi({
 }) {
   const c =
     accent === "emerald"
-      ? "text-emerald-300"
+      ? "text-accent-300"
       : accent === "red"
-        ? "text-red-300"
+        ? "text-danger-500"
         : accent === "cyan"
           ? "text-cyan-300"
-          : "text-white/90";
+          : "text-fg-strong";
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
-      <div className="text-[10px] uppercase tracking-[0.14em] text-white/40 truncate">{label}</div>
-      <div className={`mt-1 font-mono text-xl font-extrabold tabular-nums ${c}`}>{value}</div>
+    <div className="card card-hover px-4 py-3">
+      <div className="text-[10px] uppercase tracking-[0.14em] text-fg-subtle truncate">{label}</div>
+      <div className={`mt-1 font-mono-ui text-xl font-extrabold tabular ${c}`}>{value}</div>
     </div>
   );
 }
