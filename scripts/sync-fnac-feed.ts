@@ -348,7 +348,7 @@ function feedIdToFnacId(merchantProductId: string): string | null {
  */
 function fnacIdFromUrl(url: string): string | null {
   // Caso 1: URL directa de Fnac
-  let m = url.match(/fnac\.es\/(mp\d+|a\d+)[/?]/i);
+  const m = url.match(/fnac\.es\/(mp\d+|a\d+)[/?]/i);
   if (m) return m[1];
 
   // Caso 2: URL Awin con Fnac URL en parámetro ued (codificado)

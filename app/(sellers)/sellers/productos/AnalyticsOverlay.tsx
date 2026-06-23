@@ -27,9 +27,9 @@ export interface OvProduct {
 }
 
 const REASON: Record<string, { label: string; cls: string }> = {
-  competitor_undercut: { label: "Bajo competidor", cls: "text-cyan-300 bg-cyan-400/10 border-cyan-400/20" },
-  competitor_match: { label: "Igualado", cls: "text-cyan-300 bg-cyan-400/10 border-cyan-400/20" },
-  fixed_price: { label: "Precio fijo", cls: "text-indigo-300 bg-indigo-400/10 border-indigo-400/20" },
+  competitor_undercut: { label: "Bajo competidor", cls: "text-teal-300 bg-teal-400/10 border-teal-400/20" },
+  competitor_match: { label: "Igualado", cls: "text-teal-300 bg-teal-400/10 border-teal-400/20" },
+  fixed_price: { label: "Precio fijo", cls: "text-emerald-300 bg-emerald-400/10 border-emerald-400/20" },
   margin_floor: { label: "Suelo margen", cls: "text-amber-300 bg-amber-400/10 border-amber-400/20" },
   no_competition: { label: "Sin competencia", cls: "text-emerald-300 bg-emerald-400/10 border-emerald-400/20" },
   step_up: { label: "Subida gradual", cls: "text-emerald-300 bg-emerald-400/10 border-emerald-400/20" },
@@ -310,7 +310,7 @@ export default function AnalyticsOverlay({
       onClick={() => setOpen(false)}
     >
       <div
-        className="mx-auto max-w-5xl min-h-full sm:min-h-0 rounded-none sm:rounded-2xl border-0 sm:border sm:border-cyan-400/20 bg-[rgba(7,8,18,0.99)] sm:shadow-[0_30px_80px_-20px_rgba(34,211,238,0.4)] fade-in"
+        className="mx-auto max-w-5xl min-h-full sm:min-h-0 rounded-none sm:rounded-2xl border-0 sm:border sm:border-teal-400/20 bg-[rgba(7,8,18,0.99)] sm:shadow-[0_30px_80px_-20px_rgba(45,212,191,0.4)] fade-in"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Cabecera */}
@@ -318,7 +318,7 @@ export default function AnalyticsOverlay({
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
               <h2 className="text-base font-extrabold tracking-tight">
-                Analíticas y <span className="text-gradient-neon">actividad</span>
+                Analíticas y <span className="text-gradient-emerald">actividad</span>
               </h2>
               <p className="text-[11px] text-white/40 mt-0.5">
                 Plan {plan.label} · ciclo {plan.intervalMinutes} min · {runCount} ciclos ·{" "}
@@ -348,7 +348,7 @@ export default function AnalyticsOverlay({
                 setSel(e.target.value);
                 setActLimit(40);
               }}
-              className="flex-1 sm:flex-initial min-w-0 sm:max-w-[260px] rounded-lg border border-white/15 bg-black/40 px-3 h-9 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
+              className="flex-1 sm:flex-initial min-w-0 sm:max-w-[260px] rounded-lg border border-white/15 bg-black/40 px-3 h-9 text-sm text-white focus:border-teal-400/60 focus:outline-none"
             >
               <option value="ALL">Todos los productos</option>
               {products.map((p) => (
@@ -459,7 +459,7 @@ export default function AnalyticsOverlay({
                       </div>
                       <div className="h-2 rounded-full bg-white/[0.06] overflow-hidden">
                         <div
-                          className="h-full rounded-full bg-cyan-400/60"
+                          className="h-full rounded-full bg-teal-400/60"
                           style={{ width: `${(r.events / maxCmp) * 100}%` }}
                         />
                       </div>
@@ -545,7 +545,7 @@ export default function AnalyticsOverlay({
                       title={`${h}:00 · ${n} eventos`}
                     >
                       <div
-                        className="w-full rounded-t bg-cyan-400/50 min-h-[2px]"
+                        className="w-full rounded-t bg-teal-400/50 min-h-[2px]"
                         style={{ height: `${(n / maxHour) * 100}%` }}
                       />
                       {h % 6 === 0 && (
@@ -576,7 +576,7 @@ export default function AnalyticsOverlay({
                         </div>
                         <div className="h-2 rounded-full bg-white/[0.06] overflow-hidden">
                           <div
-                            className="h-full rounded-full bg-cyan-400/60"
+                            className="h-full rounded-full bg-teal-400/60"
                             style={{ width: `${(n / maxReason) * 100}%` }}
                           />
                         </div>
@@ -624,7 +624,7 @@ export default function AnalyticsOverlay({
                   );
                   setActLimit(40);
                 }}
-                className="rounded-lg border border-white/15 bg-black/40 px-2 py-1 text-[11px] text-white focus:border-cyan-400/60 focus:outline-none"
+                className="rounded-lg border border-white/15 bg-black/40 px-2 py-1 text-[11px] text-white focus:border-teal-400/60 focus:outline-none"
               >
                 <option value="all">Todo</option>
                 <option value="changes">Solo cambios</option>
@@ -692,7 +692,7 @@ export default function AnalyticsOverlay({
                                 down
                                   ? "text-emerald-300 font-bold"
                                   : up
-                                    ? "text-cyan-300 font-bold"
+                                    ? "text-teal-300 font-bold"
                                     : "text-white/55"
                               }
                             >
@@ -702,7 +702,7 @@ export default function AnalyticsOverlay({
                           {(up || down) && (
                             <div
                               className={`text-[10px] font-mono ${
-                                down ? "text-emerald-400" : "text-cyan-400"
+                                down ? "text-emerald-400" : "text-teal-400"
                               }`}
                             >
                               {down ? "▼" : "▲"} {eur(Math.abs(d))}
@@ -733,7 +733,7 @@ export default function AnalyticsOverlay({
 
 function Kpi({ label, value, c }: { label: string; value: string; c?: "cyan" | "emerald" | "red" }) {
   const cls =
-    c === "emerald" ? "text-emerald-300" : c === "red" ? "text-red-300" : c === "cyan" ? "text-cyan-300" : "text-white/90";
+    c === "emerald" ? "text-emerald-300" : c === "red" ? "text-red-300" : c === "cyan" ? "text-teal-300" : "text-white/90";
   return (
     <div className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5">
       <div className="text-[10px] uppercase tracking-[0.12em] text-white/40 truncate">{label}</div>
@@ -772,7 +772,7 @@ function PeriodCard({
           </div>
         </div>
         <div>
-          <div className="font-mono text-base font-extrabold text-cyan-300">
+          <div className="font-mono text-base font-extrabold text-teal-300">
             {d.changes}
           </div>
           <div className="text-[9px] uppercase tracking-wider text-white/40">
@@ -822,7 +822,7 @@ function BbCell({
   );
 }
 
-const CHART_COLORS = ["#22d3ee", "#a855f7", "#34d399", "#f59e0b", "#60a5fa", "#f472b6"];
+const CHART_COLORS = ["#2dd4bf", "#a855f7", "#34d399", "#f59e0b", "#60a5fa", "#f472b6"];
 function LineChart({ series }: { series: Array<{ title: string; pts: { t: number; p: number }[] }> }) {
   // Container-aware viewBox so the chart doesn't distort on narrow phones.
   const wrapRef = useRef<HTMLDivElement>(null);

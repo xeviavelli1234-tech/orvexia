@@ -152,7 +152,7 @@ function WaveFieldImpl() {
       const v1x = w * (0.3 + Math.sin(tm * 0.13) * 0.06) + offX;
       const v1y = h * (0.42 + Math.cos(tm * 0.11) * 0.05) + offY;
       const g1 = ctx.createRadialGradient(v1x, v1y, 0, v1x, v1y, Math.max(w, h) * 0.8);
-      g1.addColorStop(0, "rgba(38,76,160,0.24)");
+      g1.addColorStop(0, "rgba(16,120,96,0.24)");
       g1.addColorStop(1, "rgba(8,10,30,0)");
       ctx.fillStyle = g1;
       ctx.fillRect(0, 0, w, h);
@@ -160,7 +160,7 @@ function WaveFieldImpl() {
       const v2x = w * (0.74 + Math.cos(tm * 0.1) * 0.06) + offX;
       const v2y = h * (0.64 + Math.sin(tm * 0.12) * 0.05) + offY;
       const g2 = ctx.createRadialGradient(v2x, v2y, 0, v2x, v2y, Math.max(w, h) * 0.72);
-      g2.addColorStop(0, "rgba(110,46,168,0.20)");
+      g2.addColorStop(0, "rgba(20,138,104,0.20)");
       g2.addColorStop(1, "rgba(8,10,30,0)");
       ctx.fillStyle = g2;
       ctx.fillRect(0, 0, w, h);
@@ -183,9 +183,9 @@ function WaveFieldImpl() {
       const band = w * 0.42;
       const sweepX = ((tm * 90) % (w + band * 2)) - band;
       const sg = ctx.createLinearGradient(sweepX - band, 0, sweepX + band, 0);
-      sg.addColorStop(0, "rgba(120,180,255,0)");
-      sg.addColorStop(0.5, "rgba(120,180,255,0.06)");
-      sg.addColorStop(1, "rgba(120,180,255,0)");
+      sg.addColorStop(0, "rgba(110,240,200,0)");
+      sg.addColorStop(0.5, "rgba(110,240,200,0.06)");
+      sg.addColorStop(1, "rgba(110,240,200,0)");
       ctx.fillStyle = sg;
       ctx.fillRect(0, 0, w, h);
       ctx.globalCompositeOperation = "source-over";
@@ -293,7 +293,7 @@ function WaveFieldImpl() {
             ctx.moveTo(prevX[i], prevY[i]);
             ctx.lineTo(curX[i], curY[i]);
           }
-          ctx.strokeStyle = `rgba(130,170,255,${0.035 + persp * 0.07})`;
+          ctx.strokeStyle = `rgba(110,240,200,${0.035 + persp * 0.07})`;
           ctx.lineWidth = 1;
           ctx.stroke();
         }

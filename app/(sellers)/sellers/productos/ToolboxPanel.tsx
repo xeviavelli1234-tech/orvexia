@@ -59,7 +59,7 @@ export function ToolboxButton() {
       className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-sm text-white/80 hover:bg-white/[0.06] transition-colors text-left"
     >
       <span className="flex items-center gap-2">
-        <span className="h-1.5 w-1.5 rounded-full bg-fuchsia-400" />
+        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
         Herramientas extra
       </span>
       <span className="text-[11px] text-white/40">salud · vacaciones · canales →</span>
@@ -183,11 +183,11 @@ export default function ToolboxPanel({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-[min(720px,calc(100vw-2rem))] max-h-[92vh] overflow-y-auto rounded-2xl border border-fuchsia-400/25 bg-[rgba(7,7,18,0.97)] shadow-[0_20px_60px_-20px_rgba(232,121,249,0.45)]"
+        className="w-[min(720px,calc(100vw-2rem))] max-h-[92vh] overflow-y-auto rounded-2xl border border-emerald-400/25 bg-[rgba(6,12,11,0.97)] shadow-[0_20px_60px_-20px_rgba(16,185,129,0.45)]"
       >
-        <header className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-white/10 px-5 py-3.5 bg-[rgba(7,7,18,0.97)] backdrop-blur-xl">
+        <header className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-white/10 px-5 py-3.5 bg-[rgba(6,12,11,0.97)] backdrop-blur-xl">
           <div>
-            <p className="font-mono-ui text-[10px] uppercase tracking-wider text-fuchsia-300">
+            <p className="font-mono-ui text-[10px] uppercase tracking-wider text-emerald-300">
               ▸ herramientas extra
             </p>
             <h3 className="text-base font-bold text-white">Toolbox del Repricer</h3>
@@ -198,7 +198,7 @@ export default function ToolboxPanel({
                 key={t}
                 onClick={() => setTab(t)}
                 className={`px-3 py-1 rounded-md transition-colors capitalize ${
-                  tab === t ? "bg-fuchsia-500/80 text-black" : "text-white/55 hover:text-white"
+                  tab === t ? "bg-emerald-500/85 text-black" : "text-white/55 hover:text-white"
                 }`}
               >
                 {t === "health" ? "Salud" : t === "vacation" ? "Vacaciones" : "Canales"}
@@ -234,7 +234,7 @@ export default function ToolboxPanel({
                 <p className="text-sm text-white/55">Cargando…</p>
               ) : health ? (
                 <>
-                  <div className="rounded-xl border border-cyan-400/25 bg-[linear-gradient(135deg,rgba(34,211,238,0.10),rgba(232,121,249,0.06))] p-5 flex items-center gap-5">
+                  <div className="rounded-xl border border-emerald-400/25 bg-[linear-gradient(135deg,rgba(16,185,129,0.12),rgba(45,212,191,0.06))] p-5 flex items-center gap-5">
                     <div
                       className={`text-5xl font-extrabold tabular-nums ${
                         health.health.score >= 75
@@ -310,7 +310,7 @@ export default function ToolboxPanel({
                               <div className="min-w-0">
                                 <div className="font-semibold text-white/90">{s.title}</div>
                                 <div className="text-xs text-white/65 mt-0.5">{s.detail}</div>
-                                <div className="text-[11px] text-cyan-300 mt-1">→ {s.action}</div>
+                                <div className="text-[11px] text-teal-300 mt-1">→ {s.action}</div>
                               </div>
                             </div>
                           </li>
@@ -370,7 +370,7 @@ export default function ToolboxPanel({
                   <button
                     type="submit"
                     disabled={busy}
-                    className="rounded-lg bg-fuchsia-500/90 px-4 py-2 text-sm font-semibold text-black hover:bg-fuchsia-400 transition-colors disabled:opacity-50"
+                    className="rounded-lg bg-emerald-500/90 px-4 py-2 text-sm font-semibold text-black hover:bg-emerald-400 transition-colors disabled:opacity-50"
                   >
                     Guardar
                   </button>
@@ -402,7 +402,7 @@ export default function ToolboxPanel({
 
               <form
                 action={onAddChannel}
-                className="rounded-xl border border-fuchsia-400/25 bg-fuchsia-500/[0.04] p-4 space-y-3"
+                className="rounded-xl border border-emerald-400/25 bg-emerald-500/[0.04] p-4 space-y-3"
               >
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <label>
@@ -451,7 +451,7 @@ export default function ToolboxPanel({
                 <button
                   type="submit"
                   disabled={busy}
-                  className="rounded-lg bg-fuchsia-500/90 px-4 py-2 text-sm font-semibold text-black hover:bg-fuchsia-400 transition-colors disabled:opacity-50"
+                  className="rounded-lg bg-emerald-500/90 px-4 py-2 text-sm font-semibold text-black hover:bg-emerald-400 transition-colors disabled:opacity-50"
                 >
                   + Añadir canal
                 </button>
@@ -489,7 +489,7 @@ export default function ToolboxPanel({
                         <button
                           onClick={() => onTestChannel(c.id)}
                           disabled={busy}
-                          className="text-xs text-cyan-300 hover:underline"
+                          className="text-xs text-teal-300 hover:underline"
                         >
                           probar
                         </button>

@@ -34,7 +34,7 @@ export function Stat({ label, value, accent }: StatProps) {
         className={`mt-0.5 font-mono text-lg font-extrabold tabular-nums ${
           accent
             ? "text-emerald-300 [text-shadow:0_0_16px_rgba(16,185,129,0.5)]"
-            : "text-cyan-300 text-glow-cyan"
+            : "text-teal-300 [text-shadow:0_0_14px_rgba(45,212,191,0.4)]"
         }`}
       >
         {value}
@@ -57,7 +57,7 @@ export function MiniStat({ label, value, sub, tone }: MiniStatProps) {
       : tone === "red"
         ? "text-red-300"
         : tone === "cyan"
-          ? "text-cyan-300"
+          ? "text-teal-300"
           : "text-white/85";
   return (
     <div className="rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1.5 min-w-0">

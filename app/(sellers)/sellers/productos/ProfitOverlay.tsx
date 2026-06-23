@@ -237,7 +237,7 @@ export default function ProfitOverlay({ items }: { items: NetNode[] }) {
         <div className="sticky top-0 z-10 px-4 sm:px-5 py-3 sm:py-4 border-b border-white/10 bg-[rgba(7,8,18,0.99)] backdrop-blur-md sm:rounded-t-2xl">
           <div className="flex items-center justify-between gap-2 mb-3">
             <h2 className="text-base font-extrabold tracking-tight">
-              Panel de <span className="text-gradient-neon">rentabilidad</span>
+              Panel de <span className="text-gradient-emerald">rentabilidad</span>
             </h2>
             <div className="flex items-center gap-2">
               <button
@@ -513,7 +513,7 @@ function Kpi({
         ? "text-amber-300"
         : tone === "bad"
           ? "text-red-300"
-          : "text-cyan-300";
+          : "text-teal-300";
   return (
     <div className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
       <div className="text-[9px] uppercase tracking-[0.12em] text-white/40 truncate">

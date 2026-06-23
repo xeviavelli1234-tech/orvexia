@@ -50,7 +50,7 @@ export function SettingsButton() {
       className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-sm text-white/80 hover:bg-white/[0.06] transition-colors text-left"
     >
       <span className="flex items-center gap-2">
-        <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
+        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
         Ajustes de cuenta
       </span>
       <span className="text-[11px] text-white/40">horario · simulación →</span>
@@ -161,7 +161,7 @@ export default function AccountSettings({ initial }: { initial: AccountSettingsD
   if (!open) return null;
   const lbl = "text-[10px] uppercase tracking-wider text-white/40";
   const inp =
-    "mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none";
+    "mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white focus:border-teal-400/60 focus:outline-none";
 
   return (
     <div
@@ -169,12 +169,12 @@ export default function AccountSettings({ initial }: { initial: AccountSettingsD
       onClick={() => setOpen(false)}
     >
       <div
-        className="mx-auto max-w-lg min-h-full sm:min-h-0 rounded-none sm:rounded-2xl border-0 sm:border sm:border-cyan-400/20 bg-[rgba(7,8,18,0.99)] sm:shadow-[0_30px_80px_-20px_rgba(34,211,238,0.4)] fade-in"
+        className="mx-auto max-w-lg min-h-full sm:min-h-0 rounded-none sm:rounded-2xl border-0 sm:border sm:border-teal-400/20 bg-[rgba(7,8,18,0.99)] sm:shadow-[0_30px_80px_-20px_rgba(45,212,191,0.4)] fade-in"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 z-10 flex items-center justify-between px-4 sm:px-5 py-3 sm:py-4 border-b border-white/10 bg-[rgba(7,8,18,0.99)] backdrop-blur-md sm:rounded-t-2xl">
           <h2 className="text-base font-extrabold tracking-tight">
-            Ajustes de <span className="text-gradient-neon">cuenta</span>
+            Ajustes de <span className="text-gradient-emerald">cuenta</span>
           </h2>
           <button
             onClick={() => setOpen(false)}
@@ -732,7 +732,7 @@ export default function AccountSettings({ initial }: { initial: AccountSettingsD
           <button
             onClick={save}
             disabled={saving}
-            className="w-full rounded-lg bg-[var(--brand-600)] text-white py-2.5 text-sm font-semibold hover:bg-[var(--brand-700)] transition-colors disabled:opacity-50"
+            className="w-full rounded-lg bg-[#059669] text-white py-2.5 text-sm font-semibold hover:bg-[#047857] transition-colors disabled:opacity-50"
           >
             {saving ? "Guardando…" : "Guardar ajustes"}
           </button>

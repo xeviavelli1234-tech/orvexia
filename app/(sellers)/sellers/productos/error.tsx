@@ -36,7 +36,7 @@ export default function CentroControlError({
         <div className="mt-6 flex items-center justify-center gap-2">
           <button
             onClick={reset}
-            className="rounded-lg bg-[var(--brand-600)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--brand-700)] transition-colors"
+            className="rounded-lg bg-[#059669] px-4 py-2 text-sm font-semibold text-white hover:bg-[#047857] transition-colors"
           >
             Reintentar
           </button>
