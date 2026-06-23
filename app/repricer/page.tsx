@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { jsonLdScript } from "@/lib/json-ld";
 import PriceSimulator from "./PriceSimulator";
+import RoiCalculator from "./RoiCalculator";
 
 const CANONICAL = "https://www.orvexia.es/repricer";
 const OG_DESC =
@@ -296,6 +297,8 @@ export default function RepricerPage() {
               .
             </p>
           </div>
+
+          <RoiCalculator />
         </section>
 
         {/* Para quién */}
