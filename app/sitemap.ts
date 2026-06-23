@@ -30,6 +30,8 @@ const STATIC_ENTRIES: Entry[] = [
   { url: `${BASE_URL}/bajadas-recientes`, changeFrequency: "daily", priority: 0.9 },
   { url: `${BASE_URL}/popularidad`, changeFrequency: "daily", priority: 0.7 },
   { url: `${BASE_URL}/recomendados`, changeFrequency: "daily", priority: 0.7 },
+  { url: `${BASE_URL}/repricer`, changeFrequency: "weekly", priority: 0.9 },
+  { url: `${BASE_URL}/politica-datos-amazon`, changeFrequency: "monthly", priority: 0.4 },
   { url: `${BASE_URL}/comunidad`, changeFrequency: "daily", priority: 0.7 },
   { url: `${BASE_URL}/opiniones`, changeFrequency: "weekly", priority: 0.6 },
   { url: `${BASE_URL}/guias`, changeFrequency: "weekly", priority: 0.8 },

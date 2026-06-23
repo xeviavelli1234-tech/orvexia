@@ -43,16 +43,28 @@ export async function POST(req: Request) {
   if (await isSellerIpDenied(session.userId)) {
     return NextResponse.json({ error: "ip_not_allowed" }, { status: 403 });
   }
-  // 6 imports cada 10 min. Subir un CSV cuesta parseo + N upserts; protege
-  // contra scripts y errores de drag-and-drop repetidos.
-  if (rateLimit("manual-import", session.userId, 6, 10 * 60_000)) {
+  // En modo "preview" solo parseamos y validamos (sin escribir): permite al
+  // cliente mostrar una vista previa antes de confirmar la importación.
+  const preview = new URL(req.url).searchParams.get("preview") === "1";
+
+  // Rate-limit: el import real (parseo + N upserts) es más caro que el preview.
+  if (preview) {
+    if (rateLimit("manual-import-preview", session.userId, 30, 10 * 60_000)) {
+      return NextResponse.json({ error: "rate_limited" }, { status: 429 });
+    }
+  } else if (rateLimit("manual-import", session.userId, 6, 10 * 60_000)) {
     return NextResponse.json({ error: "rate_limited" }, { status: 429 });
   }
 
-  const account = await getSellerAccountByUserId(session.userId);
-  if (!account) return NextResponse.json({ error: "no_account" }, { status: 404 });
-  if (account.mode !== "manual") {
-    return NextResponse.json({ error: "not_manual_mode" }, { status: 400 });
+  // El import real exige cuenta en modo manual. El preview no (es informativo y
+  // puede usarse durante el onboarding, antes de activar el modo manual).
+  let account: Awaited<ReturnType<typeof getSellerAccountByUserId>> = null;
+  if (!preview) {
+    account = await getSellerAccountByUserId(session.userId);
+    if (!account) return NextResponse.json({ error: "no_account" }, { status: 404 });
+    if (account.mode !== "manual") {
+      return NextResponse.json({ error: "not_manual_mode" }, { status: 400 });
+    }
   }
 
   // ── Leer CSV de la request (multipart o plano) ────────────────────────
@@ -82,6 +94,30 @@ export async function POST(req: Request) {
   }
 
   const parsed = parseManualCatalogCsv(csvText);
+
+  // Vista previa: devolvemos resumen + muestra sin tocar la BD.
+  if (preview) {
+    return NextResponse.json({
+      ok: true,
+      preview: true,
+      columns: parsed.columns,
+      validRows: parsed.rows.length,
+      tooManyRows: parsed.rows.length > MAX_ROWS,
+      sample: parsed.rows.slice(0, 8).map((r) => ({
+        sku: r.sku,
+        title: r.title,
+        priceCurrent: r.priceCurrent,
+        priceMin: r.priceMin ?? null,
+        priceMax: r.priceMax ?? null,
+        cost: r.cost ?? null,
+        currency: r.currency,
+      })),
+      skipped: parsed.errors.length,
+      errors: parsed.errors.slice(0, 50),
+    });
+  }
+
+  if (!account) return NextResponse.json({ error: "no_account" }, { status: 404 });
   if (parsed.rows.length === 0) {
     return NextResponse.json(
       {

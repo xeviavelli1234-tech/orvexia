@@ -908,3 +908,18 @@ model AffiliateConversion {
   @@index([status])
   @@index([clickEventId])
 }
+
+/// Lead capturado en la web (simulador público de precios, lista de espera del
+/// repricer, etc.). No requiere cuenta: sirve para nutrir y avisar al lanzar
+/// funciones (p. ej. el modo Amazon cuando la app esté publicada).
+model Lead {
+  id        String   @id @default(cuid())
+  email     String
+  source    String   @default("simulador") // "simulador" | "waitlist" | ...
+  context   Json? // entradas/resultado del simulador u otro contexto
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([createdAt])
+}
