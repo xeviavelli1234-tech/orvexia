@@ -17,6 +17,13 @@ export async function POST(req: Request) {
     return NextResponse.redirect(new URL("/dashboard/repricer", req.url));
   }
 
+  // Cancela la suscripción ANY_OFFER_CHANGED ANTES de borrar el token (lo
+  // necesita para autenticarse). Best-effort: no bloquea la desconexión.
+  const { cancelSellerAnyOfferChangedSubscription } = await import(
+    "@/lib/amazon/notifications"
+  );
+  await cancelSellerAnyOfferChangedSubscription(account);
+
   await deactivateSellerAccount(session.userId);
   return NextResponse.redirect(new URL("/dashboard/repricer?status=disconnected", req.url));
 }

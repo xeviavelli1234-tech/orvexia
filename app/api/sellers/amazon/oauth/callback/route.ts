@@ -129,10 +129,19 @@ export async function GET(req: Request) {
         const { ensureAnyOfferChangedSubscription } = await import(
           "@/lib/amazon/notifications"
         );
-        await ensureAnyOfferChangedSubscription(
+        const subscriptionId = await ensureAnyOfferChangedSubscription(
           new SpApiClient(refreshToken, spApiEnv),
           destinationId,
         );
+        // Guardamos el id para poder CANCELAR la suscripción al desconectar/
+        // borrar la cuenta (si no, queda huérfana enviando eventos a la cola).
+        if (subscriptionId) {
+          const { prisma } = await import("@/lib/prisma");
+          await prisma.sellerAccount.update({
+            where: { id: account.id },
+            data: { notifSubscriptionId: subscriptionId },
+          });
+        }
       } catch (e) {
         console.warn(
           "[oauth/callback] suscripción ANY_OFFER_CHANGED falló (best-effort):",

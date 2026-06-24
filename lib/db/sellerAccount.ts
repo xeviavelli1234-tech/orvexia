@@ -99,7 +99,9 @@ export async function upsertSellerAccount(params: {
 export async function deactivateSellerAccount(userId: string) {
   return prisma.sellerAccount.update({
     where: { userId },
-    data: { active: false, refreshToken: "DISCONNECTED" },
+    // notifSubscriptionId: null — la suscripción a ANY_OFFER_CHANGED ya no es
+    // válida (la cancelamos al desconectar). Reconectar crea una nueva.
+    data: { active: false, refreshToken: "DISCONNECTED", notifSubscriptionId: null },
   });
 }
 

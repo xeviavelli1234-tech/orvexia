@@ -494,6 +494,13 @@ model SellerAccount {
   // ── Resumen semanal IA (cooldown) ──
   weeklyDigestSentAt DateTime?
 
+  // ── Notificaciones SP-API (ANY_OFFER_CHANGED) ──
+  // subscriptionId devuelto por Amazon al suscribir la cuenta contra el
+  // destino SQS. Se guarda para poder CANCELAR la suscripción al desconectar
+  // o borrar la cuenta (si no, quedan suscripciones huérfanas inundando la
+  // cola con eventos de vendedores ya inactivos). null = sin suscripción.
+  notifSubscriptionId String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

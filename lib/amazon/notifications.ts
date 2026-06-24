@@ -76,9 +76,33 @@ export async function ensureDestination(
 }
 
 /**
+ * Lee la suscripción ANY_OFFER_CHANGED existente del vendedor (token de
+ * `client`) y devuelve su subscriptionId, o null si no hay ninguna. Se usa
+ * para recuperar el id cuando la suscripción ya existía (409) y así poder
+ * cancelarla más tarde al desconectar.
+ */
+export async function getAnyOfferChangedSubscriptionId(
+  client: SpApiClient,
+): Promise<string | null> {
+  try {
+    const res = await client.get<{ payload?: { subscriptionId?: string } }>(
+      `/notifications/v1/subscriptions/${ANY_OFFER_CHANGED}`,
+      { payloadVersion: "1.0" },
+    );
+    return res.payload?.subscriptionId ?? null;
+  } catch (e) {
+    // 404 = sin suscripción para ese tipo. Cualquier otro error: no lo tenemos.
+    if (e instanceof SpApiError && e.status === 404) return null;
+    throw e;
+  }
+}
+
+/**
  * Suscribe al vendedor (token de `client`) a ANY_OFFER_CHANGED contra el
- * destino dado. Idempotente: si ya existe, Amazon responde 409 y lo damos por
- * bueno. Devuelve el subscriptionId si lo crea, o null si ya existía.
+ * destino dado. Idempotente: si ya existe, Amazon responde 409 y recuperamos
+ * el subscriptionId vigente con un GET. Devuelve el subscriptionId (recién
+ * creado o ya existente) para poder persistirlo y cancelarlo al desconectar,
+ * o null si Amazon no lo expone.
  */
 export async function ensureAnyOfferChangedSubscription(
   client: SpApiClient,
@@ -91,7 +115,11 @@ export async function ensureAnyOfferChangedSubscription(
     );
     return res.payload?.subscriptionId ?? null;
   } catch (e) {
-    if (e instanceof SpApiError && e.status === 409) return null; // ya existía
+    // Ya existía: recuperamos su id para poder cancelarla en el futuro. Si el
+    // GET de respaldo falla, devolvemos null (no rompemos la conexión por esto).
+    if (e instanceof SpApiError && e.status === 409) {
+      return getAnyOfferChangedSubscriptionId(client).catch(() => null);
+    }
     throw e;
   }
 }
@@ -104,4 +132,47 @@ export async function deleteAnyOfferChangedSubscription(
   await client.delete(
     `/notifications/v1/subscriptions/${ANY_OFFER_CHANGED}/${encodeURIComponent(subscriptionId)}`,
   );
+}
+
+/**
+ * Cancela (best-effort) la suscripción ANY_OFFER_CHANGED de una cuenta al
+ * desconectar o borrar. Nunca lanza: una limpieza fallida no debe bloquear la
+ * desconexión ni el borrado RGPD (el `event-drain` ya descarta eventos de
+ * cuentas inactivas, así que un huérfano residual es inocuo, solo ruido).
+ *
+ * Resuelve el subscriptionId persistido o, si falta (conexiones antiguas), lo
+ * recupera en vivo con un GET. Se salta cuentas sin token real (demo/manual) o
+ * fuera de producción: ahí no hay suscripción que borrar.
+ */
+export async function cancelSellerAnyOfferChangedSubscription(account: {
+  refreshToken: string;
+  spApiEnv: string;
+  notifSubscriptionId: string | null;
+}): Promise<void> {
+  // Sin destino configurado no se llegó a suscribir nada en producción.
+  if (!process.env.SP_API_NOTIF_DESTINATION_ID) return;
+  if (account.spApiEnv !== "production") return;
+  // Tokens placeholder/borrados (demo, manual o ya desconectada): nada que hacer.
+  const NON_TOKENS = new Set([
+    "FIXTURE_NO_TOKEN",
+    "MANUAL_NO_TOKEN",
+    "DISCONNECTED",
+  ]);
+  if (!account.refreshToken || NON_TOKENS.has(account.refreshToken)) return;
+
+  try {
+    const { SpApiClient } = await import("./client");
+    const { decryptToken } = await import("@/lib/crypto");
+    const client = new SpApiClient(decryptToken(account.refreshToken), "production");
+    const subId =
+      account.notifSubscriptionId ??
+      (await getAnyOfferChangedSubscriptionId(client));
+    if (!subId) return;
+    await deleteAnyOfferChangedSubscription(client, subId);
+  } catch (e) {
+    console.warn(
+      "[notifications] cancelar suscripción ANY_OFFER_CHANGED falló (best-effort):",
+      e,
+    );
+  }
 }

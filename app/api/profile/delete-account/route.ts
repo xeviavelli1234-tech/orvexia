@@ -33,6 +33,19 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // Cancela la suscripción ANY_OFFER_CHANGED en Amazon ANTES de destruir la
+  // cuenta (y con ella el token). Best-effort: no debe abortar el borrado RGPD.
+  const account = await prisma.sellerAccount.findUnique({
+    where: { userId: session.userId },
+    select: { refreshToken: true, spApiEnv: true, notifSubscriptionId: true },
+  });
+  if (account) {
+    const { cancelSellerAnyOfferChangedSubscription } = await import(
+      "@/lib/amazon/notifications"
+    );
+    await cancelSellerAnyOfferChangedSubscription(account);
+  }
+
   // Borra primero TODOS los datos del repricer. El borrado del usuario solo
   // cascada a SellerAccount y sus hijos con FK; las tablas que enlazan por
   // sellerAccountId suelto (canales con secretos de webhook, pedidos con PII
