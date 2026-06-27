@@ -32,6 +32,7 @@ export default function SellersHeader() {
 
   const appLinks: { href: string; label: string }[] = [
     { href: "/sellers/productos", label: "Centro de control" },
+    { href: "/sellers/reembolsos", label: "Reembolsos FBA" },
     { href: "/sellers/facturacion", label: "Facturación" },
   ];
 

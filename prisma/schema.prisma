@@ -497,10 +497,17 @@ model SellerAccount {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  listings  SellerListing[]
-  runs      RepricingRun[]
-  auditLogs AuditLog[]
+  user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listings            SellerListing[]
+  runs                RepricingRun[]
+  auditLogs           AuditLog[]
+  reimbursementClaims ReimbursementClaim[]
+
+  // ── Auditor de reembolsos FBA ──
+  // Última vez que se auditaron los eventos financieros de la cuenta en busca
+  // de dinero que Amazon debe (inventario perdido/dañado, devoluciones no
+  // repuestas, tarifas cobradas de más). 0 = nunca auditada.
+  lastReimbursementAuditAt DateTime?
 
   @@index([active, lastRunAt])
 }
@@ -850,6 +857,70 @@ model RepriceOrderItem {
   @@index([listingId, createdAt])
   @@index([asin])
   @@index([sku])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  AUDITOR DE REEMBOLSOS FBA — detecta dinero que Amazon debe al vendedor
+//  (inventario perdido/dañado sin reembolsar, devoluciones reembolsadas pero
+//  no repuestas, tarifas FBA cobradas de más). Modelo de negocio: success fee
+//  sobre lo recuperado, no suscripción plana.
+// ═══════════════════════════════════════════════════════════════════════════
+
+enum ReimbursementClaimType {
+  WAREHOUSE_LOST // inventario perdido en almacén, sin reembolsar
+  WAREHOUSE_DAMAGED // dañado por Amazon, sin reembolsar
+  INBOUND_SHORTAGE // recibido menos de lo enviado en un envío FBA
+  CUSTOMER_RETURN_MISSING // cliente reembolsado pero la unidad nunca volvió al stock
+  REIMBURSEMENT_SHORTFALL // Amazon reembolsó por debajo del valor del producto
+  OVERCHARGED_FEE // tarifa FBA cobrada de más o duplicada
+}
+
+enum ReimbursementClaimStatus {
+  DETECTED // candidata recién detectada (pendiente de revisión)
+  READY // revisada por el vendedor, lista para presentar el caso
+  FILED // caso presentado en Seller Central, esperando resolución
+  RECOVERED // Amazon reembolsó (importe en recoveredAmount)
+  REJECTED // Amazon rechazó la reclamación
+  EXPIRED // venció la ventana de reclamación sin presentarla
+}
+
+model ReimbursementClaim {
+  id              String                   @id @default(cuid())
+  sellerAccountId String
+  type            ReimbursementClaimType
+  status          ReimbursementClaimStatus @default(DETECTED)
+
+  sku   String
+  asin  String @default("")
+  fnsku String @default("")
+  title String @default("")
+
+  quantity        Int    @default(1)
+  estimatedAmount Float // € reclamables estimados
+  recoveredAmount Float? // € realmente recuperados (status RECOVERED)
+  currency        String @default("EUR")
+  confidence      Int    @default(0) // 0-100, qué tan sólida es la reclamación
+
+  reason   String @db.Text // explicación legible de por qué Amazon debe esto
+  evidence Json   @default("{}") // ids de transacción, fechas, importes (auditoría)
+  caseText String? @db.Text // texto listo para pegar en el caso de Seller Central
+
+  // Idempotencia: misma discrepancia detectada en dos auditorías no se duplica.
+  dedupeKey String
+
+  detectedAt      DateTime  @default(now())
+  windowExpiresAt DateTime? // fin del plazo legal para reclamar (~18 meses)
+  filedAt         DateTime?
+  recoveredAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sellerAccount SellerAccount @relation(fields: [sellerAccountId], references: [id], onDelete: Cascade)
+
+  @@unique([sellerAccountId, dedupeKey])
+  @@index([sellerAccountId, status])
+  @@index([sellerAccountId, detectedAt])
 }
 
 // ─── Tracking de clicks de afiliación ─────────────────────────────────────────
