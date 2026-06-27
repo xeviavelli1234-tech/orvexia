@@ -356,6 +356,25 @@ export default async function HomePage() {
           </div>
         </div>
 
+        {/* Anuncio — Repricer gratis para los primeros 10 usuarios */}
+        <div className="relative border-b border-emerald-400/20 bg-emerald-400/[0.06] backdrop-blur-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 flex flex-col sm:flex-row items-center justify-center gap-x-3 gap-y-1 text-center">
+            <span className="inline-flex items-center gap-1.5 font-mono-ui text-[9px] uppercase px-2 h-5 rounded-full text-emerald-300 bg-emerald-400/[0.12] border border-emerald-400/30 flex-shrink-0">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
+              </span>
+              Oferta de lanzamiento
+            </span>
+            <p className="text-[12px] sm:text-[13px] text-white/75 leading-snug">
+              Regalamos el <span className="font-bold text-white">Repricer</span> a los <span className="font-bold text-emerald-300">primeros 10 usuarios</span>. Escríbenos a{" "}
+              <a href="mailto:orvexiaesp@gmail.com?subject=Repricer%20gratis%20-%20primeros%2010%20usuarios" className="font-semibold text-emerald-300 hover:text-emerald-200 underline decoration-dotted underline-offset-2">
+                orvexiaesp@gmail.com
+              </a>
+            </p>
+          </div>
+        </div>
+
         {/* Hero content — PLATAFORMA */}
         <div className="relative px-4 sm:px-6 pt-16 pb-24 sm:pt-24 sm:pb-28">
           <div className="max-w-5xl mx-auto">
