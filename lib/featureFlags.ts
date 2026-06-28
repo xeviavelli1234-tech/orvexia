@@ -11,5 +11,10 @@ export const REPRICER_ENABLED = true;
 //    por SP_API_APP_PUBLISHED (este flag NO la activa).
 //  - false: NO se promociona (sin banda en la home ni tarjeta en el dashboard)
 //    y las páginas llevan noindex. Sigue accesible por URL directa con login.
-// Kill-switch por env en Vercel: REPRICER_PUBLIC=false (+ redeploy) lo oculta.
-export const REPRICER_PUBLIC = process.env.REPRICER_PUBLIC !== "false";
+//
+// El Repricer ya está lanzado públicamente (landing /repricer, prueba gratis y
+// banner de captación), así que su visibilidad SEO debe estar SIEMPRE activa:
+// dejamos el flag fijado en true para que ni un REPRICER_PUBLIC=false heredado
+// en Vercel pueda volver a meter `noindex` ni quitar los enlaces internos
+// (home/dashboard) que dan descubribilidad a la landing en buscadores.
+export const REPRICER_PUBLIC = true;
