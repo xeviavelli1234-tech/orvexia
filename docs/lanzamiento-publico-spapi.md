@@ -2,9 +2,14 @@
 
 Objetivo: que **cualquier vendedor** conecte su cuenta de Amazon vía OAuth, no solo el dueño.
 
-Estado a 14 jun 2026: ficha del Appstore **aprobada**, no publicada. Amazon la publica
-en ~10-12 días naturales (**~21-23 jun 2026**). Hasta que esté *live* el OAuth público
-(`version=stable`) devuelve **MD1000**. Ver memoria `project-spapi-public`.
+Estado a 3 jul 2026: Amazon confirmó por correo (30 jun) que la **actualización de la
+ficha** del Appstore fue **revisada y aprobada**; la publica en **10-12 días naturales
+(~10-12 jul 2026)**. Durante ese procesamiento la ficha NO se puede editar. Hasta que
+esté *live* el OAuth público (`version=stable`) devuelve **MD1000**.
+Ver memoria `project-spapi-public`.
+
+> Nota: cualquier edición de la **ficha** reabre el ciclo de revisión + 10-12 días.
+> Editar solo la **config OAuth de la app** (redirect/login URI) NO dispara revisión.
 
 ---
 
@@ -49,7 +54,7 @@ App ID (referencia): `amzn1.sp.solution.f98636d5-2bbf-48cb-8224-dff0a46cefe6`
 
 ---
 
-## 3. EL DÍA QUE AMAZON PUBLIQUE (~21-23 jun)
+## 3. EL DÍA QUE AMAZON PUBLIQUE (~10-12 jul)
 
 1. Confirmar que la app aparece **publicada/live** en el Selling Partner Appstore
    (no solo "aprobada"). Si sigue "in translation/processing", esperar.
@@ -69,6 +74,29 @@ App ID (referencia): `amzn1.sp.solution.f98636d5-2bbf-48cb-8224-dff0a46cefe6`
 Si algo falla: `SP_API_APP_PUBLISHED` → quitar/`false` + redeploy. El botón público
 desaparece; el self-connect del dueño y el modo demo/CSV siguen funcionando.
 
+## 5b. Variables de entorno en Vercel (estado objetivo para producción)
+
+El día de la publicación el único cambio funcional es `SP_API_APP_PUBLISHED=true`
+(+ `SP_API_ENV=production` si aún estuviera en sandbox). El resto ya debería estar puesto.
+
+| Variable | Valor objetivo | Rol |
+|---|---|---|
+| `SP_API_APP_PUBLISHED` | `true` | **Flip del día.** Abre el OAuth público (`version=stable`) y muestra el botón "Conectar mi cuenta de Amazon". |
+| `SP_API_ENV` | `production` | Las cuentas nuevas se guardan como producción → derivan marketplace real + sync inicial. En `sandbox` no hay datos reales. |
+| `SP_API_APP_ID` | `amzn1.sp.solution.f98636d5-…cefe6` | ID de la app SP-API (LWA). |
+| `LWA_CLIENT_ID` | (del SP Portal) | Canje `code → refresh_token`. |
+| `LWA_CLIENT_SECRET` | (del SP Portal) | Idem. |
+| `NEXT_PUBLIC_BASE_URL` | dominio canónico live | Deriva `redirect_uri` y `login_uri`; DEBE coincidir con el SP Portal. |
+| `ENCRYPTION_KEY` | (32 bytes) | Cifra el refresh token en BD. Ausente → `error_encryption`. |
+| `DATABASE_URL` | (Postgres) | Persistencia del `SellerAccount`/listings. |
+| `CRON_SECRET` | (secreto) | Auth de los crons de repricing. |
+| `ADMIN_EMAILS` | email(s) dueño | Gate del self-connect del operador. |
+| `SP_API_NOTIF_DESTINATION_ID` | (opcional) | Si está, suscribe `ANY_OFFER_CHANGED` al conectar. Sin él, el sync es por cron/manual. |
+| `SP_API_REFRESH_TOKEN` | (opcional, dueño) | Self-connect de la cuenta propia (no OAuth). |
+| `SP_API_SELLER_ID` | (opcional, dueño) | Idem, merchant token del dueño. |
+
+Tras cualquier cambio de env → **Redeploy** (Vercel no lo aplica hasta un nuevo deploy).
+
 ## 5. Códigos de error del callback (`?status=...`)
 
 | status | significado |
@@ -78,4 +106,5 @@ desaparece; el self-connect del dueño y el modo demo/CSV siguen funcionando.
 | `error_missing_params` | faltan `spapi_oauth_code` / `state` / `selling_partner_id` |
 | `error_state_mismatch` | cookie de estado ausente o distinta (CSRF / cookie expirada, TTL 10 min) |
 | `error_token_exchange` | falló el intercambio code→token en LWA (revisar `LWA_CLIENT_ID/SECRET`, redirect URI) |
+| `error_encryption` | `ENCRYPTION_KEY` ausente o inválida en Vercel (ponerla + redeploy) |
 | `error_persist` | falló el guardado en BD (revisar `ENCRYPTION_KEY`, `DATABASE_URL`) |
