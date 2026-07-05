@@ -129,7 +129,7 @@ export default function ProductCard({ product, priority = false }: Props) {
   return (
     <>
       <div
-        className="group shine-on-hover h-full rounded-lg sm:rounded-2xl overflow-hidden bg-bg-elevated border border-white/[0.08] hover:border-cyan-400/30 hover:shadow-[0_0_24px_-6px_rgba(94,234,212,0.35)] hover:-translate-y-0.5 transition-all duration-200 ease-out cursor-pointer flex flex-col"
+        className="group shine-on-hover h-full rounded-lg sm:rounded-2xl overflow-hidden bg-bg-elevated border border-white/[0.07] hover:border-brand-400/40 hover:shadow-[0_24px_60px_-24px_rgba(99,102,241,0.55)] hover:-translate-y-1 transition-all duration-300 ease-out cursor-pointer flex flex-col"
         onClick={handleOpen}
       >
         {/* Image area */}
@@ -153,12 +153,12 @@ export default function ProductCard({ product, priority = false }: Props) {
           {/* Discount pill */}
           {realDiscount > 0 && (
             <div
-              className="absolute top-1.5 left-1.5 sm:top-3 sm:left-3 inline-flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 h-5 sm:h-6 rounded sm:rounded-md text-[9px] sm:text-[11px] font-bold shadow-lg backdrop-blur-sm font-mono-ui"
+              className="absolute top-1.5 left-1.5 sm:top-3 sm:left-3 inline-flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2.5 h-5 sm:h-6 rounded-full text-[9px] sm:text-[11px] font-bold tabular shadow-lg backdrop-blur-sm"
               style={{
-                background: "linear-gradient(135deg, rgba(5,6,15,0.95), rgba(15,18,28,0.9))",
-                color: "#A3E635",
-                border: "1px solid rgba(163,230,53,0.35)",
-                boxShadow: "0 0 14px -2px rgba(163,230,53,0.4)",
+                background: "rgba(5,6,15,0.92)",
+                color: "#34D399",
+                border: "1px solid rgba(52,211,153,0.35)",
+                boxShadow: "0 0 14px -2px rgba(52,211,153,0.35)",
               }}
             >
               <svg className="hidden sm:inline-block w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -217,7 +217,7 @@ export default function ProductCard({ product, priority = false }: Props) {
         <div className="p-2 sm:p-4 flex flex-col flex-1">
           <div className="flex items-center justify-between gap-1 sm:gap-2 mb-1 sm:mb-1.5">
             <p className="text-[9px] sm:text-[11px] text-fg-subtle min-w-0 truncate">
-              <span className="font-semibold text-brand-600">{product.brand}</span>
+              <span className="font-semibold text-brand-300">{product.brand}</span>
               <span className="hidden sm:inline mx-1.5 text-border-strong">·</span>
               <span className="hidden sm:inline">{CATEGORY_LABELS[product.category] ?? product.category}</span>
             </p>
@@ -234,7 +234,7 @@ export default function ProductCard({ product, priority = false }: Props) {
             )}
           </div>
 
-          <h3 className="text-[11px] sm:text-[14px] font-bold text-fg leading-snug mb-1.5 sm:mb-3 line-clamp-2 group-hover:text-brand-600 transition-colors sm:min-h-[2.5em]">
+          <h3 className="text-[11px] sm:text-[14px] font-bold text-fg leading-snug mb-1.5 sm:mb-3 line-clamp-2 group-hover:text-brand-300 transition-colors sm:min-h-[2.5em]">
             {product.name}
           </h3>
 
@@ -255,7 +255,7 @@ export default function ProductCard({ product, priority = false }: Props) {
                 )}
               </div>
               {savingsAmount > 0 && (
-                <p className="hidden sm:block text-[11px] font-bold text-accent-600 mb-2 tabular">
+                <p className="hidden sm:block text-[11px] font-bold text-accent-300 mb-2 tabular">
                   Ahorras {formatEURInteger(savingsAmount)} €
                 </p>
               )}
@@ -294,7 +294,7 @@ export default function ProductCard({ product, priority = false }: Props) {
                       placement: "product_card",
                     });
                   }}
-                  className="sm:ml-auto inline-flex items-center justify-center gap-1 w-full sm:w-auto text-[10px] sm:text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 active:scale-[0.97] px-2 sm:px-3.5 h-7 sm:h-9 rounded-md sm:rounded-lg transition-all shadow-sm shadow-brand-600/20"
+                  className="sm:ml-auto inline-flex items-center justify-center gap-1 w-full sm:w-auto text-[10px] sm:text-xs font-bold text-white bg-brand-500 hover:bg-brand-400 active:scale-[0.97] px-2 sm:px-4 h-7 sm:h-9 rounded-full transition-all shadow-[0_4px_18px_-4px_rgba(99,102,241,0.7)]"
                 >
                   <span className="sm:hidden">Ver oferta</span>
                   <span className="hidden sm:inline">Ver en {ctaStoreName}</span>

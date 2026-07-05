@@ -30,37 +30,39 @@ export async function RepricerSection({
   if (!REPRICER_ENABLED) {
     return (
       <section className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-        <div className="neon-border rounded-3xl overflow-hidden">
+        <div
+          className="reveal relative overflow-hidden rounded-3xl border border-brand-400/15 p-6 sm:p-7"
+          style={{ background: "linear-gradient(160deg,#100d26 0%,#0a0819 55%,#070614 100%)" }}
+        >
           <div
-            className="relative bg-grid-cyber rounded-[calc(1.5rem-1px)] p-6 sm:p-7"
-            style={{ background: "linear-gradient(150deg,#0b0d1c,#08091a 55%,#050913)" }}
-          >
-            <div className="absolute inset-0 bg-grid-cyber-fine opacity-30 pointer-events-none" />
-            <div className="relative flex items-center justify-between gap-5 flex-wrap">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2.5 flex-wrap">
-                  <span className="font-mono-ui text-[10px] uppercase tracking-wider text-cyan-300/80">
-                    ▸ módulo b2b
-                  </span>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-500/15 px-2 py-0.5 rounded-full">
-                    En desarrollo
-                  </span>
-                </div>
-                <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-white">
-                  Orvexia <span className="text-gradient-neon">Repricer</span>
-                </h2>
-                <p className="mt-1.5 text-sm text-white/55 max-w-md">
-                  Módulo de reprecio para vendedores de Amazon en desarrollo.
-                  Disponible próximamente.
-                </p>
-              </div>
-              <span className="flex items-center gap-2 text-white/40 font-semibold text-sm whitespace-nowrap">
-                Próximamente
-                <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-white/[0.06] text-lg">
-                  ⏳
+            aria-hidden
+            className="pointer-events-none absolute -top-16 -right-12 w-56 h-56 rounded-full halo-breathe"
+            style={{ background: "radial-gradient(circle,rgba(129,140,248,0.20),transparent 65%)" }}
+          />
+          <div className="relative flex items-center justify-between gap-5 flex-wrap">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-brand-300">
+                  Para vendedores de Amazon
                 </span>
-              </span>
+                <span className="inline-flex h-5 items-center rounded-full border border-amber-400/25 bg-amber-400/10 px-2 text-[9px] font-semibold uppercase tracking-wide text-amber-300">
+                  En desarrollo
+                </span>
+              </div>
+              <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-white" style={{ letterSpacing: "-0.03em" }}>
+                Orvexia <span className="text-shimmer-violet">Repricer</span>
+              </h2>
+              <p className="mt-1.5 text-sm text-white/55 max-w-md" style={{ textWrap: "pretty" }}>
+                Módulo de reprecio para vendedores de Amazon en desarrollo.
+                Disponible próximamente.
+              </p>
             </div>
+            <span className="flex items-center gap-2 text-white/40 font-semibold text-sm whitespace-nowrap">
+              Próximamente
+              <span className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-white/10 bg-white/[0.04] text-lg">
+                ⏳
+              </span>
+            </span>
           </div>
         </div>
       </section>
@@ -89,10 +91,10 @@ export async function RepricerSection({
         <div
           className={`mb-4 rounded-lg border px-4 py-2.5 text-sm ${
             statusCfg.kind === "ok"
-              ? "bg-[var(--accent-50)] text-[var(--accent-700)] border-[var(--accent-300)]"
+              ? "border-emerald-400/25 bg-emerald-400/10 text-emerald-300"
               : statusCfg.kind === "err"
-                ? "bg-red-50 text-red-700 border-red-200"
-                : "bg-[var(--brand-50)] text-[var(--brand-700)] border-[var(--brand-200)]"
+                ? "border-red-400/25 bg-red-400/10 text-red-300"
+                : "border-brand-400/25 bg-brand-400/10 text-brand-200"
           }`}
         >
           {statusCfg.text}
@@ -101,50 +103,54 @@ export async function RepricerSection({
 
       <Link
         href={connected ? "/sellers/productos" : "/dashboard/repricer"}
-        className="group block neon-border rounded-3xl overflow-hidden"
+        className="reveal shine-on-hover group relative block overflow-hidden rounded-3xl border border-brand-400/15 transition-all duration-300 hover:-translate-y-1 hover:border-brand-400/35 hover:shadow-[0_24px_60px_-24px_rgba(99,102,241,0.55)]"
+        style={{ background: "linear-gradient(160deg,#100d26 0%,#0a0819 55%,#070614 100%)" }}
       >
         <div
-          className="relative bg-grid-cyber rounded-[calc(1.5rem-1px)] p-6 sm:p-7"
-          style={{ background: "linear-gradient(150deg,#0b0d1c,#08091a 55%,#050913)" }}
-        >
-          <div className="absolute inset-0 bg-grid-cyber-fine opacity-30 pointer-events-none" />
-          <div
-            className="absolute -top-16 -right-12 w-56 h-56 rounded-full halo-breathe pointer-events-none"
-            style={{ background: "radial-gradient(circle,rgba(129,140,248,0.20),transparent 65%)" }}
-          />
+          aria-hidden
+          className="pointer-events-none absolute -top-16 -right-12 w-56 h-56 rounded-full halo-breathe"
+          style={{ background: "radial-gradient(circle,rgba(129,140,248,0.20),transparent 65%)" }}
+        />
 
-          <div className="relative flex items-center justify-between gap-5 flex-wrap">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2.5 flex-wrap">
-                <span className="font-mono-ui text-[10px] uppercase tracking-wider text-cyan-300/80">
-                  ▸ módulo b2b
-                </span>
-              </div>
-              <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-white">
-                Orvexia <span className="text-gradient-neon">Repricer</span>
-              </h2>
-              <p className="mt-1.5 text-sm text-white/55 max-w-md">
-                {connected ? (
-                  <>
-                    Plan <strong className="text-white/80">{billing!.label}</strong> ·{" "}
-                    {repricedCount} producto{repricedCount === 1 ? "" : "s"} con reprecio
-                    activo · ciclo {billing!.intervalMinutes} min
-                  </>
-                ) : (
-                  <>
-                    Reprecia tus productos de Amazon automáticamente, o sube tu
-                    catálogo en CSV.
-                  </>
-                )}
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2 text-white font-semibold text-sm whitespace-nowrap">
-              {connected ? "Abrir panel" : "Descubrir"}
-              <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-white/10 group-hover:bg-white/20 transition-colors text-lg">
-                →
+        <div className="relative flex items-center justify-between gap-5 flex-wrap p-6 sm:p-7">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-brand-300">
+                Para vendedores de Amazon
               </span>
+              {connected && (
+                <span className="inline-flex h-5 items-center gap-1 rounded-full border border-emerald-400/25 bg-emerald-400/10 px-2 text-[9px] font-semibold uppercase tracking-wide text-emerald-300">
+                  <span className="h-1 w-1 rounded-full bg-emerald-400" /> Conectado
+                </span>
+              )}
             </div>
+            <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-white" style={{ letterSpacing: "-0.03em" }}>
+              Orvexia <span className="text-shimmer-violet">Repricer</span>
+            </h2>
+            <p className="mt-1.5 text-sm text-white/55 max-w-md" style={{ textWrap: "pretty" }}>
+              {connected ? (
+                <>
+                  Plan <strong className="text-white/80">{billing!.label}</strong> ·{" "}
+                  {repricedCount} producto{repricedCount === 1 ? "" : "s"} con reprecio
+                  activo · ciclo {billing!.intervalMinutes} min
+                </>
+              ) : (
+                <>
+                  Reprecia tus productos de Amazon automáticamente, o sube tu
+                  catálogo en CSV.
+                </>
+              )}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 text-white font-semibold text-sm whitespace-nowrap">
+            {connected ? "Abrir panel" : "Descubrir"}
+            <span
+              className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-brand-500 text-lg text-white transition-all group-hover:bg-brand-400"
+              style={{ boxShadow: "0 8px 24px -6px rgba(99,102,241,0.85)" }}
+            >
+              →
+            </span>
           </div>
         </div>
       </Link>
@@ -156,7 +162,7 @@ export async function RepricerSection({
         <div className="mt-3 flex justify-end">
           <Link
             href="/dashboard/repricer?relink=1"
-            className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white/80 transition-colors hover:bg-white/[0.08] hover:text-white"
+            className="inline-flex h-10 items-center gap-1.5 rounded-full border border-white/12 bg-white/[0.03] px-5 text-sm font-semibold text-white/80 transition-all hover:border-white/30 hover:bg-white/[0.06] hover:text-white active:scale-[0.97]"
           >
             🔗 Vincular Amazon o CSV
           </Link>

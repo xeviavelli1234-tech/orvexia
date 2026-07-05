@@ -78,13 +78,20 @@ const nextConfig: NextConfig = {
           { key: "Cache-Control", value: "no-store, max-age=0" },
         ],
       },
-      // Recursos estáticos de Next: caché agresiva (immutable hash)
-      {
-        source: "/_next/static/:path*",
-        headers: [
-          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
-        ],
-      },
+      // Recursos estáticos de Next: caché agresiva (immutable hash).
+      // SOLO en producción: en dev los chunks de Turbopack NO llevan hash en
+      // el nombre, así que "immutable" hace que el navegador sirva CSS/JS
+      // caducado durante días aunque el código cambie.
+      ...(process.env.NODE_ENV === "production"
+        ? [
+            {
+              source: "/_next/static/:path*",
+              headers: [
+                { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+              ],
+            },
+          ]
+        : []),
     ];
   },
 };

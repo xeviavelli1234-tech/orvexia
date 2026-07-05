@@ -112,25 +112,20 @@ export default function MysteryDealCard({
           onClick={open}
           aria-label="Abrir oferta misteriosa"
           className={`absolute inset-0 z-20 w-full overflow-hidden rounded-lg sm:rounded-2xl
-            bg-bg-elevated border border-white/[0.08]
+            bg-bg-elevated border border-white/[0.07]
             flex flex-col items-center justify-center gap-1.5 sm:gap-3.5 p-2 sm:p-5 text-center
             transition-all duration-500 ease-out
-            ${opening ? "opacity-0 scale-110 blur-[3px] pointer-events-none" : "hover:border-cyan-400/40"}
+            ${opening ? "opacity-0 scale-110 blur-[3px] pointer-events-none" : "hover:border-brand-400/40"}
             motion-reduce:transition-none`}
         >
           <span
             aria-hidden
             className="pointer-events-none absolute inset-0 opacity-70
-              bg-[radial-gradient(circle_at_50%_28%,rgba(94,234,212,0.14),transparent_60%)]"
-          />
-          <span
-            aria-hidden
-            className="pointer-events-none absolute -inset-1 opacity-50
-              bg-[conic-gradient(from_0deg,transparent,rgba(217,70,239,0.10),transparent,rgba(94,234,212,0.12),transparent)]"
+              bg-[radial-gradient(circle_at_50%_28%,rgba(129,140,248,0.16),transparent_60%)]"
           />
 
-          <span className="hidden sm:inline relative font-mono-ui text-[10px] uppercase tracking-widest text-white/55
-            border border-white/10 rounded-full px-3 py-1 bg-white/[0.03]">
+          <span className="hidden sm:inline relative text-[10px] font-semibold text-brand-200
+            border border-brand-400/25 rounded-full px-3 py-1 bg-brand-400/[0.09]">
             {catLabel}
           </span>
 
@@ -143,9 +138,9 @@ export default function MysteryDealCard({
 
           {discount > 0 ? (
             <span className="relative leading-none">
-              <span className="block text-lg sm:text-4xl font-black text-gradient-neon">-{discount}%</span>
+              <span className="block text-lg sm:text-4xl font-black tabular text-emerald-300" style={{ textShadow: "0 0 24px rgba(52,211,153,0.45)" }}>-{discount}%</span>
               {savings > 0 && (
-                <span className="hidden sm:block mt-1.5 font-mono-ui text-[11px] text-emerald-300/90">
+                <span className="hidden sm:block mt-1.5 text-[11px] font-semibold tabular text-emerald-300/90">
                   ahorras {formatEURInteger(savings)} €
                 </span>
               )}
@@ -154,12 +149,12 @@ export default function MysteryDealCard({
             <span className="relative text-[11px] sm:text-sm font-bold text-white/80">Oferta sorpresa</span>
           )}
 
-          <span className="relative mt-0.5 inline-flex items-center gap-1 sm:gap-2 font-mono-ui text-[9px] sm:text-[11px] uppercase font-bold
-            px-2 sm:px-4 h-6 sm:h-9 rounded-full text-cyan-200 border border-cyan-400/30 bg-cyan-400/[0.06]
-            group-hover:bg-cyan-400/[0.12] transition-colors">
+          <span className="relative mt-0.5 inline-flex items-center gap-1 sm:gap-2 text-[9px] sm:text-[11px] font-bold
+            px-2 sm:px-4 h-6 sm:h-9 rounded-full text-brand-200 border border-brand-400/30 bg-brand-400/[0.09]
+            group-hover:bg-brand-400/[0.16] transition-colors">
             <span className="sm:hidden">Abrir</span>
             <span className="hidden sm:inline">Abrir oferta</span>
-            <span className="transition-transform group-hover:translate-x-0.5">▸</span>
+            <span className="transition-transform group-hover:translate-x-0.5">→</span>
           </span>
         </button>
       )}

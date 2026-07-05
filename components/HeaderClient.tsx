@@ -46,19 +46,20 @@ function OrvexiaLogo() {
         aria-hidden
         className="relative flex items-center justify-center w-9 h-9 rounded-xl text-white text-base font-black overflow-hidden"
         style={{
-          backgroundImage: "linear-gradient(135deg, #4F46E5 0%, #818CF8 35%, #5EEAD4 70%, #A3E635 100%)",
-          boxShadow: "0 0 24px -4px rgba(94,234,212,0.55), inset 0 1px 0 rgba(255,255,255,0.25)",
+          backgroundImage: "linear-gradient(135deg, #4F46E5 0%, #6366F1 50%, #818CF8 100%)",
+          boxShadow: "0 0 24px -4px rgba(129,140,248,0.55), inset 0 1px 0 rgba(255,255,255,0.25)",
         }}
       >
-        <span className="absolute inset-0 opacity-30" style={{
-          backgroundImage: "linear-gradient(rgba(255,255,255,0.18) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.18) 1px, transparent 1px)",
-          backgroundSize: "6px 6px",
-        }} />
         <span className="relative">O</span>
       </span>
       <span className="flex items-baseline text-[1.15rem] tracking-[-0.02em] leading-none">
         <span className="font-medium text-fg">Orv</span>
-        <span className="font-extrabold text-gradient-neon">exia</span>
+        <span
+          className="font-extrabold bg-clip-text text-transparent"
+          style={{ backgroundImage: "linear-gradient(100deg, #E3E6FF, #A5B4FC)" }}
+        >
+          exia
+        </span>
       </span>
     </span>
   );
@@ -134,9 +135,9 @@ export function HeaderClient({
     <>
       <header className="sticky top-0 z-40 backdrop-blur-xl border-b border-white/[0.06]"
               style={{ background: "rgba(4,5,11,0.78)" }}>
-        {/* Top neon hairline */}
+        {/* Hairline violeta superior */}
         <span aria-hidden className="absolute left-0 right-0 top-0 h-px" style={{
-          background: "linear-gradient(90deg, transparent, rgba(94,234,212,0.45) 25%, rgba(129,140,248,0.45) 50%, rgba(240,171,252,0.45) 75%, transparent)",
+          background: "linear-gradient(90deg, transparent, rgba(129,140,248,0.45) 50%, transparent)",
         }} />
         <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 h-16 flex items-center gap-4">
 
@@ -177,16 +178,6 @@ export function HeaderClient({
 
           <div className="hidden md:flex items-center shrink-0">
             <CommunityDropdown />
-          </div>
-
-          {/* Live status pill — replaces theme toggle */}
-          <div
-            className="hidden lg:inline-flex items-center gap-1.5 h-9 px-2.5 rounded-lg border border-emerald-400/20 bg-emerald-400/[0.04] font-mono-ui text-[10px] uppercase tracking-wider text-white/55 shrink-0 hover:border-emerald-400/40 hover:bg-emerald-400/[0.08] transition-colors"
-            title="Sistema sincronizando precios"
-            aria-label="Estado del sistema: en línea"
-          >
-            <span className="relative flex h-1.5 w-1.5 rounded-full bg-emerald-400 node-pulse" />
-            live
           </div>
 
           <nav className="hidden md:flex items-center gap-2 shrink-0" aria-label="Cuenta de usuario">
@@ -272,13 +263,14 @@ export function HeaderClient({
               <>
                 <Link
                   href="/login"
-                  className="text-sm px-4 h-10 inline-flex items-center rounded-lg font-semibold text-fg-muted hover:text-fg hover:bg-bg-subtle transition-colors"
+                  className="text-sm px-4 h-10 inline-flex items-center rounded-full font-semibold text-fg-muted hover:text-fg hover:bg-bg-subtle transition-colors"
                 >
                   Iniciar sesión
                 </Link>
                 <Link
                   href="/register"
-                  className="text-sm px-5 h-10 inline-flex items-center rounded-lg font-semibold text-white bg-brand-600 hover:bg-brand-700 shadow-sm shadow-brand-600/20 hover:shadow-md hover:shadow-brand-600/30 transition-all"
+                  className="shine-on-hover text-sm px-5 h-10 inline-flex items-center rounded-full font-bold text-white bg-brand-500 hover:bg-brand-400 active:scale-[0.97] transition-all"
+                  style={{ boxShadow: "0 8px 36px -6px rgba(99,102,241,0.85)" }}
                 >
                   Registrarse
                 </Link>
@@ -329,11 +321,9 @@ export function HeaderClient({
             aria-label="Menú de navegación"
           >
             <nav className="p-4 space-y-1">
-              <div className="flex items-center justify-between mb-2 px-2">
-                <p className="font-mono-ui text-[10px] uppercase tracking-[0.2em] text-cyan-300/80">▸ /navigate</p>
-                <span className="font-mono-ui text-[10px] uppercase tracking-wider text-emerald-400/80 inline-flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-dot" /> live
-                </span>
+              <div className="flex items-center gap-4 mb-2 px-2">
+                <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-brand-300">Navegación</p>
+                <span className="h-px flex-1 bg-gradient-to-r from-brand-400/35 to-transparent" />
               </div>
               {MOBILE_NAV.map((item) => (
                 <Link
@@ -398,7 +388,8 @@ export function HeaderClient({
                     <Link
                       href="/register"
                       onClick={() => setMobileOpen(false)}
-                      className="flex items-center justify-center w-full py-3 rounded-xl text-sm font-bold text-white bg-brand-600 hover:bg-brand-700 shadow-sm shadow-brand-600/20 transition-all"
+                      className="flex items-center justify-center w-full py-3 rounded-full text-sm font-bold text-white bg-brand-500 hover:bg-brand-400 active:scale-[0.97] transition-all"
+                      style={{ boxShadow: "0 8px 36px -6px rgba(99,102,241,0.85)" }}
                     >
                       Crear cuenta gratis
                     </Link>

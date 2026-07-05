@@ -360,7 +360,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   };
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-[#050310] text-white/90">
       {productJsonLd && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(productJsonLd) }} />
       )}
@@ -368,15 +368,15 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
       {/* BREADCRUMB */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 pb-2">
-        <div className="flex items-center gap-2 font-mono-ui text-[10px] uppercase tracking-wider text-white/40">
-          <Link href="/" className="hover:text-cyan-300 transition-colors">~/</Link>
-          <span aria-hidden className="text-white/25">›</span>
-          <Link href="/categorias" className="hover:text-cyan-300 transition-colors">categorias</Link>
-          <span aria-hidden className="text-white/25">›</span>
-          <Link href={`/categorias/${catSlug}`} className="hover:text-cyan-300 transition-colors">{catSlug}</Link>
-          <span aria-hidden className="text-white/25">›</span>
-          <span className="text-cyan-300 font-medium truncate max-w-[200px] normal-case">{product.name.slice(0, 40)}...</span>
-        </div>
+        <nav aria-label="Miga de pan" className="flex items-center gap-2 text-[11px] font-semibold text-white/40">
+          <Link href="/" className="transition-colors hover:text-brand-200">Inicio</Link>
+          <span aria-hidden className="text-white/20">›</span>
+          <Link href="/categorias" className="transition-colors hover:text-brand-200">Categorías</Link>
+          <span aria-hidden className="text-white/20">›</span>
+          <Link href={`/categorias/${catSlug}`} className="transition-colors hover:text-brand-200">{catLabel}</Link>
+          <span aria-hidden className="text-white/20">›</span>
+          <span className="max-w-[200px] truncate text-brand-300">{product.name.slice(0, 40)}...</span>
+        </nav>
       </div>
 
       {/* CONTENIDO PRINCIPAL */}

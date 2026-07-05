@@ -302,7 +302,8 @@ export function DashboardClient({
           </p>
           <button
             onClick={load}
-            className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 transition-colors"
+            className="shine-on-hover inline-flex h-11 items-center justify-center rounded-full bg-brand-500 px-6 text-sm font-bold text-white transition-all hover:bg-brand-400 active:scale-[0.97]"
+            style={{ boxShadow: "0 8px 36px -6px rgba(99,102,241,0.85)" }}
           >
             Reintentar
           </button>
@@ -317,9 +318,9 @@ export function DashboardClient({
     <main className="min-h-screen">
 
       {/* ── TOPBAR PERSONALIZADA ─────────────────────────────────────────── */}
-      <div className="bg-bg-elevated/95 backdrop-blur-md border-b border-white/[0.08] relative overflow-hidden">
+      <div className="bg-bg-elevated/95 backdrop-blur-md border-b border-white/[0.07] relative overflow-hidden">
         <span aria-hidden className="absolute left-0 right-0 top-0 h-px" style={{
-          background: "linear-gradient(90deg, transparent, rgba(94,234,212,0.4) 30%, rgba(129,140,248,0.4) 70%, transparent)",
+          background: "linear-gradient(90deg, transparent, rgba(129,140,248,0.45) 50%, transparent)",
         }} />
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
 
@@ -338,9 +339,9 @@ export function DashboardClient({
               <div
                 className="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-white shrink-0 shadow-lg select-none"
                 style={{
-                  background: avatarProfile?.avatarColor ?? "linear-gradient(135deg,#4F46E5,#A855F7)",
+                  background: avatarProfile?.avatarColor ?? "linear-gradient(135deg,#6366F1,#A5B4FC)",
                   fontSize: avatarProfile?.avatarEmoji ? 22 : 15,
-                  boxShadow: "0 0 24px -6px rgba(94,234,212,0.4)",
+                  boxShadow: "0 0 24px -6px rgba(129,140,248,0.45)",
                 }}
                 aria-hidden="true"
               >
@@ -350,8 +351,8 @@ export function DashboardClient({
 
             {/* Text */}
             <div className="min-w-0">
-              <p className="font-mono-ui text-[10px] uppercase tracking-wider text-cyan-300/80 mb-0.5">
-                ▸ /dashboard · user
+              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-brand-300 mb-0.5">
+                Mi panel
               </p>
               <h1 className="text-[16px] font-bold text-white leading-tight truncate">
                 Hola, {firstName} 👋
@@ -382,14 +383,13 @@ export function DashboardClient({
                 <path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
               </svg>
             </button>
-            <span className="aura-cta inline-flex rounded-full">
-              <Link
-                href="/ofertas-destacadas"
-                className="inline-flex items-center gap-1.5 text-[13px] font-bold text-cyan-200 px-4 py-2 rounded-full hover:bg-cyan-400/15 transition-all border border-cyan-400/40 bg-cyan-400/10"
-              >
-                Explorar ofertas →
-              </Link>
-            </span>
+            <Link
+              href="/ofertas-destacadas"
+              className="inline-flex items-center gap-1.5 rounded-full border border-brand-400/30 bg-brand-400/10 px-4 py-2 text-[13px] font-bold text-brand-200 transition-all hover:border-brand-400/50 hover:bg-brand-400/15 active:scale-[0.97]"
+              style={{ boxShadow: "0 0 24px -8px rgba(129,140,248,0.55)" }}
+            >
+              Explorar ofertas →
+            </Link>
           </div>
         </div>
       </div>
@@ -400,37 +400,40 @@ export function DashboardClient({
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-7 space-y-7">
 
         {/* ── COMPARADOR (SECUNDARIO) — etiqueta de área ───────────────────── */}
-        <div className="flex items-center gap-3 pt-1">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-fg-subtle whitespace-nowrap">
+        <div className="reveal flex items-center gap-4 pt-1">
+          <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-brand-300 whitespace-nowrap">
             Comparador · seguimiento de precios
           </span>
-          <span className="h-px flex-1 bg-border" />
+          <span className="h-px flex-1 bg-gradient-to-r from-brand-400/35 to-transparent" />
         </div>
 
         {/* ── TRIGGERED ALERTS BANNER ──────────────────────────────────────── */}
         {triggeredAlerts.length > 0 && (
           <div
-            className="rounded-2xl p-4 sm:p-5 space-y-3 border border-[#22C55E]/30 bg-[#ECFDF3]"
+            className="reveal rounded-2xl p-4 sm:p-5 space-y-3 border border-emerald-400/25 bg-emerald-400/[0.05]"
             role="alert"
             aria-live="polite"
           >
             <div className="flex items-start gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#22C55E] to-[#16A34A] flex items-center justify-center text-white text-xl shrink-0 shadow-sm">
+              <div
+                className="w-12 h-12 rounded-2xl border border-emerald-400/30 bg-emerald-400/10 flex items-center justify-center text-xl shrink-0"
+                style={{ boxShadow: "0 0 24px -8px rgba(52,211,153,0.55)" }}
+              >
                 🎯
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                  <p className="text-sm font-extrabold text-[#14532D] uppercase tracking-wide">
+                  <p className="text-sm font-extrabold text-emerald-300 uppercase tracking-wide">
                     ¡{triggeredAlerts.length === 1 ? "Producto en oferta" : `${triggeredAlerts.length} productos en oferta`}!
                   </p>
                   <Link
                     href="/ofertas-destacadas"
-                    className="inline-flex items-center justify-center text-sm font-bold text-white bg-[#16A34A] hover:bg-[#15803D] px-4 py-2 rounded-lg transition-colors whitespace-nowrap"
+                    className="inline-flex items-center justify-center rounded-full border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 text-sm font-bold text-emerald-300 transition-all hover:border-emerald-400/50 hover:bg-emerald-400/15 whitespace-nowrap"
                   >
                     Ver ofertas →
                   </Link>
                 </div>
-                <p className="text-[12px] text-[#166534]">Mejor precio vs. su base original.</p>
+                <p className="text-[12px] text-emerald-300/70">Mejor precio vs. su base original.</p>
               </div>
             </div>
 
@@ -499,22 +502,22 @@ export function DashboardClient({
                       });
                     }
                   }}
-                  className="relative overflow-hidden rounded-xl bg-bg-elevated border border-[#22C55E]/40 px-3 py-2 flex flex-col gap-1 shadow-[0_6px_16px_rgba(34,197,94,0.08)] hover:shadow-[0_10px_24px_rgba(34,197,94,0.14)] transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#22C55E]"
+                  className="relative overflow-hidden rounded-xl bg-white/[0.02] border border-emerald-400/25 px-3 py-2 flex flex-col gap-1 transition-all hover:-translate-y-0.5 hover:border-emerald-400/45 hover:shadow-[0_10px_24px_-10px_rgba(52,211,153,0.35)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400"
                 >
-                  <span className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-[#22C55E] to-[#16A34A]" aria-hidden="true" />
+                  <span className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-emerald-400/70 to-emerald-500/40" aria-hidden="true" />
                   <div className="flex items-start gap-2">
-                    <span className="w-2 h-2 rounded-full bg-[#22C55E] mt-2" aria-hidden="true" />
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 mt-2" aria-hidden="true" />
                     <div className="min-w-0">
-                      <p className="text-[13px] font-semibold text-fg line-clamp-1">{a.productName}</p>
-                      <p className="text-[11px] text-accent-600 font-bold">
+                      <p className="text-[13px] font-semibold text-white/85 line-clamp-1">{a.productName}</p>
+                      <p className="text-[11px] text-emerald-300 font-bold tabular">
                         Ahora {a.currentPrice?.toFixed(0)}€{" "}
                         {a.basePrice ? (
-                          <span className="text-[#14532D] font-semibold">
+                          <span className="text-emerald-300/70 font-semibold">
                             (−{Math.max(0, Math.round((1 - (a.currentPrice ?? 0) / a.basePrice) * 100))}% vs {a.basePrice.toFixed(0)}€)
                           </span>
                         ) : null}
                       </p>
-                      <p className="text-[11px] text-[#6B7280]">
+                      <p className="text-[11px] text-white/40">
                         Tienda: {a.store || "—"}
                       </p>
                     </div>
@@ -548,7 +551,7 @@ export function DashboardClient({
                 : activeAlerts.length
             }
             sub={triggeredAlerts.length > 0 ? `¡${triggeredAlerts.length} en oferta!` : "Te avisamos cuando baje"}
-            accent="#7C3AED"
+            accent="var(--brand-400)"
           />
         </div>
 
@@ -580,23 +583,38 @@ export function DashboardClient({
         {/* ── NEW USER ONBOARDING ───────────────────────────────────────────── */}
         {isNew && (
           <div
-            className="rounded-3xl overflow-hidden"
-            style={{ background: "linear-gradient(135deg,#0F172A 0%,#1E1B4B 50%,#1D4ED8 100%)" }}
+            className="reveal relative overflow-hidden rounded-3xl border border-brand-400/15"
+            style={{ background: "linear-gradient(160deg,#100d26 0%,#0a0819 55%,#070614 100%)" }}
           >
-            <div className="px-6 sm:px-10 py-10 text-center">
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -top-28 left-1/2 h-72 w-[560px] -translate-x-1/2 rounded-full"
+              style={{ background: "radial-gradient(ellipse, rgba(129,140,248,0.18), transparent 70%)" }}
+            />
+            <div className="relative px-6 sm:px-10 py-10 text-center">
               <p className="text-5xl mb-4">🚀</p>
-              <h2 className="text-2xl font-extrabold text-white mb-2">Empieza a comprar más inteligente</h2>
-              <p className="text-white/70 mb-7 max-w-md mx-auto text-sm leading-relaxed">
+              <h2
+                className="text-2xl font-extrabold tracking-tight text-white mb-2"
+                style={{ letterSpacing: "-0.03em", textWrap: "balance" }}
+              >
+                Empieza a comprar más inteligente
+              </h2>
+              <p className="text-white/50 mb-7 max-w-md mx-auto text-sm leading-relaxed" style={{ textWrap: "pretty" }}>
                 Guarda productos que te interesan, crea alertas de precio y te
                 avisamos cuando bajen. Compara entre tiendas con un solo clic.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                <Link href="/ofertas-destacadas"
-                  className="bg-bg-elevated text-brand-700 font-bold px-6 py-3 rounded-xl text-sm hover:bg-brand-50 transition-all w-full sm:w-auto text-center">
+                <Link
+                  href="/ofertas-destacadas"
+                  className="shine-on-hover inline-flex h-12 w-full items-center justify-center rounded-full bg-brand-500 px-7 text-sm font-bold text-white transition-all hover:bg-brand-400 hover:shadow-[0_0_48px_-4px_rgba(129,140,248,0.9)] active:scale-[0.97] sm:w-auto"
+                  style={{ boxShadow: "0 8px 36px -6px rgba(99,102,241,0.85)" }}
+                >
                   Ver ofertas destacadas
                 </Link>
-                <Link href="/categorias"
-                  className="text-white font-semibold px-6 py-3 rounded-xl border border-white/25 text-sm hover:bg-white/10 transition-all w-full sm:w-auto text-center">
+                <Link
+                  href="/categorias"
+                  className="inline-flex h-12 w-full items-center justify-center rounded-full border border-white/12 bg-white/[0.03] px-7 text-sm font-semibold text-white/80 transition-all hover:border-white/30 hover:bg-white/[0.06] hover:text-white active:scale-[0.97] sm:w-auto"
+                >
                   Explorar categorías
                 </Link>
               </div>
@@ -609,9 +627,9 @@ export function DashboardClient({
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
             {/* LEFT (2/3): Oportunidades ─────────────────────────────────── */}
-            <div className="lg:col-span-2 bg-bg-elevated rounded-2xl border border-border overflow-hidden">
+            <div className="reveal lg:col-span-2 rounded-2xl border border-white/[0.07] bg-white/[0.02] overflow-hidden transition-colors hover:border-brand-400/25">
               <SectionHeader
-                accent="linear-gradient(180deg,#10B981,#059669)"
+                accent="linear-gradient(180deg,#34D399,#059669)"
                 label="Bajadas en tu watchlist"
                 title="Oportunidades de hoy"
                 count={data!.recentDrops.length}
@@ -624,14 +642,14 @@ export function DashboardClient({
                   sub="Te avisaremos cuando uno de tus productos baje de precio."
                 />
               ) : (
-                <div className="divide-y divide-[#F8FAFC]">
+                <div className="divide-y divide-white/[0.05]">
                   {data!.recentDrops.map((drop) => (
                     <div
                       key={drop.productId}
                       role="button"
                       tabIndex={0}
                       aria-label={`Ver detalles de ${drop.name}`}
-                      className="flex items-center gap-3 p-4 hover:bg-bg-subtle transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-[#2563EB] focus-visible:outline-offset-[-2px]"
+                      className="flex items-center gap-3 p-4 hover:bg-white/[0.03] transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-brand-400 focus-visible:outline-offset-[-2px]"
                       onClick={() => openModal({
                         id: drop.productId, name: drop.name, brand: drop.brand,
                         category: drop.category, description: drop.description,
@@ -669,7 +687,8 @@ export function DashboardClient({
                         rel="noopener noreferrer"
                         aria-label={`Comprar ${drop.name} en ${drop.store}`}
                         onClick={(e) => e.stopPropagation()}
-                        className="shrink-0 text-[12px] font-bold text-white bg-brand-600 hover:bg-brand-700 px-3 py-2 rounded-xl transition-colors whitespace-nowrap"
+                        className="shrink-0 text-[12px] font-bold text-white bg-brand-500 hover:bg-brand-400 px-4 py-2 rounded-full transition-all active:scale-[0.97] whitespace-nowrap"
+                        style={{ boxShadow: "0 6px 20px -6px rgba(99,102,241,0.7)" }}
                       >
                         Ver →
                       </a>
@@ -680,9 +699,9 @@ export function DashboardClient({
             </div>
 
             {/* RIGHT (1/3): Alertas ────────────────────────────────────────── */}
-            <div className="bg-bg-elevated rounded-2xl border border-border overflow-hidden">
+            <div className="reveal rounded-2xl border border-white/[0.07] bg-white/[0.02] overflow-hidden transition-colors hover:border-brand-400/25">
               <SectionHeader
-                accent="linear-gradient(180deg,#7C3AED,#6D28D9)"
+                accent="linear-gradient(180deg,#A5B4FC,#6366F1)"
                 label="Precio objetivo"
                 title="Mis alertas"
                 count={data!.alerts.length}
@@ -702,7 +721,7 @@ export function DashboardClient({
                   sub="Abre un producto y crea una alerta para recibir aviso cuando baje."
                 />
               ) : (
-                <div className="divide-y divide-[#F8FAFC]">
+                <div className="divide-y divide-white/[0.05]">
                   {/* Triggered primero */}
                   {[...triggeredAlerts, ...activeAlerts].map((alert) => {
                     const reached = alert.currentPrice !== null && alert.basePrice !== null && alert.basePrice !== undefined && alert.currentPrice < alert.basePrice;
@@ -710,7 +729,7 @@ export function DashboardClient({
                       <div
                         key={alert.id}
                         className={`flex items-start gap-3 p-4 transition-colors cursor-pointer ${
-                          reached ? "bg-[#ECFDF3] border-l-4 border-[#22C55E]/60" : "hover:bg-bg-subtle"
+                          reached ? "bg-emerald-400/[0.06] border-l-4 border-emerald-400/50" : "hover:bg-white/[0.03]"
                         }`}
                         onClick={() => openModal({
                           id: alert.productId,
@@ -756,27 +775,27 @@ export function DashboardClient({
                       >
                         {/* State indicator */}
                         <div
-                          className={`w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 ${reached ? "bg-[#22C55E]" : "bg-[#94A3B8]"}`}
+                          className={`w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 ${reached ? "bg-emerald-400" : "bg-white/25"}`}
                           aria-hidden="true"
                         />
                         <div className="flex-1 min-w-0">
                           <p className="text-[13px] font-semibold text-fg line-clamp-1 leading-snug">
                             {alert.productName}
                           </p>
-                          <p className="text-[11px] mt-0.5">
+                          <p className="text-[11px] mt-0.5 tabular">
                             <span className="font-medium text-fg-muted">Precio base:</span>{" "}
-                            <span className={reached ? "text-[#14532D] font-semibold" : "text-[#6B7280]"}>
+                            <span className={reached ? "text-emerald-300/80 font-semibold" : "text-white/40"}>
                               {alert.basePrice ? `${alert.basePrice.toFixed(0)}€` : "—"}
                             </span>
                             {alert.currentPrice !== null && (
                               <>
                                 {" · "}
                                 <span className="font-medium text-fg-muted">Ahora:</span>{" "}
-                                <span className={reached ? "font-bold text-accent-600" : alert.currentPrice === alert.basePrice ? "text-fg-subtle" : "text-fg"}>
+                                <span className={reached ? "font-bold text-emerald-300" : alert.currentPrice === alert.basePrice ? "text-fg-subtle" : "text-fg"}>
                                   {alert.currentPrice.toFixed(0)}€
                                 </span>
                                 {reached && alert.basePrice ? (
-                                  <span className="text-[11px] text-[#14532D] font-semibold">
+                                  <span className="text-[11px] text-emerald-300/80 font-semibold">
                                     {" "}(−{Math.max(0, Math.round((1 - (alert.currentPrice ?? 0) / alert.basePrice) * 100))}%)
                                   </span>
                                 ) : null}
@@ -784,7 +803,7 @@ export function DashboardClient({
                             )}
                           </p>
                           {reached && (
-                            <span className="inline-flex items-center gap-1 mt-1 text-[11px] font-bold text-[#14532D] bg-[#DCFCE7] px-2 py-0.5 rounded-full">
+                            <span className="inline-flex items-center gap-1 mt-1 text-[11px] font-bold text-emerald-300 border border-emerald-400/25 bg-emerald-400/10 px-2 py-0.5 rounded-full">
                               <span aria-hidden="true">✓</span> ¡Precio alcanzado!
                             </span>
                           )}
@@ -810,9 +829,9 @@ export function DashboardClient({
         {/* ── WATCHLIST ─────────────────────────────────────────────────────── */}
         {!isNew && (
           <>
-          <div className="bg-bg-elevated rounded-2xl border border-border overflow-hidden">
+          <div className="reveal rounded-2xl border border-white/[0.07] bg-white/[0.02] overflow-hidden transition-colors hover:border-brand-400/25">
             <SectionHeader
-              accent="linear-gradient(180deg,#2563EB,#7C3AED)"
+              accent="linear-gradient(180deg,#818CF8,#6366F1)"
               label="Tu lista de seguimiento"
               title="Watchlist"
               count={savedProductsToShow.length}
@@ -829,18 +848,18 @@ export function DashboardClient({
             ) : (
               <>
                 {/* Table header — desktop only */}
-                <div className="hidden sm:grid grid-cols-[1fr_auto_auto_auto] gap-3 px-5 py-2.5 bg-bg-subtle border-b border-border-subtle text-[11px] font-bold text-fg-subtle uppercase tracking-wider">
+                <div className="hidden sm:grid grid-cols-[1fr_auto_auto_auto] gap-3 px-5 py-2.5 bg-white/[0.02] border-b border-white/[0.05] text-[11px] font-bold text-fg-subtle uppercase tracking-wider">
                   <span>Producto</span>
                   <span className="text-right">Precio</span>
                   <span className="text-center w-32">¿Compro ahora?</span>
                   <span className="w-16" />
                 </div>
 
-                <div className="divide-y divide-[#F8FAFC]">
+                <div className="divide-y divide-white/[0.05]">
                   {savedProductsToShow.map((sp) => (
                     <div
                       key={sp.id}
-                      className="group relative flex sm:grid sm:grid-cols-[1fr_auto_auto_auto] items-center gap-3 px-4 sm:px-5 py-3.5 hover:bg-bg-subtle transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#2563EB]"
+                      className="group relative flex sm:grid sm:grid-cols-[1fr_auto_auto_auto] items-center gap-3 px-4 sm:px-5 py-3.5 hover:bg-white/[0.03] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-400"
                       role="button"
                       tabIndex={0}
                       aria-label={`Ver detalles de ${sp.name}`}
@@ -871,7 +890,7 @@ export function DashboardClient({
                             {sp.store && <> · {sp.store}</>}
                           </p>
                           {sp.notifyOnDiscount && !sp.discountPercent && (
-                            <span className="inline-flex items-center gap-1 mt-0.5 text-[10px] font-semibold text-hot-700 bg-amber-50 border border-[#FDE68A] px-1.5 py-0.5 rounded-md">
+                            <span className="inline-flex items-center gap-1 mt-0.5 text-[10px] font-semibold text-amber-300 bg-amber-400/10 border border-amber-400/25 px-1.5 py-0.5 rounded-full">
                               <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0 1 18 14.158V11a6.002 6.002 0 0 0-4-5.659V5a2 2 0 1 0-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 1 1-6 0v-1m6 0H9" />
                               </svg>
@@ -908,7 +927,7 @@ export function DashboardClient({
                             target="_blank"
                             rel="noopener noreferrer"
                             aria-label={`Ver ${sp.name} en tienda`}
-                            className="text-[12px] font-bold text-brand-600 hover:underline"
+                            className="text-[12px] font-bold text-brand-300 hover:text-brand-200 hover:underline"
                           >
                             Ver →
                           </a>
@@ -916,7 +935,7 @@ export function DashboardClient({
                         <button
                           onClick={async (e) => { e.stopPropagation(); await unsave(sp.productId); }}
                           aria-label={`Quitar ${sp.name} de la watchlist`}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 rounded-full border border-border flex items-center justify-center text-fg-subtle hover:text-danger-500 hover:border-[#EF4444] shrink-0"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 rounded-full border border-white/12 flex items-center justify-center text-fg-subtle hover:text-red-400 hover:border-red-400/50 shrink-0"
                         >
                           <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden="true">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M18 6L6 18M6 6l12 12" />
@@ -937,7 +956,7 @@ export function DashboardClient({
                         <button
                           onClick={async (e) => { e.stopPropagation(); await unsave(sp.productId); }}
                           aria-label={`Quitar ${sp.name} de la watchlist`}
-                          className="w-6 h-6 rounded-full border border-border flex items-center justify-center text-fg-subtle hover:text-danger-500 hover:border-[#EF4444] shrink-0"
+                          className="w-6 h-6 rounded-full border border-white/12 flex items-center justify-center text-fg-subtle hover:text-red-400 hover:border-red-400/50 shrink-0"
                         >
                           <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden="true">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M18 6L6 18M6 6l12 12" />
@@ -955,14 +974,14 @@ export function DashboardClient({
         )}
 
         {/* ── RECOMENDADOS ──────────────────────────────────────────────────── */}
-        <div className="bg-bg-elevated rounded-2xl border border-border overflow-hidden">
+        <div className="reveal rounded-2xl border border-white/[0.07] bg-white/[0.02] overflow-hidden transition-colors hover:border-brand-400/25">
           <SectionHeader
-            accent="linear-gradient(180deg,#F97316,#EF4444)"
+            accent="linear-gradient(180deg,#C7D2FE,#818CF8)"
             label={isNew ? "Populares ahora" : "Basado en tus guardados"}
             title="Recomendados para ti"
             action={
               <Link href="/ofertas-destacadas"
-                className="text-[12px] font-semibold text-brand-600 hover:underline shrink-0">
+                className="text-[12px] font-semibold text-brand-300 hover:text-brand-200 hover:underline shrink-0">
                 Ver todos →
               </Link>
             }
@@ -982,7 +1001,7 @@ export function DashboardClient({
                   role="button"
                   tabIndex={0}
                   aria-label={`Ver detalles de ${p.name}`}
-                  className="group flex gap-3 p-3 rounded-xl border border-border-subtle hover:border-[#C7D7F4] hover:shadow-sm transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-[#2563EB]"
+                  className="group flex gap-3 p-3 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:border-brand-400/35 hover:-translate-y-0.5 hover:shadow-[0_14px_36px_-16px_rgba(99,102,241,0.5)] transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-brand-400"
                   onClick={() => openModal({
                     id: p.id, name: p.name, brand: p.brand,
                     category: p.category, description: p.description,
@@ -1033,19 +1052,19 @@ export function DashboardClient({
 
         {/* ── SIN DESCUENTO ─────────────────────────────────────────────────── */}
         {(data?.noDiscount ?? []).length > 0 && (
-          <div className="bg-bg-elevated rounded-2xl border border-border overflow-hidden">
-            <div className="px-5 py-4 border-b border-border-subtle flex items-center justify-between">
+          <div className="reveal rounded-2xl border border-white/[0.07] bg-white/[0.02] overflow-hidden transition-colors hover:border-brand-400/25">
+            <div className="px-5 py-4 border-b border-white/[0.05] flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-1 h-7 rounded-full bg-warn-500" />
+                <div className="w-1 h-7 rounded-full" style={{ background: "linear-gradient(180deg,#A5B4FC,#6366F1)" }} />
                 <div>
-                  <p className="text-[10px] font-bold text-warn-500 uppercase tracking-widest">Explora más</p>
+                  <p className="text-[10px] font-bold text-brand-300 uppercase tracking-widest">Explora más</p>
                   <h2 className="text-[15px] font-bold text-fg">Disponibles sin oferta</h2>
                 </div>
               </div>
               <Link
                 href="/categorias"
-                className="px-4 py-2 rounded-xl text-[12px] font-semibold text-white transition-all"
-                style={{ background: "linear-gradient(135deg,#F59E0B,#EA580C)" }}
+                className="px-4 py-2 rounded-full text-[12px] font-semibold text-white bg-brand-500 hover:bg-brand-400 transition-all active:scale-[0.97]"
+                style={{ boxShadow: "0 6px 20px -6px rgba(99,102,241,0.7)" }}
               >
                 Explorar categorías →
               </Link>
@@ -1057,7 +1076,7 @@ export function DashboardClient({
                   role="button"
                   tabIndex={0}
                   aria-label={`Ver detalles de ${p.name}`}
-                  className="group flex gap-3 p-3 rounded-xl border border-border-subtle hover:border-[#C7D7F4] hover:shadow-sm transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-[#2563EB]"
+                  className="group flex gap-3 p-3 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:border-brand-400/35 hover:-translate-y-0.5 hover:shadow-[0_14px_36px_-16px_rgba(99,102,241,0.5)] transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-brand-400"
                   onClick={() => openModal({ id: p.id, name: p.name, brand: p.brand, category: p.category, description: p.description, image: p.image, images: p.images, rating: p.rating, reviewCount: p.reviewCount, offers: p.offers })}
                   onKeyDown={(e) => e.key === "Enter" && openModal({ id: p.id, name: p.name, brand: p.brand, category: p.category, description: p.description, image: p.image, images: p.images, rating: p.rating, reviewCount: p.reviewCount, offers: p.offers })}
                 >

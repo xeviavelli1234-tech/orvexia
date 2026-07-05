@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { SectionChip } from "@/app/_components/SectionPrimitives";
 
 export const metadata: Metadata = {
   title: "Política de Protección de Datos de Amazon · Orvexia Repricer",
@@ -23,43 +23,35 @@ function P({ children }: { children: React.ReactNode }) {
 }
 function LI({ children }: { children: React.ReactNode }) {
   return (
-    <li className="mt-1.5 text-sm leading-relaxed text-white/70">{children}</li>
+    <li className="mt-1.5 text-sm leading-relaxed text-white/70 marker:text-brand-400">{children}</li>
   );
 }
 
 export default function PoliticaDatosAmazon() {
   return (
-    <main>
-      {/* Hero cibernético */}
-      <div className="relative border-b border-white/[0.06] overflow-hidden">
-        <div className="absolute inset-0 bg-grid-cyber opacity-40 pointer-events-none" />
+    <main className="min-h-screen bg-[#050310] text-white/90">
+      {/* Header */}
+      <div className="relative overflow-hidden border-b border-white/[0.05]">
         <div
-          className="absolute -top-32 left-1/3 w-[800px] h-[400px] rounded-full pointer-events-none"
-          style={{
-            background:
-              "radial-gradient(ellipse, rgba(94,234,212,0.16), transparent 65%)",
-          }}
+          aria-hidden
+          className="pointer-events-none absolute -top-32 left-1/2 h-72 w-[720px] -translate-x-1/2 rounded-full"
+          style={{ background: "radial-gradient(ellipse, rgba(129,140,248,0.14), transparent 70%)" }}
         />
-        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 py-12">
-          <div className="flex items-center gap-2 font-mono-ui text-[10px] uppercase tracking-wider text-white/40 mb-4">
-            <Link href="/" className="hover:text-cyan-300 transition-colors">
-              ~/
-            </Link>
-            <span className="text-white/25">›</span>
-            <span className="text-cyan-300">amazon-data</span>
+        <div className="reveal relative mx-auto max-w-3xl px-4 sm:px-6 py-14 sm:py-16">
+          <div className="flex justify-center sm:justify-start">
+            <SectionChip label="Legal · Datos de Amazon" />
           </div>
-          <p className="font-mono-ui text-[10px] uppercase tracking-wider text-cyan-300 mb-2">
-            ▸ /legal · sp-api data protection
-          </p>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-3">
-            Protección de datos de{" "}
-            <span className="text-gradient-aurora">Amazon</span>
+          <h1
+            className="mt-6 font-extrabold tracking-tight text-white"
+            style={{ fontSize: "clamp(2rem, 4.6vw, 3rem)", lineHeight: 1.08, letterSpacing: "-0.03em", textWrap: "balance" }}
+          >
+            Protección de datos de Amazon
           </h1>
-          <p className="text-sm text-white/55">
+          <p className="mt-4 text-sm text-white/60">
             Aplicable a Orvexia Repricer · Última actualización:{" "}
             <strong className="text-white/85">{UPDATED}</strong>
           </p>
-          <p className="mt-3 text-sm text-white/55 leading-relaxed max-w-2xl">
+          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/60" style={{ textWrap: "pretty" }}>
             Cómo accedemos, usamos, protegemos, conservamos y eliminamos los
             datos obtenidos a través de la{" "}
             <strong className="text-white/85">
@@ -69,11 +61,11 @@ export default function PoliticaDatosAmazon() {
             <em>Data Protection Policy</em>.
           </p>
         </div>
-        <div className="holo-divider mx-auto max-w-4xl" />
+        <div aria-hidden className="divider-glow mx-auto max-w-3xl" />
       </div>
 
       {/* Contenido */}
-      <article className="relative max-w-3xl mx-auto px-5 py-14">
+      <article className="relative mx-auto max-w-3xl px-4 sm:px-6 py-14">
       <P>
         Esta política describe cómo Orvexia Repricer (&ldquo;la Aplicación&rdquo;) accede,
         utiliza, almacena, protege, conserva y elimina la información obtenida a través de la

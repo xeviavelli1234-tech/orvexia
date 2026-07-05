@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SectionChip } from "@/app/_components/SectionPrimitives";
 
 export const metadata: Metadata = {
   title: "Centro de ayuda y soporte",
@@ -42,42 +43,48 @@ const FAQ = [
 
 export default function AyudaPage() {
   return (
-    <main>
+    <main className="min-h-screen bg-[#050310] text-white/90">
       {/* Hero */}
-      <section className="relative overflow-hidden border-b border-white/[0.06]">
-        <div className="absolute inset-0 bg-grid-cyber opacity-50 pointer-events-none" />
+      <section className="relative overflow-hidden border-b border-white/[0.05]">
         <div
-          className="absolute -top-32 left-1/2 -translate-x-1/2 w-[1100px] h-[600px] rounded-full halo-breathe pointer-events-none"
-          style={{ background: "radial-gradient(ellipse at center, rgba(94,234,212,0.20), transparent 65%)" }}
+          aria-hidden
+          className="pointer-events-none absolute -top-40 left-1/2 h-[420px] w-[900px] -translate-x-1/2 rounded-full halo-breathe"
+          style={{ background: "radial-gradient(ellipse at center, rgba(129,140,248,0.18), transparent 70%)" }}
         />
-        <div className="relative max-w-3xl mx-auto px-4 sm:px-6 pt-16 sm:pt-20 pb-14 text-center">
-          <div className="inline-flex items-center gap-2 mb-6 px-3 h-7 rounded-full bg-white/[0.04] border border-white/[0.10] font-mono-ui">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-dot" />
-            <span className="text-[10px] uppercase tracking-wider text-white/65">▸ /ayuda · soporte</span>
-          </div>
+        <div className="reveal relative mx-auto max-w-3xl px-4 sm:px-6 pt-16 sm:pt-20 pb-14 text-center">
+          <SectionChip label="Soporte" />
           <h1
-            className="font-extrabold tracking-tight text-white mb-5"
-            style={{ fontSize: "clamp(2.2rem, 5vw, 3.8rem)", lineHeight: 1, letterSpacing: "-0.04em" }}
+            className="mt-6 mb-5 font-extrabold tracking-tight text-white"
+            style={{ fontSize: "clamp(2.2rem, 5vw, 3.6rem)", lineHeight: 1.05, letterSpacing: "-0.035em", textWrap: "balance" }}
           >
-            Centro de <span className="text-gradient-neon">ayuda</span>
+            Centro de ayuda
           </h1>
-          <p className="text-white/60 text-lg max-w-2xl mx-auto leading-relaxed">
+          <p className="mx-auto max-w-2xl text-lg leading-relaxed text-white/60" style={{ textWrap: "pretty" }}>
             Resolvemos tus dudas sobre Orvexia Repricer. Si no encuentras lo que buscas, escríbenos.
           </p>
         </div>
       </section>
 
-      <div className="max-w-3xl mx-auto px-6 py-14 space-y-14">
+      <div className="mx-auto max-w-3xl px-4 sm:px-6 py-14 space-y-14">
         {/* Contacto */}
-        <section className="bg-bg-elevated rounded-2xl border border-border p-6 sm:p-8 text-center">
-          <h2 className="text-xl font-extrabold text-fg mb-2">Contacta con soporte</h2>
-          <p className="text-sm text-fg-muted mb-5 max-w-md mx-auto leading-relaxed">
+        <section
+          className="reveal relative overflow-hidden rounded-3xl border border-brand-400/15 p-6 sm:p-8 text-center"
+          style={{ background: "linear-gradient(160deg, #100d26 0%, #0a0819 55%, #070614 100%)" }}
+        >
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -top-20 left-1/2 h-48 w-80 -translate-x-1/2 rounded-full"
+            style={{ background: "radial-gradient(ellipse, rgba(129,140,248,0.18), transparent 70%)" }}
+          />
+          <h2 className="relative mb-2 text-xl font-extrabold tracking-tight text-white">Contacta con soporte</h2>
+          <p className="relative mx-auto mb-6 max-w-md text-sm leading-relaxed text-white/60">
             Atendemos por correo electrónico. Te respondemos lo antes posible, normalmente en menos de 48
             horas hábiles.
           </p>
           <a
             href={`mailto:${SUPPORT_EMAIL}`}
-            className="inline-flex items-center justify-center gap-2 bg-[#4F46E5] hover:bg-[#4338CA] text-white font-bold px-6 py-3 rounded-xl transition-colors text-sm"
+            className="shine-on-hover relative inline-flex h-12 items-center justify-center gap-2 rounded-full bg-brand-500 px-7 text-sm font-bold text-white transition-all hover:bg-brand-400 hover:shadow-[0_0_48px_-4px_rgba(129,140,248,0.9)] active:scale-[0.97]"
+            style={{ boxShadow: "0 8px 36px -6px rgba(99,102,241,0.85)" }}
           >
             {SUPPORT_EMAIL}
           </a>
@@ -85,20 +92,27 @@ export default function AyudaPage() {
 
         {/* FAQ */}
         <section>
-          <h2 className="text-2xl font-extrabold text-fg mb-6">Preguntas frecuentes</h2>
-          <div className="space-y-3">
+          <h2 className="mb-6 text-2xl font-extrabold tracking-tight text-white">Preguntas frecuentes</h2>
+          <div className="flex flex-col gap-2.5">
             {FAQ.map((item) => (
               <details
                 key={item.q}
-                className="group bg-bg-elevated rounded-2xl border border-border p-5 open:pb-6"
+                className="group rounded-2xl border border-white/[0.07] bg-white/[0.02] transition-all duration-200 open:border-brand-400/30 open:bg-white/[0.035] hover:border-white/15"
               >
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-bold text-fg">
-                  {item.q}
-                  <span className="text-fg-muted transition-transform group-open:rotate-45 text-xl leading-none">
-                    +
+                <summary className="flex cursor-pointer list-none items-center gap-4 px-5 py-4.5 sm:px-6 [&::-webkit-details-marker]:hidden">
+                  <span className="flex-1 text-[15px] font-semibold leading-snug text-white/90">{item.q}</span>
+                  <span
+                    aria-hidden="true"
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-white/60 transition-transform duration-200 group-open:rotate-45 group-open:border-brand-400/40 group-open:text-brand-200"
+                  >
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" d="M12 5v14M5 12h14" />
+                    </svg>
                   </span>
                 </summary>
-                <p className="mt-3 text-sm text-fg-muted leading-relaxed">{item.a}</p>
+                <div className="px-5 pb-5 sm:px-6">
+                  <p className="border-t border-white/[0.06] pt-4 text-sm leading-relaxed text-white/60">{item.a}</p>
+                </div>
               </details>
             ))}
           </div>
@@ -106,23 +120,23 @@ export default function AyudaPage() {
 
         {/* Enlaces legales */}
         <section className="text-center">
-          <p className="text-sm text-fg-muted">
+          <p className="text-sm text-white/60">
             Más información en{" "}
-            <Link href="/politica-datos-amazon" className="text-[#4F46E5] hover:underline">
+            <Link href="/politica-datos-amazon" className="font-medium text-brand-300 hover:text-brand-200 hover:underline">
               Política de Datos de Amazon
             </Link>
             ,{" "}
-            <Link href="/politica-privacidad" className="text-[#4F46E5] hover:underline">
+            <Link href="/politica-privacidad" className="font-medium text-brand-300 hover:text-brand-200 hover:underline">
               Privacidad
             </Link>{" "}
             y{" "}
-            <Link href="/terminos" className="text-[#4F46E5] hover:underline">
+            <Link href="/terminos" className="font-medium text-brand-300 hover:text-brand-200 hover:underline">
               Términos
             </Link>
             .
           </p>
           <p className="mt-4">
-            <Link href="/repricer" className="text-sm font-semibold text-fg hover:underline">
+            <Link href="/repricer" className="text-sm font-semibold text-white/80 transition-colors hover:text-white hover:underline">
               ← Volver a Orvexia Repricer
             </Link>
           </p>

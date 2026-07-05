@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SectionChip } from "@/app/_components/SectionPrimitives";
 
 export const metadata: Metadata = {
   title: "Política de Privacidad | Orvexia",
@@ -18,7 +19,7 @@ const SECTIONS = [
         </p>
         <p className="mt-2">
           Para cualquier consulta relacionada con la privacidad puedes contactarnos en:{" "}
-          <a href="mailto:orvexiaesp@gmail.com" className="text-[#4F46E5] hover:underline">
+          <a href="mailto:orvexiaesp@gmail.com" className="font-medium text-brand-300 hover:text-brand-200 hover:underline">
             orvexiaesp@gmail.com
           </a>
         </p>
@@ -50,10 +51,10 @@ const SECTIONS = [
             },
           ].map((item) => (
             <li key={item.label} className="flex gap-3 items-start">
-              <span className="mt-0.5 w-2 h-2 rounded-full bg-[#4F46E5] flex-shrink-0" />
+              <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-brand-400 flex-shrink-0" />
               <span>
-                <strong className="text-fg">{item.label}:</strong>{" "}
-                <span className="text-fg-muted">{item.desc}</span>
+                <strong className="text-white/85">{item.label}:</strong>{" "}
+                <span className="text-white/60">{item.desc}</span>
               </span>
             </li>
           ))}
@@ -64,29 +65,31 @@ const SECTIONS = [
   {
     title: "3. Finalidad y base legal del tratamiento",
     content: (
-      <table className="w-full text-sm border-collapse mt-1">
-        <thead>
-          <tr className="bg-bg-subtle">
-            <th className="text-left px-3 py-2 font-semibold text-fg rounded-tl-lg">Finalidad</th>
-            <th className="text-left px-3 py-2 font-semibold text-fg rounded-tr-lg">Base legal</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-[#F1F5F9]">
-          {[
-            ["Gestionar tu cuenta y autenticación", "Ejecución de contrato (Art. 6.1.b RGPD)"],
-            ["Mostrarte comparativas y precios personalizados", "Interés legítimo (Art. 6.1.f RGPD)"],
-            ["Enviar notificaciones de alertas de precio (si las activas)", "Consentimiento (Art. 6.1.a RGPD)"],
-            ["Analítica de uso del sitio", "Consentimiento (Art. 6.1.a RGPD)"],
-            ["Publicidad personalizada", "Consentimiento (Art. 6.1.a RGPD)"],
-            ["Cumplimiento de obligaciones legales", "Obligación legal (Art. 6.1.c RGPD)"],
-          ].map(([fin, base]) => (
-            <tr key={fin}>
-              <td className="px-3 py-2 text-fg">{fin}</td>
-              <td className="px-3 py-2 text-fg-muted">{base}</td>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm border-collapse mt-1">
+          <thead>
+            <tr className="bg-white/[0.04]">
+              <th className="text-left px-3 py-2 font-semibold text-white/85 rounded-tl-lg">Finalidad</th>
+              <th className="text-left px-3 py-2 font-semibold text-white/85 rounded-tr-lg">Base legal</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-white/[0.06]">
+            {[
+              ["Gestionar tu cuenta y autenticación", "Ejecución de contrato (Art. 6.1.b RGPD)"],
+              ["Mostrarte comparativas y precios personalizados", "Interés legítimo (Art. 6.1.f RGPD)"],
+              ["Enviar notificaciones de alertas de precio (si las activas)", "Consentimiento (Art. 6.1.a RGPD)"],
+              ["Analítica de uso del sitio", "Consentimiento (Art. 6.1.a RGPD)"],
+              ["Publicidad personalizada", "Consentimiento (Art. 6.1.a RGPD)"],
+              ["Cumplimiento de obligaciones legales", "Obligación legal (Art. 6.1.c RGPD)"],
+            ].map(([fin, base]) => (
+              <tr key={fin}>
+                <td className="px-3 py-2 text-white/80">{fin}</td>
+                <td className="px-3 py-2 text-white/60">{base}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     ),
   },
   {
@@ -100,10 +103,10 @@ const SECTIONS = [
           ["Registros de seguridad (logs)", "90 días."],
         ].map(([tipo, plazo]) => (
           <li key={tipo as string} className="flex gap-3 items-start">
-            <span className="mt-0.5 w-2 h-2 rounded-full bg-[#4F46E5] flex-shrink-0" />
+            <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-brand-400 flex-shrink-0" />
             <span>
-              <strong className="text-fg">{tipo}:</strong>{" "}
-              <span className="text-fg-muted">{plazo}</span>
+              <strong className="text-white/85">{tipo}:</strong>{" "}
+              <span className="text-white/60">{plazo}</span>
             </span>
           </li>
         ))}
@@ -125,15 +128,15 @@ const SECTIONS = [
             ["Amazon, PcComponentes, El Corte Inglés, Fnac (enlaces de afiliados)", "Solo se comparte el clic a través de un enlace de seguimiento. No se transfieren datos personales identificables."],
           ].map(([dest, info]) => (
             <li key={dest as string} className="flex gap-3 items-start">
-              <span className="mt-0.5 w-2 h-2 rounded-full bg-[#4F46E5] flex-shrink-0" />
+              <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-brand-400 flex-shrink-0" />
               <span>
-                <strong className="text-fg">{dest}:</strong>{" "}
-                <span className="text-fg-muted">{info}</span>
+                <strong className="text-white/85">{dest}:</strong>{" "}
+                <span className="text-white/60">{info}</span>
               </span>
             </li>
           ))}
         </ul>
-        <p className="mt-3 text-fg-muted">
+        <p className="mt-3 text-white/60">
           No vendemos, alquilamos ni cedemos tus datos a terceros con fines comerciales propios.
         </p>
       </>
@@ -158,17 +161,17 @@ const SECTIONS = [
             ["Cumplimiento", "El tratamiento se realiza conforme a la Amazon Data Protection Policy (DPP) y la Acceptable Use Policy (AUP) de la SP-API."],
           ].map(([k, v]) => (
             <li key={k as string} className="flex gap-3 items-start">
-              <span className="mt-0.5 w-2 h-2 rounded-full bg-[#4F46E5] flex-shrink-0" />
+              <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-brand-400 flex-shrink-0" />
               <span>
-                <strong className="text-fg">{k}:</strong>{" "}
-                <span className="text-fg-muted">{v}</span>
+                <strong className="text-white/85">{k}:</strong>{" "}
+                <span className="text-white/60">{v}</span>
               </span>
             </li>
           ))}
         </ul>
         <p>
           Para el detalle técnico completo consulta la{" "}
-          <Link href="/politica-datos-amazon" className="text-[#4F46E5] hover:underline font-medium">
+          <Link href="/politica-datos-amazon" className="font-medium text-brand-300 hover:text-brand-200 hover:underline">
             Política de Protección de Datos de Amazon
           </Link>
           .
@@ -194,15 +197,15 @@ const SECTIONS = [
             ["Retirar consentimiento", "En cualquier momento para los tratamientos basados en él, sin efecto retroactivo."],
             ["Reclamar ante la AEPD", "Si consideras que tus derechos han sido vulnerados puedes presentar una reclamación ante la Agencia Española de Protección de Datos (aepd.es)."],
           ].map(([der, desc]) => (
-            <div key={der as string} className="bg-bg-subtle rounded-xl p-4 border border-border">
-              <p className="font-semibold text-fg text-sm mb-1">{der}</p>
-              <p className="text-xs text-fg-muted leading-relaxed">{desc}</p>
+            <div key={der as string} className="rounded-xl border border-white/[0.07] bg-white/[0.03] p-4">
+              <p className="mb-1 text-sm font-semibold text-white/90">{der}</p>
+              <p className="text-xs leading-relaxed text-white/55">{desc}</p>
             </div>
           ))}
         </div>
-        <p className="mt-4 text-sm text-fg-muted">
+        <p className="mt-4 text-sm text-white/60">
           Para ejercer cualquiera de estos derechos escríbenos a{" "}
-          <a href="mailto:orvexiaesp@gmail.com" className="text-[#4F46E5] hover:underline">
+          <a href="mailto:orvexiaesp@gmail.com" className="font-medium text-brand-300 hover:text-brand-200 hover:underline">
             orvexiaesp@gmail.com
           </a>{" "}
           indicando el derecho que deseas ejercer y adjuntando una copia de tu documento de identidad.
@@ -228,7 +231,7 @@ const SECTIONS = [
       <p>
         Orvexia no está dirigido a menores de 14 años. No recogemos conscientemente datos de menores.
         Si eres padre o tutor y crees que tu hijo nos ha proporcionado datos personales, contáctanos en{" "}
-        <a href="mailto:orvexiaesp@gmail.com" className="text-[#4F46E5] hover:underline">
+        <a href="mailto:orvexiaesp@gmail.com" className="font-medium text-brand-300 hover:text-brand-200 hover:underline">
           orvexiaesp@gmail.com
         </a>{" "}
         y los eliminaremos de inmediato.
@@ -251,7 +254,7 @@ const SECTIONS = [
     content: (
       <p>
         Para más información sobre las cookies que utilizamos y cómo gestionarlas, consulta nuestra{" "}
-        <Link href="/politica-cookies" className="text-[#4F46E5] hover:underline font-medium">
+        <Link href="/politica-cookies" className="font-medium text-brand-300 hover:text-brand-200 hover:underline">
           Política de cookies
         </Link>
         .
@@ -262,26 +265,28 @@ const SECTIONS = [
 
 export default function PrivacyPolicyPage() {
   return (
-    <main>
+    <main className="min-h-screen bg-[#050310] text-white/90">
       {/* Header */}
-      <div className="relative border-b border-white/[0.06] overflow-hidden">
-        <div className="absolute inset-0 bg-grid-cyber opacity-40 pointer-events-none" />
-        <div className="absolute -top-32 left-1/3 w-[800px] h-[400px] rounded-full pointer-events-none"
-             style={{ background: "radial-gradient(ellipse, rgba(129,140,248,0.16), transparent 65%)" }} />
-        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 py-12">
-          <div className="flex items-center gap-2 font-mono-ui text-[10px] uppercase tracking-wider text-white/40 mb-4">
-            <Link href="/" className="hover:text-cyan-300 transition-colors">~/</Link>
-            <span className="text-white/25">›</span>
-            <span className="text-cyan-300">privacidad</span>
+      <div className="relative overflow-hidden border-b border-white/[0.05]">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-32 left-1/2 h-72 w-[720px] -translate-x-1/2 rounded-full"
+          style={{ background: "radial-gradient(ellipse, rgba(129,140,248,0.14), transparent 70%)" }}
+        />
+        <div className="reveal relative mx-auto max-w-3xl px-4 sm:px-6 py-14 sm:py-16">
+          <div className="flex justify-center sm:justify-start">
+            <SectionChip label="Legal · Privacidad" />
           </div>
-          <p className="font-mono-ui text-[10px] uppercase tracking-wider text-cyan-300 mb-2">▸ /legal · privacy</p>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-3">
-            Política de <span className="text-gradient-neon">Privacidad</span>
+          <h1
+            className="mt-6 font-extrabold tracking-tight text-white"
+            style={{ fontSize: "clamp(2rem, 4.6vw, 3rem)", lineHeight: 1.08, letterSpacing: "-0.03em", textWrap: "balance" }}
+          >
+            Política de Privacidad
           </h1>
-          <p className="text-sm text-white/55">
+          <p className="mt-4 text-sm text-white/60">
             Última actualización: <strong className="text-white/85">24 de mayo de 2026</strong>
           </p>
-          <p className="mt-3 text-sm text-white/55 leading-relaxed max-w-2xl">
+          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/60" style={{ textWrap: "pretty" }}>
             En Orvexia nos tomamos muy en serio la privacidad de nuestros usuarios. Esta política explica
             qué datos recogemos, para qué los usamos y cuáles son tus derechos conforme al{" "}
             <strong className="text-white/85">Reglamento General de Protección de Datos (RGPD)</strong> y la{" "}
@@ -291,47 +296,45 @@ export default function PrivacyPolicyPage() {
       </div>
 
       {/* Índice rápido */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
-        <div className="rounded-2xl p-5 bg-cyan-400/[0.06] border border-cyan-400/25">
-          <p className="font-mono-ui text-[10px] font-bold text-cyan-300 uppercase tracking-[0.2em] mb-3">▸ /index</p>
-          <ol className="grid sm:grid-cols-2 gap-1">
+      <div className="mx-auto max-w-3xl px-4 sm:px-6 py-6">
+        <nav aria-label="Índice del documento" className="rounded-2xl border border-brand-400/20 bg-brand-400/[0.05] p-6">
+          <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-brand-300">Índice</p>
+          <ol className="grid gap-1.5 sm:grid-cols-2">
             {SECTIONS.map((s, i) => (
               <li key={s.title}>
                 <a
                   href={`#seccion-${i + 1}`}
-                  className="text-sm text-cyan-200 hover:text-cyan-100 hover:underline transition-colors"
+                  className="text-sm text-white/65 transition-colors hover:text-brand-200 hover:underline"
                 >
                   {s.title}
                 </a>
               </li>
             ))}
           </ol>
-        </div>
+        </nav>
       </div>
 
       {/* Secciones */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 pb-16 space-y-4">
+      <div className="mx-auto max-w-3xl px-4 sm:px-6 pb-20 space-y-3">
         {SECTIONS.map((s, i) => (
           <article
             key={s.title}
             id={`seccion-${i + 1}`}
-            className="bg-bg-elevated rounded-2xl border border-white/[0.08] p-6 scroll-mt-6"
+            className="scroll-mt-6 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-6 sm:p-7"
           >
-            <h2 className="text-base font-bold text-white mb-4">{s.title}</h2>
-            <div className="text-sm leading-relaxed text-white/75">{s.content}</div>
+            <h2 className="mb-4 text-base font-bold text-white">{s.title}</h2>
+            <div className="text-sm leading-relaxed text-white/70">{s.content}</div>
           </article>
         ))}
 
-        <div className="text-center pt-4">
-          <p className="font-mono-ui text-[10px] uppercase tracking-wider text-white/40">
-            orvexia · orvexia.es ·{" "}
-            <a href="mailto:orvexiaesp@gmail.com" className="hover:text-cyan-300 transition-colors">
+        <div className="pt-6 text-center">
+          <p className="text-xs text-white/40">
+            Orvexia · orvexia.es ·{" "}
+            <a href="mailto:orvexiaesp@gmail.com" className="transition-colors hover:text-brand-300">
               orvexiaesp@gmail.com
             </a>
           </p>
-          <p className="font-mono-ui text-[10px] uppercase tracking-wider text-white/40 mt-1">
-            v1.1 · last_rev=2026-05-24
-          </p>
+          <p className="mt-1 text-xs text-white/40">Última revisión: 24 de mayo de 2026</p>
         </div>
       </div>
     </main>

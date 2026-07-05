@@ -7,62 +7,75 @@ export const metadata = {
 
 export default function FotosPage() {
   return (
-    <main className="min-h-screen text-white relative overflow-hidden">
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-grid-cyber opacity-50" />
-        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[900px] h-[500px] rounded-full halo-breathe"
-             style={{ background: "radial-gradient(ellipse at center, rgba(251,146,60,0.20), transparent 65%)" }} />
-      </div>
+    <main className="relative min-h-screen overflow-hidden bg-[#050310] text-white/90">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-40 left-1/2 h-[440px] w-[900px] -translate-x-1/2 rounded-full halo-breathe"
+        style={{ background: "radial-gradient(ellipse at center, rgba(129,140,248,0.18), transparent 65%)" }}
+      />
 
-      <div className="relative flex items-center justify-center min-h-[calc(100vh-4rem)] px-4 py-16">
-        <div className="max-w-xl w-full">
-          <div className="bg-bg-elevated/95 backdrop-blur-xl border border-white/[0.08] rounded-3xl shadow-2xl shadow-black/50 px-6 sm:px-10 py-10 text-center relative">
-            <span aria-hidden className="absolute top-3 left-3 w-3 h-3 border-t border-l border-white/30" />
-            <span aria-hidden className="absolute top-3 right-3 w-3 h-3 border-t border-r border-white/30" />
-            <span aria-hidden className="absolute bottom-3 left-3 w-3 h-3 border-b border-l border-white/30" />
-            <span aria-hidden className="absolute bottom-3 right-3 w-3 h-3 border-b border-r border-white/30" />
+      <div className="relative flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-16">
+        <div className="w-full max-w-xl">
+          <div
+            className="reveal relative overflow-hidden rounded-3xl border border-brand-400/15 px-6 py-10 text-center sm:px-10"
+            style={{ background: "linear-gradient(160deg, #100d26 0%, #0a0819 55%, #070614 100%)" }}
+          >
+            <div aria-hidden className="pointer-events-none absolute -top-24 left-1/2 h-52 w-[480px] -translate-x-1/2 rounded-full" style={{ background: "radial-gradient(ellipse, rgba(129,140,248,0.18), transparent 70%)" }} />
+            <div aria-hidden className="noise-overlay" />
 
-            <div className="flex justify-center mb-5">
-              <div
-                className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl relative"
-                style={{
-                  background: "rgba(251,146,60,0.1)",
-                  border: "1px solid rgba(251,146,60,0.45)",
-                  boxShadow: "0 0 32px -4px rgba(251,146,60,0.5)",
-                }}
-                aria-hidden="true"
-              >
-                🚧
+            <div className="relative">
+              <div className="mb-5 flex justify-center">
+                <div
+                  className="flex h-14 w-14 items-center justify-center rounded-2xl border border-brand-400/35 text-2xl"
+                  style={{
+                    background: "rgba(129,140,248,0.10)",
+                    boxShadow: "0 0 32px -6px rgba(129,140,248,0.5)",
+                  }}
+                  aria-hidden="true"
+                >
+                  🚧
+                </div>
               </div>
-            </div>
-            <p className="font-mono-ui text-[10px] font-bold tracking-[0.2em] uppercase text-orange-300">▸ /build · in_progress</p>
-            <h1 className="text-3xl font-extrabold mt-2 mb-3">Fotos y <span className="text-gradient-neon">Experiencias</span></h1>
-            <p className="text-sm text-white/55 leading-relaxed">
-              Estamos afinando la galería para que puedas subir imágenes, filtrar por categoría y ver historias destacadas.
-              Vuelve en breve: queremos que quede impecable antes de abrirla.
-            </p>
-            <div className="mt-7 grid sm:grid-cols-2 gap-3">
-              <div className="bg-white/[0.025] border border-white/[0.10] rounded-2xl px-4 py-3 text-left">
-                <p className="font-mono-ui text-[10px] uppercase tracking-wider text-cyan-300/80">▸ next</p>
-                <p className="text-sm font-semibold text-white mt-0.5">Lo que viene</p>
-                <p className="text-xs text-white/50 mt-1">Subidas rápidas, feed curado y colecciones temáticas.</p>
-              </div>
-              <div className="bg-white/[0.025] border border-white/[0.10] rounded-2xl px-4 py-3 text-left">
-                <p className="font-mono-ui text-[10px] uppercase tracking-wider text-fuchsia-300/80">▸ feedback</p>
-                <p className="text-sm font-semibold text-white mt-0.5">¿Quieres opinar?</p>
-                <p className="text-xs text-white/50 mt-1">Déjanos ideas en el foro para priorizar tus necesidades.</p>
-              </div>
-            </div>
-            <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <Link
-                href="/comunidad"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white border border-white/15 hover:bg-white/[0.06] hover:border-white/30 transition"
-              >
-                Ir al foro
-              </Link>
-              <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-mono-ui text-xs font-semibold uppercase tracking-wider text-orange-300 bg-orange-400/10 border border-orange-400/30">
-                launch · soon
+              <span className="inline-flex h-7 items-center rounded-full border border-brand-400/30 bg-brand-400/[0.09] px-3.5 text-[11px] font-semibold tracking-wide text-brand-200">
+                En construcción
               </span>
+              <h1
+                className="mb-3 mt-3 font-extrabold tracking-tight text-white"
+                style={{ fontSize: "clamp(1.8rem, 4vw, 2.2rem)", letterSpacing: "-0.03em", textWrap: "balance" }}
+              >
+                Fotos y <span className="text-shimmer-violet">Experiencias</span>
+              </h1>
+              <p className="text-sm leading-relaxed text-white/50" style={{ textWrap: "pretty" }}>
+                Estamos afinando la galería para que puedas subir imágenes, filtrar por categoría y ver historias destacadas.
+                Vuelve en breve: queremos que quede impecable antes de abrirla.
+              </p>
+              <div className="mt-7 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] px-4 py-3 text-left transition-colors hover:border-brand-400/25">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-brand-300">Próximamente</p>
+                  <p className="mt-0.5 text-sm font-semibold text-white">Lo que viene</p>
+                  <p className="mt-1 text-xs text-white/50">Subidas rápidas, feed curado y colecciones temáticas.</p>
+                </div>
+                <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] px-4 py-3 text-left transition-colors hover:border-brand-400/25">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-brand-300">Feedback</p>
+                  <p className="mt-0.5 text-sm font-semibold text-white">¿Quieres opinar?</p>
+                  <p className="mt-1 text-xs text-white/50">Déjanos ideas en el foro para priorizar tus necesidades.</p>
+                </div>
+              </div>
+              <div className="mt-8 flex flex-wrap justify-center gap-3">
+                <Link
+                  href="/comunidad"
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-white/12 bg-white/[0.03] px-6 text-sm font-semibold text-white/80 transition-all hover:border-white/30 hover:bg-white/[0.06] hover:text-white active:scale-[0.97]"
+                >
+                  Ir al foro
+                </Link>
+                <span className="inline-flex h-11 items-center gap-2 rounded-full border border-brand-400/25 bg-brand-400/10 px-6 text-[12px] font-semibold text-brand-200">
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-300 opacity-75" />
+                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-brand-300" />
+                  </span>
+                  Lanzamiento muy pronto
+                </span>
+              </div>
             </div>
           </div>
         </div>

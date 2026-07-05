@@ -75,13 +75,13 @@ function OtpInput({
           onPaste={handlePaste}
           onFocus={(e) => e.target.select()}
           placeholder="-"
-          className="font-mono-ui w-11 h-14 text-center text-xl font-bold rounded-xl border-2 transition-all outline-none"
+          className="tabular w-11 h-14 text-center text-xl font-bold rounded-xl border-2 transition-all outline-none"
           style={{
-            borderColor: d ? "rgba(94,234,212,0.6)" : "rgba(255,255,255,0.14)",
-            background: d ? "rgba(94,234,212,0.10)" : "rgba(255,255,255,0.03)",
-            color: "#ECFEFF",
-            boxShadow: d ? "0 0 14px -4px rgba(94,234,212,0.5)" : "none",
-            caretColor: "#5EEAD4",
+            borderColor: d ? "rgba(129,140,248,0.6)" : "rgba(255,255,255,0.14)",
+            background: d ? "rgba(129,140,248,0.10)" : "rgba(255,255,255,0.03)",
+            color: "#EEF2FF",
+            boxShadow: d ? "0 0 14px -4px rgba(129,140,248,0.5)" : "none",
+            caretColor: "#A5B4FC",
           }}
         />
       ))}
@@ -193,19 +193,21 @@ function VerifyForm() {
     <AuthShell accent="blue">
       <div className={`${inter.className}`}>
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="reveal text-center mb-8">
           <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4"
                style={{
-                 background: "rgba(94,234,212,0.10)",
-                 border: "1px solid rgba(94,234,212,0.35)",
-                 boxShadow: "0 0 24px -6px rgba(94,234,212,0.5)",
+                 background: "rgba(129,140,248,0.10)",
+                 border: "1px solid rgba(129,140,248,0.35)",
+                 boxShadow: "0 0 24px -6px rgba(129,140,248,0.5)",
                }}>
             📧
           </div>
-          <p className="font-mono-ui text-[10px] font-bold text-cyan-300 uppercase tracking-[0.2em] mb-3">
-            ▸ /auth · verify
-          </p>
-          <h1 className="text-2xl font-extrabold text-white tracking-tight mb-2">
+          <div className="mb-3 flex justify-center">
+            <span className="inline-flex h-6 items-center rounded-full border border-brand-400/25 bg-brand-400/10 px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-brand-200">
+              Un último paso
+            </span>
+          </div>
+          <h1 className="text-2xl font-extrabold text-white tracking-tight mb-2" style={{ letterSpacing: "-0.03em", textWrap: "balance" }}>
             Verifica tu correo
           </h1>
           <p className="text-sm text-white/55">
@@ -216,24 +218,24 @@ function VerifyForm() {
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Email */}
           <div>
-            <label className="block text-sm font-medium text-fg mb-1.5">
+            <label className="block text-sm font-medium text-white/70 mb-1.5">
               Correo
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="p-3 rounded-xl block bg-bg-subtle text-fg w-full border border-border placeholder-[#94A3B8] focus:border-brand-600 focus:ring-2 focus:ring-[#2563EB]/20 focus:outline-none transition-all text-sm"
+              className="p-3 rounded-xl block w-full border border-white/10 bg-white/[0.03] text-white placeholder-white/25 focus:border-brand-400/60 focus:ring-2 focus:ring-brand-400/20 focus:outline-none transition-all text-sm"
               placeholder="tu@email.com"
               required
             />
             {info && (
               <p
-                className="text-xs mt-1.5 px-3 py-2 rounded-lg"
-                style={{
-                  color: info.startsWith("✓") ? "#166534" : "#1e40af",
-                  background: info.startsWith("✓") ? "#DCFCE7" : "var(--brand-50)",
-                }}
+                className={`mt-1.5 rounded-lg border px-3 py-2 text-xs ${
+                  info.startsWith("✓")
+                    ? "border-emerald-400/25 bg-emerald-400/10 text-emerald-300"
+                    : "border-brand-400/25 bg-brand-400/10 text-brand-200"
+                }`}
               >
                 {info}
               </p>
@@ -243,14 +245,14 @@ function VerifyForm() {
           {/* OTP */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <label className="text-sm font-medium text-fg">
+              <label className="text-sm font-medium text-white/70">
                 Código de verificación
               </label>
               <button
                 type="button"
                 onClick={handleResend}
                 disabled={resendLoading || resendCountdown > 0}
-                className="text-xs font-semibold text-brand-600 hover:text-brand-700 disabled:opacity-50 transition-colors"
+                className="text-xs font-semibold text-brand-300 hover:text-brand-200 disabled:opacity-50 transition-colors"
               >
                 {resendLoading
                   ? "Enviando..."
@@ -263,7 +265,7 @@ function VerifyForm() {
           </div>
 
           {error && (
-            <p className="text-xs text-danger-500 bg-danger-50 px-3 py-2 rounded-lg text-center">
+            <p className="rounded-lg border border-red-400/25 bg-red-400/10 px-3 py-2 text-center text-xs text-red-300">
               {error}
             </p>
           )}
@@ -271,7 +273,8 @@ function VerifyForm() {
           <button
             type="submit"
             disabled={loading || !isComplete}
-            className="w-full bg-brand-600 hover:bg-brand-700 active:scale-[0.98] text-white font-semibold p-3 rounded-xl shadow-[0_8px_24px_-8px_rgba(37,99,235,0.5)] transition-all duration-150 disabled:opacity-50"
+            className="shine-on-hover inline-flex h-12 w-full items-center justify-center rounded-full bg-brand-500 px-7 text-sm font-bold text-white transition-all hover:bg-brand-400 hover:shadow-[0_0_48px_-4px_rgba(129,140,248,0.9)] active:scale-[0.97] disabled:opacity-50"
+            style={{ boxShadow: "0 8px 36px -6px rgba(99,102,241,0.85)" }}
           >
             {loading ? "Verificando..." : "Verificar y continuar →"}
           </button>

@@ -60,29 +60,29 @@ export default async function CategoriesSection() {
 
   return (
     <section aria-labelledby="category-heading">
-      <div className="mb-6">
-        <p className="font-mono-ui text-[10px] uppercase tracking-wider text-cyan-300 mb-1">
-          ▸ /catalog
+      <div className="reveal mb-6">
+        <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.22em] text-brand-300">
+          Catálogo
         </p>
-        <h2 id="category-heading" className="text-2xl font-bold text-white">
+        <h2 id="category-heading" className="text-2xl font-extrabold tracking-tight text-white">
           Por categoría
         </h2>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+      <div className="reveal grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         {byCategory.map(({ category, _count }) => (
           <Link
             key={category}
             href={`/categorias/${category.toLowerCase()}`}
-            className="group bg-bg-elevated rounded-2xl border border-white/[0.08] p-5 flex flex-col items-center text-center hover:border-cyan-400/35 hover:shadow-[0_0_24px_-6px_rgba(94,234,212,0.35)] hover:-translate-y-0.5 transition-all duration-200"
+            className="group rounded-2xl border border-white/[0.07] bg-white/[0.02] p-5 flex flex-col items-center text-center hover:border-brand-400/40 hover:shadow-[0_24px_60px_-24px_rgba(99,102,241,0.55)] hover:-translate-y-1 transition-all duration-300"
           >
-            <span className="text-3xl mb-2">
+            <span className="text-3xl mb-2 transition-transform duration-300 group-hover:scale-110">
               {CATEGORY_ICONS[category] ?? "📦"}
             </span>
-            <p className="text-sm font-bold text-fg group-hover:text-cyan-300 transition-colors">
+            <p className="text-sm font-bold text-fg group-hover:text-brand-200 transition-colors">
               {CATEGORY_LABELS[category] ?? category}
             </p>
-            <p className="font-mono-ui text-[10px] uppercase tracking-wider text-white/40 mt-1 tabular">
-              {_count.id} item{_count.id !== 1 ? "s" : ""}
+            <p className="mt-1 text-[11px] tabular text-white/40">
+              {_count.id} producto{_count.id !== 1 ? "s" : ""}
             </p>
           </Link>
         ))}

@@ -87,11 +87,13 @@ function ResetPasswordForm() {
 
   return (
     <AuthShell accent="green">
-      <div className={`space-y-1 text-center mb-6 ${inter.className}`}>
-        <p className="font-mono-ui text-[10px] font-bold text-lime-300 uppercase tracking-[0.2em] mb-3">
-          ▸ /auth · reset
-        </p>
-        <h1 className="text-2xl font-extrabold text-white tracking-tight">
+      <div className={`reveal space-y-1 text-center mb-6 ${inter.className}`}>
+        <div className="mb-4 flex justify-center">
+          <span className="inline-flex h-6 items-center rounded-full border border-brand-400/25 bg-brand-400/10 px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-brand-200">
+            Recuperar acceso
+          </span>
+        </div>
+        <h1 className="text-2xl font-extrabold text-white tracking-tight" style={{ letterSpacing: "-0.03em", textWrap: "balance" }}>
           Nueva contraseña
         </h1>
         <p className="text-sm text-white/55">
@@ -101,7 +103,7 @@ function ResetPasswordForm() {
 
       <form onSubmit={handleSubmit} className={`space-y-4 ${inter.className}`}>
         {tokenError && (
-          <p role="alert" aria-live="polite" className="text-xs text-danger-500 bg-danger-50 px-3 py-2 rounded-lg">
+          <p role="alert" aria-live="polite" className="rounded-lg border border-red-400/25 bg-red-400/10 px-3 py-2 text-xs text-red-300">
             {tokenError}
           </p>
         )}
@@ -138,14 +140,14 @@ function ResetPasswordForm() {
         />
 
         {serverError && (
-          <p className="text-xs text-danger-500 bg-danger-50 px-3 py-2 rounded-lg" role="alert" aria-live="polite">
+          <p className="rounded-lg border border-red-400/25 bg-red-400/10 px-3 py-2 text-xs text-red-300" role="alert" aria-live="polite">
             {serverError}
           </p>
         )}
 
         {info && (
           <p
-            className="text-xs text-[#166534] bg-[#DCFCE7] px-3 py-2 rounded-lg text-center"
+            className="rounded-lg border border-emerald-400/25 bg-emerald-400/10 px-3 py-2 text-center text-xs text-emerald-300"
             role="status"
             aria-live="polite"
           >
@@ -156,16 +158,17 @@ function ResetPasswordForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-accent-500 hover:bg-[#059669] active:scale-[0.98] text-white font-semibold p-3 rounded-xl shadow-[0_8px_24px_-8px_rgba(16,185,129,0.5)] transition-all duration-150 disabled:opacity-50"
+          className="shine-on-hover inline-flex h-12 w-full items-center justify-center rounded-full bg-brand-500 px-7 text-sm font-bold text-white transition-all hover:bg-brand-400 hover:shadow-[0_0_48px_-4px_rgba(129,140,248,0.9)] active:scale-[0.97] disabled:opacity-50"
+          style={{ boxShadow: "0 8px 36px -6px rgba(99,102,241,0.85)" }}
         >
           {loading ? "Guardando..." : "Actualizar contraseña"}
         </button>
 
-        <div className="text-center text-sm text-fg-muted pt-1">
+        <div className="text-center text-sm text-white/50 pt-1">
           <button
             type="button"
             onClick={() => router.push("/forgot-password")}
-            className="text-brand-600 hover:text-brand-700 font-medium transition-colors"
+            className="font-semibold text-brand-300 hover:text-brand-200 transition-colors"
           >
             Solicitar un nuevo enlace
           </button>

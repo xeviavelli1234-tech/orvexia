@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { FuturisticFX } from "@/components/FuturisticFX";
+import { SectionChip, AudienceLabel } from "@/app/_components/SectionPrimitives";
 
 export const metadata: Metadata = {
   title: "Sobre Nosotros | Orvexia",
@@ -17,8 +17,6 @@ const VALUES = [
     ),
     title: "Honestidad ante todo",
     desc: "No aceptamos pagos por posiciones. El orden de nuestras recomendaciones lo dictan el precio y las valoraciones reales, no acuerdos comerciales.",
-    color: "#4F46E5",
-    bg: "#EEF2FF",
   },
   {
     icon: (
@@ -28,8 +26,6 @@ const VALUES = [
     ),
     title: "Precios en tiempo real",
     desc: "Actualizamos los precios periódicamente desde las principales tiendas para que siempre veas la oferta más reciente antes de comprar.",
-    color: "#0891B2",
-    bg: "#E0F7FA",
   },
   {
     icon: (
@@ -39,8 +35,6 @@ const VALUES = [
     ),
     title: "Comunidad real",
     desc: "Detrás de cada análisis hay personas reales que han comprado, probado y opinado. La comunidad es el corazón de Orvexia.",
-    color: "var(--accent-600)",
-    bg: "var(--accent-50)",
   },
   {
     icon: (
@@ -50,8 +44,6 @@ const VALUES = [
     ),
     title: "Solo España",
     desc: "Nos especializamos en el mercado español. Los precios, tiendas y disponibilidad que ves son reales para compradores en España.",
-    color: "var(--danger-600)",
-    bg: "var(--danger-50)",
   },
 ];
 
@@ -66,42 +58,35 @@ const STORES = ["Amazon", "PcComponentes", "El Corte Inglés", "Fnac"];
 
 export default function SobreNosotrosPage() {
   return (
-    <main>
+    <main className="min-h-screen bg-[#050310] text-white/90">
       {/* Hero */}
-      <section className="relative overflow-hidden border-b border-white/[0.06]">
-        <div className="absolute inset-0 bg-grid-cyber opacity-50 pointer-events-none" />
-        <div className="absolute inset-0 pointer-events-none">
-          <FuturisticFX particleCount={7} streamCount={3} beam seed={17} />
-        </div>
-        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[1200px] h-[700px] rounded-full halo-breathe pointer-events-none"
-             style={{ background: "radial-gradient(ellipse at center, rgba(129,140,248,0.25), transparent 65%)" }} />
-        <div className="absolute top-0 right-0 w-96 h-96 rounded-full pointer-events-none opacity-60"
-             style={{ background: "radial-gradient(circle, rgba(240,171,252,0.18), transparent 65%)" }} />
-
-        <div className="relative max-w-3xl mx-auto px-4 sm:px-6 pt-16 sm:pt-24 pb-16 sm:pb-20 text-center">
-          <div className="inline-flex items-center gap-2 mb-6 px-3 h-7 rounded-full bg-white/[0.04] border border-white/[0.10] font-mono-ui">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-dot" />
-            <span className="text-[10px] uppercase tracking-wider text-white/65">
-              ▸ /about · comparador independiente
-            </span>
-          </div>
-          <h1 className="font-extrabold tracking-tight text-white mb-5"
-              style={{ fontSize: "clamp(2.6rem, 6vw, 5rem)", lineHeight: 0.98, letterSpacing: "-0.045em" }}>
-            Sobre <span className="text-gradient-neon">Orvexia</span>
+      <section className="relative overflow-hidden border-b border-white/[0.05]">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-44 left-1/2 h-[480px] w-[1000px] -translate-x-1/2 rounded-full halo-breathe"
+          style={{ background: "radial-gradient(ellipse at center, rgba(129,140,248,0.2), transparent 70%)" }}
+        />
+        <div className="reveal relative mx-auto max-w-3xl px-4 sm:px-6 pt-16 sm:pt-24 pb-16 sm:pb-20 text-center">
+          <SectionChip label="Comparador independiente" />
+          <h1
+            className="mt-7 mb-5 font-extrabold tracking-tight text-white"
+            style={{ fontSize: "clamp(2.4rem, 5.6vw, 4.2rem)", lineHeight: 1.03, letterSpacing: "-0.04em", textWrap: "balance" }}
+          >
+            Sobre Orvexia
           </h1>
-          <p className="text-white/55 text-lg max-w-2xl mx-auto leading-relaxed">
+          <p className="mx-auto max-w-2xl text-lg leading-relaxed text-white/60" style={{ textWrap: "pretty" }}>
             Somos un comparador de electrodomésticos independiente. Nuestro objetivo es uno:
             ayudarte a tomar la mejor decisión de compra con información honesta y precios reales.
           </p>
         </div>
       </section>
 
-      <div className="max-w-4xl mx-auto px-6 py-16 space-y-20">
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 py-16 space-y-20">
 
         {/* Quiénes somos */}
-        <section>
-          <h2 className="text-2xl font-extrabold text-fg mb-4">¿Quiénes somos?</h2>
-          <div className="prose prose-slate max-w-none text-fg-muted leading-relaxed space-y-4">
+        <section className="reveal">
+          <h2 className="mb-4 text-2xl font-extrabold tracking-tight text-white">¿Quiénes somos?</h2>
+          <div className="max-w-none space-y-4 text-[15px] leading-relaxed text-white/65">
             <p>
               Orvexia nació de una frustración muy concreta: comprar un electrodoméstico en España es
               más difícil de lo que debería. Los comparadores genéricos mezclan categorías sin criterio,
@@ -123,46 +108,46 @@ export default function SobreNosotrosPage() {
         </section>
 
         {/* Nuestras dos actividades */}
-        <section>
-          <h2 className="text-2xl font-extrabold text-fg mb-2">Nuestras dos actividades</h2>
-          <p className="text-fg-muted mb-6">
+        <section className="reveal">
+          <h2 className="mb-2 text-2xl font-extrabold tracking-tight text-white">Nuestras dos actividades</h2>
+          <p className="mb-6 text-white/60">
             Orvexia opera dos actividades complementarias pero independientes entre sí.
           </p>
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div className="bg-bg-elevated rounded-2xl border border-border p-6">
-              <p className="font-mono-ui text-[10px] uppercase tracking-wider text-cyan-600 mb-2">▸ /public</p>
-              <p className="font-bold text-fg mb-2">Comparador público de precios</p>
-              <p className="text-sm text-fg-muted leading-relaxed">
-                <strong>orvexia.es</strong> — comparador independiente de electrodomésticos con enlaces de
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-6">
+              <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.22em] text-brand-300">Comparador público</p>
+              <p className="mb-2 font-bold text-white">Comparador público de precios</p>
+              <p className="text-sm leading-relaxed text-white/60">
+                <strong className="text-white/80">orvexia.es</strong> — comparador independiente de electrodomésticos con enlaces de
                 afiliados a Amazon, PcComponentes, El Corte Inglés y Fnac. Cualquier visitante puede consultar
                 precios, guías y comparativas sin registro.
               </p>
             </div>
-            <div className="bg-bg-elevated rounded-2xl border border-border p-6">
-              <p className="font-mono-ui text-[10px] uppercase tracking-wider text-fuchsia-600 mb-2">▸ /private</p>
-              <p className="font-bold text-fg mb-2">Tienda propia en Amazon (OrvexiaShop)</p>
-              <p className="text-sm text-fg-muted leading-relaxed">
+            <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-6">
+              <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.22em] text-brand-300">Tienda propia</p>
+              <p className="mb-2 font-bold text-white">Tienda propia en Amazon (OrvexiaShop)</p>
+              <p className="text-sm leading-relaxed text-white/60">
                 Vendemos electrodomésticos directamente como vendedor en Amazon España bajo la marca
-                <strong> OrvexiaShop</strong>. Para gestionar nuestro catálogo utilizamos la
-                <strong> Selling Partner API (SP-API) de Amazon</strong> de forma estrictamente privada y
+                <strong className="text-white/80"> OrvexiaShop</strong>. Para gestionar nuestro catálogo utilizamos la
+                <strong className="text-white/80"> Selling Partner API (SP-API) de Amazon</strong> de forma estrictamente privada y
                 únicamente sobre nuestra propia cuenta de vendedor: importamos nuestros listings,
                 consultamos el precio competitivo y ajustamos automáticamente el precio dentro de un rango
                 mín/máx que definimos manualmente.
               </p>
             </div>
           </div>
-          <div className="mt-6 rounded-2xl p-5 bg-cyan-400/[0.06] border border-cyan-400/25">
-            <p className="font-mono-ui text-[10px] font-bold text-cyan-600 uppercase tracking-[0.2em] mb-2">▸ /isolation</p>
-            <p className="text-sm text-fg leading-relaxed">
-              Las dos actividades están <strong>aisladas técnica y operativamente</strong>. Los datos obtenidos
-              de Amazon SP-API <strong>nunca</strong> se utilizan en el comparador público, no se comparten con
+          <div className="mt-6 rounded-2xl border border-brand-400/20 bg-brand-400/[0.05] p-6">
+            <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.22em] text-brand-300">Aislamiento de datos</p>
+            <p className="text-sm leading-relaxed text-white/75">
+              Las dos actividades están <strong className="text-white">aisladas técnica y operativamente</strong>. Los datos obtenidos
+              de Amazon SP-API <strong className="text-white">nunca</strong> se utilizan en el comparador público, no se comparten con
               terceros y no se cruzan con datos de usuarios. El comparador público no consume SP-API: los
               precios de Amazon que se muestran ahí proceden del programa de afiliados (Product Advertising API
               y enlaces públicos), no de SP-API.
             </p>
-            <p className="mt-3 text-sm text-fg-muted leading-relaxed">
+            <p className="mt-3 text-sm leading-relaxed text-white/60">
               Para más detalle consulta nuestra{" "}
-              <Link href="/politica-datos-amazon" className="text-[#4F46E5] hover:underline font-medium">
+              <Link href="/politica-datos-amazon" className="font-medium text-brand-300 hover:text-brand-200 hover:underline">
                 Política de Protección de Datos de Amazon
               </Link>
               .
@@ -171,23 +156,23 @@ export default function SobreNosotrosPage() {
         </section>
 
         {/* Stats */}
-        <section className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <section className="reveal grid grid-cols-2 gap-4 sm:grid-cols-4">
           {STATS.map((s) => (
-            <div key={s.label} className="bg-bg-elevated rounded-2xl border border-border p-5 text-center">
-              <p className="text-3xl font-extrabold text-[#4F46E5] mb-1">{s.value}</p>
-              <p className="text-xs text-fg-muted leading-snug">{s.label}</p>
+            <div key={s.label} className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-5 text-center transition-colors hover:border-brand-400/30">
+              <p className="mb-1 text-3xl font-extrabold tabular text-brand-300">{s.value}</p>
+              <p className="text-xs leading-snug text-white/50">{s.label}</p>
             </div>
           ))}
         </section>
 
         {/* Cómo funciona */}
-        <section>
-          <h2 className="text-2xl font-extrabold text-fg mb-2">Cómo funciona Orvexia</h2>
-          <p className="text-fg-muted mb-8">
+        <section className="reveal">
+          <h2 className="mb-2 text-2xl font-extrabold tracking-tight text-white">Cómo funciona Orvexia</h2>
+          <p className="mb-8 text-white/60">
             Comparamos precios en tiempo real de las principales tiendas españolas para que siempre
             veas el mejor precio disponible.
           </p>
-          <div className="bg-bg-elevated rounded-2xl border border-border divide-y divide-[#F1F5F9]">
+          <div className="divide-y divide-white/[0.06] rounded-2xl border border-white/[0.07] bg-white/[0.02]">
             {[
               {
                 n: "01",
@@ -210,13 +195,13 @@ export default function SobreNosotrosPage() {
                 desc: "Las valoraciones y experiencias de usuarios reales complementan nuestros análisis. Nadie sabe mejor cómo funciona una lavadora que quien la usa a diario.",
               },
             ].map((step) => (
-              <div key={step.n} className="flex gap-5 p-6 items-start">
-                <span className="text-xs font-black text-[#4F46E5] bg-[#EEF2FF] rounded-lg px-2.5 py-1.5 flex-shrink-0 mt-0.5">
+              <div key={step.n} className="flex items-start gap-5 p-6">
+                <span className="mt-0.5 flex-shrink-0 rounded-lg border border-brand-400/25 bg-brand-400/10 px-2.5 py-1.5 text-xs font-black tabular text-brand-200">
                   {step.n}
                 </span>
                 <div>
-                  <p className="font-bold text-fg mb-1">{step.title}</p>
-                  <p className="text-sm text-fg-muted leading-relaxed">{step.desc}</p>
+                  <p className="mb-1 font-bold text-white">{step.title}</p>
+                  <p className="text-sm leading-relaxed text-white/60">{step.desc}</p>
                 </div>
               </div>
             ))}
@@ -224,21 +209,18 @@ export default function SobreNosotrosPage() {
         </section>
 
         {/* Valores */}
-        <section>
-          <h2 className="text-2xl font-extrabold text-fg mb-2">Nuestros principios</h2>
-          <p className="text-fg-muted mb-8">Lo que nos guía en cada decisión que tomamos.</p>
-          <div className="grid sm:grid-cols-2 gap-4">
+        <section className="reveal">
+          <h2 className="mb-2 text-2xl font-extrabold tracking-tight text-white">Nuestros principios</h2>
+          <p className="mb-8 text-white/60">Lo que nos guía en cada decisión que tomamos.</p>
+          <div className="grid gap-4 sm:grid-cols-2">
             {VALUES.map((v) => (
-              <div key={v.title} className="bg-bg-elevated rounded-2xl border border-border p-6 flex gap-4 items-start">
-                <span
-                  className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
-                  style={{ backgroundColor: v.bg, color: v.color }}
-                >
+              <div key={v.title} className="flex items-start gap-4 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-brand-400/30">
+                <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-brand-400/25 bg-brand-400/10 text-brand-300">
                   {v.icon}
                 </span>
                 <div>
-                  <p className="font-bold text-fg mb-1">{v.title}</p>
-                  <p className="text-sm text-fg-muted leading-relaxed">{v.desc}</p>
+                  <p className="mb-1 font-bold text-white">{v.title}</p>
+                  <p className="text-sm leading-relaxed text-white/60">{v.desc}</p>
                 </div>
               </div>
             ))}
@@ -246,16 +228,16 @@ export default function SobreNosotrosPage() {
         </section>
 
         {/* Tiendas */}
-        <section>
-          <h2 className="text-2xl font-extrabold text-fg mb-2">Tiendas que comparamos</h2>
-          <p className="text-fg-muted mb-6">
+        <section className="reveal">
+          <h2 className="mb-2 text-2xl font-extrabold tracking-tight text-white">Tiendas que comparamos</h2>
+          <p className="mb-6 text-white/60">
             Trabajamos con las principales tiendas de tecnología y electrodomésticos en España.
           </p>
           <div className="flex flex-wrap gap-3">
             {STORES.map((s) => (
               <span
                 key={s}
-                className="bg-bg-elevated border border-border rounded-full px-5 py-2 text-sm font-semibold text-fg"
+                className="rounded-full border border-white/[0.08] bg-white/[0.03] px-5 py-2 text-sm font-semibold text-white/75 transition-colors hover:border-brand-400/30 hover:text-white"
               >
                 {s}
               </span>
@@ -264,12 +246,12 @@ export default function SobreNosotrosPage() {
         </section>
 
         {/* Transparencia afiliados */}
-        <section className="bg-amber-50 border border-[#FDE68A] rounded-2xl p-6">
-          <div className="flex gap-3 items-start">
-            <span className="text-xl flex-shrink-0">💡</span>
+        <section className="reveal rounded-2xl border border-brand-400/20 bg-brand-400/[0.05] p-6">
+          <div className="flex items-start gap-3">
+            <span className="flex-shrink-0 text-xl">💡</span>
             <div>
-              <p className="font-bold text-[#92400E] mb-2">Transparencia sobre enlaces de afiliados</p>
-              <p className="text-sm text-[#78350F] leading-relaxed">
+              <p className="mb-2 font-bold text-white">Transparencia sobre enlaces de afiliados</p>
+              <p className="text-sm leading-relaxed text-white/65">
                 Orvexia incluye enlaces de afiliados de Amazon, PcComponentes, El Corte Inglés y Fnac.
                 Cuando compras a través de ellos podemos recibir una pequeña comisión por la venta.
                 Esto no supone ningún coste adicional para ti y nos ayuda a mantener el servicio gratuito.
@@ -281,22 +263,24 @@ export default function SobreNosotrosPage() {
         </section>
 
         {/* Contacto */}
-        <section className="text-center">
-          <h2 className="text-2xl font-extrabold text-fg mb-3">¿Tienes alguna pregunta?</h2>
-          <p className="text-fg-muted mb-6 max-w-lg mx-auto">
+        <section className="reveal text-center">
+          <AudienceLabel label="Contacto" />
+          <h2 className="mb-3 text-2xl font-extrabold tracking-tight text-white">¿Tienes alguna pregunta?</h2>
+          <p className="mx-auto mb-7 max-w-lg text-white/60">
             Si eres una marca, tienda o afiliado y quieres ponerte en contacto con nosotros, escríbenos.
             También atendemos sugerencias de usuarios.
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <div className="flex flex-col justify-center gap-3 sm:flex-row">
             <Link
               href="/guias"
-              className="inline-flex items-center justify-center gap-2 bg-[#4F46E5] hover:bg-[#4338CA] text-white font-bold px-6 py-3 rounded-xl transition-colors text-sm"
+              className="shine-on-hover inline-flex h-12 items-center justify-center rounded-full bg-brand-500 px-7 text-sm font-bold text-white transition-all hover:bg-brand-400 hover:shadow-[0_0_48px_-4px_rgba(129,140,248,0.9)] active:scale-[0.97]"
+              style={{ boxShadow: "0 8px 36px -6px rgba(99,102,241,0.85)" }}
             >
               Ver guías de compra
             </Link>
             <Link
               href="/"
-              className="inline-flex items-center justify-center gap-2 bg-bg-elevated hover:bg-bg-subtle border border-border text-fg font-bold px-6 py-3 rounded-xl transition-colors text-sm"
+              className="inline-flex h-12 items-center justify-center rounded-full border border-white/12 bg-white/[0.03] px-7 text-sm font-semibold text-white/80 transition-all hover:border-white/30 hover:bg-white/[0.06] hover:text-white active:scale-[0.97]"
             >
               Comparar electrodomésticos
             </Link>

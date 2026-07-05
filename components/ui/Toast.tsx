@@ -204,31 +204,23 @@ function ToastViewport({
 
 const variantStyles: Record<
   Variant,
-  { ring: string; label: string; iconColor: string; tag: string }
+  { ring: string; iconColor: string }
 > = {
   success: {
     ring: "border-emerald-400/30 shadow-[0_0_28px_-12px_rgba(16,185,129,0.7)]",
-    label: "text-emerald-300",
     iconColor: "text-emerald-300",
-    tag: "▸ /ok",
   },
   error: {
     ring: "border-rose-400/35 shadow-[0_0_28px_-12px_rgba(244,63,94,0.7)]",
-    label: "text-rose-300",
     iconColor: "text-rose-300",
-    tag: "▸ /err",
   },
   info: {
-    ring: "border-cyan-400/30 shadow-[0_0_28px_-12px_rgba(34,211,238,0.7)]",
-    label: "text-cyan-300",
-    iconColor: "text-cyan-300",
-    tag: "▸ /info",
+    ring: "border-brand-400/30 shadow-[0_0_28px_-12px_rgba(99,102,241,0.7)]",
+    iconColor: "text-brand-300",
   },
   loading: {
-    ring: "border-cyan-400/30 shadow-[0_0_28px_-12px_rgba(34,211,238,0.7)]",
-    label: "text-cyan-300",
-    iconColor: "text-cyan-300",
-    tag: "▸ /sync",
+    ring: "border-brand-400/30 shadow-[0_0_28px_-12px_rgba(99,102,241,0.7)]",
+    iconColor: "text-brand-300",
   },
 };
 
@@ -244,7 +236,7 @@ function ToastCard({
     <div
       role={item.variant === "error" ? "alert" : "status"}
       className={cn(
-        "pointer-events-auto w-full max-w-sm rounded-xl border bg-[rgba(6,7,18,0.95)] backdrop-blur-xl px-4 py-3",
+        "pointer-events-auto w-full max-w-sm rounded-2xl border bg-[rgba(8,7,20,0.95)] backdrop-blur-xl px-4 py-3",
         "animate-slide-in-right-fade flex items-start gap-3",
         s.ring,
       )}
@@ -261,14 +253,6 @@ function ToastCard({
         )}
       </span>
       <div className="min-w-0 flex-1">
-        <p
-          className={cn(
-            "font-mono-ui text-[9px] uppercase tracking-[0.18em] mb-0.5",
-            s.label,
-          )}
-        >
-          {s.tag}
-        </p>
         <p className="text-sm font-semibold text-white leading-tight">{item.message}</p>
         {item.description ? (
           <p className="mt-1 text-xs text-white/60 leading-relaxed">{item.description}</p>

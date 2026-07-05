@@ -7,9 +7,9 @@ import type { Pick } from "@/lib/guides/picks";
 
 const HINT_LABELS: Record<Pick["hint"], { badge: string; tone: string; bg: string; border: string }> = {
   best:    { badge: "🏆 Ganador general", tone: "#FBBF24", bg: "rgba(251,191,36,0.10)", border: "rgba(251,191,36,0.35)" },
-  value:   { badge: "💰 Calidad-precio",  tone: "#A3E635", bg: "rgba(163,230,53,0.10)", border: "rgba(163,230,53,0.35)" },
-  cheap:   { badge: "🪙 Más barato",      tone: "#5EEAD4", bg: "rgba(94,234,212,0.10)", border: "rgba(94,234,212,0.35)" },
-  premium: { badge: "👑 Premium",         tone: "#F0ABFC", bg: "rgba(240,171,252,0.10)", border: "rgba(240,171,252,0.35)" },
+  value:   { badge: "💰 Calidad-precio",  tone: "#34D399", bg: "rgba(52,211,153,0.10)", border: "rgba(52,211,153,0.35)" },
+  cheap:   { badge: "🪙 Más barato",      tone: "#6EE7B7", bg: "rgba(110,231,183,0.10)", border: "rgba(110,231,183,0.35)" },
+  premium: { badge: "👑 Premium",         tone: "#A5B4FC", bg: "rgba(165,180,252,0.10)", border: "rgba(165,180,252,0.35)" },
 };
 
 function formatEUR(n: number) {
@@ -67,7 +67,7 @@ function FaqJsonLd({ faqs }: { faqs: GuideConfig["faqs"] }) {
   return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(data) }} />;
 }
 
-function ItemListJsonLd({ picks, label, slug }: { picks: Pick[]; label: string; slug: string }) {
+function ItemListJsonLd({ picks, label }: { picks: Pick[]; label: string; slug: string }) {
   if (picks.length === 0) return null;
   const data = {
     "@context": "https://schema.org",
@@ -103,7 +103,7 @@ function PickCard({ pick, config, featured = false }: { pick: Pick; config: Guid
     >
       {/* Badge */}
       <div
-        className="absolute top-3 left-3 z-10 font-mono-ui text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full backdrop-blur-sm"
+        className="absolute top-3 left-3 z-10 text-[10px] font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm"
         style={{ background: meta.bg, color: meta.tone, border: `1px solid ${meta.border}` }}
       >
         {meta.badge}
@@ -112,12 +112,12 @@ function PickCard({ pick, config, featured = false }: { pick: Pick; config: Guid
       {/* Discount tag */}
       {o.discountPercent && o.discountPercent >= 5 && (
         <div
-          className="absolute top-3 right-3 z-10 font-mono-ui text-[10px] font-bold px-2 py-1 rounded-md backdrop-blur-sm"
+          className="absolute top-3 right-3 z-10 text-[10px] font-bold tabular px-2 py-1 rounded-full backdrop-blur-sm"
           style={{
             background: "rgba(5,6,15,0.92)",
-            color: "#A3E635",
-            border: "1px solid rgba(163,230,53,0.4)",
-            boxShadow: "0 0 12px -2px rgba(163,230,53,0.4)",
+            color: "#34D399",
+            border: "1px solid rgba(52,211,153,0.4)",
+            boxShadow: "0 0 12px -2px rgba(52,211,153,0.35)",
           }}
         >
           -{o.discountPercent}%
@@ -228,8 +228,6 @@ function PickCard({ pick, config, featured = false }: { pick: Pick; config: Guid
 // ── Componente principal ───────────────────────────────────────────────────
 
 export default function BuyersGuide({ config, picks }: { config: GuideConfig; picks: Pick[] }) {
-  const otherGuides = []; // Internal links computed below
-
   return (
     <main className="min-h-screen">
       <FaqJsonLd faqs={config.faqs} />
@@ -337,8 +335,8 @@ export default function BuyersGuide({ config, picks }: { config: GuideConfig; pi
         {picks.length > 1 && (
           <section id="tabla">
             <div className="mb-6">
-              <p className="font-mono-ui text-[11px] font-bold uppercase tracking-[0.2em] mb-2" style={{ color: config.color }}>
-                ▸ /compare · directa
+              <p className="text-[11px] font-bold uppercase tracking-[0.2em] mb-2" style={{ color: config.color }}>
+                Comparativa directa
               </p>
               <h2 className="text-3xl font-extrabold text-white mb-2 tracking-tight">Tabla cara a cara</h2>
               <p className="text-white/55 text-sm">Características clave una al lado de la otra.</p>
@@ -351,12 +349,12 @@ export default function BuyersGuide({ config, picks }: { config: GuideConfig; pi
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-white/[0.08]" style={{ background: "rgba(255,255,255,0.025)" }}>
-                    <th className="text-left p-4 font-mono-ui text-[10px] font-bold uppercase tracking-wider text-white/45">Modelo</th>
+                    <th className="text-left p-4 text-[10px] font-bold uppercase tracking-wider text-white/45">Modelo</th>
                     {picks.map((p) => {
                       const meta = HINT_LABELS[p.hint];
                       return (
                         <th key={p.product.id} className="text-center p-4 min-w-[180px]">
-                          <span className="inline-flex items-center font-mono-ui text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border"
+                          <span className="inline-flex items-center text-[10px] font-semibold px-2.5 py-1 rounded-full border"
                             style={{ background: meta.bg, color: meta.tone, borderColor: meta.border }}>
                             {meta.badge}
                           </span>
@@ -367,7 +365,7 @@ export default function BuyersGuide({ config, picks }: { config: GuideConfig; pi
                 </thead>
                 <tbody>
                   <tr className="border-b border-white/[0.06]">
-                    <td className="p-4 font-mono-ui text-[10px] uppercase tracking-wider text-white/45">Producto</td>
+                    <td className="p-4 text-[10px] font-bold uppercase tracking-wider text-white/45">Producto</td>
                     {picks.map((p) => (
                       <td key={p.product.id} className="p-4 text-center">
                         <p className="font-bold text-[13px] text-white leading-tight" style={{ color: config.color }}>{p.product.brand}</p>
@@ -378,7 +376,7 @@ export default function BuyersGuide({ config, picks }: { config: GuideConfig; pi
                     ))}
                   </tr>
                   <tr className="border-b border-white/[0.06]" style={{ background: "rgba(255,255,255,0.018)" }}>
-                    <td className="p-4 font-mono-ui text-[10px] uppercase tracking-wider text-white/45">Precio</td>
+                    <td className="p-4 text-[10px] font-bold uppercase tracking-wider text-white/45">Precio</td>
                     {picks.map((p) => (
                       <td key={p.product.id} className="p-4 text-center">
                         <p className="font-extrabold text-lg text-white tabular-nums">{formatEUR(p.product.bestOffer.priceCurrent)}</p>
@@ -389,13 +387,13 @@ export default function BuyersGuide({ config, picks }: { config: GuideConfig; pi
                     ))}
                   </tr>
                   <tr className="border-b border-white/[0.06]">
-                    <td className="p-4 font-mono-ui text-[10px] uppercase tracking-wider text-white/45">Tienda</td>
+                    <td className="p-4 text-[10px] font-bold uppercase tracking-wider text-white/45">Tienda</td>
                     {picks.map((p) => (
                       <td key={p.product.id} className="p-4 text-center text-[13px] text-white/85">{p.product.bestOffer.store}</td>
                     ))}
                   </tr>
                   <tr className="border-b border-white/[0.06]" style={{ background: "rgba(255,255,255,0.018)" }}>
-                    <td className="p-4 font-mono-ui text-[10px] uppercase tracking-wider text-white/45">Valoración</td>
+                    <td className="p-4 text-[10px] font-bold uppercase tracking-wider text-white/45">Valoración</td>
                     {picks.map((p) => (
                       <td key={p.product.id} className="p-4 text-center">
                         {p.product.rating !== null ? (
@@ -411,7 +409,7 @@ export default function BuyersGuide({ config, picks }: { config: GuideConfig; pi
                     ))}
                   </tr>
                   <tr className="border-b border-white/[0.06]">
-                    <td className="p-4 font-mono-ui text-[10px] uppercase tracking-wider text-white/45">Especificaciones</td>
+                    <td className="p-4 text-[10px] font-bold uppercase tracking-wider text-white/45">Especificaciones</td>
                     {picks.map((p) => {
                       const specs = extractSpecLabels(p.product.name, config.specRegex);
                       return (
@@ -419,7 +417,7 @@ export default function BuyersGuide({ config, picks }: { config: GuideConfig; pi
                           {specs.length > 0 ? (
                             <div className="flex flex-wrap gap-1 justify-center">
                               {specs.map((s) => (
-                                <span key={s} className="font-mono-ui text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-md"
+                                <span key={s} className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full"
                                   style={{ background: `${config.color}14`, color: config.color, border: `1px solid ${config.color}30` }}>
                                   {s}
                                 </span>
@@ -664,10 +662,10 @@ export default function BuyersGuide({ config, picks }: { config: GuideConfig; pi
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-white/[0.08]" style={{ background: "rgba(255,255,255,0.025)" }}>
-                    <th className="text-left p-4 font-mono-ui text-[10px] font-bold uppercase tracking-wider text-white/55 min-w-[140px]">Marca</th>
-                    <th className="text-left p-4 font-mono-ui text-[10px] font-bold uppercase tracking-wider text-emerald-300 min-w-[200px]">✓ Fuerte en</th>
-                    <th className="text-left p-4 font-mono-ui text-[10px] font-bold uppercase tracking-wider text-amber-300 min-w-[200px]">⚠ Punto débil</th>
-                    <th className="text-left p-4 font-mono-ui text-[10px] font-bold uppercase tracking-wider" style={{ color: config.color }}>★ Ideal para</th>
+                    <th className="text-left p-4 text-[10px] font-bold uppercase tracking-wider text-white/55 min-w-[140px]">Marca</th>
+                    <th className="text-left p-4 text-[10px] font-bold uppercase tracking-wider text-emerald-300 min-w-[200px]">✓ Fuerte en</th>
+                    <th className="text-left p-4 text-[10px] font-bold uppercase tracking-wider text-amber-300 min-w-[200px]">⚠ Punto débil</th>
+                    <th className="text-left p-4 text-[10px] font-bold uppercase tracking-wider" style={{ color: config.color }}>★ Ideal para</th>
                   </tr>
                 </thead>
                 <tbody>

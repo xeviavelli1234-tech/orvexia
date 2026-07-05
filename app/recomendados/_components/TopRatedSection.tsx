@@ -128,23 +128,23 @@ export default async function TopRatedSection({
 
   return (
     <section aria-labelledby="top-rated-heading">
-      <div className="flex items-center justify-between mb-6">
+      <div className="reveal flex items-center justify-between mb-6">
         <div>
-          <p className="font-mono-ui text-[10px] uppercase tracking-wider text-amber-300 mb-1">
-            ▸ /engine.output
+          <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.22em] text-brand-300">
+            Motor de recomendación
           </p>
           <h2
             id="top-rated-heading"
-            className="text-2xl font-bold text-white"
+            className="text-2xl font-extrabold tracking-tight text-white"
           >
             Selección curada
           </h2>
         </div>
         <Link
           href="/popularidad"
-          className="font-mono-ui text-[11px] uppercase tracking-wider text-cyan-300 hover:text-cyan-200 transition-colors"
+          className="text-[12px] font-semibold text-brand-300 transition-colors hover:text-brand-200"
         >
-          ver ranking →
+          Ver ranking →
         </Link>
       </div>
       <RecomendadosClient initialProducts={products as never} />

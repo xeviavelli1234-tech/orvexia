@@ -17,15 +17,20 @@ export function DataUnavailable({
   return (
     <main className="min-h-[60vh] grid place-items-center px-5">
       <div className="max-w-md text-center">
-        <p className="font-mono-ui text-[10px] uppercase tracking-wider text-amber-300 mb-2">
-          ▸ data · stand_by
+        <p className="mb-4 flex justify-center">
+          <span
+            className="inline-flex h-7 items-center rounded-full border border-brand-400/30 bg-brand-400/[0.09] px-3.5 text-[11px] font-semibold tracking-wide text-brand-200"
+            style={{ boxShadow: "0 0 24px -6px rgba(129,140,248,0.55)" }}
+          >
+            Datos temporalmente no disponibles
+          </span>
         </p>
-        <h1 className="text-2xl font-extrabold text-white">{title}</h1>
-        <p className="mt-3 text-sm text-white/65">{message}</p>
+        <h1 className="text-2xl font-extrabold tracking-tight text-white" style={{ letterSpacing: "-0.03em", textWrap: "balance" }}>{title}</h1>
+        <p className="mt-3 text-sm leading-relaxed text-white/50">{message}</p>
         <div className="mt-6 flex items-center justify-center gap-2">
           <Link
             href="/"
-            className="rounded-lg border border-white/20 px-4 py-2 text-sm text-white/85 hover:bg-white/10 transition-colors"
+            className="inline-flex h-11 items-center justify-center rounded-full border border-white/12 bg-white/[0.03] px-6 text-sm font-semibold text-white/80 transition-all hover:border-white/30 hover:bg-white/[0.06] hover:text-white active:scale-[0.97]"
           >
             Volver al inicio
           </Link>

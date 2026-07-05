@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SectionChip } from "@/app/_components/SectionPrimitives";
 
 export const metadata: Metadata = {
   title: "Aviso Legal y Términos de Uso | Orvexia",
@@ -22,8 +23,8 @@ const SECTIONS = [
             ["Actividad secundaria", "Venta directa de electrodomésticos como vendedor en Amazon España bajo la marca OrvexiaShop"],
           ].map(([k, v]) => (
             <li key={k as string} className="flex gap-2 text-sm">
-              <span className="font-semibold text-fg flex-shrink-0">{k}:</span>
-              <span className="text-fg-muted">{v}</span>
+              <span className="font-semibold text-white/85 flex-shrink-0">{k}:</span>
+              <span className="text-white/60">{v}</span>
             </li>
           ))}
         </ul>
@@ -57,8 +58,8 @@ const SECTIONS = [
             "Publicar en la comunidad contenidos ofensivos, falsos, difamatorios o que infrinjan derechos de terceros.",
           ].map((item) => (
             <li key={item} className="flex gap-3 items-start text-sm">
-              <span className="mt-1 w-1.5 h-1.5 rounded-full bg-[#4F46E5] flex-shrink-0" />
-              <span className="text-fg-muted">{item}</span>
+              <span className="mt-1 w-1.5 h-1.5 rounded-full bg-brand-400 flex-shrink-0" />
+              <span className="text-white/60">{item}</span>
             </li>
           ))}
         </ul>
@@ -75,7 +76,7 @@ const SECTIONS = [
         Orvexia no será responsable de los daños derivados del uso no autorizado de la cuenta por parte de terceros
         cuando sea consecuencia de un incumplimiento del usuario en la custodia de sus credenciales.
         El usuario puede solicitar la baja de su cuenta en cualquier momento escribiendo a{" "}
-        <a href="mailto:orvexiaesp@gmail.com" className="text-[#4F46E5] hover:underline">orvexiaesp@gmail.com</a>.
+        <a href="mailto:orvexiaesp@gmail.com" className="font-medium text-brand-300 hover:text-brand-200 hover:underline">orvexiaesp@gmail.com</a>.
       </p>
     ),
   },
@@ -144,14 +145,14 @@ const SECTIONS = [
             "El tratamiento de datos de SP-API se realiza conforme a la Amazon Data Protection Policy y la Acceptable Use Policy.",
           ].map((item) => (
             <li key={item} className="flex gap-3 items-start text-sm">
-              <span className="mt-1 w-1.5 h-1.5 rounded-full bg-[#4F46E5] flex-shrink-0" />
-              <span className="text-fg-muted">{item}</span>
+              <span className="mt-1 w-1.5 h-1.5 rounded-full bg-brand-400 flex-shrink-0" />
+              <span className="text-white/60">{item}</span>
             </li>
           ))}
         </ul>
         <p>
           Para más detalle consulta la{" "}
-          <Link href="/politica-datos-amazon" className="text-[#4F46E5] hover:underline font-medium">
+          <Link href="/politica-datos-amazon" className="font-medium text-brand-300 hover:text-brand-200 hover:underline">
             Política de Protección de Datos de Amazon
           </Link>
           .
@@ -170,8 +171,8 @@ const SECTIONS = [
           "Orvexia no garantiza la exactitud, completitud o actualidad de la información publicada, aunque pone todos los medios razonables para mantenerla correcta.",
         ].map((item) => (
           <li key={item} className="flex gap-3 items-start text-sm">
-            <span className="mt-1 w-1.5 h-1.5 rounded-full bg-[#4F46E5] flex-shrink-0" />
-            <span className="text-fg-muted">{item}</span>
+            <span className="mt-1 w-1.5 h-1.5 rounded-full bg-brand-400 flex-shrink-0" />
+            <span className="text-white/60">{item}</span>
           </li>
         ))}
       </ul>
@@ -182,11 +183,11 @@ const SECTIONS = [
     content: (
       <p>
         El tratamiento de datos personales se rige por nuestra{" "}
-        <Link href="/politica-privacidad" className="text-[#4F46E5] hover:underline font-medium">
+        <Link href="/politica-privacidad" className="font-medium text-brand-300 hover:text-brand-200 hover:underline">
           Política de Privacidad
         </Link>{" "}
         y nuestra{" "}
-        <Link href="/politica-cookies" className="text-[#4F46E5] hover:underline font-medium">
+        <Link href="/politica-cookies" className="font-medium text-brand-300 hover:text-brand-200 hover:underline">
           Política de Cookies
         </Link>
         , que forman parte integrante de este Aviso Legal.
@@ -205,7 +206,7 @@ const SECTIONS = [
           href="https://ec.europa.eu/consumers/odr"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-[#4F46E5] hover:underline"
+          className="font-medium text-brand-300 hover:text-brand-200 hover:underline"
         >
           ec.europa.eu/consumers/odr
         </a>
@@ -217,26 +218,28 @@ const SECTIONS = [
 
 export default function AvisoLegalPage() {
   return (
-    <main>
+    <main className="min-h-screen bg-[#050310] text-white/90">
       {/* Header */}
-      <div className="relative border-b border-white/[0.06] overflow-hidden">
-        <div className="absolute inset-0 bg-grid-cyber opacity-40 pointer-events-none" />
-        <div className="absolute -top-32 left-1/3 w-[800px] h-[400px] rounded-full pointer-events-none"
-             style={{ background: "radial-gradient(ellipse, rgba(129,140,248,0.16), transparent 65%)" }} />
-        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 py-12">
-          <div className="flex items-center gap-2 font-mono-ui text-[10px] uppercase tracking-wider text-white/40 mb-4">
-            <Link href="/" className="hover:text-cyan-300 transition-colors">~/</Link>
-            <span className="text-white/25">›</span>
-            <span className="text-cyan-300">aviso_legal</span>
+      <div className="relative overflow-hidden border-b border-white/[0.05]">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-32 left-1/2 h-72 w-[720px] -translate-x-1/2 rounded-full"
+          style={{ background: "radial-gradient(ellipse, rgba(129,140,248,0.14), transparent 70%)" }}
+        />
+        <div className="reveal relative mx-auto max-w-3xl px-4 sm:px-6 py-14 sm:py-16">
+          <div className="flex justify-center sm:justify-start">
+            <SectionChip label="Legal · Aviso legal" />
           </div>
-          <p className="font-mono-ui text-[10px] uppercase tracking-wider text-cyan-300 mb-2">▸ /legal · terms</p>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-3">
-            Aviso Legal y <span className="text-gradient-neon">Términos de Uso</span>
+          <h1
+            className="mt-6 font-extrabold tracking-tight text-white"
+            style={{ fontSize: "clamp(2rem, 4.6vw, 3rem)", lineHeight: 1.08, letterSpacing: "-0.03em", textWrap: "balance" }}
+          >
+            Aviso Legal y Términos de Uso
           </h1>
-          <p className="text-sm text-white/55">
+          <p className="mt-4 text-sm text-white/60">
             Última actualización: <strong className="text-white/85">24 de mayo de 2026</strong>
           </p>
-          <p className="mt-3 text-sm text-white/55 leading-relaxed max-w-2xl">
+          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/60" style={{ textWrap: "pretty" }}>
             Este documento establece las condiciones legales que rigen el acceso y uso de{" "}
             <strong className="text-white/85">orvexia.es</strong>, en cumplimiento de la{" "}
             <strong className="text-white/85">Ley 34/2002 de Servicios de la Sociedad de la Información (LSSICE)</strong> y
@@ -246,47 +249,45 @@ export default function AvisoLegalPage() {
       </div>
 
       {/* Índice */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
-        <div className="rounded-2xl p-5 bg-cyan-400/[0.06] border border-cyan-400/25">
-          <p className="font-mono-ui text-[10px] font-bold text-cyan-300 uppercase tracking-[0.2em] mb-3">▸ /index</p>
-          <ol className="grid sm:grid-cols-2 gap-1">
+      <div className="mx-auto max-w-3xl px-4 sm:px-6 py-6">
+        <nav aria-label="Índice del documento" className="rounded-2xl border border-brand-400/20 bg-brand-400/[0.05] p-6">
+          <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-brand-300">Índice</p>
+          <ol className="grid gap-1.5 sm:grid-cols-2">
             {SECTIONS.map((s, i) => (
               <li key={s.title}>
                 <a
                   href={`#seccion-${i + 1}`}
-                  className="text-sm text-cyan-200 hover:text-cyan-100 hover:underline transition-colors"
+                  className="text-sm text-white/65 transition-colors hover:text-brand-200 hover:underline"
                 >
                   {s.title}
                 </a>
               </li>
             ))}
           </ol>
-        </div>
+        </nav>
       </div>
 
       {/* Secciones */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 pb-16 space-y-4">
+      <div className="mx-auto max-w-3xl px-4 sm:px-6 pb-20 space-y-3">
         {SECTIONS.map((s, i) => (
           <article
             key={s.title}
             id={`seccion-${i + 1}`}
-            className="bg-bg-elevated rounded-2xl border border-white/[0.08] p-6 scroll-mt-6"
+            className="scroll-mt-6 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-6 sm:p-7"
           >
-            <h2 className="text-base font-bold text-white mb-4">{s.title}</h2>
-            <div className="text-sm leading-relaxed text-white/75">{s.content}</div>
+            <h2 className="mb-4 text-base font-bold text-white">{s.title}</h2>
+            <div className="text-sm leading-relaxed text-white/70">{s.content}</div>
           </article>
         ))}
 
-        <div className="text-center pt-4">
-          <p className="font-mono-ui text-[10px] uppercase tracking-wider text-white/40">
-            orvexia · orvexia.es ·{" "}
-            <a href="mailto:orvexiaesp@gmail.com" className="hover:text-cyan-300 transition-colors">
+        <div className="pt-6 text-center">
+          <p className="text-xs text-white/40">
+            Orvexia · orvexia.es ·{" "}
+            <a href="mailto:orvexiaesp@gmail.com" className="transition-colors hover:text-brand-300">
               orvexiaesp@gmail.com
             </a>
           </p>
-          <p className="font-mono-ui text-[10px] uppercase tracking-wider text-white/40 mt-1">
-            v1.1 · last_rev=2026-05-24
-          </p>
+          <p className="mt-1 text-xs text-white/40">Última revisión: 24 de mayo de 2026</p>
         </div>
       </div>
     </main>

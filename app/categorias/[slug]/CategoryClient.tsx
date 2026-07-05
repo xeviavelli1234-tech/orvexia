@@ -3,7 +3,6 @@
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
-import { FuturisticFX } from "@/components/FuturisticFX";
 import type { ProductSpecs } from "@/lib/specs/extractor";
 
 interface Offer {
@@ -160,7 +159,7 @@ export default function CategoryClient({ products, meta, content }: { products: 
               <label
                 key={b}
                 className={`flex items-center gap-3 cursor-pointer py-2 px-2.5 -mx-2.5 rounded-lg transition-colors ${
-                  checked ? "bg-cyan-400/[0.10]" : "hover:bg-bg-subtle"
+                  checked ? "bg-brand-400/[0.10]" : "hover:bg-bg-subtle"
                 }`}
               >
                 <input
@@ -173,18 +172,18 @@ export default function CategoryClient({ products, meta, content }: { products: 
                   aria-hidden
                   className={`flex items-center justify-center w-5 h-5 rounded-md border transition-all flex-shrink-0 ${
                     checked
-                      ? "bg-cyan-500 border-cyan-400 shadow-[0_0_10px_-2px_rgba(94,234,212,0.7)]"
+                      ? "bg-brand-500 border-brand-400 shadow-[0_0_10px_-2px_rgba(129,140,248,0.7)]"
                       : "bg-white/[0.04] border-white/20 peer-hover:border-white/40"
                   }`}
                 >
                   {checked && (
-                    <svg className="w-3 h-3 text-bg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round">
+                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round">
                       <path d="M5 13l4 4L19 7" />
                     </svg>
                   )}
                 </span>
                 <span className={`text-sm flex-1 transition-colors ${checked ? "text-fg font-semibold" : "text-fg-muted"}`}>{b}</span>
-                <span className={`text-[11px] tabular ${checked ? "text-cyan-200/80" : "text-fg-faint"}`}>{enriched.filter((p) => p.brand === b).length}</span>
+                <span className={`text-[11px] tabular ${checked ? "text-brand-200/80" : "text-fg-faint"}`}>{enriched.filter((p) => p.brand === b).length}</span>
               </label>
             );
           })}
@@ -202,7 +201,7 @@ export default function CategoryClient({ products, meta, content }: { products: 
                 <label
                   key={s}
                   className={`flex items-center gap-3 cursor-pointer py-2 px-2.5 -mx-2.5 rounded-lg transition-colors ${
-                    checked ? "bg-cyan-400/[0.10]" : "hover:bg-bg-subtle"
+                    checked ? "bg-brand-400/[0.10]" : "hover:bg-bg-subtle"
                   }`}
                 >
                   <input
@@ -215,18 +214,18 @@ export default function CategoryClient({ products, meta, content }: { products: 
                     aria-hidden
                     className={`flex items-center justify-center w-5 h-5 rounded-md border transition-all flex-shrink-0 ${
                       checked
-                        ? "bg-cyan-500 border-cyan-400 shadow-[0_0_10px_-2px_rgba(94,234,212,0.7)]"
+                        ? "bg-brand-500 border-brand-400 shadow-[0_0_10px_-2px_rgba(129,140,248,0.7)]"
                         : "bg-white/[0.04] border-white/20 peer-hover:border-white/40"
                     }`}
                   >
                     {checked && (
-                      <svg className="w-3 h-3 text-bg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round">
+                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round">
                         <path d="M5 13l4 4L19 7" />
                       </svg>
                     )}
                   </span>
                   <span className={`text-sm flex-1 transition-colors ${checked ? "text-fg font-semibold" : "text-fg-muted"}`}>{s}</span>
-                  <span className={`text-[11px] tabular ${checked ? "text-cyan-200/80" : "text-fg-faint"}`}>
+                  <span className={`text-[11px] tabular ${checked ? "text-brand-200/80" : "text-fg-faint"}`}>
                     {enriched.filter((p) => p.offers.some((o) => o.store === s)).length}
                   </span>
                 </label>
@@ -259,9 +258,9 @@ export default function CategoryClient({ products, meta, content }: { products: 
             <button
               key={v}
               onClick={() => setMaxPrice(maxPrice === v ? 9999 : v)}
-              className={`text-xs h-9 rounded-lg font-semibold border transition-colors tabular ${
+              className={`text-xs h-9 rounded-full font-semibold border transition-colors tabular ${
                 maxPrice === v
-                  ? "bg-cyan-400/15 text-cyan-200 border-cyan-400/50"
+                  ? "bg-brand-500 text-white border-brand-400"
                   : "border-white/10 text-fg-muted hover:text-fg hover:border-white/25"
               }`}
             >
@@ -280,9 +279,9 @@ export default function CategoryClient({ products, meta, content }: { products: 
               <button
                 key={t}
                 onClick={() => toggle(selectedTechs, t, setSelectedTechs)}
-                className={`px-3.5 h-9 rounded-lg text-xs font-bold border transition-all ${
+                className={`px-3.5 h-9 rounded-full text-xs font-bold border transition-all ${
                   selectedTechs.includes(t)
-                    ? "bg-cyan-400/15 text-cyan-200 border-cyan-400/50"
+                    ? "bg-brand-500 text-white border-brand-400"
                     : "border-white/10 text-fg-muted hover:text-fg hover:border-white/25"
                 }`}
               >
@@ -302,9 +301,9 @@ export default function CategoryClient({ products, meta, content }: { products: 
               <button
                 key={os}
                 onClick={() => toggle(selectedOS, os, setSelectedOS)}
-                className={`px-3.5 h-9 rounded-lg text-xs font-bold border transition-all ${
+                className={`px-3.5 h-9 rounded-full text-xs font-bold border transition-all ${
                   selectedOS.includes(os)
-                    ? "bg-cyan-400/15 text-cyan-200 border-cyan-400/50"
+                    ? "bg-brand-500 text-white border-brand-400"
                     : "border-white/10 text-fg-muted hover:text-fg hover:border-white/25"
                 }`}
               >
@@ -324,9 +323,9 @@ export default function CategoryClient({ products, meta, content }: { products: 
               <button
                 key={e}
                 onClick={() => toggle(selectedEnergy, e, setSelectedEnergy)}
-                className={`px-3.5 h-9 rounded-lg text-xs font-bold border transition-all tabular ${
+                className={`px-3.5 h-9 rounded-full text-xs font-bold border transition-all tabular ${
                   selectedEnergy.includes(e)
-                    ? "bg-emerald-400/15 text-emerald-200 border-emerald-400/50"
+                    ? "bg-brand-500 text-white border-brand-400"
                     : "border-white/10 text-fg-muted hover:text-fg hover:border-white/25"
                 }`}
               >
@@ -345,9 +344,9 @@ export default function CategoryClient({ products, meta, content }: { products: 
             <button
               key={r}
               onClick={() => setMinRating(minRating === r ? 0 : r)}
-              className={`h-9 rounded-lg text-xs font-bold border transition-all ${
+              className={`h-9 rounded-full text-xs font-bold border transition-all ${
                 minRating === r
-                  ? "bg-amber-400/15 text-amber-200 border-amber-400/50"
+                  ? "bg-brand-500 text-white border-brand-400"
                   : "border-white/10 text-fg-muted hover:text-fg hover:border-white/25"
               }`}
             >
@@ -365,14 +364,14 @@ export default function CategoryClient({ products, meta, content }: { products: 
         onClick={() => setOnlyDiscount((v) => !v)}
         className="w-full flex items-center justify-between gap-3 pt-3 border-t border-white/10 select-none"
       >
-        <span className={`text-sm font-semibold transition-colors ${onlyDiscount ? "text-cyan-100" : "text-fg-muted"}`}>
+        <span className={`text-sm font-semibold transition-colors ${onlyDiscount ? "text-brand-100" : "text-fg-muted"}`}>
           Solo con descuento
         </span>
         {/* Track 44x24 · thumb 20x20 · 2px margin all sides (symmetric) */}
         <span
           className={`relative inline-block w-11 h-6 rounded-full transition-colors duration-200 flex-shrink-0 ${
             onlyDiscount
-              ? "bg-cyan-500/70 shadow-[0_0_14px_-2px_rgba(34,211,238,0.55)]"
+              ? "bg-brand-500 shadow-[0_0_14px_-2px_rgba(99,102,241,0.6)]"
               : "bg-white/[0.12]"
           }`}
         >
@@ -387,18 +386,18 @@ export default function CategoryClient({ products, meta, content }: { products: 
   );
 
   const sidebarJSX = (
-    <div className="bg-bg-elevated rounded-2xl border border-white/[0.08] p-5 space-y-6">
+    <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-5 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <p className="font-mono-ui text-[10px] uppercase tracking-wider text-cyan-300/80 mb-0.5">▸ /filters</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-brand-300 mb-0.5">Filtros</p>
           <h3 className="text-sm font-bold text-fg">Refinar resultados</h3>
         </div>
         {activeCount > 0 && (
           <button
             onClick={clearAll}
-            className="font-mono-ui text-[10px] uppercase tracking-wider text-white/45 hover:text-white transition-colors"
+            className="text-[11px] font-semibold text-white/45 hover:text-white transition-colors"
           >
-            limpiar
+            Limpiar
           </button>
         )}
       </div>
@@ -425,61 +424,52 @@ export default function CategoryClient({ products, meta, content }: { products: 
   }, [showFilters]);
 
   return (
-    <main className="min-h-screen">
-      {/* HERO con accent de la categoría — decoración pesada solo en sm+ */}
-      <section className="relative overflow-hidden border-b border-white/[0.06]">
-        <div className="hidden sm:block absolute inset-0 bg-grid-cyber opacity-50 pointer-events-none" />
-        <div className="hidden sm:block absolute inset-0 pointer-events-none">
-          <FuturisticFX particleCount={5} streamCount={2} beam seed={meta.label.length} />
-        </div>
+    <main className="min-h-screen bg-[#050310] text-white/90">
+      {/* HERO — halo violeta discreto */}
+      <section className="relative overflow-hidden border-b border-white/[0.05]">
         <div
-          className="hidden sm:block absolute -top-40 left-1/2 -translate-x-1/2 w-[1200px] h-[600px] rounded-full halo-breathe pointer-events-none"
-          style={{ background: `radial-gradient(ellipse at center, ${meta.color}33, transparent 65%)` }}
-        />
-        <div
-          className="hidden sm:block absolute -top-20 -right-32 w-[500px] h-[500px] rounded-full opacity-50 pointer-events-none"
-          style={{ background: `radial-gradient(circle, ${meta.color}33, transparent 70%)` }}
+          aria-hidden
+          className="pointer-events-none absolute -top-48 left-1/2 hidden h-[520px] w-[1100px] -translate-x-1/2 rounded-full halo-breathe sm:block"
+          style={{ background: "radial-gradient(ellipse at center, rgba(129,140,248,0.18), transparent 65%)" }}
         />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 pt-10 pb-14 sm:pt-14 sm:pb-16">
           {/* Breadcrumb */}
-          <div className="flex items-center gap-2 font-mono-ui text-[10px] uppercase tracking-wider text-white/40 mb-8">
-            <Link href="/" className="hover:text-cyan-300 transition-colors">~/</Link>
-            <span className="text-white/25">›</span>
-            <Link href="/categorias" className="hover:text-cyan-300 transition-colors">categorias</Link>
-            <span className="text-white/25">›</span>
-            <span style={{ color: meta.color }}>{meta.label.toLowerCase()}</span>
-          </div>
+          <nav aria-label="Miga de pan" className="mb-8 flex items-center gap-2 text-[11px] font-semibold text-white/40">
+            <Link href="/" className="transition-colors hover:text-brand-200">Inicio</Link>
+            <span aria-hidden className="text-white/20">›</span>
+            <Link href="/categorias" className="transition-colors hover:text-brand-200">Categorías</Link>
+            <span aria-hidden className="text-white/20">›</span>
+            <span className="text-brand-300">{meta.label}</span>
+          </nav>
 
-          <div className="flex flex-col lg:flex-row lg:items-end gap-6 lg:gap-10">
+          <div className="reveal flex flex-col lg:flex-row lg:items-end gap-6 lg:gap-10">
             <div className="flex items-center gap-4">
               <div
-                className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center text-3xl sm:text-4xl shadow-xl relative"
+                className="relative flex h-16 w-16 items-center justify-center rounded-2xl border border-brand-400/30 text-3xl sm:h-20 sm:w-20 sm:text-4xl"
                 style={{
-                  background: `color-mix(in srgb, ${meta.color} 14%, transparent)`,
-                  border: `1px solid color-mix(in srgb, ${meta.color} 45%, transparent)`,
-                  boxShadow: `0 0 40px -6px ${meta.color}66`,
+                  background: "rgba(129,140,248,0.10)",
+                  boxShadow: "0 0 40px -6px rgba(129,140,248,0.45)",
                 }}
               >
                 {meta.icon}
               </div>
               <div>
-                <p className="font-mono-ui text-[10px] uppercase tracking-wider mb-1.5"
-                   style={{ color: meta.color }}>
-                  ▸ /catalog/{meta.label.toLowerCase().replace(/\s+/g, "_")}
-                </p>
-                <h1 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-[1] mb-2">
+                <h1
+                  className="mb-2 font-extrabold tracking-tight text-white"
+                  style={{ fontSize: "clamp(1.9rem, 4.4vw, 3rem)", lineHeight: 1.02, letterSpacing: "-0.035em" }}
+                >
                   {meta.label}
                 </h1>
-                <p className="text-white/55 text-sm">{meta.desc}</p>
-                <div className="flex items-center gap-2 mt-4 flex-wrap">
-                  <span className="font-mono-ui text-[10px] font-bold uppercase tracking-wider text-white/80 border border-white/[0.12] bg-white/[0.04] px-2.5 h-6 inline-flex items-center rounded-md tabular">
-                    {products.length} item{products.length !== 1 ? "s" : ""}
+                <p className="text-sm text-white/50">{meta.desc}</p>
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <span className="inline-flex h-6 items-center rounded-full border border-brand-400/25 bg-brand-400/10 px-2.5 text-[10px] font-semibold tabular text-brand-200">
+                    {products.length} producto{products.length !== 1 ? "s" : ""}
                   </span>
                   {products.some((p) => p.offers[0]?.discountPercent) && (
-                    <span className="font-mono-ui text-[10px] font-bold uppercase tracking-wider text-emerald-300 bg-emerald-500/10 border border-emerald-500/30 px-2.5 h-6 inline-flex items-center rounded-md">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 pulse-dot" />
-                      live deals
+                    <span className="inline-flex h-6 items-center rounded-full border border-emerald-400/25 bg-emerald-400/10 px-2.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-300">
+                      <span className="mr-1.5 h-1.5 w-1.5 rounded-full bg-emerald-400 pulse-dot" />
+                      Ofertas activas
                     </span>
                   )}
                 </div>
@@ -487,8 +477,8 @@ export default function CategoryClient({ products, meta, content }: { products: 
             </div>
 
             {/* Inline search */}
-            <div className="flex-1 max-w-md lg:ml-auto w-full">
-              <div className="flex items-center gap-2 bg-white/[0.04] backdrop-blur-md border border-white/[0.10] hover:border-white/25 focus-within:border-cyan-400/50 focus-within:bg-white/[0.06] rounded-xl px-4 h-11 transition-all">
+            <div className="w-full max-w-md flex-1 lg:ml-auto">
+              <div className="flex h-11 items-center gap-2 rounded-full border border-white/[0.10] bg-white/[0.04] px-4 backdrop-blur-md transition-all hover:border-white/25 focus-within:border-brand-400/50 focus-within:bg-white/[0.06]">
                 <svg className="w-4 h-4 text-white/45 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
                 </svg>
@@ -515,25 +505,23 @@ export default function CategoryClient({ products, meta, content }: { products: 
       {/* CONTENIDO EDITORIAL */}
       {content && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-10">
-          <div className="bg-bg-elevated rounded-2xl border border-white/[0.08] p-6 flex flex-col gap-5">
-            <div className="flex items-center gap-2 font-mono-ui text-[10px] uppercase tracking-wider text-cyan-300/80 mb-1">
-              ▸ /briefing
-            </div>
-            <p className="text-fg-muted text-sm leading-relaxed -mt-3">{content.intro}</p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div
+            className="reveal relative overflow-hidden rounded-3xl border border-brand-400/15 p-6 flex flex-col gap-5"
+            style={{ background: "linear-gradient(160deg, #100d26 0%, #0a0819 55%, #070614 100%)" }}
+          >
+            <div aria-hidden className="pointer-events-none absolute -top-24 right-10 h-52 w-[420px] rounded-full" style={{ background: "radial-gradient(ellipse, rgba(129,140,248,0.14), transparent 70%)" }} />
+            <p className="relative text-[10px] font-bold uppercase tracking-[0.22em] text-brand-300">Guía de compra</p>
+            <p className="relative -mt-3 text-sm leading-relaxed text-white/55" style={{ textWrap: "pretty" }}>{content.intro}</p>
+            <div className="relative grid grid-cols-1 gap-3 sm:grid-cols-3">
               {content.tips.map((t) => (
                 <div
                   key={t.title}
-                  className="flex gap-3 p-3.5 rounded-xl border"
-                  style={{
-                    background: `color-mix(in srgb, ${meta.color} 6%, transparent)`,
-                    borderColor: `color-mix(in srgb, ${meta.color} 25%, transparent)`,
-                  }}
+                  className="flex gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-3.5 transition-colors hover:border-brand-400/25"
                 >
-                  <span className="text-xl flex-shrink-0" style={{ filter: `drop-shadow(0 0 8px ${meta.color}80)` }}>{t.icon}</span>
+                  <span className="flex-shrink-0 text-xl" style={{ filter: "drop-shadow(0 0 8px rgba(129,140,248,0.5))" }}>{t.icon}</span>
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-white leading-tight">{t.title}</p>
-                    <p className="text-xs text-white/55 mt-1 leading-relaxed">{t.desc}</p>
+                    <p className="text-xs font-bold leading-tight text-white">{t.title}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-white/50">{t.desc}</p>
                   </div>
                 </div>
               ))}
@@ -541,19 +529,13 @@ export default function CategoryClient({ products, meta, content }: { products: 
             {content.guideSlug && (
               <Link
                 href={`/guias/${content.guideSlug}`}
-                className="self-start inline-flex items-center gap-2 font-mono-ui text-[11px] uppercase font-bold px-4 h-9 rounded-full transition-all hover:scale-[1.02]"
-                style={{
-                  color: meta.color,
-                  background: `${meta.color}12`,
-                  border: `1px solid ${meta.color}40`,
-                  boxShadow: `0 0 14px -4px ${meta.color}60`,
-                }}
+                className="relative inline-flex h-10 items-center gap-2 self-start rounded-full border border-brand-400/25 bg-brand-400/10 px-5 text-[12px] font-bold text-brand-200 transition-all hover:border-brand-400/50 hover:bg-brand-400/[0.16] active:scale-[0.97]"
               >
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                   <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
                   <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
                 </svg>
-                ver guía completa →
+                Ver guía completa →
               </Link>
             )}
           </div>
@@ -573,22 +555,22 @@ export default function CategoryClient({ products, meta, content }: { products: 
         <div className="flex-1 min-w-0">
 
           {/* Control bar — sticky on mobile (below the 64px page header) so Filtros/Ordenar are always reachable */}
-          <div className="lg:static sticky top-16 z-30 -mx-4 sm:-mx-6 lg:mx-0 px-4 sm:px-6 lg:px-0 py-3 lg:py-0 mb-4 bg-bg/85 lg:bg-transparent backdrop-blur-md lg:backdrop-blur-none border-b border-white/[0.06] lg:border-0">
+          <div className="lg:static sticky top-16 z-30 -mx-4 sm:-mx-6 lg:mx-0 px-4 sm:px-6 lg:px-0 py-3 lg:py-0 mb-4 bg-[#050310]/85 lg:bg-transparent backdrop-blur-md lg:backdrop-blur-none border-b border-white/[0.06] lg:border-0">
             <div className="flex items-center justify-between gap-3 flex-wrap">
-              <p className="font-mono-ui text-[11px] uppercase tracking-wider text-white/55 hidden sm:block">
-                <span className="text-emerald-300 tabular">{filtered.length.toString().padStart(2, "0")}</span> result{filtered.length !== 1 ? "s" : ""}
-                {search && <> · query=&ldquo;<span className="text-cyan-300">{search}</span>&rdquo;</>}
+              <p className="hidden text-[12px] text-white/55 sm:block">
+                <span className="font-bold tabular text-white">{filtered.length}</span> resultado{filtered.length !== 1 ? "s" : ""}
+                {search && <> para &ldquo;<span className="font-semibold text-brand-200">{search}</span>&rdquo;</>}
               </p>
               <p className="sm:hidden text-xs text-white/70 tabular">
-                <span className="font-bold text-emerald-300">{filtered.length}</span> producto{filtered.length !== 1 ? "s" : ""}
+                <span className="font-bold text-white">{filtered.length}</span> producto{filtered.length !== 1 ? "s" : ""}
               </p>
               <div className="flex items-center gap-2 sm:ml-auto">
                 <button
                   onClick={() => setShowFilters(true)}
-                  className={`lg:hidden flex items-center gap-1.5 text-sm font-semibold px-3.5 h-10 rounded-lg transition-all ${
+                  className={`lg:hidden flex items-center gap-1.5 text-sm font-semibold px-4 h-10 rounded-full transition-all ${
                     activeCount > 0
-                      ? "bg-cyan-400/15 border border-cyan-400/45 text-cyan-100 shadow-[0_0_18px_-6px_rgba(94,234,212,0.6)]"
-                      : "bg-bg-elevated border border-white/[0.10] hover:border-white/25 text-white/85"
+                      ? "bg-brand-500 text-white border border-brand-400 shadow-[0_0_18px_-6px_rgba(99,102,241,0.7)]"
+                      : "bg-white/[0.03] border border-white/12 hover:border-white/30 text-white/85"
                   }`}
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -596,7 +578,7 @@ export default function CategoryClient({ products, meta, content }: { products: 
                   </svg>
                   Filtros
                   {activeCount > 0 && (
-                    <span className="bg-cyan-400/30 text-cyan-50 text-[10px] font-bold min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center tabular">
+                    <span className="bg-white/25 text-white text-[10px] font-bold min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center tabular">
                       {activeCount}
                     </span>
                   )}
@@ -604,7 +586,7 @@ export default function CategoryClient({ products, meta, content }: { products: 
                 <select
                   value={sort}
                   onChange={(e) => setSort(e.target.value as SortKey)}
-                  className="text-sm font-medium border border-white/[0.10] bg-bg-elevated rounded-lg px-3 h-10 lg:h-9 outline-none hover:border-white/25 focus-visible:border-cyan-400/50 focus-visible:ring-2 focus-visible:ring-cyan-400/15 transition-all cursor-pointer text-fg"
+                  className="text-sm font-medium border border-white/[0.10] bg-white/[0.03] rounded-full px-4 h-10 lg:h-9 outline-none hover:border-white/25 focus-visible:border-brand-400/50 focus-visible:ring-2 focus-visible:ring-brand-400/15 transition-all cursor-pointer text-fg"
                 >
                   <option value="relevancia">Relevancia</option>
                   <option value="precio_asc">Precio: menor a mayor</option>
@@ -623,7 +605,7 @@ export default function CategoryClient({ products, meta, content }: { products: 
                 <button
                   key={c.label}
                   onClick={c.clear}
-                  className="flex-shrink-0 inline-flex items-center gap-1 text-xs font-semibold px-3 h-8 rounded-full bg-cyan-400/10 text-cyan-200 border border-cyan-400/30 hover:bg-cyan-400/15 hover:border-cyan-400/50 transition-colors"
+                  className="flex-shrink-0 inline-flex items-center gap-1 text-xs font-semibold px-3 h-8 rounded-full bg-brand-400/10 text-brand-200 border border-brand-400/30 hover:bg-brand-400/[0.16] hover:border-brand-400/50 transition-colors"
                 >
                   {c.label}
                   <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round">
@@ -633,9 +615,9 @@ export default function CategoryClient({ products, meta, content }: { products: 
               ))}
               <button
                 onClick={clearAll}
-                className="flex-shrink-0 font-mono-ui text-[10px] uppercase tracking-wider text-white/45 hover:text-white ml-1 transition-colors"
+                className="flex-shrink-0 text-[11px] font-semibold text-white/45 hover:text-white ml-1 transition-colors"
               >
-                limpiar todo
+                Limpiar todo
               </button>
             </div>
           )}
@@ -654,7 +636,7 @@ export default function CategoryClient({ products, meta, content }: { products: 
                 role="dialog"
                 aria-modal="true"
                 aria-label="Filtros"
-                className="fixed inset-x-0 bottom-0 z-50 flex flex-col bg-bg-elevated border-t border-white/[0.10] rounded-t-3xl shadow-[0_-24px_60px_-12px_rgba(0,0,0,0.7)] animate-slide-up"
+                className="fixed inset-x-0 bottom-0 z-50 flex flex-col bg-[#0a0818] border-t border-white/[0.10] rounded-t-3xl shadow-[0_-24px_60px_-12px_rgba(0,0,0,0.7)] animate-slide-up"
                 style={{ maxHeight: "90vh" }}
               >
                 {/* Drag handle */}
@@ -668,14 +650,14 @@ export default function CategoryClient({ products, meta, content }: { products: 
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 pt-2 pb-3 border-b border-white/[0.06]">
                   <div>
-                    <p className="font-mono-ui text-[10px] uppercase tracking-wider text-cyan-300/80 mb-0.5">▸ /filters</p>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-brand-300 mb-0.5">Refinar resultados</p>
                     <h3 className="text-base font-bold text-fg">Filtros</h3>
                   </div>
                   <div className="flex items-center gap-2">
                     {activeCount > 0 && (
                       <button
                         onClick={clearAll}
-                        className="text-xs font-semibold text-white/65 hover:text-white px-3 h-9 rounded-lg hover:bg-bg-subtle transition-colors"
+                        className="text-xs font-semibold text-white/65 hover:text-white px-3 h-9 rounded-full hover:bg-white/[0.06] transition-colors"
                       >
                         Limpiar
                       </button>
@@ -683,7 +665,7 @@ export default function CategoryClient({ products, meta, content }: { products: 
                     <button
                       onClick={() => setShowFilters(false)}
                       aria-label="Cerrar"
-                      className="w-9 h-9 rounded-full bg-bg-subtle hover:bg-bg-muted text-white/70 hover:text-white flex items-center justify-center transition-colors"
+                      className="w-9 h-9 rounded-full bg-white/[0.05] hover:bg-white/[0.10] text-white/70 hover:text-white flex items-center justify-center transition-colors"
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
@@ -697,12 +679,13 @@ export default function CategoryClient({ products, meta, content }: { products: 
                 </div>
                 {/* Sticky apply CTA */}
                 <div
-                  className="px-5 py-4 border-t border-white/[0.08] bg-bg-elevated/95 backdrop-blur-md"
+                  className="px-5 py-4 border-t border-white/[0.08] bg-[#0a0818]/95 backdrop-blur-md"
                   style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0) + 1rem)" }}
                 >
                   <button
                     onClick={() => setShowFilters(false)}
-                    className="w-full h-12 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-[0.98] text-white font-bold text-sm transition-all shadow-[0_0_24px_-6px_rgba(99,102,241,0.6)]"
+                    className="shine-on-hover w-full h-12 rounded-full bg-brand-500 hover:bg-brand-400 active:scale-[0.97] text-white font-bold text-sm transition-all"
+                    style={{ boxShadow: "0 8px 36px -6px rgba(99,102,241,0.85)" }}
                   >
                     {filtered.length === 0
                       ? "Sin resultados — ajusta filtros"
@@ -715,22 +698,22 @@ export default function CategoryClient({ products, meta, content }: { products: 
 
           {/* Grid */}
           {filtered.length > 0 ? (
-            <div className="grid grid-cols-3 sm:grid-cols-3 xl:grid-cols-3 gap-2 sm:gap-5">
+            <div className="reveal grid grid-cols-3 sm:grid-cols-3 xl:grid-cols-3 gap-2 sm:gap-5">
               {filtered.map((p, i) => (
                 <ProductCard key={p.id} product={p} priority={i === 0} />
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-20 text-center bg-bg-elevated rounded-2xl border border-white/[0.08]">
-              <span className="text-5xl mb-4 opacity-50" style={{ filter: `drop-shadow(0 0 16px ${meta.color}80)` }}>{meta.icon}</span>
-              <p className="font-mono-ui text-[10px] uppercase tracking-wider text-white/40 mb-2">stand_by · 0 results</p>
+            <div className="flex flex-col items-center justify-center rounded-3xl border border-white/[0.07] bg-white/[0.02] py-20 text-center">
+              <span className="mb-4 text-5xl opacity-50" style={{ filter: "drop-shadow(0 0 16px rgba(129,140,248,0.5))" }}>{meta.icon}</span>
               <h3 className="text-base font-bold text-fg mb-1.5">Sin resultados</h3>
               <p className="text-sm text-fg-muted mb-6 max-w-sm">
                 {search ? `No encontramos "${search}" con estos filtros.` : "Ningún producto coincide con los filtros seleccionados."}
               </p>
               <button
                 onClick={clearAll}
-                className="text-sm font-bold text-white px-5 h-10 rounded-lg bg-cyan-400/15 border border-cyan-400/40 hover:bg-cyan-400/25 hover:border-cyan-400/60 transition-colors shadow-[0_0_18px_-6px_rgba(94,234,212,0.5)]"
+                className="shine-on-hover inline-flex h-11 items-center justify-center rounded-full bg-brand-500 px-6 text-sm font-bold text-white transition-all hover:bg-brand-400 active:scale-[0.97]"
+                style={{ boxShadow: "0 8px 36px -6px rgba(99,102,241,0.85)" }}
               >
                 Limpiar filtros
               </button>

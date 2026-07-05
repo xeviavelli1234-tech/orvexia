@@ -61,8 +61,8 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
     <>
       <div
         onClick={() => setOpen(true)}
-        className="group shine-on-hover bg-bg-elevated rounded-2xl border border-white/[0.08] hover:border-cyan-400/35
-                   hover:shadow-[0_0_24px_-6px_rgba(94,234,212,0.35)] hover:-translate-y-0.5 transition-all duration-200
+        className="group shine-on-hover bg-bg-elevated rounded-2xl border border-white/[0.07] hover:border-brand-400/40
+                   hover:shadow-[0_24px_60px_-24px_rgba(99,102,241,0.55)] hover:-translate-y-1 transition-all duration-300
                    overflow-hidden flex cursor-pointer"
         style={{ ['--cat' as string]: catColor }}
       >
@@ -93,12 +93,12 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
           )}
           {realDiscount > 0 && (
             <span
-              className="absolute top-2 left-2 font-mono-ui text-[10px] font-bold px-1.5 py-0.5 rounded-md backdrop-blur-sm"
+              className="absolute top-2 left-2 text-[10px] font-bold tabular px-2 py-0.5 rounded-full backdrop-blur-sm"
               style={{
                 background: "rgba(5,6,15,0.92)",
-                color: "#A3E635",
-                border: "1px solid rgba(163,230,53,0.4)",
-                boxShadow: "0 0 12px -2px rgba(163,230,53,0.4)",
+                color: "#34D399",
+                border: "1px solid rgba(52,211,153,0.4)",
+                boxShadow: "0 0 12px -2px rgba(52,211,153,0.35)",
               }}
             >
               -{realDiscount}%
@@ -112,7 +112,7 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
             {product.brand}
           </p>
           <h3 className="text-sm font-semibold text-fg leading-snug line-clamp-2
-                         group-hover:text-cyan-300 transition-colors mb-auto">
+                         group-hover:text-brand-300 transition-colors mb-auto">
             {product.name}
           </h3>
           {oferta ? (
@@ -139,8 +139,7 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
                   )}
                 </div>
                 <span
-                  className="text-xs font-bold text-white px-3 py-1.5 rounded-lg"
-                  style={{ backgroundColor: catColor }}
+                  className="text-xs font-bold text-white px-3.5 py-1.5 rounded-full bg-brand-500 group-hover:bg-brand-400 transition-colors shadow-[0_4px_18px_-4px_rgba(99,102,241,0.7)]"
                 >
                   Ver →
                 </span>
@@ -150,9 +149,9 @@ export function CategoryProductCard({ product, catColor, catIcon }: Props) {
                   {saneOffers.slice(0, 4).map((o, i) => (
                     <span
                       key={`${o.store}-${i}`}
-                      className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${
+                      className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold ${
                         o.store === oferta.store
-                          ? "border-cyan-400/45 bg-cyan-400/10 text-cyan-200"
+                          ? "border-brand-400/40 bg-brand-400/10 text-brand-200"
                           : "border-white/10 bg-white/[0.025] text-white/55"
                       }`}
                     >

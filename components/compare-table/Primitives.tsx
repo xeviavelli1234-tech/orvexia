@@ -20,10 +20,10 @@ export function Header({ onSwap }: { onSwap?: () => void }) {
   return (
     <header className="px-4 py-3.5 sm:px-5 sm:py-4 border-b border-border-subtle flex items-center justify-between gap-2 sm:gap-3">
       <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-        <div className="w-1 h-7 sm:h-8 rounded-full shrink-0" style={{ background: "linear-gradient(180deg,#5EEAD4,#818CF8)" }} />
+        <div className="w-1 h-7 sm:h-8 rounded-full shrink-0" style={{ background: "linear-gradient(180deg,#A5B4FC,#6366F1)" }} />
         <div className="min-w-0">
-          <p className="font-mono-ui text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-300 leading-none mb-0.5">
-            ▸ /compare · side-by-side
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-300 leading-none mb-0.5">
+            Lado a lado
           </p>
           <h2 className="text-[14px] sm:text-[15px] font-bold text-fg leading-tight">Comparar productos</h2>
         </div>
@@ -74,12 +74,12 @@ export function PickerGrid({
         const dim = bothPicked && !selected;
 
         const frame = isA
-          ? "border-cyan-400/60 ring-1 ring-cyan-400/40"
+          ? "border-brand-400/60 ring-1 ring-brand-400/40"
           : isB
-            ? "border-fuchsia-400/60 ring-1 ring-fuchsia-400/40"
+            ? "border-emerald-400/60 ring-1 ring-emerald-400/40"
             : "border-border hover:border-border-strong";
-        const accentText = isA ? "text-cyan-300" : isB ? "text-fuchsia-300" : "text-fg-subtle";
-        const badgeClass = isA ? "bg-cyan-500" : isB ? "bg-fuchsia-500" : "bg-fg-subtle/40";
+        const accentText = isA ? "text-brand-300" : isB ? "text-emerald-300" : "text-fg-subtle";
+        const badgeClass = isA ? "bg-brand-500" : isB ? "bg-emerald-500" : "bg-fg-subtle/40";
 
         return (
           <button
@@ -118,7 +118,7 @@ export function PickerGrid({
                   <>
                     <span className="text-[12px] font-extrabold text-fg tabular">{formatPrice(offer.priceCurrent)}</span>
                     {discount > 0 && (
-                      <span className="text-[9px] font-bold text-lime-400 tabular">−{discount}%</span>
+                      <span className="text-[9px] font-bold text-emerald-300 tabular">−{discount}%</span>
                     )}
                   </>
                 ) : (
@@ -243,13 +243,13 @@ export function DetailTable({
                     <div className="absolute inset-0 flex items-center justify-center text-4xl opacity-25">📦</div>
                   )}
                   {offer?.discountPercent ? (
-                    <span className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2 inline-flex items-center px-1.5 sm:px-2 h-5 sm:h-6 rounded-md bg-fg-strong text-bg text-[10px] sm:text-[11px] font-bold">
+                    <span className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2 inline-flex items-center px-1.5 sm:px-2.5 h-5 sm:h-6 rounded-full bg-fg-strong text-bg text-[10px] sm:text-[11px] font-bold tabular">
                       −{offer.discountPercent}%
                     </span>
                   ) : null}
                 </div>
-                <p className="text-[10px] sm:text-[11px] font-bold text-cyan-300 mb-0.5 truncate">{p.brand}</p>
-                <p className="text-[12px] sm:text-[13px] font-bold text-fg line-clamp-2 leading-snug group-hover:text-cyan-300 transition-colors break-words mb-2">
+                <p className="text-[10px] sm:text-[11px] font-bold text-brand-300 mb-0.5 truncate">{p.brand}</p>
+                <p className="text-[12px] sm:text-[13px] font-bold text-fg line-clamp-2 leading-snug group-hover:text-brand-300 transition-colors break-words mb-2">
                   {p.name}
                 </p>
                 <span
@@ -279,14 +279,14 @@ export function DetailTable({
         <Row label="Descuento" trophy={wDisc}>
           <Cell winner={wDisc === "a"}>
             {offerA?.discountPercent ? (
-              <span className="inline-flex items-center px-1.5 sm:px-2 h-5 sm:h-6 rounded-md bg-lime-400/15 text-lime-300 border border-lime-400/30 font-bold tabular text-[11px] sm:text-[12px]">
+              <span className="inline-flex items-center px-1.5 sm:px-2 h-5 sm:h-6 rounded-full bg-emerald-400/10 text-emerald-300 border border-emerald-400/30 font-bold tabular text-[11px] sm:text-[12px]">
                 −{offerA.discountPercent}%
               </span>
             ) : <span className="text-fg-subtle text-[11px]">Sin desc.</span>}
           </Cell>
           <Cell winner={wDisc === "b"}>
             {offerB?.discountPercent ? (
-              <span className="inline-flex items-center px-1.5 sm:px-2 h-5 sm:h-6 rounded-md bg-lime-400/15 text-lime-300 border border-lime-400/30 font-bold tabular text-[11px] sm:text-[12px]">
+              <span className="inline-flex items-center px-1.5 sm:px-2 h-5 sm:h-6 rounded-full bg-emerald-400/10 text-emerald-300 border border-emerald-400/30 font-bold tabular text-[11px] sm:text-[12px]">
                 −{offerB.discountPercent}%
               </span>
             ) : <span className="text-fg-subtle text-[11px]">Sin desc.</span>}
@@ -383,8 +383,8 @@ export function DetailTable({
         </Row>
 
         <Row label="Modelo">
-          <Cell><span className="font-mono-ui text-[11px] sm:text-[12px] text-fg-muted break-all">{a.model || "—"}</span></Cell>
-          <Cell><span className="font-mono-ui text-[11px] sm:text-[12px] text-fg-muted break-all">{b.model || "—"}</span></Cell>
+          <Cell><span className="text-[11px] sm:text-[12px] text-fg-muted break-all">{a.model || "—"}</span></Cell>
+          <Cell><span className="text-[11px] sm:text-[12px] text-fg-muted break-all">{b.model || "—"}</span></Cell>
         </Row>
 
         <Row label="Specs">
@@ -439,7 +439,7 @@ export function DetailTable({
                   target="_blank"
                   rel="nofollow noopener noreferrer sponsored"
                   onClick={() => onCtaClick(p, offer)}
-                  className="flex items-center justify-center gap-1 sm:gap-2 w-full bg-brand-600 hover:bg-brand-700 active:scale-[0.98] text-white font-extrabold h-10 sm:h-11 rounded-xl text-[11px] sm:text-[13px] transition-all shadow-md shadow-brand-600/25 px-2"
+                  className="shine-on-hover flex items-center justify-center gap-1 sm:gap-2 w-full bg-brand-500 hover:bg-brand-400 active:scale-[0.97] text-white font-bold h-10 sm:h-11 rounded-full text-[11px] sm:text-[13px] transition-all shadow-[0_8px_36px_-6px_rgba(99,102,241,0.85)] px-2"
                   aria-label={`Ver en ${offer.store}`}
                 >
                   <span className="sm:hidden truncate">{offer.store}</span>
@@ -463,7 +463,7 @@ export function DetailTable({
         style={{
           background: verdictTone === "tie"
             ? "var(--bg-subtle)"
-            : "linear-gradient(135deg, rgba(94,234,212,0.08), rgba(129,140,248,0.08))",
+            : "linear-gradient(135deg, rgba(99,102,241,0.12), rgba(129,140,248,0.05))",
         }}
       >
         <span className="text-lg sm:text-xl shrink-0 leading-none mt-0.5" aria-hidden>

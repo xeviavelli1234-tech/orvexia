@@ -4,9 +4,9 @@ import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
 import { CategoryTabs } from "./CategoryTabs";
 import { PopularCard } from "./PopularCard";
-import { FuturisticFX } from "@/components/FuturisticFX";
 import type { Product, Offer } from "@/app/generated/prisma/client";
 import { safeData } from "@/lib/safe-data";
+import { SectionChip } from "@/app/_components/SectionPrimitives";
 
 type ProductWithOffers = Product & { offers: Offer[] };
 
@@ -17,12 +17,6 @@ const CATEGORY_LABELS: Record<string, string> = {
   LAVAVAJILLAS: "Lavavajillas", SECADORAS: "Secadoras", HORNOS: "Hornos",
   MICROONDAS: "Microondas", ASPIRADORAS: "Aspiradoras", CAFETERAS: "Cafeteras",
   AIRES_ACONDICIONADOS: "Aires A/C", OTROS: "Otros",
-};
-
-const CATEGORY_EMOJI: Record<string, string> = {
-  TELEVISORES: "📺", LAVADORAS: "🫧", FRIGORIFICOS: "🧊", LAVAVAJILLAS: "🍽️",
-  SECADORAS: "🌀", HORNOS: "🔥", MICROONDAS: "📻", ASPIRADORAS: "🌪️",
-  CAFETERAS: "☕", AIRES_ACONDICIONADOS: "❄️", OTROS: "📦",
 };
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
@@ -62,8 +56,6 @@ async function getStats() {
   return { total, topProduct: withRating };
 }
 
-// ─── Stars ────────────────────────────────────────────────────────────────────
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function PopularidadPage({
@@ -87,91 +79,81 @@ export default async function PopularidadPage({
     : null;
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-[#050310] text-white/90">
 
       {/* Hero */}
-      <section className="relative overflow-hidden border-b border-white/[0.06]">
-        <div className="absolute inset-0 bg-grid-cyber opacity-50 pointer-events-none" />
-        <div className="absolute inset-0 pointer-events-none">
-          <FuturisticFX particleCount={6} streamCount={2} beam seed={11} />
-        </div>
-        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[1200px] h-[600px] rounded-full halo-breathe pointer-events-none"
-             style={{ background: "radial-gradient(ellipse at center, rgba(168,85,247,0.22), transparent 65%)" }} />
-        <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-50 pointer-events-none"
-             style={{ background: "radial-gradient(circle, rgba(251,191,36,0.16), transparent 65%)" }} />
+      <section className="relative overflow-hidden border-b border-white/[0.05]">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-48 left-1/2 h-[520px] w-[1100px] -translate-x-1/2 rounded-full halo-breathe"
+          style={{ background: "radial-gradient(ellipse at center, rgba(129,140,248,0.20), transparent 65%)" }}
+        />
 
-        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 pt-16 sm:pt-24 pb-16 sm:pb-24 text-center">
-          <div className="inline-flex items-center gap-2 mb-6 px-3 h-7 rounded-full bg-white/[0.04] border border-white/[0.10] font-mono-ui">
-            <span className="text-sm" style={{ filter: "drop-shadow(0 0 6px rgba(251,191,36,0.6))" }}>🏆</span>
-            <span className="text-[10px] uppercase tracking-wider text-white/65">
-              ▸ /leaderboard · valoraciones reales
-            </span>
+        <div className="relative mx-auto max-w-5xl px-4 pb-16 pt-16 text-center sm:px-6 sm:pb-24 sm:pt-24">
+          <div className="reveal">
+            <SectionChip label="Valoraciones reales" />
+            <h1
+              className="mb-5 mt-5 font-extrabold tracking-tight text-white"
+              style={{ fontSize: "clamp(2.4rem, 6vw, 4.5rem)", lineHeight: 1.02, letterSpacing: "-0.04em", textWrap: "balance" }}
+            >
+              <span className="text-shimmer-violet">Popularidad</span>
+            </h1>
+            <p className="mx-auto mb-9 max-w-xl text-base leading-relaxed text-white/50" style={{ textWrap: "pretty" }}>
+              Los electrodomésticos más valorados por compradores reales. Ordenados por reseñas y puntuación.
+            </p>
           </div>
 
-          <h1 className="font-extrabold tracking-tight text-white mb-5"
-              style={{ fontSize: "clamp(2.4rem, 6vw, 4.5rem)", lineHeight: 1, letterSpacing: "-0.045em" }}>
-            <span className="text-gradient-neon">Popularidad</span>
-          </h1>
-          <p className="text-white/55 text-base max-w-xl mx-auto mb-9 leading-relaxed">
-            Los electrodomésticos más valorados por compradores reales. Ordenados por reseñas y puntuación.
-          </p>
-
-          <div className="grid grid-cols-3 gap-2 sm:gap-3 max-w-2xl mx-auto">
-            <div className="rounded-xl bg-white/[0.025] border border-white/[0.10] p-3 sm:p-4 backdrop-blur-sm">
-              <p className="font-mono-ui text-[9px] uppercase text-fuchsia-300 mb-1">▸ db.tracked</p>
-              <p className="tabular font-extrabold text-xl sm:text-2xl text-white">{stats.total.toLocaleString("es-ES")}</p>
-              <p className="text-[10px] sm:text-xs text-white/45 mt-0.5">productos</p>
+          <div className="reveal mx-auto grid max-w-2xl grid-cols-3 gap-2 sm:gap-3">
+            <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-3 backdrop-blur-sm transition-colors hover:border-brand-400/30 sm:p-4">
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-brand-300">Productos</p>
+              <p className="text-xl font-extrabold tabular text-white sm:text-2xl">{stats.total.toLocaleString("es-ES")}</p>
+              <p className="mt-0.5 text-[10px] text-white/45 sm:text-xs">en seguimiento</p>
             </div>
             {avgRating && (
-              <div className="rounded-xl bg-white/[0.025] border border-white/[0.10] p-3 sm:p-4 backdrop-blur-sm">
-                <p className="font-mono-ui text-[9px] uppercase text-amber-300 mb-1">▸ avg.rating</p>
-                <p className="tabular font-extrabold text-xl sm:text-2xl text-white">{avgRating}<span className="text-amber-300 ml-1">★</span></p>
-                <p className="text-[10px] sm:text-xs text-white/45 mt-0.5">media</p>
+              <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-3 backdrop-blur-sm transition-colors hover:border-brand-400/30 sm:p-4">
+                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-brand-300">Nota media</p>
+                <p className="text-xl font-extrabold tabular text-white sm:text-2xl">{avgRating}<span className="ml-1 text-amber-300">★</span></p>
+                <p className="mt-0.5 text-[10px] text-white/45 sm:text-xs">del top actual</p>
               </div>
             )}
             {totalReviews > 0 && (
-              <div className="rounded-xl bg-white/[0.025] border border-white/[0.10] p-3 sm:p-4 backdrop-blur-sm">
-                <p className="font-mono-ui text-[9px] uppercase text-cyan-300 mb-1">▸ db.reviews</p>
-                <p className="tabular font-extrabold text-xl sm:text-2xl text-white">{(totalReviews / 1000).toFixed(1)}k</p>
-                <p className="text-[10px] sm:text-xs text-white/45 mt-0.5">analizadas</p>
+              <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-3 backdrop-blur-sm transition-colors hover:border-brand-400/30 sm:p-4">
+                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-brand-300">Reseñas</p>
+                <p className="text-xl font-extrabold tabular text-white sm:text-2xl">{(totalReviews / 1000).toFixed(1)}k</p>
+                <p className="mt-0.5 text-[10px] text-white/45 sm:text-xs">analizadas</p>
               </div>
             )}
           </div>
         </div>
       </section>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
 
-        <div className="relative z-10 -mt-8 mb-8 bg-bg-elevated rounded-2xl border border-white/[0.10]
-                        shadow-[0_24px_60px_-24px_rgba(0,0,0,0.5)] p-4">
+        <div className="relative z-10 -mt-8 mb-8 rounded-2xl border border-white/[0.07] bg-[#0a0818]/95 p-4 shadow-[0_24px_60px_-24px_rgba(3,2,12,0.9)] backdrop-blur-md">
           <Suspense>
             <CategoryTabs categories={categories} />
           </Suspense>
         </div>
 
-        <div className="flex items-end justify-between mb-6">
+        <div className="reveal mb-6 flex items-end justify-between">
           <div>
-            <p className="font-mono-ui text-[10px] uppercase tracking-wider text-fuchsia-300 mb-1">
-              ▸ /ranking/{(categoria || "all").toLowerCase()}
-            </p>
-            <h2 className="text-2xl font-bold text-white">
+            <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.22em] text-brand-300">Ranking por valoraciones</p>
+            <h2 className="text-2xl font-extrabold tracking-tight text-white">
               {categoria ? `${CATEGORY_LABELS[categoria] ?? categoria} más valorados` : "Los más valorados"}
             </h2>
           </div>
-          <span className="font-mono-ui text-[11px] uppercase tracking-wider text-white/45 hidden sm:block">
-            top {products.length.toString().padStart(2, "0")}
+          <span className="hidden text-[12px] text-white/45 sm:block">
+            top <span className="font-bold tabular text-white/70">{products.length}</span>
           </span>
         </div>
 
         {products.length === 0 ? (
-          <div className="text-center py-24 bg-bg-elevated rounded-3xl border border-white/[0.08]">
-            <span className="text-5xl block mb-4">📭</span>
-            <p className="font-mono-ui text-[11px] uppercase tracking-wider text-white/45">
-              no_data · stand_by
-            </p>
+          <div className="rounded-3xl border border-white/[0.07] bg-white/[0.02] py-24 text-center">
+            <span className="mb-4 block text-5xl">📭</span>
+            <p className="text-sm text-white/45">Aún no hay valoraciones suficientes en esta categoría.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 pb-16">
+          <div className="reveal grid grid-cols-1 gap-5 pb-16 sm:grid-cols-2 lg:grid-cols-3">
             {products.map((p, i) => (
               <PopularCard key={p.id} product={p} rank={i + 1} />
             ))}

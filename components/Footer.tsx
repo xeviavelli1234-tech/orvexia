@@ -4,7 +4,6 @@ import { CookieSettingsButton } from "@/components/CookieSettingsButton";
 const NAV = [
   {
     title: "Explorar",
-    code: "/explore",
     links: [
       { label: "Ofertas destacadas", href: "/ofertas-destacadas" },
       { label: "Bajadas recientes", href: "/bajadas-recientes" },
@@ -15,7 +14,6 @@ const NAV = [
   },
   {
     title: "Categorías",
-    code: "/catalog",
     links: [
       { label: "Televisores", href: "/categorias/televisores" },
       { label: "Lavadoras", href: "/categorias/lavadoras" },
@@ -26,7 +24,6 @@ const NAV = [
   },
   {
     title: "Mi cuenta",
-    code: "/user",
     links: [
       { label: "Mi panel", href: "/dashboard" },
       { label: "Iniciar sesión", href: "/login" },
@@ -35,7 +32,6 @@ const NAV = [
   },
   {
     title: "Orvexia",
-    code: "/system",
     links: [
       { label: "Sobre nosotros", href: "/sobre-nosotros" },
       { label: "Repricer para Amazon", href: "/repricer" },
@@ -56,35 +52,22 @@ export function Footer() {
       role="contentinfo"
       style={{
         background:
-          "radial-gradient(ellipse 1200px 600px at 50% 0%, rgba(94,234,212,0.10) 0%, transparent 60%), radial-gradient(ellipse 900px 500px at 100% 100%, rgba(168,85,247,0.10) 0%, transparent 65%), linear-gradient(180deg, #06070F 0%, #03040A 100%)",
+          "radial-gradient(ellipse 1200px 600px at 50% 0%, rgba(129,140,248,0.10) 0%, transparent 60%), linear-gradient(180deg, #070614 0%, #050310 100%)",
       }}
     >
-      {/* Top neon hairline */}
+      {/* Hairline violeta superior */}
       <span aria-hidden className="absolute left-0 right-0 top-0 h-px" style={{
-        background: "linear-gradient(90deg, transparent, rgba(94,234,212,0.4) 20%, rgba(129,140,248,0.5) 50%, rgba(240,171,252,0.4) 80%, transparent)",
+        background: "linear-gradient(90deg, transparent, rgba(129,140,248,0.5) 50%, transparent)",
       }} />
 
-      {/* Status ribbon */}
-      <div className="relative border-b border-white/[0.06] bg-black/30 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-9 flex items-center justify-between font-mono-ui text-[10px] uppercase tracking-wider">
-          <div className="flex items-center gap-4 text-white/45">
-            <span className="flex items-center gap-1.5">
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
-              </span>
-              <span>sys · online</span>
-            </span>
-            <span className="hidden sm:inline text-white/25">·</span>
-            <span className="hidden sm:inline">tx <span className="text-cyan-300">∞</span> precios/día</span>
-            <span className="hidden md:inline text-white/25">·</span>
-            <span className="hidden md:inline">node <span className="text-fuchsia-300">eu-west-1</span></span>
-          </div>
-          <div className="flex items-center gap-3 text-white/35">
-            <span>ssl <span className="text-emerald-300">✓</span></span>
-            <span className="text-white/25">·</span>
-            <span>v3.1.0</span>
-          </div>
+      {/* Línea de estado, limpia y discreta */}
+      <div className="relative border-b border-white/[0.06]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-9 flex items-center justify-center sm:justify-start gap-2 text-[11px] text-white/40">
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-300 opacity-75" />
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-brand-300" />
+          </span>
+          Precios sincronizados varias veces al día con las principales tiendas de España
         </div>
       </div>
 
@@ -95,14 +78,10 @@ export function Footer() {
               <span
                 className="relative flex items-center justify-center w-9 h-9 rounded-xl text-white text-base font-black shrink-0 overflow-hidden"
                 style={{
-                  backgroundImage: "linear-gradient(135deg, #4F46E5 0%, #818CF8 35%, #5EEAD4 70%, #A3E635 100%)",
-                  boxShadow: "0 0 24px -4px rgba(94,234,212,0.55), inset 0 1px 0 rgba(255,255,255,0.2)",
+                  backgroundImage: "linear-gradient(135deg, #4F46E5 0%, #6366F1 50%, #818CF8 100%)",
+                  boxShadow: "0 0 24px -4px rgba(129,140,248,0.55), inset 0 1px 0 rgba(255,255,255,0.2)",
                 }}
               >
-                <span className="absolute inset-0 opacity-30" style={{
-                  backgroundImage: "linear-gradient(rgba(255,255,255,0.18) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.18) 1px, transparent 1px)",
-                  backgroundSize: "6px 6px",
-                }} />
                 <span className="relative">O</span>
               </span>
               <span className="text-lg font-extrabold tracking-tight">Orvexia</span>
@@ -110,12 +89,13 @@ export function Footer() {
             <p className="text-sm text-white/55 leading-relaxed max-w-xs mb-4">
               Compara precios de electrodomésticos en las principales tiendas de España y ahorra en cada compra.
             </p>
-            <div className="font-mono-ui text-[10px] text-white/35 space-y-0.5 mb-4">
-              <div>▸ <span className="text-cyan-300/80">orvexiaesp@gmail.com</span></div>
-              <div>▸ build <span className="text-white/55">stable</span></div>
-            </div>
-            <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3 max-w-xs">
-              <p className="font-mono-ui text-[9px] uppercase tracking-wider text-fuchsia-300/80 mb-1">▸ /amazon-seller</p>
+            <p className="text-xs text-white/45 mb-4">
+              <a href="mailto:orvexiaesp@gmail.com" className="font-semibold text-brand-300 hover:text-brand-200 transition-colors">
+                orvexiaesp@gmail.com
+              </a>
+            </p>
+            <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-3 max-w-xs">
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-brand-300 mb-1">Vendedor en Amazon</p>
               <p className="text-xs text-white/70 leading-relaxed">
                 También vendemos en Amazon España como{" "}
                 <span className="font-semibold text-white">OrvexiaShop</span>.
@@ -125,8 +105,7 @@ export function Footer() {
 
           {NAV.map((col) => (
             <nav key={col.title} aria-label={col.title}>
-              <p className="font-mono-ui text-[10px] uppercase tracking-[0.2em] text-cyan-300/80 mb-1">▸ {col.code}</p>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-white/85 mb-4">{col.title}</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-brand-300 mb-4">{col.title}</p>
               <ul className="space-y-2.5">
                 {col.links.map((link) => (
                   <li key={link.href}>
@@ -134,7 +113,7 @@ export function Footer() {
                       href={link.href}
                       className="group inline-flex items-center gap-1.5 text-sm text-white/60 hover:text-white transition-colors"
                     >
-                      <span aria-hidden className="text-white/20 group-hover:text-cyan-300 transition-colors">›</span>
+                      <span aria-hidden className="text-white/20 group-hover:text-brand-300 transition-colors">›</span>
                       {link.label}
                     </Link>
                   </li>
@@ -152,8 +131,8 @@ export function Footer() {
         </div>
 
         <div className="border-t border-white/[0.08] pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="font-mono-ui text-[10px] uppercase tracking-wider text-white/40">
-            © {new Date().getFullYear()} orvexia · all rights reserved
+          <p className="text-xs text-white/40">
+            © {new Date().getFullYear()} Orvexia · Todos los derechos reservados
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
             <CookieSettingsButton />

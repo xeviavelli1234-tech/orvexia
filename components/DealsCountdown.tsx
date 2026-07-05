@@ -54,13 +54,13 @@ export default function DealsCountdown({ dayKey }: { dayKey: string }) {
 
   return (
     <p
-      className="mt-3 inline-flex items-center gap-2 font-mono-ui text-[11px] uppercase tracking-wide
-        text-cyan-200/80 border border-cyan-400/20 bg-cyan-400/[0.05] rounded-full px-3 h-7"
+      className="mt-3 inline-flex items-center gap-2 text-[11px] font-semibold
+        text-brand-200 border border-brand-400/25 bg-brand-400/[0.09] rounded-full px-3.5 h-7"
       aria-live="off"
     >
       <span className="relative flex h-1.5 w-1.5">
-        <span className="absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-60 animate-ping" />
-        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-cyan-400" />
+        <span className="absolute inline-flex h-full w-full rounded-full bg-brand-300 opacity-75 animate-ping" />
+        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-brand-300" />
       </span>
       {secs === null ? (
         "Nuevas ofertas cada día"

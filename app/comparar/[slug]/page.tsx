@@ -132,102 +132,131 @@ export default async function CompararPage({ params }: { params: Promise<{ slug:
   };
 
   return (
-    <main className="min-h-screen max-w-6xl mx-auto px-4 sm:px-6 py-8">
+    <main className="relative min-h-screen bg-[#050310] text-white/90">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
 
-      <nav className="flex items-center gap-2 font-mono-ui text-[10px] uppercase tracking-wider text-white/40 mb-4">
-        <Link href="/" className="hover:text-cyan-300">~/</Link>
-        <span className="text-white/25">›</span>
-        <Link href={`/categorias/${catSlug}`} className="hover:text-cyan-300">{catSlug}</Link>
-        <span className="text-white/25">›</span>
-        <span className="text-cyan-300">comparativa</span>
-      </nav>
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-40 left-1/2 h-[400px] w-[900px] -translate-x-1/2 rounded-full"
+        style={{ background: "radial-gradient(ellipse at center, rgba(129,140,248,0.14), transparent 65%)" }}
+      />
 
-      <header className="mb-8">
-        <h1 className="text-3xl sm:text-4xl font-bold text-white">
-          {a.name} <span className="text-white/40">vs</span> {b.name}
-        </h1>
-        <p className="mt-3 text-white/70 max-w-3xl">
-          Comparativa cara a cara entre dos {catLabel.toLowerCase()}. Precios actualizados, specs lado a lado y veredicto rápido.
-        </p>
-      </header>
+      <div className="relative mx-auto max-w-6xl px-4 py-8 sm:px-6">
+        <nav aria-label="Miga de pan" className="mb-6 flex items-center gap-2 text-[11px] font-semibold text-white/40">
+          <Link href="/" className="transition-colors hover:text-brand-200">Inicio</Link>
+          <span aria-hidden className="text-white/20">›</span>
+          <Link href={`/categorias/${catSlug}`} className="transition-colors hover:text-brand-200">{catLabel}</Link>
+          <span aria-hidden className="text-white/20">›</span>
+          <span className="text-brand-300">Comparativa</span>
+        </nav>
 
-      <section className="grid grid-cols-2 gap-4 sm:gap-6 mb-8">
-        {[a, b].map((p, idx) => {
-          const min = idx === 0 ? minA : minB;
-          return (
-            <div key={p.id} className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <div className="aspect-square relative bg-white/5 rounded-lg overflow-hidden mb-3 flex items-center justify-center">
-                {p.image ? (
-                  <Image src={p.image} alt={p.name} fill className="object-contain p-3" sizes="(max-width:768px) 50vw, 25vw" />
-                ) : (
-                  <span className="text-3xl opacity-40" aria-hidden>📦</span>
-                )}
+        <header className="reveal mb-8">
+          <span className="mb-3 inline-flex h-7 items-center rounded-full border border-brand-400/30 bg-brand-400/[0.09] px-3.5 text-[11px] font-semibold tracking-wide text-brand-200">
+            Cara a cara
+          </span>
+          <h1
+            className="font-extrabold tracking-tight text-white"
+            style={{ fontSize: "clamp(1.8rem, 3.6vw, 2.6rem)", lineHeight: 1.1, letterSpacing: "-0.03em", textWrap: "balance" }}
+          >
+            {a.name} <span className="text-brand-300/70">vs</span> {b.name}
+          </h1>
+          <p className="mt-3 max-w-3xl text-[15px] leading-relaxed text-white/50" style={{ textWrap: "pretty" }}>
+            Comparativa cara a cara entre dos {catLabel.toLowerCase()}. Precios actualizados, specs lado a lado y veredicto rápido.
+          </p>
+        </header>
+
+        <section className="reveal mb-8 grid grid-cols-2 gap-4 sm:gap-6">
+          {[a, b].map((p, idx) => {
+            const min = idx === 0 ? minA : minB;
+            return (
+              <div
+                key={p.id}
+                className="group rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4 transition-all duration-300 hover:-translate-y-1 hover:border-brand-400/35 hover:shadow-[0_24px_60px_-24px_rgba(99,102,241,0.55)]"
+              >
+                <div className="relative mb-3 flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-white/[0.04]">
+                  {p.image ? (
+                    <Image src={p.image} alt={p.name} fill className="object-contain p-3 transition-transform duration-300 group-hover:scale-[1.03]" sizes="(max-width:768px) 50vw, 25vw" />
+                  ) : (
+                    <span className="text-3xl opacity-40" aria-hidden>📦</span>
+                  )}
+                </div>
+                <div className="mb-1 text-xs uppercase tracking-wider text-brand-300/80">{p.brand}</div>
+                <Link href={`/productos/${p.slug}`} className="mb-2 block text-sm font-semibold leading-tight text-white line-clamp-2 transition-colors hover:text-brand-200">
+                  {p.name}
+                </Link>
+                <div className="text-lg font-extrabold tabular text-white">
+                  {min !== null ? `${min.toFixed(2)}€` : "Sin stock"}
+                </div>
+                <div className="text-xs text-white/40">{p.offers.length} tienda{p.offers.length !== 1 ? "s" : ""}</div>
               </div>
-              <div className="text-xs text-white/40 uppercase tracking-wider mb-1">{p.brand}</div>
-              <Link href={`/productos/${p.slug}`} className="block text-sm font-semibold text-white hover:text-cyan-300 leading-tight mb-2 line-clamp-2">
-                {p.name}
-              </Link>
-              <div className="text-lg font-bold text-cyan-300">
-                {min !== null ? `${min.toFixed(2)}€` : "Sin stock"}
-              </div>
-              <div className="text-xs text-white/40">{p.offers.length} tienda{p.offers.length !== 1 ? "s" : ""}</div>
-            </div>
-          );
-        })}
-      </section>
+            );
+          })}
+        </section>
 
-      <section className="rounded-xl border border-white/10 bg-white/5 overflow-hidden mb-8">
-        <table className="w-full text-sm">
-          <thead className="bg-white/5">
-            <tr>
-              <th className="text-left px-4 py-3 text-white/60 font-medium">Característica</th>
-              <th className="text-left px-4 py-3 text-white font-semibold">{a.name.slice(0, 40)}</th>
-              <th className="text-left px-4 py-3 text-white font-semibold">{b.name.slice(0, 40)}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {specKeys.length === 0 ? (
-              <tr><td colSpan={3} className="px-4 py-6 text-white/50 text-center">Sin especificaciones estructuradas comparables.</td></tr>
-            ) : specKeys.map((k) => (
-              <tr key={k} className="border-t border-white/5">
-                <td className="px-4 py-2.5 text-white/60">{SPEC_LABELS[k] ?? k}</td>
-                <td className="px-4 py-2.5 text-white">{fmtSpec(specsA[k])}</td>
-                <td className="px-4 py-2.5 text-white">{fmtSpec(specsB[k])}</td>
-              </tr>
-            ))}
-            <tr className="border-t border-white/5 bg-cyan-500/5">
-              <td className="px-4 py-2.5 text-white/60">Precio actual</td>
-              <td className="px-4 py-2.5 font-bold text-cyan-300">{minA !== null ? `${minA.toFixed(2)}€` : "—"}</td>
-              <td className="px-4 py-2.5 font-bold text-cyan-300">{minB !== null ? `${minB.toFixed(2)}€` : "—"}</td>
-            </tr>
-            <tr className="border-t border-white/5">
-              <td className="px-4 py-2.5 text-white/60">Tiendas disponibles</td>
-              <td className="px-4 py-2.5 text-white">{a.offers.length}</td>
-              <td className="px-4 py-2.5 text-white">{b.offers.length}</td>
-            </tr>
-            <tr className="border-t border-white/5">
-              <td className="px-4 py-2.5 text-white/60">Valoración media</td>
-              <td className="px-4 py-2.5 text-white">{a.rating ? `${a.rating.toFixed(1)} / 5` : "—"}</td>
-              <td className="px-4 py-2.5 text-white">{b.rating ? `${b.rating.toFixed(1)} / 5` : "—"}</td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
+        <section className="reveal mb-8 overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.02]">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-white/[0.03]">
+                <tr>
+                  <th className="px-4 py-3 text-left font-medium text-white/50">Característica</th>
+                  <th className="px-4 py-3 text-left font-semibold text-white">{a.name.slice(0, 40)}</th>
+                  <th className="px-4 py-3 text-left font-semibold text-white">{b.name.slice(0, 40)}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {specKeys.length === 0 ? (
+                  <tr><td colSpan={3} className="px-4 py-6 text-center text-white/50">Sin especificaciones estructuradas comparables.</td></tr>
+                ) : specKeys.map((k) => (
+                  <tr key={k} className="border-t border-white/[0.05]">
+                    <td className="px-4 py-2.5 text-white/50">{SPEC_LABELS[k] ?? k}</td>
+                    <td className="px-4 py-2.5 text-white">{fmtSpec(specsA[k])}</td>
+                    <td className="px-4 py-2.5 text-white">{fmtSpec(specsB[k])}</td>
+                  </tr>
+                ))}
+                <tr className="border-t border-white/[0.05] bg-brand-500/[0.07]">
+                  <td className="px-4 py-2.5 text-white/50">Precio actual</td>
+                  <td className="px-4 py-2.5 font-bold tabular text-brand-200">{minA !== null ? `${minA.toFixed(2)}€` : "—"}</td>
+                  <td className="px-4 py-2.5 font-bold tabular text-brand-200">{minB !== null ? `${minB.toFixed(2)}€` : "—"}</td>
+                </tr>
+                <tr className="border-t border-white/[0.05]">
+                  <td className="px-4 py-2.5 text-white/50">Tiendas disponibles</td>
+                  <td className="px-4 py-2.5 text-white">{a.offers.length}</td>
+                  <td className="px-4 py-2.5 text-white">{b.offers.length}</td>
+                </tr>
+                <tr className="border-t border-white/[0.05]">
+                  <td className="px-4 py-2.5 text-white/50">Valoración media</td>
+                  <td className="px-4 py-2.5 text-white">{a.rating ? `${a.rating.toFixed(1)} / 5` : "—"}</td>
+                  <td className="px-4 py-2.5 text-white">{b.rating ? `${b.rating.toFixed(1)} / 5` : "—"}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
 
-      <section className="rounded-xl border border-cyan-300/20 bg-cyan-300/5 p-5 mb-8">
-        <h2 className="text-lg font-semibold text-white mb-2">Veredicto rápido</h2>
-        <p className="text-white/80">{verdict}</p>
-      </section>
+        <section
+          className="reveal relative mb-8 overflow-hidden rounded-3xl border border-brand-400/15 p-6"
+          style={{ background: "linear-gradient(160deg, #100d26 0%, #0a0819 55%, #070614 100%)" }}
+        >
+          <div aria-hidden className="pointer-events-none absolute -top-20 left-1/2 h-44 w-[420px] -translate-x-1/2 rounded-full" style={{ background: "radial-gradient(ellipse, rgba(129,140,248,0.16), transparent 70%)" }} />
+          <h2 className="relative mb-2 text-lg font-extrabold tracking-tight text-white">Veredicto rápido</h2>
+          <p className="relative text-sm leading-relaxed text-white/65" style={{ textWrap: "pretty" }}>{verdict}</p>
+        </section>
 
-      <section className="grid grid-cols-2 gap-4">
-        <Link href={`/productos/${a.slug}`} className="rounded-lg border border-white/10 px-4 py-3 text-center text-cyan-300 hover:bg-white/5">
-          Ver ficha completa de {a.brand}
-        </Link>
-        <Link href={`/productos/${b.slug}`} className="rounded-lg border border-white/10 px-4 py-3 text-center text-cyan-300 hover:bg-white/5">
-          Ver ficha completa de {b.brand}
-        </Link>
-      </section>
+        <section className="grid grid-cols-2 gap-4">
+          <Link
+            href={`/productos/${a.slug}`}
+            className="inline-flex h-12 items-center justify-center rounded-full border border-white/12 bg-white/[0.03] px-4 text-center text-sm font-semibold text-white/80 transition-all hover:border-white/30 hover:bg-white/[0.06] hover:text-white active:scale-[0.97]"
+          >
+            Ver ficha completa de {a.brand}
+          </Link>
+          <Link
+            href={`/productos/${b.slug}`}
+            className="inline-flex h-12 items-center justify-center rounded-full border border-white/12 bg-white/[0.03] px-4 text-center text-sm font-semibold text-white/80 transition-all hover:border-white/30 hover:bg-white/[0.06] hover:text-white active:scale-[0.97]"
+          >
+            Ver ficha completa de {b.brand}
+          </Link>
+        </section>
+      </div>
     </main>
   );
 }

@@ -60,7 +60,7 @@ export function CategoryTabs({ categories }: { categories: string[] }) {
             disabled={pending}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap border transition-all duration-150 shrink-0 ${
               isActive
-                ? "bg-fuchsia-400/15 border-fuchsia-400/50 text-fuchsia-200 shadow-[0_0_14px_-4px_rgba(240,171,252,0.5)]"
+                ? "bg-brand-500 border-brand-400/60 text-white shadow-[0_0_18px_-4px_rgba(129,140,248,0.7)]"
                 : "bg-white/[0.025] border-white/[0.10] text-white/65 hover:border-white/30 hover:text-white"
             } disabled:opacity-60`}
           >

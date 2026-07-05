@@ -3,8 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { RelativeTime } from "@/components/community/RelativeTime";
 import { ProductModalButton } from "@/components/ProductModalButton";
-import { FuturisticFX } from "@/components/FuturisticFX";
 import { safeData } from "@/lib/safe-data";
+import { SectionChip } from "@/app/_components/SectionPrimitives";
 
 export const runtime = "nodejs";
 export const metadata = {
@@ -48,7 +48,7 @@ function Stars({ rating, size = 13 }: { rating: number; size?: number }) {
             <defs>
               <linearGradient id={id}>
                 <stop offset={`${fill * 100}%`} stopColor="var(--warn-500)" />
-                <stop offset={`${fill * 100}%`} stopColor="var(--border)" />
+                <stop offset={`${fill * 100}%`} stopColor="rgba(255,255,255,0.14)" />
               </linearGradient>
             </defs>
             <path
@@ -171,55 +171,55 @@ export default async function OpinionesPage({
   };
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-[#050310] text-white/90">
       {/* Hero */}
-      <section className="relative overflow-hidden border-b border-white/[0.06]">
-        <div className="absolute inset-0 bg-grid-cyber opacity-50 pointer-events-none" />
-        <div className="absolute inset-0 pointer-events-none">
-          <FuturisticFX particleCount={5} streamCount={2} beam seed={15} />
-        </div>
-        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[1200px] h-[600px] rounded-full halo-breathe pointer-events-none"
-             style={{ background: "radial-gradient(ellipse at center, rgba(251,191,36,0.20), transparent 65%)" }} />
+      <section className="relative overflow-hidden border-b border-white/[0.05]">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-40 left-1/2 h-[380px] w-[900px] -translate-x-1/2 rounded-full halo-breathe"
+          style={{ background: "radial-gradient(ellipse at center, rgba(129,140,248,0.16), transparent 70%)" }}
+        />
 
-        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-12">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+        <div className="reveal relative mx-auto max-w-6xl px-4 sm:px-6 py-12">
+          <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
             <div>
-              <div className="inline-flex items-center gap-2 mb-3 px-3 h-7 rounded-full bg-white/[0.04] border border-white/[0.10] font-mono-ui">
-                <span className="text-sm" style={{ filter: "drop-shadow(0 0 4px rgba(251,191,36,0.6))" }}>⭐</span>
-                <span className="text-[10px] uppercase tracking-wider text-white/65">▸ /reviews · genuine</span>
+              <div className="mb-4 flex justify-start">
+                <SectionChip label="Opiniones verificadas" />
               </div>
-              <h1 className="font-extrabold text-white mb-2 tracking-tight"
-                  style={{ fontSize: "clamp(2rem, 4.5vw, 3.2rem)", lineHeight: 1, letterSpacing: "-0.04em" }}>
-                Opiniones &amp; <span className="text-gradient-neon">Reseñas</span>
+              <h1
+                className="mb-2 font-extrabold tracking-tight text-white"
+                style={{ fontSize: "clamp(2rem, 4.5vw, 3.2rem)", lineHeight: 1.04, letterSpacing: "-0.035em", textWrap: "balance" }}
+              >
+                Opiniones &amp; Reseñas
               </h1>
-              <p className="text-white/55 text-sm max-w-lg leading-relaxed">
+              <p className="max-w-lg text-sm leading-relaxed text-white/55" style={{ textWrap: "pretty" }}>
                 Lo que dicen compradores reales sobre los productos. Sin filtros, sin patrocinios.
               </p>
 
-              <div className="flex items-center gap-5 mt-6 flex-wrap font-mono-ui text-[11px] uppercase tracking-wider">
+              <div className="mt-6 flex flex-wrap items-center gap-2.5">
                 {avgDisplay && (
-                  <span className="flex items-center gap-2 text-white/55">
-                    <Stars rating={parseFloat(avgDisplay)} size={14} />
-                    <span className="text-amber-300 font-bold tabular">{avgDisplay}★</span>
-                    <span className="text-white/40">media</span>
+                  <span className="inline-flex h-9 items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-4">
+                    <Stars rating={parseFloat(avgDisplay)} size={13} />
+                    <span className="text-[13px] font-extrabold tabular text-white">{avgDisplay}</span>
+                    <span className="text-[11px] text-white/45">media</span>
                   </span>
                 )}
-                <span className="text-white/15">·</span>
-                <span className="flex items-center gap-1.5 text-white/55">
-                  <span className="text-cyan-300">▸</span>
-                  <span className="text-white/85 tabular">{totalReviews.toLocaleString("es-ES")}</span> reseñas
+                <span className="inline-flex h-9 items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-4">
+                  <span className="h-1 w-1 rounded-full bg-brand-300" />
+                  <span className="text-[13px] font-extrabold tabular text-white">{totalReviews.toLocaleString("es-ES")}</span>
+                  <span className="text-[11px] text-white/45">reseñas</span>
                 </span>
-                <span className="text-white/15">·</span>
-                <span className="flex items-center gap-1.5 text-white/55">
-                  <span className="text-fuchsia-300">▸</span>
-                  <span className="text-white/85 tabular">{totalProductsReviewed}</span> productos
+                <span className="inline-flex h-9 items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-4">
+                  <span className="h-1 w-1 rounded-full bg-brand-300" />
+                  <span className="text-[13px] font-extrabold tabular text-white">{totalProductsReviewed}</span>
+                  <span className="text-[11px] text-white/45">productos</span>
                 </span>
               </div>
             </div>
 
             <Link
               href="/comunidad"
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold text-white border border-white/15 hover:bg-white/[0.06] hover:border-white/30 transition shrink-0"
+              className="inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-full border border-white/12 bg-white/[0.03] px-7 text-sm font-semibold text-white/80 transition-all hover:border-white/30 hover:bg-white/[0.06] hover:text-white active:scale-[0.97]"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -231,24 +231,24 @@ export default async function OpinionesPage({
       </section>
 
       {/* ── Content ─────────────────────────────────────────────────────── */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-7">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_280px]">
 
           {/* ── Feed ──────────────────────────────────────────────────── */}
           <div className="space-y-4">
             {/* Product filter banner */}
             {filteredProduct && (
-              <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3">
+              <div className="flex items-center gap-3 rounded-2xl border border-brand-400/25 bg-brand-400/[0.07] px-4 py-3">
                 {filteredProduct.image && (
-                  <img src={filteredProduct.image} alt={filteredProduct.name} className="w-10 h-10 object-contain rounded-lg bg-bg-elevated border border-amber-100 p-0.5 shrink-0" />
+                  <img src={filteredProduct.image} alt={filteredProduct.name} className="h-10 w-10 shrink-0 rounded-lg border border-white/[0.08] bg-white/[0.04] object-contain p-0.5" />
                 )}
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest">Filtrando por producto</p>
-                  <p className="text-sm font-bold text-fg truncate">{filteredProduct.name}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-brand-300">Filtrando por producto</p>
+                  <p className="truncate text-sm font-bold text-white">{filteredProduct.name}</p>
                 </div>
                 <Link
                   href={clearProductHref()}
-                  className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-amber-700 bg-amber-100 hover:bg-amber-200 transition"
+                  className="flex shrink-0 items-center gap-1.5 rounded-full border border-brand-400/30 bg-brand-400/10 px-3 py-1.5 text-xs font-semibold text-brand-200 transition hover:bg-brand-400/20"
                 >
                   <svg width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                     <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -259,17 +259,19 @@ export default async function OpinionesPage({
             )}
 
             {/* Controls */}
-            <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               {/* Rating filter */}
               <div className="flex flex-wrap gap-1.5">
                 <Link
                   href={ratingHref(undefined)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                    !rating ? "bg-[#1E293B] text-white" : "bg-bg-elevated border border-border text-fg-muted hover:border-[#1E293B]/30"
+                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
+                    !rating
+                      ? "border border-brand-400/50 bg-brand-400/15 text-brand-200"
+                      : "border border-white/[0.1] bg-white/[0.025] text-white/60 hover:border-white/25 hover:text-white"
                   }`}
                 >
                   Todas
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none ${!rating ? "bg-white/20 text-white" : "bg-bg-subtle text-fg-subtle"}`}>
+                  <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none tabular ${!rating ? "bg-brand-400/20 text-brand-100" : "bg-white/[0.05] text-white/45"}`}>
                     {totalReviews}
                   </span>
                 </Link>
@@ -277,8 +279,10 @@ export default async function OpinionesPage({
                   <Link
                     key={star}
                     href={ratingHref(star)}
-                    className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                      rating === star ? "bg-amber-500 text-white" : "bg-bg-elevated border border-border text-fg-muted hover:border-amber-300"
+                    className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
+                      rating === star
+                        ? "border border-brand-400/50 bg-brand-400/15 text-brand-200"
+                        : "border border-white/[0.1] bg-white/[0.025] text-white/60 hover:border-white/25 hover:text-white"
                     }`}
                   >
                     <svg width="11" height="11" viewBox="0 0 24 24" aria-hidden="true">
@@ -290,13 +294,13 @@ export default async function OpinionesPage({
               </div>
 
               {/* Sort */}
-              <div className="flex items-center gap-1 bg-bg-elevated border border-border rounded-full p-0.5">
+              <div className="flex items-center gap-1 rounded-full border border-white/[0.1] bg-white/[0.025] p-0.5">
                 {[{ label: "Reciente", value: "reciente" }, { label: "Mejor valorado", value: "valoracion" }].map((o) => (
                   <Link
                     key={o.value}
                     href={ordenHref(o.value)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                      orden === o.value ? "bg-[#1E293B] text-white" : "text-fg-muted hover:text-fg"
+                    className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
+                      orden === o.value ? "bg-brand-500/90 text-white" : "text-white/55 hover:text-white"
                     }`}
                   >
                     {o.label}
@@ -307,27 +311,31 @@ export default async function OpinionesPage({
 
             {/* Reviews list */}
             {reviews.length === 0 ? (
-              <div className="text-center py-24 bg-bg-elevated border border-border rounded-2xl">
-                <div className="text-4xl mb-4">⭐</div>
-                <h2 className="text-lg font-bold text-fg mb-2">Sin reseñas todavía</h2>
-                <p className="text-fg-muted text-sm mb-6 max-w-xs mx-auto">
+              <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] py-24 text-center">
+                <div className="mb-4 text-4xl">⭐</div>
+                <h2 className="mb-2 text-lg font-bold text-white">Sin reseñas todavía</h2>
+                <p className="mx-auto mb-6 max-w-xs text-sm text-white/55">
                   {filteredProduct
                     ? `No hay reseñas de ${filteredProduct.name} todavía.`
                     : rating
                     ? `No hay reseñas de ${rating} estrella${rating !== 1 ? "s" : ""} aún.`
                     : "Sé el primero en dejar tu opinión."}
                 </p>
-                <Link href="/buscar" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white" style={{ background: "linear-gradient(135deg,#2563EB,#4F46E5)" }}>
+                <Link
+                  href="/buscar"
+                  className="shine-on-hover inline-flex h-11 items-center justify-center gap-2 rounded-full bg-brand-500 px-6 text-sm font-bold text-white transition-all hover:bg-brand-400 active:scale-[0.97]"
+                  style={{ boxShadow: "0 8px 36px -6px rgba(99,102,241,0.85)" }}
+                >
                   Buscar productos
                 </Link>
               </div>
             ) : (
               <div className="space-y-3">
                 {reviews.map((review) => (
-                  <div key={review.id} className="group bg-bg-elevated border border-border rounded-2xl overflow-hidden hover:border-[#94A3B8]/50 hover:shadow-md transition-all duration-200">
-                    {/* Top accent bar — amber gradient */}
+                  <div key={review.id} className="group overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.02] transition-all duration-200 hover:border-brand-400/30 hover:shadow-[0_18px_44px_-22px_rgba(99,102,241,0.45)]">
+                    {/* Top accent bar — proporcional a la valoración */}
                     <div className="h-[3px]" style={{
-                      background: `linear-gradient(90deg, #F59E0B ${(review.rating / 5) * 100}%, #E2E8F0 ${(review.rating / 5) * 100}%)`
+                      background: `linear-gradient(90deg, #818CF8 ${(review.rating / 5) * 100}%, rgba(255,255,255,0.06) ${(review.rating / 5) * 100}%)`
                     }} />
 
                     <div className="p-5">
@@ -336,57 +344,57 @@ export default async function OpinionesPage({
                         <ProductModalButton
                           slug={review.product.slug}
                           aria-label={`Ver ${review.product.name}`}
-                          className="shrink-0 hidden sm:block"
+                          className="hidden shrink-0 sm:block"
                         >
                           {review.product.image ? (
                             <img
                               src={review.product.image}
                               alt={review.product.name}
-                              className="w-16 h-16 rounded-xl object-contain bg-bg-subtle border border-border p-1 hover:border-brand-600/30 transition-colors"
+                              className="h-16 w-16 rounded-xl border border-white/[0.08] bg-white/[0.04] object-contain p-1 transition-colors hover:border-brand-400/40"
                             />
                           ) : (
-                            <div className="w-16 h-16 rounded-xl bg-bg-subtle border border-border flex items-center justify-center text-2xl">
+                            <div className="flex h-16 w-16 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.04] text-2xl">
                               📦
                             </div>
                           )}
                         </ProductModalButton>
 
-                        <div className="flex-1 min-w-0 space-y-2">
+                        <div className="min-w-0 flex-1 space-y-2">
                           {/* Product name */}
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
-                              <p className="text-[10px] font-semibold text-fg-subtle uppercase tracking-widest mb-0.5">
+                              <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-widest text-white/40">
                                 {review.product.brand}
                               </p>
                               <ProductModalButton slug={review.product.slug} aria-label={`Ver ${review.product.name}`}>
-                                <span className="text-sm font-bold text-fg hover:text-brand-600 transition-colors line-clamp-1 text-left block">
+                                <span className="block text-left text-sm font-bold text-white line-clamp-1 transition-colors hover:text-brand-200">
                                   {review.product.name}
                                 </span>
                               </ProductModalButton>
                             </div>
                             {/* Stars + rating */}
-                            <div className="flex items-center gap-1.5 shrink-0">
+                            <div className="flex shrink-0 items-center gap-1.5">
                               <Stars rating={review.rating} size={14} />
-                              <span className="text-xs font-bold text-fg">{review.rating}.0</span>
+                              <span className="text-xs font-bold tabular text-white">{review.rating}.0</span>
                             </div>
                           </div>
 
                           {/* Review content */}
                           {review.title && (
-                            <p className="text-sm font-bold text-fg leading-snug">{review.title}</p>
+                            <p className="text-sm font-bold leading-snug text-white/90">{review.title}</p>
                           )}
-                          <p className="text-[13px] text-fg-muted leading-relaxed line-clamp-3">
+                          <p className="text-[13px] leading-relaxed text-white/60 line-clamp-3">
                             {review.content}
                           </p>
 
                           {/* Author + date */}
                           <div className="flex items-center gap-2 pt-1">
                             <Avatar user={review.user} size={20} />
-                            <span className="text-xs font-semibold text-fg-muted">{review.user.name}</span>
-                            <span className="text-fg-faint text-xs">·</span>
-                            <RelativeTime iso={review.createdAt.toISOString()} className="text-[11px] text-fg-subtle" />
+                            <span className="text-xs font-semibold text-white/65">{review.user.name}</span>
+                            <span className="text-xs text-white/25">·</span>
+                            <RelativeTime iso={review.createdAt.toISOString()} className="text-[11px] text-white/40" />
                             {session?.userId === review.userId && (
-                              <span className="ml-auto text-[10px] font-bold text-brand-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                              <span className="ml-auto rounded-full border border-brand-400/30 bg-brand-400/10 px-2 py-0.5 text-[10px] font-bold text-brand-200">
                                 Tu reseña
                               </span>
                             )}
@@ -403,18 +411,26 @@ export default async function OpinionesPage({
           {/* ── Sidebar ──────────────────────────────────────────────── */}
           <aside className="space-y-4">
             {/* CTA */}
-            <div className="rounded-2xl p-5 text-white" style={{ background: "linear-gradient(135deg,#1E293B,#1E3A5F)" }}>
-              <div className="flex items-center gap-2 mb-2">
+            <div
+              className="relative overflow-hidden rounded-2xl border border-brand-400/20 p-5 text-white"
+              style={{ background: "linear-gradient(160deg, #100d26 0%, #0a0819 55%, #070614 100%)" }}
+            >
+              <div
+                aria-hidden
+                className="pointer-events-none absolute -top-14 left-1/2 h-32 w-56 -translate-x-1/2 rounded-full"
+                style={{ background: "radial-gradient(ellipse, rgba(129,140,248,0.2), transparent 70%)" }}
+              />
+              <div className="relative mb-2 flex items-center gap-2">
                 <span className="text-xl">⭐</span>
                 <p className="text-sm font-bold">¿Tienes un producto?</p>
               </div>
-              <p className="text-xs text-blue-200/70 mb-4 leading-relaxed">
+              <p className="relative mb-4 text-xs leading-relaxed text-white/55">
                 Deja tu opinión y ayuda a otros compradores a tomar mejores decisiones.
               </p>
               <Link
                 href="/buscar"
-                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition hover:-translate-y-0.5"
-                style={{ background: "linear-gradient(135deg,#F59E0B,#D97706)" }}
+                className="shine-on-hover relative flex h-11 items-center justify-center gap-2 rounded-full bg-brand-500 px-4 text-sm font-bold text-white transition-all hover:bg-brand-400 active:scale-[0.97]"
+                style={{ boxShadow: "0 8px 36px -6px rgba(99,102,241,0.85)" }}
               >
                 Buscar y reseñar
               </Link>
@@ -422,29 +438,32 @@ export default async function OpinionesPage({
 
             {/* Global rating summary */}
             {avgDisplay && totalReviews > 0 && (
-              <div className="bg-bg-elevated border border-border rounded-2xl overflow-hidden">
-                <div className="px-4 py-3 border-b border-border-subtle">
-                  <p className="text-[11px] font-bold text-fg-subtle uppercase tracking-widest">Resumen global</p>
+              <div className="overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.02]">
+                <div className="border-b border-white/[0.06] px-4 py-3">
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-white/45">Resumen global</p>
                 </div>
-                <div className="p-4 flex flex-col items-center gap-2">
-                  <span className="text-4xl font-extrabold text-fg">{avgDisplay}</span>
+                <div className="flex flex-col items-center gap-2 p-4">
+                  <span className="text-4xl font-extrabold tabular text-white">{avgDisplay}</span>
                   <Stars rating={parseFloat(avgDisplay)} size={20} />
-                  <p className="text-xs text-fg-subtle">sobre {totalReviews} reseñas</p>
+                  <p className="text-xs text-white/45">sobre {totalReviews} reseñas</p>
                   {/* Distribution */}
-                  <div className="w-full mt-2 space-y-1.5">
+                  <div className="mt-2 w-full space-y-1.5">
                     {[5, 4, 3, 2, 1].map((star) => {
                       const count = reviews.filter((r) => r.rating === star).length;
                       const pct = totalReviews > 0 ? (count / totalReviews) * 100 : 0;
                       return (
-                        <Link key={star} href={ratingHref(star)} className="flex items-center gap-2 group/bar">
-                          <span className="text-xs text-fg-muted w-3 shrink-0">{star}</span>
+                        <Link key={star} href={ratingHref(star)} className="group/bar flex items-center gap-2">
+                          <span className="w-3 shrink-0 text-xs tabular text-white/55">{star}</span>
                           <svg width="10" height="10" viewBox="0 0 24 24" className="shrink-0" aria-hidden="true">
                             <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="var(--warn-500)" />
                           </svg>
-                          <div className="flex-1 h-1.5 bg-bg-subtle rounded-full overflow-hidden">
-                            <div className="h-full bg-amber-400 rounded-full transition-all group-hover/bar:bg-amber-500" style={{ width: `${pct}%` }} />
+                          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/[0.05]">
+                            <div
+                              className="h-full rounded-full transition-all"
+                              style={{ width: `${pct}%`, background: "linear-gradient(90deg, #6366F1, #A5B4FC)" }}
+                            />
                           </div>
-                          <span className="text-[10px] text-fg-subtle w-4 shrink-0 text-right">{count}</span>
+                          <span className="w-4 shrink-0 text-right text-[10px] tabular text-white/45">{count}</span>
                         </Link>
                       );
                     })}
@@ -455,29 +474,29 @@ export default async function OpinionesPage({
 
             {/* Top rated products */}
             {topProductsWithStats.length > 0 && (
-              <div className="bg-bg-elevated border border-border rounded-2xl overflow-hidden">
-                <div className="px-4 py-3 border-b border-border-subtle">
-                  <p className="text-[11px] font-bold text-fg-subtle uppercase tracking-widest">Mejor valorados</p>
+              <div className="overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.02]">
+                <div className="border-b border-white/[0.06] px-4 py-3">
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-white/45">Mejor valorados</p>
                 </div>
-                <div className="divide-y divide-[#F8FAFC]">
+                <div className="divide-y divide-white/[0.05]">
                   {topProductsWithStats.map(({ product, avg, count }, i) => (
                     <ProductModalButton
                       key={product.id}
                       slug={product.slug}
                       aria-label={`Ver ${product.name}`}
-                      className="flex items-center gap-3 px-4 py-3 hover:bg-bg-subtle transition-colors w-full text-left"
+                      className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-white/[0.03]"
                     >
-                      <span className="text-xs font-bold text-fg-subtle w-4 shrink-0">#{i + 1}</span>
+                      <span className="w-4 shrink-0 text-xs font-bold tabular text-white/40">#{i + 1}</span>
                       {product.image ? (
-                        <img src={product.image} alt={product.name} className="w-9 h-9 rounded-lg object-contain bg-bg-subtle border border-border p-0.5 shrink-0" />
+                        <img src={product.image} alt={product.name} className="h-9 w-9 shrink-0 rounded-lg border border-white/[0.08] bg-white/[0.04] object-contain p-0.5" />
                       ) : (
-                        <div className="w-9 h-9 rounded-lg bg-bg-subtle shrink-0" />
+                        <div className="h-9 w-9 shrink-0 rounded-lg bg-white/[0.04]" />
                       )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-fg line-clamp-1">{product.name}</p>
-                        <div className="flex items-center gap-1 mt-0.5">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-semibold text-white/85 line-clamp-1">{product.name}</p>
+                        <div className="mt-0.5 flex items-center gap-1">
                           <Stars rating={avg} size={10} />
-                          <span className="text-[10px] text-fg-subtle">{avg.toFixed(1)} · {count} op.</span>
+                          <span className="text-[10px] tabular text-white/45">{avg.toFixed(1)} · {count} op.</span>
                         </div>
                       </div>
                     </ProductModalButton>
@@ -489,7 +508,7 @@ export default async function OpinionesPage({
             {/* Link to forum */}
             <Link
               href="/comunidad"
-              className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl text-sm font-semibold text-fg-muted bg-bg-elevated border border-border hover:border-brand-600/30 hover:text-brand-600 transition"
+              className="flex w-full items-center justify-center gap-2 rounded-full border border-white/12 bg-white/[0.03] px-4 py-3 text-sm font-semibold text-white/70 transition-all hover:border-brand-400/40 hover:text-brand-200"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />

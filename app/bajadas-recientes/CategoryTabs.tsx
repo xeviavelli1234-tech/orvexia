@@ -41,9 +41,9 @@ export function CategoryTabs({ categories }: { categories: string[] }) {
             key={cat}
             onClick={() => navigate(cat)}
             disabled={pending}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border active:scale-[0.97] ${
               active
-                ? "bg-emerald-400/15 text-emerald-200 border-emerald-400/50 shadow-[0_0_14px_-4px_rgba(16,185,129,0.5)]"
+                ? "bg-brand-500 text-white border-brand-400 shadow-[0_0_18px_-4px_rgba(99,102,241,0.7)]"
                 : "bg-white/[0.025] text-white/65 border-white/[0.10] hover:border-white/30 hover:text-white"
             } disabled:opacity-60`}
           >
@@ -51,7 +51,7 @@ export function CategoryTabs({ categories }: { categories: string[] }) {
           </button>
         );
       })}
-      {pending && <span className="ml-1 font-mono-ui text-[10px] uppercase tracking-wider text-emerald-300 self-center animate-pulse">loading…</span>}
+      {pending && <span className="ml-1 self-center animate-pulse text-[11px] font-semibold text-brand-300">Cargando…</span>}
     </div>
   );
 }

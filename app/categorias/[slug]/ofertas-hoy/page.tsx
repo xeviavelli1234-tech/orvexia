@@ -94,51 +94,64 @@ export default async function OfertasHoyPage({ params }: { params: Promise<{ slu
   };
 
   return (
-    <main className="min-h-screen max-w-7xl mx-auto px-4 sm:px-6 py-8">
+    <main className="relative min-h-screen bg-[#050310] text-white/90">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(breadcrumbsJsonLd) }} />
 
-      <nav className="flex items-center gap-2 font-mono-ui text-[10px] uppercase tracking-wider text-white/40 mb-4">
-        <Link href="/" className="hover:text-cyan-300">~/</Link>
-        <span className="text-white/25">›</span>
-        <Link href="/categorias" className="hover:text-cyan-300">categorias</Link>
-        <span className="text-white/25">›</span>
-        <Link href={`/categorias/${meta.slug}`} className="hover:text-cyan-300">{meta.slug}</Link>
-        <span className="text-white/25">›</span>
-        <span className="text-cyan-300">ofertas-hoy</span>
-      </nav>
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-40 left-1/2 h-[400px] w-[900px] -translate-x-1/2 rounded-full"
+        style={{ background: "radial-gradient(ellipse at center, rgba(129,140,248,0.14), transparent 65%)" }}
+      />
 
-      <header className="mb-8">
-        <h1 className="text-3xl sm:text-4xl font-bold text-white">
-          {meta.icon} Ofertas de {meta.label.toLowerCase()} hoy
-        </h1>
-        <p className="mt-3 text-white/70 max-w-3xl">
-          {products.length} {meta.label.toLowerCase()} con descuento activo a fecha de {todayLabel}.
-          Hasta un <strong className="text-cyan-300">{maxDiscount}% menos</strong> frente al precio anterior.
-          Los precios se actualizan cada pocas horas desde las tiendas oficiales.
-        </p>
-      </header>
+      <div className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6">
+        <nav aria-label="Miga de pan" className="mb-6 flex items-center gap-2 text-[11px] font-semibold text-white/40">
+          <Link href="/" className="transition-colors hover:text-brand-200">Inicio</Link>
+          <span aria-hidden className="text-white/20">›</span>
+          <Link href="/categorias" className="transition-colors hover:text-brand-200">Categorías</Link>
+          <span aria-hidden className="text-white/20">›</span>
+          <Link href={`/categorias/${meta.slug}`} className="transition-colors hover:text-brand-200">{meta.label}</Link>
+          <span aria-hidden className="text-white/20">›</span>
+          <span className="text-brand-300">Ofertas de hoy</span>
+        </nav>
 
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-        {cards.map((p, i) => (
-          <ProductCard key={p.id} product={p} priority={i < 4} />
-        ))}
-      </section>
+        <header className="reveal mb-8">
+          <h1
+            className="font-extrabold tracking-tight text-white"
+            style={{ fontSize: "clamp(1.9rem, 4vw, 2.7rem)", lineHeight: 1.08, letterSpacing: "-0.03em", textWrap: "balance" }}
+          >
+            {meta.icon} Ofertas de {meta.label.toLowerCase()} hoy
+          </h1>
+          <p className="mt-3 max-w-3xl text-[15px] leading-relaxed text-white/50" style={{ textWrap: "pretty" }}>
+            {products.length} {meta.label.toLowerCase()} con descuento activo a fecha de {todayLabel}.
+            Hasta un <strong className="font-semibold text-brand-200">{maxDiscount}% menos</strong> frente al precio anterior.
+            Los precios se actualizan cada pocas horas desde las tiendas oficiales.
+          </p>
+        </header>
 
-      <section className="mt-12 prose prose-invert max-w-3xl text-white/80">
-        <h2 className="text-xl font-semibold text-white">¿Cómo elegimos las ofertas?</h2>
-        <p>
-          Solo mostramos {meta.label.toLowerCase()} con descuento real y disponibilidad en stock.
-          Cruzamos el precio actual con el histórico de cada producto para descartar falsos chollos
-          (subidas seguidas de bajadas). Si tienes dudas sobre si un precio es bueno, abre la ficha
-          del producto y revisa el gráfico de evolución de los últimos 30 días.
-        </p>
-        <h2 className="text-xl font-semibold text-white">Otras formas de buscar</h2>
-        <ul>
-          <li><Link href={`/categorias/${meta.slug}/mejor-precio`} className="text-cyan-300">{meta.label} ordenados por mejor precio</Link></li>
-          <li><Link href={`/categorias/${meta.slug}`} className="text-cyan-300">Ver toda la categoría de {meta.label.toLowerCase()}</Link></li>
-          <li><Link href="/bajadas-recientes" className="text-cyan-300">Bajadas de precio recientes en todas las categorías</Link></li>
-        </ul>
-      </section>
+        <section className="reveal grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {cards.map((p, i) => (
+            <ProductCard key={p.id} product={p} priority={i < 4} />
+          ))}
+        </section>
+
+        <div aria-hidden className="divider-glow mx-auto mt-12 max-w-3xl" />
+
+        <section className="reveal mt-10 max-w-3xl space-y-4">
+          <h2 className="text-xl font-extrabold tracking-tight text-white">¿Cómo elegimos las ofertas?</h2>
+          <p className="text-sm leading-relaxed text-white/55">
+            Solo mostramos {meta.label.toLowerCase()} con descuento real y disponibilidad en stock.
+            Cruzamos el precio actual con el histórico de cada producto para descartar falsos chollos
+            (subidas seguidas de bajadas). Si tienes dudas sobre si un precio es bueno, abre la ficha
+            del producto y revisa el gráfico de evolución de los últimos 30 días.
+          </p>
+          <h2 className="pt-2 text-xl font-extrabold tracking-tight text-white">Otras formas de buscar</h2>
+          <ul className="list-disc space-y-1.5 pl-5 text-sm text-white/55">
+            <li><Link href={`/categorias/${meta.slug}/mejor-precio`} className="font-semibold text-brand-300 underline decoration-dotted underline-offset-2 hover:text-brand-200">{meta.label} ordenados por mejor precio</Link></li>
+            <li><Link href={`/categorias/${meta.slug}`} className="font-semibold text-brand-300 underline decoration-dotted underline-offset-2 hover:text-brand-200">Ver toda la categoría de {meta.label.toLowerCase()}</Link></li>
+            <li><Link href="/bajadas-recientes" className="font-semibold text-brand-300 underline decoration-dotted underline-offset-2 hover:text-brand-200">Bajadas de precio recientes en todas las categorías</Link></li>
+          </ul>
+        </section>
+      </div>
     </main>
   );
 }

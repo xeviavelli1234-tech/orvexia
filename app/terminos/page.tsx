@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SectionChip } from "@/app/_components/SectionPrimitives";
 
 export const metadata: Metadata = {
   title: "Términos del Servicio y Política de Reembolso | Orvexia Repricer",
@@ -27,7 +28,7 @@ const SECTIONS = [
         <p>
           Estos Términos se aplican exclusivamente al Servicio de suscripción. El uso del
           comparador público de orvexia.es se rige por el{" "}
-          <Link href="/aviso-legal" className="text-[#4F46E5] hover:underline font-medium">
+          <Link href="/aviso-legal" className="font-medium text-brand-300 hover:text-brand-200 hover:underline">
             Aviso Legal
           </Link>{" "}
           general del sitio.
@@ -53,8 +54,8 @@ const SECTIONS = [
             "El Servicio es 'best-effort': dependemos de la disponibilidad de SP-API y de los límites de cuota que Amazon impone. No ofrecemos un acuerdo de nivel de servicio (SLA) con garantía de tiempo de actividad.",
           ].map((item) => (
             <li key={item} className="flex gap-3 items-start text-sm">
-              <span className="mt-1 w-1.5 h-1.5 rounded-full bg-[#4F46E5] flex-shrink-0" />
-              <span className="text-fg-muted">{item}</span>
+              <span className="mt-1 w-1.5 h-1.5 rounded-full bg-brand-400 flex-shrink-0" />
+              <span className="text-white/60">{item}</span>
             </li>
           ))}
         </ul>
@@ -78,8 +79,8 @@ const SECTIONS = [
             "El período de prueba es de un solo uso por cuenta. Cancelar y volver a suscribirse no concede un nuevo trial.",
           ].map((item) => (
             <li key={item} className="flex gap-3 items-start text-sm">
-              <span className="mt-1 w-1.5 h-1.5 rounded-full bg-[#4F46E5] flex-shrink-0" />
-              <span className="text-fg-muted">{item}</span>
+              <span className="mt-1 w-1.5 h-1.5 rounded-full bg-brand-400 flex-shrink-0" />
+              <span className="text-white/60">{item}</span>
             </li>
           ))}
         </ul>
@@ -94,22 +95,24 @@ const SECTIONS = [
           El Servicio se factura mediante una <strong>suscripción mensual recurrente</strong> de
           precio plano. Tarifa vigente:
         </p>
-        <table className="w-full text-sm border-collapse mt-1 mb-3">
-          <thead>
-            <tr className="bg-bg-subtle">
-              <th className="text-left px-3 py-2 font-semibold text-fg rounded-tl-lg">Plan</th>
-              <th className="text-left px-3 py-2 font-semibold text-fg">Catálogo incluido</th>
-              <th className="text-left px-3 py-2 font-semibold text-fg rounded-tr-lg">Precio (IVA incluido)</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[#F1F5F9]">
-            <tr>
-              <td className="px-3 py-2 text-fg font-semibold">Pro</td>
-              <td className="px-3 py-2 text-fg-muted">SKUs ilimitados</td>
-              <td className="px-3 py-2 text-fg-muted">19 €/mes</td>
-            </tr>
-          </tbody>
-        </table>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border-collapse mt-1 mb-3">
+            <thead>
+              <tr className="bg-white/[0.04]">
+                <th className="text-left px-3 py-2 font-semibold text-white/85 rounded-tl-lg">Plan</th>
+                <th className="text-left px-3 py-2 font-semibold text-white/85">Catálogo incluido</th>
+                <th className="text-left px-3 py-2 font-semibold text-white/85 rounded-tr-lg">Precio (IVA incluido)</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/[0.06]">
+              <tr>
+                <td className="px-3 py-2 text-white/85 font-semibold">Pro</td>
+                <td className="px-3 py-2 text-white/60">SKUs ilimitados</td>
+                <td className="px-3 py-2 text-white/60">19 €/mes</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
         <ul className="space-y-2 list-none">
           {[
             "El precio mostrado incluye el IVA español del 21%. Para operaciones intracomunitarias B2B con NIF-IVA válido puede aplicarse la inversión del sujeto pasivo conforme a la normativa europea.",
@@ -119,8 +122,8 @@ const SECTIONS = [
             "Orvexia se reserva el derecho a modificar el precio con un preaviso mínimo de 30 días por correo electrónico. El Cliente podrá cancelar antes de la entrada en vigor del nuevo precio sin coste adicional.",
           ].map((item) => (
             <li key={item} className="flex gap-3 items-start text-sm">
-              <span className="mt-1 w-1.5 h-1.5 rounded-full bg-[#4F46E5] flex-shrink-0" />
-              <span className="text-fg-muted">{item}</span>
+              <span className="mt-1 w-1.5 h-1.5 rounded-full bg-brand-400 flex-shrink-0" />
+              <span className="text-white/60">{item}</span>
             </li>
           ))}
         </ul>
@@ -141,8 +144,8 @@ const SECTIONS = [
             "Escribiendo a orvexiaesp@gmail.com con la solicitud de cancelación. Confirmaremos por correo en menos de 48 horas hábiles.",
           ].map((item) => (
             <li key={item} className="flex gap-3 items-start text-sm">
-              <span className="mt-1 w-1.5 h-1.5 rounded-full bg-[#4F46E5] flex-shrink-0" />
-              <span className="text-fg-muted">{item}</span>
+              <span className="mt-1 w-1.5 h-1.5 rounded-full bg-brand-400 flex-shrink-0" />
+              <span className="text-white/60">{item}</span>
             </li>
           ))}
         </ul>
@@ -158,8 +161,8 @@ const SECTIONS = [
             "El Cliente puede solicitar la eliminación inmediata de sus datos en cualquier momento (ver Política de Privacidad).",
           ].map((item) => (
             <li key={item} className="flex gap-3 items-start text-sm">
-              <span className="mt-1 w-1.5 h-1.5 rounded-full bg-[#4F46E5] flex-shrink-0" />
-              <span className="text-fg-muted">{item}</span>
+              <span className="mt-1 w-1.5 h-1.5 rounded-full bg-brand-400 flex-shrink-0" />
+              <span className="text-white/60">{item}</span>
             </li>
           ))}
         </ul>
@@ -186,14 +189,14 @@ const SECTIONS = [
             "Cobro tras un trial gratuito que el Cliente intentó cancelar y no pudo hacerlo por un fallo técnico de la plataforma: reembolso íntegro del primer cargo.",
           ].map((item) => (
             <li key={item} className="flex gap-3 items-start text-sm">
-              <span className="mt-1 w-1.5 h-1.5 rounded-full bg-[#4F46E5] flex-shrink-0" />
-              <span className="text-fg-muted">{item}</span>
+              <span className="mt-1 w-1.5 h-1.5 rounded-full bg-brand-400 flex-shrink-0" />
+              <span className="text-white/60">{item}</span>
             </li>
           ))}
         </ul>
         <p className="mb-3">
           <strong>Solicitudes de reembolso:</strong> deben dirigirse a{" "}
-          <a href="mailto:orvexiaesp@gmail.com" className="text-[#4F46E5] hover:underline">
+          <a href="mailto:orvexiaesp@gmail.com" className="font-medium text-brand-300 hover:text-brand-200 hover:underline">
             orvexiaesp@gmail.com
           </a>{" "}
           en el plazo máximo de 14 días naturales desde el cargo. Indica el correo de la
@@ -226,8 +229,8 @@ const SECTIONS = [
             "No utilizar el Servicio para actividades fraudulentas, manipulación de mercado, fijación concertada de precios u otras conductas anticompetitivas.",
           ].map((item) => (
             <li key={item} className="flex gap-3 items-start text-sm">
-              <span className="mt-1 w-1.5 h-1.5 rounded-full bg-[#4F46E5] flex-shrink-0" />
-              <span className="text-fg-muted">{item}</span>
+              <span className="mt-1 w-1.5 h-1.5 rounded-full bg-brand-400 flex-shrink-0" />
+              <span className="text-white/60">{item}</span>
             </li>
           ))}
         </ul>
@@ -251,8 +254,8 @@ const SECTIONS = [
             "La cuenta y los datos del Cliente se conservan durante 90 días tras la suspensión por impago. Pasado ese plazo se eliminan.",
           ].map((item) => (
             <li key={item} className="flex gap-3 items-start text-sm">
-              <span className="mt-1 w-1.5 h-1.5 rounded-full bg-[#4F46E5] flex-shrink-0" />
-              <span className="text-fg-muted">{item}</span>
+              <span className="mt-1 w-1.5 h-1.5 rounded-full bg-brand-400 flex-shrink-0" />
+              <span className="text-white/60">{item}</span>
             </li>
           ))}
         </ul>
@@ -275,8 +278,8 @@ const SECTIONS = [
             "Daños indirectos, pérdida de beneficios, pérdida de oportunidades comerciales o daños a la reputación.",
           ].map((item) => (
             <li key={item} className="flex gap-3 items-start text-sm">
-              <span className="mt-1 w-1.5 h-1.5 rounded-full bg-[#4F46E5] flex-shrink-0" />
-              <span className="text-fg-muted">{item}</span>
+              <span className="mt-1 w-1.5 h-1.5 rounded-full bg-brand-400 flex-shrink-0" />
+              <span className="text-white/60">{item}</span>
             </li>
           ))}
         </ul>
@@ -311,11 +314,11 @@ const SECTIONS = [
       <p>
         El tratamiento de datos personales del Cliente y de los datos obtenidos vía Amazon
         SP-API se rige por la{" "}
-        <Link href="/politica-privacidad" className="text-[#4F46E5] hover:underline font-medium">
+        <Link href="/politica-privacidad" className="font-medium text-brand-300 hover:text-brand-200 hover:underline">
           Política de Privacidad
         </Link>
         {" "}y la{" "}
-        <Link href="/politica-datos-amazon" className="text-[#4F46E5] hover:underline font-medium">
+        <Link href="/politica-datos-amazon" className="font-medium text-brand-300 hover:text-brand-200 hover:underline">
           Política de Protección de Datos de Amazon
         </Link>
         , que forman parte integrante de estos Términos.
@@ -353,7 +356,7 @@ const SECTIONS = [
             href="https://ec.europa.eu/consumers/odr"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[#4F46E5] hover:underline"
+            className="font-medium text-brand-300 hover:text-brand-200 hover:underline"
           >
             ec.europa.eu/consumers/odr
           </a>
@@ -374,8 +377,8 @@ const SECTIONS = [
             ["Portal del cliente", "orvexia.es/sellers/facturacion"],
           ].map(([k, v]) => (
             <li key={k as string} className="flex gap-2 text-sm">
-              <span className="font-semibold text-fg flex-shrink-0">{k}:</span>
-              <span className="text-fg-muted">{v}</span>
+              <span className="font-semibold text-white/85 flex-shrink-0">{k}:</span>
+              <span className="text-white/60">{v}</span>
             </li>
           ))}
         </ul>
@@ -386,26 +389,28 @@ const SECTIONS = [
 
 export default function TerminosPage() {
   return (
-    <main>
+    <main className="min-h-screen bg-[#050310] text-white/90">
       {/* Header */}
-      <div className="relative border-b border-white/[0.06] overflow-hidden">
-        <div className="absolute inset-0 bg-grid-cyber opacity-40 pointer-events-none" />
-        <div className="absolute -top-32 left-1/3 w-[800px] h-[400px] rounded-full pointer-events-none"
-             style={{ background: "radial-gradient(ellipse, rgba(129,140,248,0.16), transparent 65%)" }} />
-        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 py-12">
-          <div className="flex items-center gap-2 font-mono-ui text-[10px] uppercase tracking-wider text-white/40 mb-4">
-            <Link href="/" className="hover:text-cyan-300 transition-colors">~/</Link>
-            <span className="text-white/25">›</span>
-            <span className="text-cyan-300">terminos</span>
+      <div className="relative overflow-hidden border-b border-white/[0.05]">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-32 left-1/2 h-72 w-[720px] -translate-x-1/2 rounded-full"
+          style={{ background: "radial-gradient(ellipse, rgba(129,140,248,0.14), transparent 70%)" }}
+        />
+        <div className="reveal relative mx-auto max-w-3xl px-4 sm:px-6 py-14 sm:py-16">
+          <div className="flex justify-center sm:justify-start">
+            <SectionChip label="Legal · Términos y reembolsos" />
           </div>
-          <p className="font-mono-ui text-[10px] uppercase tracking-wider text-cyan-300 mb-2">▸ /legal · saas · refunds</p>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-3">
-            Términos del Servicio y <span className="text-gradient-neon">Política de Reembolso</span>
+          <h1
+            className="mt-6 font-extrabold tracking-tight text-white"
+            style={{ fontSize: "clamp(2rem, 4.6vw, 3rem)", lineHeight: 1.08, letterSpacing: "-0.03em", textWrap: "balance" }}
+          >
+            Términos del Servicio y Política de Reembolso
           </h1>
-          <p className="text-sm text-white/55">
+          <p className="mt-4 text-sm text-white/60">
             Última actualización: <strong className="text-white/85">27 de mayo de 2026</strong>
           </p>
-          <p className="mt-3 text-sm text-white/55 leading-relaxed max-w-2xl">
+          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/60" style={{ textWrap: "pretty" }}>
             Estos términos regulan el contrato de suscripción a{" "}
             <strong className="text-white/85">Orvexia Repricer</strong>, el servicio SaaS de
             reprecio automático para vendedores de Amazon España. Incluye el régimen de
@@ -415,47 +420,45 @@ export default function TerminosPage() {
       </div>
 
       {/* Índice */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
-        <div className="rounded-2xl p-5 bg-cyan-400/[0.06] border border-cyan-400/25">
-          <p className="font-mono-ui text-[10px] font-bold text-cyan-300 uppercase tracking-[0.2em] mb-3">▸ /index</p>
-          <ol className="grid sm:grid-cols-2 gap-1">
+      <div className="mx-auto max-w-3xl px-4 sm:px-6 py-6">
+        <nav aria-label="Índice del documento" className="rounded-2xl border border-brand-400/20 bg-brand-400/[0.05] p-6">
+          <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-brand-300">Índice</p>
+          <ol className="grid gap-1.5 sm:grid-cols-2">
             {SECTIONS.map((s, i) => (
               <li key={s.title}>
                 <a
                   href={`#seccion-${i + 1}`}
-                  className="text-sm text-cyan-200 hover:text-cyan-100 hover:underline transition-colors"
+                  className="text-sm text-white/65 transition-colors hover:text-brand-200 hover:underline"
                 >
                   {s.title}
                 </a>
               </li>
             ))}
           </ol>
-        </div>
+        </nav>
       </div>
 
       {/* Secciones */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 pb-16 space-y-4">
+      <div className="mx-auto max-w-3xl px-4 sm:px-6 pb-20 space-y-3">
         {SECTIONS.map((s, i) => (
           <article
             key={s.title}
             id={`seccion-${i + 1}`}
-            className="bg-bg-elevated rounded-2xl border border-white/[0.08] p-6 scroll-mt-6"
+            className="scroll-mt-6 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-6 sm:p-7"
           >
-            <h2 className="text-base font-bold text-white mb-4">{s.title}</h2>
-            <div className="text-sm leading-relaxed text-white/75">{s.content}</div>
+            <h2 className="mb-4 text-base font-bold text-white">{s.title}</h2>
+            <div className="text-sm leading-relaxed text-white/70">{s.content}</div>
           </article>
         ))}
 
-        <div className="text-center pt-4">
-          <p className="font-mono-ui text-[10px] uppercase tracking-wider text-white/40">
-            orvexia · orvexia.es ·{" "}
-            <a href="mailto:orvexiaesp@gmail.com" className="hover:text-cyan-300 transition-colors">
+        <div className="pt-6 text-center">
+          <p className="text-xs text-white/40">
+            Orvexia · orvexia.es ·{" "}
+            <a href="mailto:orvexiaesp@gmail.com" className="transition-colors hover:text-brand-300">
               orvexiaesp@gmail.com
             </a>
           </p>
-          <p className="font-mono-ui text-[10px] uppercase tracking-wider text-white/40 mt-1">
-            v1.0 · last_rev=2026-05-27
-          </p>
+          <p className="mt-1 text-xs text-white/40">Última revisión: 27 de mayo de 2026</p>
         </div>
       </div>
     </main>

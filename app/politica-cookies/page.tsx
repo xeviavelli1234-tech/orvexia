@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SectionChip } from "@/app/_components/SectionPrimitives";
 
 export const metadata: Metadata = {
   title: "Politica de cookies",
@@ -45,21 +46,33 @@ const sections = [
 
 export default function CookiePolicyPage() {
   return (
-    <main>
-      <div className="mx-auto max-w-4xl px-4 sm:px-6 py-12 sm:py-16">
-        <p className="font-mono-ui text-[10px] uppercase tracking-wider text-cyan-300 mb-2">▸ /legal · cookies</p>
-        <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
-          Política de <span className="text-gradient-neon">cookies</span>
-        </h1>
-        <p className="mt-4 text-sm leading-relaxed text-white/65">
-          Esta política explica cómo usamos cookies en Orvexia y cómo puedes gestionar tu consentimiento.
-        </p>
+    <main className="min-h-screen bg-[#050310] text-white/90">
+      <div className="mx-auto max-w-3xl px-4 sm:px-6 py-14 sm:py-20">
+        <header className="reveal relative">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -top-24 left-1/2 h-64 w-[560px] -translate-x-1/2 rounded-full"
+            style={{ background: "radial-gradient(ellipse, rgba(129,140,248,0.15), transparent 70%)" }}
+          />
+          <div className="relative flex justify-center sm:justify-start">
+            <SectionChip label="Legal · Cookies" />
+          </div>
+          <h1
+            className="relative mt-6 font-extrabold tracking-tight text-white"
+            style={{ fontSize: "clamp(2rem, 4.6vw, 3rem)", lineHeight: 1.08, letterSpacing: "-0.03em", textWrap: "balance" }}
+          >
+            Política de cookies
+          </h1>
+          <p className="relative mt-4 max-w-2xl text-[15px] leading-relaxed text-white/60" style={{ textWrap: "pretty" }}>
+            Esta política explica cómo usamos cookies en Orvexia y cómo puedes gestionar tu consentimiento.
+          </p>
+        </header>
 
-        <section className="mt-8 space-y-3">
+        <section className="mt-10 space-y-3">
           {sections.map((item) => (
-            <article key={item.title} className="rounded-2xl border border-white/[0.08] bg-bg-elevated p-5">
+            <article key={item.title} className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-6">
               <h2 className="text-base font-bold text-white">{item.title}</h2>
-              <p className="mt-2 text-sm leading-relaxed text-white/65">{item.content}</p>
+              <p className="mt-2 text-sm leading-relaxed text-white/70">{item.content}</p>
             </article>
           ))}
         </section>

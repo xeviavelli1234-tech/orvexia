@@ -4,7 +4,6 @@ import React from "react";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useProfile } from "@/components/ProfileProvider";
-import { FuturisticFX } from "@/components/FuturisticFX";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -88,11 +87,11 @@ function Section({ title, description, children, collapsible = false, defaultOpe
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="bg-bg-elevated rounded-2xl border border-[#E8EDF3] shadow-[0_1px_4px_rgba(0,0,0,0.06)] overflow-hidden">
+    <div className="reveal rounded-2xl border border-white/[0.07] bg-white/[0.02] overflow-hidden transition-colors hover:border-brand-400/25">
       <button
         type="button"
         onClick={() => collapsible && setOpen((o) => !o)}
-        className={`w-full px-6 py-4 flex items-center justify-between gap-3 text-left ${collapsible ? "hover:bg-bg-subtle transition-colors" : "cursor-default"}`}
+        className={`w-full px-6 py-4 flex items-center justify-between gap-3 text-left ${collapsible ? "hover:bg-white/[0.03] transition-colors" : "cursor-default"}`}
       >
         <div>
           <h2 className="text-[15px] font-bold text-fg">{title}</h2>
@@ -108,7 +107,7 @@ function Section({ title, description, children, collapsible = false, defaultOpe
         )}
       </button>
       {(!collapsible || open) && (
-        <div className="border-t border-border-subtle px-6 py-5">{children}</div>
+        <div className="border-t border-white/[0.06] px-6 py-5">{children}</div>
       )}
     </div>
   );
@@ -141,7 +140,7 @@ function Input({
       maxLength={maxLength}
       disabled={disabled}
       autoComplete={autoComplete}
-      className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-bg-elevated text-[14px] text-fg placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-brand-600 disabled:bg-bg-subtle disabled:opacity-60 disabled:cursor-not-allowed transition-all"
+      className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 bg-white/[0.03] text-[14px] text-white placeholder-white/25 focus:outline-none focus:ring-2 focus:ring-brand-400/20 focus:border-brand-400/60 disabled:bg-white/[0.02] disabled:opacity-60 disabled:cursor-not-allowed transition-all"
     />
   );
 }
@@ -154,8 +153,8 @@ function SaveBtn({ loading, label = "Guardar cambios", onClick, disabled }: {
       type="button"
       onClick={onClick}
       disabled={loading || disabled}
-      style={{ background: "linear-gradient(135deg, #2563EB, #1D4ED8)" }}
-      className="px-5 py-2.5 rounded-xl text-[13px] font-semibold text-white shadow-[0_4px_12px_rgba(37,99,235,0.3)] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+      style={{ boxShadow: "0 8px 24px -6px rgba(99,102,241,0.7)" }}
+      className="shine-on-hover px-6 py-2.5 rounded-full text-[13px] font-bold text-white bg-brand-500 hover:bg-brand-400 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
     >
       {loading ? "Guardando…" : label}
     </button>
@@ -439,7 +438,7 @@ export function ProfileClient() {
     return (
       <main className="min-h-screen bg-bg-subtle">
         {/* Skeleton header */}
-        <div className="w-full animate-pulse bg-[#1E293B]">
+        <div className="w-full animate-pulse border-b border-white/[0.06] bg-white/[0.03]">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 flex items-center gap-5">
             <div className="w-20 h-20 rounded-full bg-white/10 shrink-0" />
             <div className="flex flex-col gap-2">
@@ -465,24 +464,20 @@ export function ProfileClient() {
 
       {/* Profile header */}
       <div className="relative w-full overflow-hidden border-b border-white/[0.06]">
-        <div className="absolute inset-0 bg-grid-cyber opacity-50 pointer-events-none" />
-        <div className="absolute inset-0 pointer-events-none">
-          <FuturisticFX particleCount={4} streamCount={2} beam={false} seed={profile.name.length} />
-        </div>
         <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[900px] h-[400px] rounded-full halo-breathe pointer-events-none"
              style={{ background: "radial-gradient(ellipse, rgba(129,140,248,0.20), transparent 65%)" }} />
-        <div className="relative max-w-3xl mx-auto px-4 sm:px-6 py-10 flex items-center gap-5">
-          <div className="rounded-full shrink-0" style={{ boxShadow: "0 0 0 2px rgba(94,234,212,0.35), 0 0 40px -6px rgba(94,234,212,0.5)" }}>
+        <div className="reveal relative max-w-3xl mx-auto px-4 sm:px-6 py-10 flex items-center gap-5">
+          <div className="rounded-full shrink-0" style={{ boxShadow: "0 0 0 2px rgba(129,140,248,0.35), 0 0 40px -6px rgba(129,140,248,0.5)" }}>
             <Avatar name={profile.name} color={profile.avatarColor} emoji={profile.avatarEmoji} avatarUrl={avatarUrl} size={80} />
           </div>
           <div className="min-w-0">
-            <p className="font-mono-ui text-[10px] uppercase tracking-wider text-cyan-300/80 mb-1">▸ /profile</p>
-            <h1 className="text-[22px] font-extrabold text-white leading-tight truncate">{profile.name}</h1>
+            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-brand-300 mb-1">Mi perfil</p>
+            <h1 className="text-[22px] font-extrabold tracking-tight text-white leading-tight truncate" style={{ letterSpacing: "-0.03em" }}>{profile.name}</h1>
             <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-              <span className="font-mono-ui text-[10px] uppercase tracking-wider text-white/45">since · {joinedDate}</span>
+              <span className="text-[11px] text-white/45">Miembro desde {joinedDate}</span>
               <span className="w-1 h-1 rounded-full bg-white/25" />
-              <span className="inline-flex items-center gap-1 font-mono-ui text-[10px] font-semibold px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.10] text-white/65">
-                {profile.isGoogleUser ? "🔗 google" : "✉ email"}
+              <span className="inline-flex items-center gap-1 rounded-full border border-brand-400/25 bg-brand-400/10 px-2 py-0.5 text-[10px] font-semibold text-brand-200">
+                {profile.isGoogleUser ? "🔗 Google" : "✉ Email"}
               </span>
             </div>
           </div>
@@ -495,10 +490,10 @@ export function ProfileClient() {
         <Section title="Apariencia" description="Tu foto, emoji y color de avatar">
 
           {/* Photo upload — full-width card at top */}
-          <div className="flex items-center gap-5 p-4 rounded-2xl mb-6" style={{ background: "linear-gradient(135deg, #F8FAFC, #F1F5F9)", border: "1px solid #E2E8F0" }}>
+          <div className="flex items-center gap-5 p-4 rounded-2xl mb-6 border border-white/[0.08] bg-white/[0.03]">
             <div
-              className={`relative group cursor-pointer rounded-full shrink-0 transition-transform ${photoDragOver ? "scale-105 ring-4 ring-[#2563EB] ring-offset-2" : "hover:scale-105"}`}
-              style={{ boxShadow: "0 4px 16px rgba(0,0,0,0.15)" }}
+              className={`relative group cursor-pointer rounded-full shrink-0 transition-transform ${photoDragOver ? "scale-105 ring-4 ring-brand-400 ring-offset-2 ring-offset-[#0A0D1A]" : "hover:scale-105"}`}
+              style={{ boxShadow: "0 0 24px -6px rgba(129,140,248,0.45)" }}
               onDragOver={(e) => { e.preventDefault(); setPhotoDragOver(true); }}
               onDragLeave={() => setPhotoDragOver(false)}
               onDrop={(e) => { e.preventDefault(); setPhotoDragOver(false); const file = e.dataTransfer.files[0]; if (file) previewPhoto(file); }}
@@ -526,24 +521,24 @@ export function ProfileClient() {
                 {pendingPhotoUrl ? (
                   <>
                     <button type="button" onClick={savePhoto} disabled={photoUploading}
-                      className="px-3.5 py-1.5 rounded-lg text-[12px] font-semibold text-white transition-all disabled:opacity-50"
-                      style={{ background: "linear-gradient(135deg,#2563EB,#1D4ED8)" }}>
+                      className="px-4 py-1.5 rounded-full text-[12px] font-bold text-white bg-brand-500 hover:bg-brand-400 transition-all active:scale-[0.97] disabled:opacity-50"
+                      style={{ boxShadow: "0 6px 20px -6px rgba(99,102,241,0.7)" }}>
                       {photoUploading ? "Guardando…" : "Guardar foto"}
                     </button>
                     <button type="button" onClick={() => setPendingPhotoUrl(null)} disabled={photoUploading}
-                      className="px-3.5 py-1.5 rounded-lg text-[12px] font-semibold text-fg-muted bg-bg-elevated border border-border hover:bg-bg-subtle disabled:opacity-50 transition-all">
+                      className="px-4 py-1.5 rounded-full text-[12px] font-semibold text-white/70 border border-white/12 bg-white/[0.03] hover:border-white/30 hover:bg-white/[0.06] hover:text-white disabled:opacity-50 transition-all">
                       Cancelar
                     </button>
                   </>
                 ) : (
                   <>
                     <button type="button" onClick={() => fileInputRef.current?.click()}
-                      className="px-3.5 py-1.5 rounded-lg text-[12px] font-semibold text-brand-600 bg-bg-elevated border border-brand-200 hover:bg-brand-50 transition-all">
+                      className="px-4 py-1.5 rounded-full text-[12px] font-semibold text-brand-200 border border-brand-400/30 bg-brand-400/10 hover:border-brand-400/50 hover:bg-brand-400/15 transition-all">
                       Subir foto
                     </button>
                     {avatarUrl && (
                       <button type="button" onClick={removePhoto} disabled={photoUploading}
-                        className="px-3.5 py-1.5 rounded-lg text-[12px] font-semibold text-danger-600 bg-bg-elevated border border-[#FECACA] hover:bg-danger-50 disabled:opacity-40 transition-all">
+                        className="px-4 py-1.5 rounded-full text-[12px] font-semibold text-red-300 border border-red-400/25 bg-red-400/10 hover:border-red-400/45 hover:bg-red-400/15 disabled:opacity-40 transition-all">
                         Eliminar
                       </button>
                     )}
@@ -560,8 +555,8 @@ export function ProfileClient() {
                 {AVATAR_EMOJIS.map((e) => (
                   <button key={e || "none"} type="button" onClick={() => setAvatarEmoji(e)}
                     aria-label={e ? `Emoji ${e}` : "Sin emoji"} aria-pressed={avatarEmoji === e}
-                    className={`w-8 h-8 rounded-lg text-base flex items-center justify-center transition-all focus-visible:outline-2 focus-visible:outline-[#2563EB] ${
-                      avatarEmoji === e ? "ring-2 ring-[#2563EB] bg-brand-50 scale-110" : "bg-bg-subtle hover:bg-bg-subtle hover:scale-110"
+                    className={`w-8 h-8 rounded-lg text-base flex items-center justify-center transition-all focus-visible:outline-2 focus-visible:outline-brand-400 ${
+                      avatarEmoji === e ? "ring-2 ring-brand-400 bg-brand-400/10 scale-110" : "bg-white/[0.04] hover:bg-white/[0.08] hover:scale-110"
                     }`}>
                     {e || <span className="text-[10px] font-bold text-fg-subtle">Aa</span>}
                   </button>
@@ -575,8 +570,8 @@ export function ProfileClient() {
                 {AVATAR_COLORS.map((c) => (
                   <button key={c} type="button" onClick={() => setAvatarColor(c)}
                     aria-label={`Color ${c}`} aria-pressed={avatarColor === c}
-                    className={`w-7 h-7 rounded-full transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] ${
-                      avatarColor === c ? "ring-2 ring-offset-2 ring-[#2563EB] scale-125" : "hover:scale-110"
+                    className={`w-7 h-7 rounded-full transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400 ${
+                      avatarColor === c ? "ring-2 ring-offset-2 ring-offset-[#0A0D1A] ring-brand-400 scale-125" : "hover:scale-110"
                     }`}
                     style={{ backgroundColor: c }} />
                 ))}
@@ -605,13 +600,13 @@ export function ProfileClient() {
                 placeholder="Cuéntanos algo sobre ti…"
                 maxLength={160}
                 rows={3}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-bg-elevated text-[14px] text-fg placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-brand-600 resize-none transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 bg-white/[0.03] text-[14px] text-white placeholder-white/25 focus:outline-none focus:ring-2 focus:ring-brand-400/20 focus:border-brand-400/60 resize-none transition-all"
               />
             </Field>
 
             <div className="flex items-center justify-between pt-1">
               {identityDirty && (
-                <p className="text-[12px] text-hot-500 font-medium">Cambios sin guardar</p>
+                <p className="text-[12px] text-amber-300 font-medium">Cambios sin guardar</p>
               )}
               <div className="ml-auto">
                 <SaveBtn loading={identitySaving} onClick={saveIdentity} disabled={!identityDirty} />
@@ -763,7 +758,7 @@ export function ProfileClient() {
               { label: "Email", value: profile.email, icon: "✉️" },
               { label: "Tipo de cuenta", value: profile.isGoogleUser ? "Google" : "Email", icon: profile.isGoogleUser ? "🔗" : "🔒" },
             ].map((s) => (
-              <div key={s.label} className="flex items-center gap-3 flex-1 bg-bg-subtle rounded-xl px-4 py-3 border border-border-subtle">
+              <div key={s.label} className="flex items-center gap-3 flex-1 bg-white/[0.02] rounded-xl px-4 py-3 border border-white/[0.06]">
                 <span className="text-2xl">{s.icon}</span>
                 <div>
                   <p className="text-[11px] font-semibold text-fg-subtle uppercase tracking-wide">{s.label}</p>
@@ -775,10 +770,10 @@ export function ProfileClient() {
         </Section>
 
         {/* ── 4. DANGER ZONE ──────────────────────────────────────────────── */}
-        <div className="bg-bg-elevated rounded-2xl border border-[#FCA5A5] overflow-hidden">
-          <div className="px-6 py-5 border-b border-[#FEE2E2] bg-[#FFF5F5]">
-            <h2 className="text-[15px] font-bold text-[#991B1B]">Zona de peligro</h2>
-            <p className="text-[13px] text-[#B91C1C] mt-0.5">
+        <div className="reveal rounded-2xl border border-red-400/25 bg-white/[0.02] overflow-hidden">
+          <div className="px-6 py-5 border-b border-red-400/15 bg-red-400/[0.06]">
+            <h2 className="text-[15px] font-bold text-red-300">Zona de peligro</h2>
+            <p className="text-[13px] text-red-300/70 mt-0.5">
               Estas acciones son irreversibles. Procede con cuidado.
             </p>
           </div>
@@ -793,7 +788,7 @@ export function ProfileClient() {
               <button
                 type="button"
                 onClick={() => setShowDeleteModal(true)}
-                className="shrink-0 px-4 py-2.5 rounded-xl text-[13px] font-semibold text-white bg-[#DC2626] hover:bg-[#B91C1C] transition-colors focus-visible:outline-2 focus-visible:outline-[#DC2626] focus-visible:outline-offset-2"
+                className="shrink-0 px-5 py-2.5 rounded-full text-[13px] font-semibold text-red-300 border border-red-400/30 bg-red-400/10 hover:border-red-400/50 hover:bg-red-400/15 transition-all active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-red-400 focus-visible:outline-offset-2"
               >
                 Eliminar cuenta
               </button>
@@ -810,11 +805,11 @@ export function ProfileClient() {
           onClick={() => { if (!deleteLoading) setShowDeleteModal(false); }}
         >
           <div
-            className="w-full max-w-md bg-bg-elevated rounded-2xl shadow-2xl p-6 space-y-5"
+            className="w-full max-w-md bg-bg-elevated rounded-2xl border border-white/[0.08] shadow-2xl p-6 space-y-5"
             onClick={(e) => e.stopPropagation()}
           >
             <div>
-              <div className="w-12 h-12 rounded-full bg-[#FEE2E2] flex items-center justify-center text-2xl mx-auto mb-3">
+              <div className="w-12 h-12 rounded-full border border-red-400/25 bg-red-400/10 flex items-center justify-center text-2xl mx-auto mb-3">
                 ⚠️
               </div>
               <h3 className="text-[16px] font-bold text-fg text-center">¿Eliminar tu cuenta?</h3>
@@ -849,7 +844,7 @@ export function ProfileClient() {
                 type="button"
                 onClick={() => { setShowDeleteModal(false); setDeleteConfirmText(""); setDeletePassword(""); }}
                 disabled={deleteLoading}
-                className="flex-1 px-4 py-2.5 rounded-xl text-[13px] font-semibold text-fg-muted bg-bg-subtle hover:bg-bg-muted transition-colors disabled:opacity-50"
+                className="flex-1 px-4 py-2.5 rounded-full text-[13px] font-semibold text-white/70 border border-white/12 bg-white/[0.03] hover:border-white/30 hover:bg-white/[0.06] hover:text-white transition-all disabled:opacity-50"
               >
                 Cancelar
               </button>
@@ -857,7 +852,7 @@ export function ProfileClient() {
                 type="button"
                 onClick={deleteAccount}
                 disabled={deleteConfirmText !== "ELIMINAR" || deleteLoading}
-                className="flex-1 px-4 py-2.5 rounded-xl text-[13px] font-semibold text-white bg-[#DC2626] hover:bg-[#B91C1C] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-2.5 rounded-full text-[13px] font-semibold text-white bg-[#DC2626] hover:bg-[#B91C1C] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {deleteLoading ? "Eliminando…" : "Confirmar eliminación"}
               </button>

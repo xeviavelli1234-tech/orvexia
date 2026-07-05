@@ -181,29 +181,42 @@ export default async function FiltroPage({
   };
 
   return (
-    <main className="min-h-screen max-w-7xl mx-auto px-4 sm:px-6 py-8">
+    <main className="relative min-h-screen bg-[#050310] text-white/90">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(breadcrumbsJsonLd) }} />
 
-      <nav className="flex items-center gap-2 font-mono-ui text-[10px] uppercase tracking-wider text-white/40 mb-4">
-        <Link href="/" className="hover:text-cyan-300">~/</Link>
-        <span className="text-white/25">›</span>
-        <Link href="/categorias" className="hover:text-cyan-300">categorias</Link>
-        <span className="text-white/25">›</span>
-        <Link href={`/categorias/${meta.slug}`} className="hover:text-cyan-300">{meta.slug}</Link>
-        <span className="text-white/25">›</span>
-        <span className="text-cyan-300">{filtro}</span>
-      </nav>
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-40 left-1/2 h-[400px] w-[900px] -translate-x-1/2 rounded-full"
+        style={{ background: "radial-gradient(ellipse at center, rgba(129,140,248,0.14), transparent 65%)" }}
+      />
 
-      <header className="mb-8">
-        <h1 className="text-3xl sm:text-4xl font-bold text-white">{titleH1}</h1>
-        <p className="mt-3 text-white/70 max-w-3xl">{intro}</p>
-      </header>
+      <div className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6">
+        <nav aria-label="Miga de pan" className="mb-6 flex items-center gap-2 text-[11px] font-semibold text-white/40">
+          <Link href="/" className="transition-colors hover:text-brand-200">Inicio</Link>
+          <span aria-hidden className="text-white/20">›</span>
+          <Link href="/categorias" className="transition-colors hover:text-brand-200">Categorías</Link>
+          <span aria-hidden className="text-white/20">›</span>
+          <Link href={`/categorias/${meta.slug}`} className="transition-colors hover:text-brand-200">{meta.label}</Link>
+          <span aria-hidden className="text-white/20">›</span>
+          <span className="text-brand-300">{breadcrumbLabel}</span>
+        </nav>
 
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-        {cards.map((p, i) => (
-          <ProductCard key={p.id} product={p} priority={i < 4} />
-        ))}
-      </section>
+        <header className="reveal mb-8">
+          <h1
+            className="font-extrabold tracking-tight text-white"
+            style={{ fontSize: "clamp(1.9rem, 4vw, 2.7rem)", lineHeight: 1.08, letterSpacing: "-0.03em", textWrap: "balance" }}
+          >
+            {titleH1}
+          </h1>
+          <p className="mt-3 max-w-3xl text-[15px] leading-relaxed text-white/50" style={{ textWrap: "pretty" }}>{intro}</p>
+        </header>
+
+        <section className="reveal grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {cards.map((p, i) => (
+            <ProductCard key={p.id} product={p} priority={i < 4} />
+          ))}
+        </section>
+      </div>
     </main>
   );
 }
