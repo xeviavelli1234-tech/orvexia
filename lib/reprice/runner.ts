@@ -24,13 +24,19 @@ const log = logger.child("reprice:runner");
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const eur = (n: number) => n.toFixed(2).replace(".", ",") + " €";
 
-/** Anti-spam: como máximo un correo de alertas cada 6 h por cuenta. */
+/** Anti-spam: como máximo un correo de alertas cada 6 h por cuenta…
+ *  …salvo en el plan MONITOR (1 h): ahí las alertas SON el producto que el
+ *  cliente paga, y un cooldown largo se tragaría la pérdida de Buy Box de un
+ *  segundo producto horas después. Sigue acotado: solo se alerta en
+ *  transiciones (no cada ciclo), así que no puede hacer spam. */
 const ALERT_COOLDOWN_MS = 6 * 60 * 60 * 1000;
+const ALERT_COOLDOWN_MONITOR_MS = 60 * 60 * 1000;
 
 /** Envía (si procede y fuera del cooldown) un único correo resumen. */
 async function maybeSendAlerts(
   account: {
     id: string;
+    plan: string;
     alertsEnabled: boolean;
     alertEmail: string | null;
     lastAlertAt: Date | null;
@@ -41,9 +47,11 @@ async function maybeSendAlerts(
 ): Promise<void> {
   if (!account.alertsEnabled || alerts.length === 0) return;
   // Cooldown: no reenviar si ya avisamos hace poco (evita spam por ciclo).
+  const cooldownMs =
+    account.plan === "MONITOR" ? ALERT_COOLDOWN_MONITOR_MS : ALERT_COOLDOWN_MS;
   if (
     account.lastAlertAt &&
-    now.getTime() - account.lastAlertAt.getTime() < ALERT_COOLDOWN_MS
+    now.getTime() - account.lastAlertAt.getTime() < cooldownMs
   ) {
     return;
   }

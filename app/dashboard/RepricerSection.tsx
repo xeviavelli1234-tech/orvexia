@@ -131,8 +131,9 @@ export async function RepricerSection({
               {connected ? (
                 <>
                   Plan <strong className="text-white/80">{billing!.label}</strong> ·{" "}
-                  {repricedCount} producto{repricedCount === 1 ? "" : "s"} con reprecio
-                  activo · ciclo {billing!.intervalMinutes} min
+                  {repricedCount} producto{repricedCount === 1 ? "" : "s"}{" "}
+                  {billing!.plan === "MONITOR" ? "en vigilancia" : "con reprecio activo"} ·
+                  ciclo {billing!.intervalMinutes} min
                 </>
               ) : (
                 <>

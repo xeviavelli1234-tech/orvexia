@@ -74,7 +74,7 @@ export default function ActivityPanel({
                 : "text-emerald-300 bg-emerald-400/15"
             }`}
           >
-            {plan.isTrial ? "Trial" : "Pro"}
+            {plan.isTrial ? "Trial" : plan.label}
           </span>
         </div>
         {showTrialBar && (
