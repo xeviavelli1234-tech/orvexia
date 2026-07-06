@@ -186,47 +186,55 @@ export default function RepricerPage() {
       />
       {/* Hero */}
       <section className="relative overflow-hidden border-b border-white/[0.06]">
-        <div className="absolute inset-0 bg-grid-cyber opacity-50 pointer-events-none" />
+        <div
+          className="absolute inset-0 bg-grid-cyber-fine opacity-30 pointer-events-none"
+          style={{ maskImage: "radial-gradient(ellipse 70% 70% at 50% 30%, black, transparent)" }}
+        />
         <div
           className="absolute -top-32 left-1/2 -translate-x-1/2 w-[1200px] h-[700px] rounded-full halo-breathe pointer-events-none"
-          style={{ background: "radial-gradient(ellipse at center, rgba(129,140,248,0.25), transparent 65%)" }}
-        />
-        <div
-          className="absolute top-0 right-0 w-96 h-96 rounded-full pointer-events-none opacity-60"
-          style={{ background: "radial-gradient(circle, rgba(94,234,212,0.18), transparent 65%)" }}
+          style={{ background: "radial-gradient(ellipse at center, rgba(129,140,248,0.22), transparent 65%)" }}
         />
         <div className="relative max-w-3xl mx-auto px-4 sm:px-6 pt-16 sm:pt-24 pb-16 sm:pb-20 text-center">
-          <div className="inline-flex items-center gap-2 mb-6 px-3 h-7 rounded-full bg-white/[0.04] border border-white/[0.10] font-mono-ui">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-dot" />
-            <span className="text-[10px] uppercase tracking-wider text-white/65">
-              ▸ /repricer · Amazon SP-API
+          <div className="reveal inline-flex items-center gap-2 mb-6 px-3.5 h-7 rounded-full border border-brand-400/25 bg-brand-400/10">
+            <span className="w-1.5 h-1.5 rounded-full bg-brand-400 pulse-dot" />
+            <span className="text-[11px] font-semibold tracking-wide text-brand-200">
+              Para vendedores de Amazon España · SP-API oficial
             </span>
           </div>
           <h1
-            className="font-extrabold tracking-tight text-white mb-5"
-            style={{ fontSize: "clamp(2.4rem, 6vw, 4.6rem)", lineHeight: 0.98, letterSpacing: "-0.045em" }}
+            className="reveal font-extrabold tracking-tight text-white mb-5"
+            style={{
+              fontSize: "clamp(2.4rem, 6vw, 4.6rem)",
+              lineHeight: 0.98,
+              letterSpacing: "-0.045em",
+              textWrap: "balance",
+            }}
           >
-            Repricer <span className="text-gradient-neon">automático</span> para Amazon
+            Repricer <span className="text-shimmer-violet">automático</span> para Amazon
           </h1>
-          <p className="text-white/60 text-lg max-w-2xl mx-auto leading-relaxed">
+          <p
+            className="reveal text-white/60 text-lg max-w-2xl mx-auto leading-relaxed"
+            style={{ textWrap: "pretty" }}
+          >
             Ajusta tus precios en tiempo real para ganar la Buy Box y proteger tu margen, con reglas que tú
             controlas. Conecta tu cuenta de Amazon España y deja que el motor trabaje por ti.
           </p>
-          <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+          <div className="reveal mt-8 flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               href="/dashboard/repricer"
-              className="inline-flex items-center justify-center rounded-xl bg-white text-[#0b0d1c] px-7 py-3 text-sm font-bold hover:bg-white/90 transition-colors"
+              className="shine-on-hover inline-flex h-12 items-center justify-center rounded-full bg-brand-500 px-7 text-sm font-bold text-white transition-all hover:bg-brand-400 active:scale-[0.97]"
+              style={{ boxShadow: "0 8px 36px -6px rgba(99,102,241,0.85)" }}
             >
               Activar mi repricer
             </Link>
             <Link
               href="/politica-datos-amazon"
-              className="inline-flex items-center justify-center rounded-xl border border-white/20 text-white px-7 py-3 text-sm font-semibold hover:bg-white/[0.06] transition-colors"
+              className="inline-flex h-12 items-center justify-center rounded-full border border-white/12 bg-white/[0.03] px-7 text-sm font-semibold text-white/80 transition-all hover:border-white/30 hover:bg-white/[0.06] hover:text-white active:scale-[0.97]"
             >
               Cómo protegemos tus datos
             </Link>
           </div>
-          <p className="mt-5 text-sm text-white/55 font-mono-ui">
+          <p className="reveal mt-5 text-sm text-white/55">
             14 días de prueba gratis · Monitor 9 €/mes o Pro 19 €/mes (IVA incl.) · cancela cuando quieras
           </p>
         </div>
@@ -242,12 +250,17 @@ export default function RepricerPage() {
       <div className="max-w-4xl mx-auto px-6 py-16 space-y-20">
         {/* Cómo funciona */}
         <section>
-          <h2 className="text-2xl font-extrabold text-fg mb-2">Cómo funciona</h2>
-          <p className="text-fg-muted mb-8">De cero a reprecio automático en tres pasos.</p>
-          <div className="bg-bg-elevated rounded-2xl border border-border divide-y divide-border">
+          <h2
+            className="reveal text-2xl sm:text-3xl font-extrabold text-fg mb-2 tracking-tight"
+            style={{ letterSpacing: "-0.03em" }}
+          >
+            Cómo funciona
+          </h2>
+          <p className="reveal text-fg-muted mb-8">De cero a reprecio automático en tres pasos.</p>
+          <div className="reveal bg-bg-elevated rounded-2xl border border-border divide-y divide-border">
             {STEPS.map((step) => (
               <div key={step.n} className="flex gap-5 p-6 items-start">
-                <span className="text-xs font-black text-[#4F46E5] bg-[#EEF2FF] rounded-lg px-2.5 py-1.5 flex-shrink-0 mt-0.5">
+                <span className="text-xs font-black text-brand-300 bg-brand-400/10 border border-brand-400/25 rounded-lg px-2.5 py-1.5 flex-shrink-0 mt-0.5 tabular">
                   {step.n}
                 </span>
                 <div>
@@ -261,11 +274,19 @@ export default function RepricerPage() {
 
         {/* Funciones */}
         <section>
-          <h2 className="text-2xl font-extrabold text-fg mb-2">Funciones</h2>
-          <p className="text-fg-muted mb-8">Todo lo que necesitas para repreciar con control y seguridad.</p>
+          <h2
+            className="reveal text-2xl sm:text-3xl font-extrabold text-fg mb-2 tracking-tight"
+            style={{ letterSpacing: "-0.03em" }}
+          >
+            Funciones
+          </h2>
+          <p className="reveal text-fg-muted mb-8">Todo lo que necesitas para repreciar con control y seguridad.</p>
           <div className="grid sm:grid-cols-2 gap-4">
             {FEATURES.map((f) => (
-              <div key={f.title} className="bg-bg-elevated rounded-2xl border border-border p-6">
+              <div
+                key={f.title}
+                className="reveal bg-bg-elevated rounded-2xl border border-border p-6 transition-all duration-300 hover:-translate-y-1 hover:border-brand-400/30 hover:shadow-[0_24px_60px_-24px_rgba(99,102,241,0.55)]"
+              >
                 <p className="font-bold text-fg mb-1.5">{f.title}</p>
                 <p className="text-sm text-fg-muted leading-relaxed">{f.desc}</p>
               </div>
@@ -275,21 +296,26 @@ export default function RepricerPage() {
 
         {/* Precio */}
         <section>
-          <h2 className="text-2xl font-extrabold text-fg mb-2">Precio</h2>
-          <p className="text-fg-muted mb-8">
+          <h2
+            className="reveal text-2xl sm:text-3xl font-extrabold text-fg mb-2 tracking-tight"
+            style={{ letterSpacing: "-0.03em" }}
+          >
+            Precio
+          </h2>
+          <p className="reveal text-fg-muted mb-8">
             Dos tarifas planas, sin permanencia. El repricer completo empieza con 14 días de
             prueba gratuita.
           </p>
-          <div className="grid sm:grid-cols-2 gap-4 max-w-3xl mx-auto items-start">
+          <div className="grid sm:grid-cols-2 gap-4 max-w-3xl mx-auto items-stretch">
             {/* Monitor */}
-            <div className="bg-bg-elevated rounded-2xl border border-border p-6 sm:p-8">
-              <div className="inline-flex items-center gap-2 mb-5 px-3 h-7 rounded-full bg-[#F0F9FF] border border-[#E0F2FE]">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-[#0284C7]">
+            <div className="reveal flex flex-col bg-bg-elevated rounded-2xl border border-border p-6 sm:p-8 transition-all duration-300 hover:-translate-y-1 hover:border-white/20">
+              <div className="inline-flex self-start items-center gap-2 mb-5 px-3 h-7 rounded-full border border-white/12 bg-white/[0.04]">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-white/65">
                   Solo avisos
                 </span>
               </div>
               <div className="flex items-baseline gap-2 mb-1">
-                <span className="text-4xl font-black text-fg">9 €</span>
+                <span className="text-4xl font-black text-fg tabular">9 €</span>
                 <span className="text-fg-muted font-semibold">/ mes</span>
               </div>
               <p className="text-sm text-fg-muted mb-6">
@@ -298,14 +324,14 @@ export default function RepricerPage() {
               <ul className="space-y-2.5 mb-6">
                 {MONITOR_INCLUYE.map((item) => (
                   <li key={item} className="flex gap-3 items-start text-sm">
-                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#0284C7] flex-shrink-0" />
+                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-white/35 flex-shrink-0" />
                     <span className="text-fg-muted leading-relaxed">{item}</span>
                   </li>
                 ))}
               </ul>
               <Link
                 href="/dashboard/repricer"
-                className="flex items-center justify-center rounded-xl border border-[#0284C7] text-[#0284C7] hover:bg-[#F0F9FF] px-6 py-3 text-sm font-bold transition-colors"
+                className="mt-auto flex h-12 items-center justify-center rounded-full border border-white/12 bg-white/[0.03] px-6 text-sm font-bold text-white/85 transition-all hover:border-white/30 hover:bg-white/[0.06] hover:text-white active:scale-[0.97]"
               >
                 Empezar con Monitor
               </Link>
@@ -315,15 +341,23 @@ export default function RepricerPage() {
               </p>
             </div>
 
-            {/* Pro */}
-            <div className="bg-bg-elevated rounded-2xl border border-border p-6 sm:p-8">
-              <div className="inline-flex items-center gap-2 mb-5 px-3 h-7 rounded-full bg-[#EEF2FF] border border-[#E0E7FF]">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-[#4F46E5]">
-                  14 días gratis
+            {/* Pro — plan recomendado */}
+            <div
+              className="reveal relative flex flex-col rounded-2xl border border-brand-400/30 p-6 sm:p-8 transition-all duration-300 hover:-translate-y-1 hover:border-brand-400/50 hover:shadow-[0_24px_60px_-24px_rgba(99,102,241,0.55)]"
+              style={{ background: "linear-gradient(160deg,#100d26 0%,#0a0819 55%,#070614 100%)" }}
+            >
+              <div
+                aria-hidden
+                className="pointer-events-none absolute -top-10 -right-10 w-44 h-44 rounded-full halo-breathe"
+                style={{ background: "radial-gradient(circle,rgba(129,140,248,0.18),transparent 65%)" }}
+              />
+              <div className="inline-flex self-start items-center gap-2 mb-5 px-3 h-7 rounded-full border border-brand-400/25 bg-brand-400/10">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-brand-200">
+                  Recomendado · 14 días gratis
                 </span>
               </div>
               <div className="flex items-baseline gap-2 mb-1">
-                <span className="text-4xl font-black text-fg">19 €</span>
+                <span className="text-4xl font-black text-fg tabular">19 €</span>
                 <span className="text-fg-muted font-semibold">/ mes</span>
               </div>
               <p className="text-sm text-fg-muted mb-6">
@@ -332,14 +366,15 @@ export default function RepricerPage() {
               <ul className="space-y-2.5 mb-6">
                 {PLAN_INCLUYE.map((item) => (
                   <li key={item} className="flex gap-3 items-start text-sm">
-                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#4F46E5] flex-shrink-0" />
+                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-brand-400 flex-shrink-0" />
                     <span className="text-fg-muted leading-relaxed">{item}</span>
                   </li>
                 ))}
               </ul>
               <Link
                 href="/dashboard/repricer"
-                className="flex items-center justify-center rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white px-6 py-3 text-sm font-bold transition-colors"
+                className="shine-on-hover mt-auto flex h-12 items-center justify-center rounded-full bg-brand-500 px-6 text-sm font-bold text-white transition-all hover:bg-brand-400 active:scale-[0.97]"
+                style={{ boxShadow: "0 8px 36px -6px rgba(99,102,241,0.85)" }}
               >
                 Empezar la prueba gratuita
               </Link>
@@ -347,7 +382,7 @@ export default function RepricerPage() {
                 Tras los 14 días, la suscripción pasa al plan Pro (19 €/mes, IVA incl.) salvo que
                 canceles antes. Facturación mensual recurrente vía Stripe; puedes cancelar en
                 cualquier momento. Consulta el detalle en los{" "}
-                <Link href="/terminos" className="text-[#4F46E5] hover:underline">
+                <Link href="/terminos" className="text-brand-300 hover:text-brand-200 hover:underline">
                   Términos del servicio
                 </Link>
                 .
@@ -360,8 +395,13 @@ export default function RepricerPage() {
 
         {/* Para quién */}
         <section>
-          <h2 className="text-2xl font-extrabold text-fg mb-2">¿Para quién es?</h2>
-          <div className="bg-bg-elevated rounded-2xl border border-border p-6 space-y-3">
+          <h2
+            className="reveal text-2xl sm:text-3xl font-extrabold text-fg mb-2 tracking-tight"
+            style={{ letterSpacing: "-0.03em" }}
+          >
+            ¿Para quién es?
+          </h2>
+          <div className="reveal bg-bg-elevated rounded-2xl border border-border p-6 space-y-3">
             <p className="text-sm text-fg-muted leading-relaxed">
               <strong className="text-fg">Vendedores de Amazon España</strong> (Seller Central) que quieran
               automatizar su pricing sin perder el control.
@@ -380,32 +420,45 @@ export default function RepricerPage() {
         </section>
 
         {/* CTA final */}
-        <section className="text-center">
-          <h2 className="text-2xl font-extrabold text-fg mb-3">Empieza hoy</h2>
-          <p className="text-fg-muted mb-6 max-w-lg mx-auto">
+        <section className="reveal relative overflow-hidden text-center rounded-3xl border border-brand-400/15 px-6 py-12 sm:py-14"
+          style={{ background: "linear-gradient(160deg,#100d26 0%,#0a0819 55%,#070614 100%)" }}
+        >
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -top-20 left-1/2 -translate-x-1/2 w-[520px] h-[320px] rounded-full halo-breathe"
+            style={{ background: "radial-gradient(ellipse at center,rgba(129,140,248,0.18),transparent 65%)" }}
+          />
+          <h2
+            className="relative text-2xl sm:text-3xl font-extrabold text-white mb-3 tracking-tight"
+            style={{ letterSpacing: "-0.03em", textWrap: "balance" }}
+          >
+            Empieza hoy
+          </h2>
+          <p className="relative text-white/60 mb-7 max-w-lg mx-auto" style={{ textWrap: "pretty" }}>
             Conecta tu cuenta y prueba el reprecio en modo simulación antes de aplicar ningún cambio.
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <div className="relative flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               href="/dashboard/repricer"
-              className="inline-flex items-center justify-center gap-2 bg-[#4F46E5] hover:bg-[#4338CA] text-white font-bold px-6 py-3 rounded-xl transition-colors text-sm"
+              className="shine-on-hover inline-flex h-12 items-center justify-center rounded-full bg-brand-500 px-7 text-sm font-bold text-white transition-all hover:bg-brand-400 active:scale-[0.97]"
+              style={{ boxShadow: "0 8px 36px -6px rgba(99,102,241,0.85)" }}
             >
               Activar mi repricer
             </Link>
             <Link
               href="/ayuda"
-              className="inline-flex items-center justify-center gap-2 bg-bg-elevated hover:bg-bg-subtle border border-border text-fg font-bold px-6 py-3 rounded-xl transition-colors text-sm"
+              className="inline-flex h-12 items-center justify-center rounded-full border border-white/12 bg-white/[0.03] px-7 text-sm font-semibold text-white/80 transition-all hover:border-white/30 hover:bg-white/[0.06] hover:text-white active:scale-[0.97]"
             >
               Centro de ayuda
             </Link>
           </div>
-          <p className="mt-6 text-xs text-fg-muted">
+          <p className="relative mt-6 text-xs text-white/45">
             Consulta nuestra{" "}
-            <Link href="/politica-datos-amazon" className="text-[#4F46E5] hover:underline">
+            <Link href="/politica-datos-amazon" className="text-brand-300 hover:text-brand-200 hover:underline">
               Política de Datos de Amazon
             </Link>{" "}
             y los{" "}
-            <Link href="/terminos" className="text-[#4F46E5] hover:underline">
+            <Link href="/terminos" className="text-brand-300 hover:text-brand-200 hover:underline">
               Términos del servicio
             </Link>
             .
