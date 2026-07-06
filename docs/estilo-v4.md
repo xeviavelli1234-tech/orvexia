@@ -36,7 +36,8 @@ Utilidades CSS nuevas en `app/globals.css` (bloques «Home v4» y siguientes).
 
 ## Reglas duras
 
-1. NO tocar: `app/(sellers)/**`, `app/dashboard/repricer/**`, `app/repricer/**` (herramienta y su landing esmeralda), `lib/**`, rutas `app/api/**`.
+1. NO tocar: `app/(sellers)/**`, `app/dashboard/repricer/**` (la herramienta conserva su identidad esmeralda), `lib/**`, rutas `app/api/**`.
+   La landing pública `app/repricer/page.tsx` SÍ está migrada a v4 (jul 2026).
 2. Mantener TODA la funcionalidad: props, lógica, hooks, aria-*, metadata/SEO, ids de anclas, textos (salvo labels puramente decorativos del estilo viejo).
 3. No renombrar exports ni mover ficheros.
 4. Cambios solo de presentación (className/estilos/estructura JSX visual).
