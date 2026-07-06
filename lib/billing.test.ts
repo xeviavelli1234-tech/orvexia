@@ -5,6 +5,8 @@ import {
   trialDaysLeft,
   isTrialExpired,
   isRepricingAllowed,
+  isPaidPlan,
+  canApplyPrices,
   getBillingState,
   tierForSkuCount,
   priceForSkuCount,
@@ -18,6 +20,7 @@ const inDays = (d: number) => new Date(NOW.getTime() + d * 86400000);
 
 test("intervalo por plan", () => {
   assert.equal(intervalForPlan("TRIAL"), 900);
+  assert.equal(intervalForPlan("MONITOR"), 900);
   assert.equal(intervalForPlan("PRO"), 300);
 });
 
@@ -38,6 +41,32 @@ test("trial expirado", () => {
 test("PRO nunca expira aunque trialEndsAt sea pasado", () => {
   assert.equal(isTrialExpired("PRO", inDays(-100), NOW), false);
   assert.equal(isRepricingAllowed("PRO", inDays(-100), NOW), true);
+});
+
+test("MONITOR es plan de pago: nunca expira y el motor lo procesa", () => {
+  assert.equal(isTrialExpired("MONITOR", inDays(-100), NOW), false);
+  assert.equal(isTrialExpired("MONITOR", null, NOW), false);
+  assert.equal(isRepricingAllowed("MONITOR", null, NOW), true);
+});
+
+test("isPaidPlan: MONITOR y PRO sí, TRIAL no", () => {
+  assert.equal(isPaidPlan("MONITOR"), true);
+  assert.equal(isPaidPlan("PRO"), true);
+  assert.equal(isPaidPlan("TRIAL"), false);
+});
+
+test("canApplyPrices: MONITOR solo vigila; TRIAL y PRO escriben", () => {
+  assert.equal(canApplyPrices("MONITOR"), false);
+  assert.equal(canApplyPrices("TRIAL"), true);
+  assert.equal(canApplyPrices("PRO"), true);
+});
+
+test("getBillingState coherente — MONITOR", () => {
+  const s = getBillingState("MONITOR", null, NOW);
+  assert.equal(s.label, "Monitor");
+  assert.equal(s.trialExpired, false);
+  assert.equal(s.repricingAllowed, true);
+  assert.equal(s.intervalMinutes, 15);
 });
 
 test("reprecio no permitido con trial expirado", () => {

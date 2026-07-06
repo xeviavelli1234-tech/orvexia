@@ -1,24 +1,26 @@
 /**
  * Lógica de planes — FUNCIONES PURAS, testeables.
  *
- * Plan TRIAL: 14 días gratis, reprecio cada 15 min, 50 SKUs máximo.
- * Plan PRO:   19 €/mes flat, reprecio cada 5 min, SKUs ilimitados.
+ * Plan TRIAL:   14 días gratis, reprecio cada 15 min, 50 SKUs máximo.
+ * Plan MONITOR: 9 €/mes, ciclo cada 15 min, SOLO vigila (alertas + precio
+ *               sugerido); nunca escribe precios en Amazon.
+ * Plan PRO:     19 €/mes flat, reprecio cada 5 min, SKUs ilimitados.
  *
- * NOTA sobre los precios: hay UN solo plan Pro a 19 €/mes que coincide con
- * el producto único configurado en Stripe Live. Antes había tramos por
- * volumen (starter/growth/scale/unlimited) pero generaban inconsistencia
- * entre la factura interna y lo que cobra Stripe. Si en el futuro se vuelve
- * a precios escalonados, crear N productos en Stripe Live y elegir el price
- * dinámicamente en /api/sellers/billing/checkout.
+ * NOTA sobre los precios: cada plan de pago corresponde a UN producto en
+ * Stripe Live (PRO → STRIPE_PRICE_ID, MONITOR → STRIPE_PRICE_ID_MONITOR).
+ * Antes había tramos por volumen (starter/growth/scale/unlimited) pero
+ * generaban inconsistencia entre la factura interna y lo que cobra Stripe.
  */
 
-export type SellerPlan = "TRIAL" | "PRO";
+export type SellerPlan = "TRIAL" | "MONITOR" | "PRO";
 
 export const PRO_PRICE_EUR = 19;
+export const MONITOR_PRICE_EUR = 9;
 export const TRIAL_DAYS = 14;
 
 const INTERVAL_BY_PLAN: Record<SellerPlan, number> = {
   TRIAL: 900, // 15 min
+  MONITOR: 900, // 15 min (vigilancia, no necesita más frecuencia)
   PRO: 300, // 5 min
 };
 
@@ -27,7 +29,23 @@ export function intervalForPlan(plan: SellerPlan): number {
 }
 
 export function planLabel(plan: SellerPlan): string {
-  return plan === "PRO" ? "Pro" : "Prueba gratuita";
+  if (plan === "PRO") return "Pro";
+  if (plan === "MONITOR") return "Monitor";
+  return "Prueba gratuita";
+}
+
+/** ¿Es un plan de pago con suscripción Stripe viva? */
+export function isPaidPlan(plan: SellerPlan): boolean {
+  return plan === "PRO" || plan === "MONITOR";
+}
+
+/**
+ * ¿Puede este plan ESCRIBIR precios en Amazon?
+ * MONITOR vigila y avisa pero nunca aplica cambios: sus ciclos se registran
+ * como simulados (mismo camino que dryRun). TRIAL y PRO sí escriben.
+ */
+export function canApplyPrices(plan: SellerPlan): boolean {
+  return plan !== "MONITOR";
 }
 
 /** Días restantes de trial (0 si ya expiró o no aplica). Redondea hacia arriba. */
@@ -43,7 +61,7 @@ export function isTrialExpired(
   trialEndsAt: Date | null,
   now: Date = new Date(),
 ): boolean {
-  if (plan === "PRO") return false;
+  if (isPaidPlan(plan)) return false;
   // TRIAL sin fecha de fin = estado desconocido → lo tratamos como EXPIRADO
   // (fail-closed): no escribimos en Amazon en un plan sin reloj de prueba.
   // Las cuentas nuevas siempre fijan trialEndsAt; esto cubre filas legacy.
@@ -97,8 +115,8 @@ export function priceForSkuCount(_skuCount: number): number {
 }
 
 // ── Límite de productos con repricing ACTIVO ─────────────────────────────
-// TRIAL: tope de 50 SKUs activos para probar el motor sin escalar.
-// PRO:   sin límite (un solo precio cubre todo).
+// TRIAL:       tope de 50 SKUs activos para probar el motor sin escalar.
+// MONITOR/PRO: sin límite (precio plano cubre todo el catálogo).
 export const TRIAL_ACTIVE_LIMIT = 50;
 
 export function repricingActiveLimit(

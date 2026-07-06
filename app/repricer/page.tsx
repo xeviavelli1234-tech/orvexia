@@ -6,7 +6,7 @@ import RoiCalculator from "./RoiCalculator";
 
 const CANONICAL = "https://www.orvexia.es/repricer";
 const OG_DESC =
-  "Repricer automático para vendedores de Amazon España. Gana la Buy Box y protege tu margen con reglas que tú controlas. 14 días gratis, luego 19 €/mes sin permanencia.";
+  "Repricer automático para vendedores de Amazon España. Gana la Buy Box y protege tu margen con reglas que tú controlas. 14 días gratis; desde 9 €/mes sin permanencia.";
 
 export const metadata: Metadata = {
   title: "Repricer automático para Amazon España | Orvexia",
@@ -47,13 +47,23 @@ const softwareJsonLd = {
   operatingSystem: "Web",
   url: CANONICAL,
   description: OG_DESC,
-  offers: {
-    "@type": "Offer",
-    price: "19.00",
-    priceCurrency: "EUR",
-    description: "Plan Pro · 14 días de prueba gratis · IVA incluido · sin permanencia",
-    url: CANONICAL,
-  },
+  offers: [
+    {
+      "@type": "Offer",
+      price: "9.00",
+      priceCurrency: "EUR",
+      description:
+        "Plan Monitor · alertas de Buy Box y competencia sin tocar tus precios · IVA incluido · sin permanencia",
+      url: CANONICAL,
+    },
+    {
+      "@type": "Offer",
+      price: "19.00",
+      priceCurrency: "EUR",
+      description: "Plan Pro · 14 días de prueba gratis · IVA incluido · sin permanencia",
+      url: CANONICAL,
+    },
+  ],
   provider: {
     "@type": "Organization",
     name: "Orvexia",
@@ -86,7 +96,7 @@ const faqJsonLd = {
       name: "¿Cuánto cuesta Orvexia Repricer?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "14 días de prueba gratis y después 19 €/mes (IVA incluido), con SKUs ilimitados, reprecio cada 5 minutos y sin permanencia. Puedes cancelar cuando quieras.",
+        text: "Hay dos planes: Monitor por 9 €/mes (vigila tu competencia y la Buy Box y te avisa, sin tocar tus precios) y Pro por 19 €/mes con reprecio automático cada 5 minutos y SKUs ilimitados, con 14 días de prueba gratis. IVA incluido, sin permanencia; cancela cuando quieras.",
       },
     },
     {
@@ -143,6 +153,15 @@ const FEATURES = [
     title: "Analíticas y auditoría",
     desc: "Cada cambio de precio queda registrado y explicado. Sabes qué cambió, cuándo y por qué.",
   },
+];
+
+const MONITOR_INCLUYE = [
+  "Vigilancia de competencia y Buy Box cada 15 minutos",
+  "Alertas de Buy Box perdida/recuperada y precio mínimo",
+  "Detección de dumpers y cambios de competencia",
+  "Precio sugerido por el motor, sin aplicarlo",
+  "Avisos por email, Slack, Telegram y Discord",
+  "No modifica tus precios en Amazon",
 ];
 
 const PLAN_INCLUYE = [
@@ -208,7 +227,7 @@ export default function RepricerPage() {
             </Link>
           </div>
           <p className="mt-5 text-sm text-white/55 font-mono-ui">
-            14 días de prueba gratis · luego 19 €/mes (IVA incl.) · cancela cuando quieras
+            14 días de prueba gratis · Monitor 9 €/mes o Pro 19 €/mes (IVA incl.) · cancela cuando quieras
           </p>
         </div>
       </section>
@@ -258,44 +277,82 @@ export default function RepricerPage() {
         <section>
           <h2 className="text-2xl font-extrabold text-fg mb-2">Precio</h2>
           <p className="text-fg-muted mb-8">
-            Una sola tarifa plana, sin permanencia. Empiezas con 14 días de prueba gratuita.
+            Dos tarifas planas, sin permanencia. El repricer completo empieza con 14 días de
+            prueba gratuita.
           </p>
-          <div className="bg-bg-elevated rounded-2xl border border-border p-6 sm:p-8 max-w-md mx-auto">
-            <div className="inline-flex items-center gap-2 mb-5 px-3 h-7 rounded-full bg-[#EEF2FF] border border-[#E0E7FF]">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#4F46E5]">
-                14 días gratis
-              </span>
-            </div>
-            <div className="flex items-baseline gap-2 mb-1">
-              <span className="text-4xl font-black text-fg">19 €</span>
-              <span className="text-fg-muted font-semibold">/ mes</span>
-            </div>
-            <p className="text-sm text-fg-muted mb-6">
-              Plan Pro · IVA incluido · cancela cuando quieras
-            </p>
-            <ul className="space-y-2.5 mb-6">
-              {PLAN_INCLUYE.map((item) => (
-                <li key={item} className="flex gap-3 items-start text-sm">
-                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#4F46E5] flex-shrink-0" />
-                  <span className="text-fg-muted leading-relaxed">{item}</span>
-                </li>
-              ))}
-            </ul>
-            <Link
-              href="/dashboard/repricer"
-              className="flex items-center justify-center rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white px-6 py-3 text-sm font-bold transition-colors"
-            >
-              Empezar la prueba gratuita
-            </Link>
-            <p className="mt-4 text-xs text-fg-muted leading-relaxed">
-              Tras los 14 días, la suscripción pasa al plan Pro (19 €/mes, IVA incl.) salvo que
-              canceles antes. Facturación mensual recurrente vía Stripe; puedes cancelar en
-              cualquier momento. Consulta el detalle en los{" "}
-              <Link href="/terminos" className="text-[#4F46E5] hover:underline">
-                Términos del servicio
+          <div className="grid sm:grid-cols-2 gap-4 max-w-3xl mx-auto items-start">
+            {/* Monitor */}
+            <div className="bg-bg-elevated rounded-2xl border border-border p-6 sm:p-8">
+              <div className="inline-flex items-center gap-2 mb-5 px-3 h-7 rounded-full bg-[#F0F9FF] border border-[#E0F2FE]">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#0284C7]">
+                  Solo avisos
+                </span>
+              </div>
+              <div className="flex items-baseline gap-2 mb-1">
+                <span className="text-4xl font-black text-fg">9 €</span>
+                <span className="text-fg-muted font-semibold">/ mes</span>
+              </div>
+              <p className="text-sm text-fg-muted mb-6">
+                Plan Monitor · IVA incluido · cancela cuando quieras
+              </p>
+              <ul className="space-y-2.5 mb-6">
+                {MONITOR_INCLUYE.map((item) => (
+                  <li key={item} className="flex gap-3 items-start text-sm">
+                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#0284C7] flex-shrink-0" />
+                    <span className="text-fg-muted leading-relaxed">{item}</span>
+                  </li>
+                ))}
+              </ul>
+              <Link
+                href="/dashboard/repricer"
+                className="flex items-center justify-center rounded-xl border border-[#0284C7] text-[#0284C7] hover:bg-[#F0F9FF] px-6 py-3 text-sm font-bold transition-colors"
+              >
+                Empezar con Monitor
               </Link>
-              .
-            </p>
+              <p className="mt-4 text-xs text-fg-muted leading-relaxed">
+                Ideal si aún no te fías de que una herramienta cambie tus precios: el motor
+                vigila y te avisa, y tú decides. Nunca modifica nada en Amazon.
+              </p>
+            </div>
+
+            {/* Pro */}
+            <div className="bg-bg-elevated rounded-2xl border border-border p-6 sm:p-8">
+              <div className="inline-flex items-center gap-2 mb-5 px-3 h-7 rounded-full bg-[#EEF2FF] border border-[#E0E7FF]">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#4F46E5]">
+                  14 días gratis
+                </span>
+              </div>
+              <div className="flex items-baseline gap-2 mb-1">
+                <span className="text-4xl font-black text-fg">19 €</span>
+                <span className="text-fg-muted font-semibold">/ mes</span>
+              </div>
+              <p className="text-sm text-fg-muted mb-6">
+                Plan Pro · IVA incluido · cancela cuando quieras
+              </p>
+              <ul className="space-y-2.5 mb-6">
+                {PLAN_INCLUYE.map((item) => (
+                  <li key={item} className="flex gap-3 items-start text-sm">
+                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#4F46E5] flex-shrink-0" />
+                    <span className="text-fg-muted leading-relaxed">{item}</span>
+                  </li>
+                ))}
+              </ul>
+              <Link
+                href="/dashboard/repricer"
+                className="flex items-center justify-center rounded-xl bg-[#4F46E5] hover:bg-[#4338CA] text-white px-6 py-3 text-sm font-bold transition-colors"
+              >
+                Empezar la prueba gratuita
+              </Link>
+              <p className="mt-4 text-xs text-fg-muted leading-relaxed">
+                Tras los 14 días, la suscripción pasa al plan Pro (19 €/mes, IVA incl.) salvo que
+                canceles antes. Facturación mensual recurrente vía Stripe; puedes cancelar en
+                cualquier momento. Consulta el detalle en los{" "}
+                <Link href="/terminos" className="text-[#4F46E5] hover:underline">
+                  Términos del servicio
+                </Link>
+                .
+              </p>
+            </div>
           </div>
 
           <RoiCalculator />

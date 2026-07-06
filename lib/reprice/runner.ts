@@ -11,6 +11,8 @@ import { isFixtureMode } from "@/lib/amazon/fixtures";
 import { sendRepricerAlertEmail, sendTrialEndingEmail } from "@/lib/email";
 import { parseTags } from "@/lib/tags";
 import { shouldRunAccount } from "./gating";
+import { canApplyPrices, type SellerPlan } from "@/lib/billing";
+import { recordDumperHit, DUMPER_CONFIRMED_AT } from "./health";
 import { computeNewPrice } from "./engine";
 import { minPriceForMargin } from "./margin";
 import { logger } from "@/lib/logger";
@@ -70,8 +72,11 @@ async function maybeSendAlerts(
       byKind.set(a.kind, arr);
     }
     for (const [kind, arr] of byKind) {
+      // buybox_won y dumper comparten toggle/categoría con buybox_lost:
+      // mismo interés (qué hace la competencia con tu Buy Box), no merecen
+      // un flag propio por canal.
       const cat =
-        kind === "buybox_lost"
+        kind === "buybox_lost" || kind === "buybox_won" || kind === "dumper"
           ? "buybox_lost"
           : kind === "price_floor"
             ? "price_floor"
@@ -234,6 +239,12 @@ export async function runRepricer(
     let errors = 0;
     let runError: string | null = null;
     const accountAlerts: RepriceAlert[] = [];
+
+    // Vigilancia sin escritura: dry-run manual O plan MONITOR (tier de solo
+    // avisos). Ambos calculan el precio sugerido y registran el evento como
+    // simulado, pero jamás hacen PATCH en Amazon.
+    const watchOnly =
+      account.dryRun || !canApplyPrices(account.plan as SellerPlan);
 
     try {
       const isFixtureAcc = isFixtureMode(account.spApiEnv);
@@ -412,6 +423,22 @@ export async function runRepricer(
             });
           }
 
+          // Recuperación: la teníamos PERDIDA y la acabamos de ganar. Mismo
+          // toggle que la pérdida (interés simétrico). Solo la transición
+          // LOST→WON: el estado inicial UNKNOWN no dispara falsos positivos.
+          if (
+            account.alertOnBuyBoxLost &&
+            prevBuyBox === "LOST" &&
+            comp.buyBox === "WON"
+          ) {
+            accountAlerts.push({
+              kind: "buybox_won",
+              sku: listing.sku,
+              title: listing.title,
+              detail: `Has recuperado la Buy Box con tu precio de ${eur(listing.priceCurrent)}`,
+            });
+          }
+
           // Estrategia efectiva: la del producto o la de la cuenta.
           const eff = listing.useAccountDefaults
             ? {
@@ -487,6 +514,30 @@ export async function runRepricer(
               ? listing.priceWarStreak + 1
               : 0;
           if (result.reason === "price_war") nextWarStreak = 0; // freno aplicado → reset
+
+          // Detector de dumpers: si un competidor identificable nos arrastra
+          // a la baja, acumulamos el golpe (se registra aunque el movimiento
+          // luego se debouncee o no se aplique: el arrastre ocurrió igual).
+          // Al cruzar el umbral avisamos UNA vez; getItemOffers v0 a veces
+          // anonimiza el SellerId → sin id no hay nada que registrar.
+          if (goingDown && pulledByCompetitor && comp.cheapestSellerId) {
+            const dumper = await recordDumperHit(
+              account.id,
+              comp.cheapestSellerId,
+            );
+            if (
+              dumper &&
+              dumper.occurrences === DUMPER_CONFIRMED_AT &&
+              !dumper.excluded
+            ) {
+              accountAlerts.push({
+                kind: "dumper",
+                sku: listing.sku,
+                title: listing.title,
+                detail: `El vendedor ${comp.cheapestSellerId} te ha arrastrado el precio ${DUMPER_CONFIRMED_AT} veces. Puedes excluirlo en los filtros de competencia del producto.`,
+              });
+            }
+          }
 
           // Debounce: no repetir un movimiento del mismo signo dentro de la
           // ventana configurada. Evita ping-pong frente a competidores que
@@ -613,9 +664,9 @@ export async function runRepricer(
             continue;
           }
 
-          if (account.dryRun) {
-            // Simulación: calcula pero NO aplica en Amazon ni cambia precio.
-            // Aún así guardamos streaks para que las estadísticas no mientan.
+          if (watchOnly) {
+            // Simulación (dry-run o plan MONITOR): calcula pero NO aplica en
+            // Amazon ni cambia precio. Guardamos streaks para no mentir en stats.
             await prisma.$transaction([
               prisma.repricingEvent.create({
                 data: {

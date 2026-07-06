@@ -23,4 +23,8 @@ export async function getStripe(): Promise<Stripe> {
 }
 
 export const STRIPE_PRICE_ID = () => process.env.STRIPE_PRICE_ID ?? "";
+// Plan Monitor (9 €/mes, solo vigilancia). Sin esta env var el plan Monitor
+// no se puede contratar, pero el resto de la facturación sigue funcionando.
+export const STRIPE_PRICE_ID_MONITOR = () =>
+  process.env.STRIPE_PRICE_ID_MONITOR ?? "";
 export const STRIPE_WEBHOOK_SECRET = () => process.env.STRIPE_WEBHOOK_SECRET ?? "";

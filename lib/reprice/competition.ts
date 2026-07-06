@@ -40,6 +40,9 @@ export interface CompetitionResult {
   buyBox: "WON" | "LOST" | "UNKNOWN";
   /** Precio REAL de la oferta ganadora de la Buy Box (SP-API), o null. */
   buyBoxPrice: number | null;
+  /** SellerId del competidor más barato (para el detector de dumpers), o
+   *  null si no hay competidor o la API anonimizó su SellerId. */
+  cheapestSellerId: string | null;
 }
 
 export function selectCompetitor(
@@ -83,10 +86,15 @@ export function selectCompetitor(
     return true;
   });
 
-  const price =
+  const cheapest =
     eligible.length === 0
       ? null
-      : Math.min(...eligible.map((o) => o.price));
+      : eligible.reduce((min, o) => (o.price < min.price ? o : min));
 
-  return { price, buyBox, buyBoxPrice };
+  return {
+    price: cheapest?.price ?? null,
+    buyBox,
+    buyBoxPrice,
+    cheapestSellerId: cheapest?.sellerId?.trim() || null,
+  };
 }

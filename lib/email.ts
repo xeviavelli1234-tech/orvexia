@@ -676,7 +676,9 @@ export async function sendRepricerAlertEmail(options: {
 
   const tone: Record<RepriceAlert["kind"], string> = {
     buybox_lost: "#dc2626",
+    buybox_won: "#16a34a",
     price_floor: "#d97706",
+    dumper: "#9333ea",
     error: "#dc2626",
   };
 

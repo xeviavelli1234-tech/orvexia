@@ -2,7 +2,13 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSession } from "@/lib/session";
 import { getSellerAccountByUserId } from "@/lib/db/sellerAccount";
-import { getBillingState, PRO_PRICE_EUR, type SellerPlan } from "@/lib/billing";
+import {
+  getBillingState,
+  isPaidPlan,
+  MONITOR_PRICE_EUR,
+  PRO_PRICE_EUR,
+  type SellerPlan,
+} from "@/lib/billing";
 import { prisma } from "@/lib/prisma";
 import PrintButton from "./PrintButton";
 
@@ -29,14 +35,16 @@ export default async function FacturaPage() {
 
   const billing = getBillingState(account.plan as SellerPlan, account.trialEndsAt);
   // En trial mostramos la MISMA factura como VISTA PREVIA (para que se
-  // vea el formato y el desglose de IVA); en Pro es el documento real.
-  const isPreview = billing.plan !== "PRO";
+  // vea el formato y el desglose de IVA); en un plan de pago es el documento real.
+  const isPreview = !isPaidPlan(billing.plan);
 
   const now = new Date();
-  // Plan único: 19 €/mes (IVA incluido) coincidiendo con el price configurado
+  // Precio plano por plan (IVA incluido) coincidiendo con el price configurado
   // en Stripe Live. Si en el futuro hay tramos múltiples, leer el precio real
   // de la suscripción de Stripe vía customer.subscriptions.retrieve().
-  const total = PRO_PRICE_EUR;
+  const total =
+    billing.plan === "MONITOR" ? MONITOR_PRICE_EUR : PRO_PRICE_EUR;
+  const planName = billing.plan === "MONITOR" ? "Plan Monitor" : "Plan Pro";
   const base = Math.round((total / (1 + VAT_RATE / 100)) * 100) / 100;
   const iva = Math.round((total - base) * 100) / 100;
 
@@ -148,7 +156,7 @@ export default async function FacturaPage() {
           <tbody>
             <tr className="border-b border-[#f1f5f9]">
               <td className="py-3">
-                Suscripción Orvexia Repricer · Plan Pro (mensual)
+                Suscripción Orvexia Repricer · {planName} (mensual)
               </td>
               <td className="py-3 text-right font-mono">{eur(base)}</td>
               <td className="py-3 text-right font-mono">{eur(iva)}</td>

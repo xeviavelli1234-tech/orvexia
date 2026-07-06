@@ -23,6 +23,18 @@ test("elige el más barato que pasa filtros", () => {
     base,
   );
   assert.equal(r.price, 25);
+  assert.equal(r.cheapestSellerId, "B");
+});
+
+test("cheapestSellerId: null sin competidores o con SellerId anonimizado", () => {
+  assert.equal(selectCompetitor([], base).cheapestSellerId, null);
+  // getItemOffers v0 puede anonimizar el SellerId de la competencia.
+  const r = selectCompetitor([offer({ sellerId: undefined, price: 20 })], base);
+  assert.equal(r.price, 20);
+  assert.equal(r.cheapestSellerId, null);
+  // Un sellerId de espacios en blanco tampoco cuenta como identificable.
+  const r2 = selectCompetitor([offer({ sellerId: "  ", price: 20 })], base);
+  assert.equal(r2.cheapestSellerId, null);
 });
 
 test("excluye nuestra propia oferta", () => {

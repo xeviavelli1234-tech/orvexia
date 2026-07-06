@@ -1,8 +1,26 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
-import { getStripe, STRIPE_WEBHOOK_SECRET } from "@/lib/stripe";
-import { intervalForPlan } from "@/lib/billing";
+import {
+  getStripe,
+  STRIPE_WEBHOOK_SECRET,
+  STRIPE_PRICE_ID_MONITOR,
+} from "@/lib/stripe";
+import { intervalForPlan, type SellerPlan } from "@/lib/billing";
+
+/**
+ * Plan que corresponde a una suscripción viva. Discrimina por el price ID del
+ * primer item (fuente autoritativa: es lo que Stripe cobra); si no está
+ * disponible cae a los metadata que grabamos en el checkout, y en última
+ * instancia a PRO (comportamiento histórico de suscripción única).
+ */
+function planFromSubscription(sub: Stripe.Subscription): SellerPlan {
+  const priceId = sub.items?.data?.[0]?.price?.id ?? "";
+  const monitorPrice = STRIPE_PRICE_ID_MONITOR();
+  if (monitorPrice && priceId === monitorPrice) return "MONITOR";
+  if (priceId) return "PRO";
+  return sub.metadata?.plan === "MONITOR" ? "MONITOR" : "PRO";
+}
 
 // Stripe necesita el body crudo para verificar la firma.
 export async function POST(req: Request) {
@@ -35,19 +53,24 @@ export async function POST(req: Request) {
         const s = event.data.object as Stripe.Checkout.Session;
         const sellerAccountId =
           s.client_reference_id ?? s.metadata?.sellerAccountId ?? null;
-        // Solo conceder PRO si es realmente una suscripción y está pagada.
-        // En trials de 14 días el primer importe es 0 € → payment_status es
-        // "no_payment_required"; lo aceptamos. Rechazamos sesiones impagas
-        // (async) o de otro mode para que nadie obtenga PRO sin cobro válido.
+        // Solo conceder plan de pago si es realmente una suscripción y está
+        // pagada. En trials de 14 días el primer importe es 0 € →
+        // payment_status es "no_payment_required"; lo aceptamos. Rechazamos
+        // sesiones impagas (async) o de otro mode para que nadie obtenga un
+        // plan de pago sin cobro válido.
         const validPayment =
           s.payment_status === "paid" ||
           s.payment_status === "no_payment_required";
+        // Plan contratado: viene de los metadata que grabó el checkout.
+        // Sesiones antiguas sin `plan` = PRO (única oferta que existía).
+        const paidPlan: SellerPlan =
+          s.metadata?.plan === "MONITOR" ? "MONITOR" : "PRO";
         if (sellerAccountId && s.mode === "subscription" && validPayment) {
           await prisma.sellerAccount.update({
             where: { id: sellerAccountId },
             data: {
-              plan: "PRO",
-              intervalSeconds: intervalForPlan("PRO"),
+              plan: paidPlan,
+              intervalSeconds: intervalForPlan(paidPlan),
               stripeCustomerId:
                 typeof s.customer === "string" ? s.customer : undefined,
               stripeSubscriptionId:
@@ -63,18 +86,23 @@ export async function POST(req: Request) {
           where: { stripeSubscriptionId: sub.id },
         });
         if (acc) {
-          // active/trialing → PRO. past_due se mantiene en PRO (periodo de
-          // gracia: Stripe reintenta el cobro). El resto (unpaid, canceled,
-          // paused, incomplete_expired…) degrada a TRIAL EXPIRADO.
+          // active/trialing → plan de la suscripción (PRO o MONITOR según el
+          // price). past_due se mantiene (periodo de gracia: Stripe reintenta
+          // el cobro). El resto (unpaid, canceled, paused,
+          // incomplete_expired…) degrada a TRIAL EXPIRADO.
           const live =
             sub.status === "active" ||
             sub.status === "trialing" ||
             sub.status === "past_due";
           if (live) {
-            if (acc.plan !== "PRO") {
+            const paidPlan = planFromSubscription(sub);
+            if (acc.plan !== paidPlan) {
               await prisma.sellerAccount.update({
                 where: { id: acc.id },
-                data: { plan: "PRO", intervalSeconds: intervalForPlan("PRO") },
+                data: {
+                  plan: paidPlan,
+                  intervalSeconds: intervalForPlan(paidPlan),
+                },
               });
             }
           } else {
@@ -109,8 +137,8 @@ export async function POST(req: Request) {
           where: { stripeSubscriptionId: sub.id },
         });
         if (acc) {
-          // El enum de plan solo tiene TRIAL|PRO, así que al cancelar volvemos
-          // a TRIAL. Pero forzamos trialEndsAt al pasado (época) para que el
+          // Al cancelar cualquier plan de pago (PRO o MONITOR) volvemos a
+          // TRIAL, pero forzamos trialEndsAt al pasado (época) para que el
           // gating lo trate como prueba EXPIRADA y NO reactive el reprecio
           // gratis. Sin esto, un cliente que cancela pronto recuperaría días
           // de trial sin pagar.

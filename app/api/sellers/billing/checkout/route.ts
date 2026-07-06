@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { getSellerAccountByUserId } from "@/lib/db/sellerAccount";
-import { getStripe, isStripeConfigured, STRIPE_PRICE_ID } from "@/lib/stripe";
+import {
+  getStripe,
+  isStripeConfigured,
+  STRIPE_PRICE_ID,
+  STRIPE_PRICE_ID_MONITOR,
+} from "@/lib/stripe";
+import { isPaidPlan, type SellerPlan } from "@/lib/billing";
 import { getBaseUrl } from "@/lib/url";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
@@ -36,19 +42,35 @@ export async function POST(req: Request) {
     return NextResponse.redirect(new URL("/dashboard?status=connect_first", req.url));
   }
 
-  // Idempotencia de suscripción: si la cuenta ya es PRO (suscripción activa, en
-  // prueba o en gracia past_due) no creamos una segunda. Sin esta guarda, un POST
-  // repetido a este endpoint (doble submit, back+resubmit, POST manual con la
-  // cookie) abría una 2ª suscripción al mismo precio sobre el mismo customer: el
-  // webhook sobrescribía stripeSubscriptionId con la nueva y la antigua quedaba
-  // HUÉRFANA cobrando 19 €/mes sin poder cancelarse desde la app.
+  // Plan solicitado: "monitor" (9 €/mes, solo vigilancia) o "pro" (por
+  // defecto, compatible con el formulario histórico sin campo `plan`).
+  const form = await req.formData().catch(() => null);
+  const requestedPlan: SellerPlan =
+    form?.get("plan") === "monitor" ? "MONITOR" : "PRO";
+  const priceId =
+    requestedPlan === "MONITOR" ? STRIPE_PRICE_ID_MONITOR() : STRIPE_PRICE_ID();
+  if (!priceId) {
+    return NextResponse.redirect(
+      new URL("/sellers/facturacion?status=stripe_not_configured", req.url),
+    );
+  }
+
+  // Idempotencia de suscripción: si la cuenta ya tiene un plan de pago
+  // (suscripción activa, en prueba o en gracia past_due) no creamos una segunda.
+  // Sin esta guarda, un POST repetido a este endpoint (doble submit,
+  // back+resubmit, POST manual con la cookie) abría una 2ª suscripción sobre el
+  // mismo customer: el webhook sobrescribía stripeSubscriptionId con la nueva y
+  // la antigua quedaba HUÉRFANA cobrando cada mes sin poder cancelarse desde la
+  // app. El cambio Monitor↔Pro se hace cancelando desde el portal y volviendo
+  // a contratar (o desde el portal de Stripe si se configuran ambos productos).
   //
   // La discriminación es por `plan` (la señal autoritativa: el webhook lo pone
-  // PRO mientras la suscripción está viva y lo degrada a TRIAL al churn), NO por
-  // stripeSubscriptionId: un impago vía customer.subscription.updated deja la
-  // cuenta en TRIAL pero podría conservar un stripeSubscriptionId obsoleto, y
-  // bloquear por ese id dejaría al cliente sin poder volver a pagar nunca.
-  if (account.plan === "PRO") {
+  // PRO/MONITOR mientras la suscripción está viva y lo degrada a TRIAL al
+  // churn), NO por stripeSubscriptionId: un impago vía
+  // customer.subscription.updated deja la cuenta en TRIAL pero podría conservar
+  // un stripeSubscriptionId obsoleto, y bloquear por ese id dejaría al cliente
+  // sin poder volver a pagar nunca.
+  if (isPaidPlan(account.plan as SellerPlan)) {
     return NextResponse.redirect(
       new URL("/sellers/facturacion?status=already_subscribed", req.url),
     );
@@ -72,14 +94,23 @@ export async function POST(req: Request) {
     // para que Stripe cree uno nuevo.
     const buildPayload = (customerId: string | null) => ({
       mode: "subscription" as const,
-      line_items: [{ price: STRIPE_PRICE_ID(), quantity: 1 }],
+      line_items: [{ price: priceId, quantity: 1 }],
       customer: customerId ?? undefined,
       customer_email: customerId ? undefined : session.email,
       client_reference_id: account.id,
-      metadata: { sellerAccountId: account.id, userId: session.userId },
+      metadata: {
+        sellerAccountId: account.id,
+        userId: session.userId,
+        plan: requestedPlan,
+      },
       subscription_data: {
-        metadata: { sellerAccountId: account.id },
-        ...(isFirstSubscription || !customerId ? { trial_period_days: 14 } : {}),
+        metadata: { sellerAccountId: account.id, plan: requestedPlan },
+        // Trial de 14 días SOLO en Pro y solo en la primera suscripción: el
+        // plan TRIAL de la app ya equivale al Pro completo. Monitor (9 €) se
+        // cobra desde el primer día — es el tier de entrada, no una prueba.
+        ...(requestedPlan === "PRO" && (isFirstSubscription || !customerId)
+          ? { trial_period_days: 14 }
+          : {}),
       },
       // Stripe Live exige consentimiento explícito. El checkbox sólo aparece si la
       // URL de Términos del Servicio está configurada en Stripe Dashboard →

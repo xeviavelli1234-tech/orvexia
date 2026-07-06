@@ -31,6 +31,7 @@ import { prisma } from "@/lib/prisma";
 import { utcToMadridLocalInput } from "@/lib/tz";
 import {
   getBillingState,
+  isPaidPlan,
   repricingActiveLimit,
   TRIAL_DAYS,
   type SellerPlan,
@@ -117,7 +118,7 @@ export default async function ProductosPage({
       take: 500,
       include: { listing: { select: { title: true } } },
     }),
-    isStripeConfigured() && billing.plan === "PRO"
+    isStripeConfigured() && isPaidPlan(billing.plan)
       ? getSubscriptionStatus(account.stripeSubscriptionId)
       : Promise.resolve(null),
   ]);
@@ -567,7 +568,21 @@ export default async function ProductosPage({
     <ControlCenterShell
       sidebar={sidebar}
       canvas={canvas}
-      banner={<ConnectedBanner status={connectStatus} synced={syncedCount} />}
+      banner={
+        <>
+          {billing.plan === "MONITOR" && (
+            <div className="mx-auto max-w-3xl rounded-xl border border-sky-400/30 bg-sky-400/10 px-4 py-2.5 text-center text-xs text-sky-200">
+              👁️ <strong>Plan Monitor:</strong> vigilamos competencia y Buy Box
+              y te avisamos, pero tus precios en Amazon no se modifican. Los
+              eventos muestran el precio que el motor <em>habría</em> aplicado.{" "}
+              <Link href="/sellers/facturacion" className="underline hover:text-sky-100">
+                Pasar a Pro para repreciar →
+              </Link>
+            </div>
+          )}
+          <ConnectedBanner status={connectStatus} synced={syncedCount} />
+        </>
+      }
       overlays={
         <>
           <AssistantWidget />

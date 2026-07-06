@@ -367,6 +367,7 @@ model Review {
 
 enum SellerPlan {
   TRIAL
+  MONITOR // vigilancia sin escritura: alertas + precios sugeridos, nunca PATCH
   PRO
 }
 

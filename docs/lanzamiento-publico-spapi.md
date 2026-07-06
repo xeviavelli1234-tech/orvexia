@@ -94,6 +94,8 @@ El día de la publicación el único cambio funcional es `SP_API_APP_PUBLISHED=t
 | `SP_API_NOTIF_DESTINATION_ID` | (opcional) | Si está, suscribe `ANY_OFFER_CHANGED` al conectar. Sin él, el sync es por cron/manual. |
 | `SP_API_REFRESH_TOKEN` | (opcional, dueño) | Self-connect de la cuenta propia (no OAuth). |
 | `SP_API_SELLER_ID` | (opcional, dueño) | Idem, merchant token del dueño. |
+| `STRIPE_PRICE_ID` | (price de Stripe Live) | Plan Pro (19 €/mes). |
+| `STRIPE_PRICE_ID_MONITOR` | (price de Stripe Live) | Plan Monitor (9 €/mes, solo vigilancia). Crear el producto/price en Stripe Live antes de ponerla; sin ella el botón "Contratar Monitor" redirige a `stripe_not_configured`. |
 
 Tras cualquier cambio de env → **Redeploy** (Vercel no lo aplica hasta un nuevo deploy).
 

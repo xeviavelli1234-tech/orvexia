@@ -118,17 +118,25 @@ export async function getCatalogHealth(userId: string): Promise<{
 }
 
 // ─── Detector de dumpers (acumula y persiste en BD) ────────────────────────
+
+/** Golpes de un mismo seller a partir de los cuales se considera CONFIRMADO. */
+export const DUMPER_CONFIRMED_AT = 5;
+
 /**
  * Registra un competidor como potencial dumper. Se incrementa la cuenta
- * cuando un mismo seller nos baja el precio repetidamente. Cuando supera
- * un umbral (5 detecciones), se considera confirmado.
+ * cuando un mismo seller nos baja el precio repetidamente. Al alcanzar
+ * DUMPER_CONFIRMED_AT detecciones se considera confirmado.
+ *
+ * Devuelve la fila actualizada (para que el runner pueda avisar exactamente
+ * al cruzar el umbral) o null si la BD falló — nunca lanza: un fallo aquí no
+ * debe romper el ciclo de reprecio.
  */
 export async function recordDumperHit(
   sellerAccountId: string,
   amazonSellerId: string,
-): Promise<void> {
+): Promise<{ occurrences: number; excluded: boolean } | null> {
   try {
-    await prisma.detectedDumper.upsert({
+    const row = await prisma.detectedDumper.upsert({
       where: {
         sellerAccountId_amazonSellerId: { sellerAccountId, amazonSellerId },
       },
@@ -138,17 +146,23 @@ export async function recordDumperHit(
         lastDetectedAt: new Date(),
       },
     });
+    return { occurrences: row.occurrences, excluded: row.excluded };
   } catch (e) {
     log.warn(
       { sellerAccountId, amazonSellerId, err: e },
       "recordDumperHit failed",
     );
+    return null;
   }
 }
 
 export async function listConfirmedDumpers(sellerAccountId: string) {
   return prisma.detectedDumper.findMany({
-    where: { sellerAccountId, occurrences: { gte: 5 }, acknowledged: false },
+    where: {
+      sellerAccountId,
+      occurrences: { gte: DUMPER_CONFIRMED_AT },
+      acknowledged: false,
+    },
     orderBy: { occurrences: "desc" },
     take: 10,
   });
